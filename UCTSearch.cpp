@@ -37,7 +37,7 @@ UCTNode* UCTSearch::uct_select(UCTNode* node) {
             uctvalue = 10000 + Random::get_Rng()->random();
         }
 
-        if (uctvalue > best_uct) {
+        if (uctvalue >= best_uct) {
             best_uct = uctvalue;
             result = &(*child);
         }            
@@ -70,11 +70,39 @@ float UCTSearch::play_simulation(UCTNode* node) {
     return noderesult;  
 }
 
+static void dump_pv(GameState & state, UCTNode & parent) {
+    int bestmove;
+    int bestvisits = 0;
+    UCTNode bestchild;
+    
+    BOOST_FOREACH(UCTNode & node, std::make_pair(parent.first_child(), parent.end_child())) {                              
+        if (node.get_visits() >= bestvisits) {
+            bestmove = node.get_move();
+            bestchild = node;
+            bestvisits = node.get_visits();
+        }                  
+    }        
+    
+    char tmp[16];                
+    state.move_to_text(bestchild.get_move(), tmp);
+    
+    myprintf("%s ", tmp);
+    
+    if (bestvisits <= 1) {
+        return;
+    }
+    
+    state.play_move(bestmove);    
+    
+    dump_pv(state, bestchild);
+}
+
 int UCTSearch::think(int color) {
     Time start;
     int time_for_move = 100;
 
     m_nodes = 0;    
+    m_rootstate.board.m_tomove = color;
     
     int centiseconds_elapsed;
     
@@ -99,19 +127,26 @@ int UCTSearch::think(int color) {
         
         m_rootstate.move_to_text(node.get_move(), tmp);
         
-        myprintf("%4s -> %7d (%6.3f%%)\n", 
+        myprintf("%4s -> %7d (%5.2f%%)\n", 
                   tmp, 
                   node.get_visits(), 
                   node.get_winrate(m_rootstate.get_to_move())*100.0f);
                   
-        if (node.get_visits() > bestvisits) {
+        if (node.get_visits() >= bestvisits) {
             bestmove = node.get_move();
             bestvisits = node.get_visits();
             bestrate = node.get_winrate(m_rootstate.get_to_move());
         }                  
     }
     
-    myprintf("Evaluation: %6.3f%% winning probability\n\n", bestrate * 100.0f);  
+    GameState tmpstate = m_rootstate;
+    
+    myprintf("PV: ");
+    dump_pv(tmpstate, m_root);    
+    
+    myprintf("(%5.2f%%) -> %5.2f%%\n\n", 
+             m_root.get_winrate(m_rootstate.get_to_move()) * 100.0f, 
+             bestrate * 100.0f);  
 
     return bestmove;
 }
