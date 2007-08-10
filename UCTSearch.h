@@ -12,7 +12,8 @@ public:
     int think(int color);
     
 private:
-    int play_simulation(UCTNode &node);    
+    float play_simulation(UCTNode* node);
+    UCTNode* uct_select(UCTNode* node);    
 
     GameState m_rootstate;
     GameState m_currstate;

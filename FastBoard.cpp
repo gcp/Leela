@@ -703,16 +703,25 @@ bool FastBoard::no_eye_fill(const int i) {
 }
 
  void FastBoard::move_to_text(int move, char *vertex) {        
-    int column = move % m_boardsize;
-    int row = move / m_boardsize;
-    if (move >= 0 && move <= m_maxsq)
+    int column = move % (m_boardsize + 2);
+    int row = move / (m_boardsize + 2);
+    
+    column--;
+    row--;
+    
+    assert(move == FastBoard::PASS || (row >= 0 && row < m_boardsize));
+    assert(move == FastBoard::PASS || (column >= 0 && column < m_boardsize));
+    
+    if (move >= 0 && move <= m_maxsq) {
         sprintf(vertex, "%c%d", (column < 8 ? 'A' + column : 'A' + column + 1), row+1); 
-    else if (move == FastBoard::PASS)
+    } else if (move == FastBoard::PASS) {
         sprintf(vertex, "pass");
-    else if (move == -2)
+    } else if (move == -2) {
 	sprintf(vertex, "?");
-    else
+    } else {
 	sprintf(vertex, "error");
+    }
+    	
     return;
 }
 

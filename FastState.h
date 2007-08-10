@@ -12,6 +12,7 @@ class FastState {
         int play_move_fast(int vertex);
         void set_komi(float komi);     
         int get_passes();
+        int get_to_move();
         void set_passes(int val);
         void increment_passes();    
 

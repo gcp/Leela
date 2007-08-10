@@ -129,6 +129,10 @@ void FastState::increment_passes() {
     set_passes(get_passes() + 1); 
 }
 
+int FastState::get_to_move() {
+    return board.m_tomove;
+}
+
 void FastState::display_state() {    
     myprintf("\nPasses: %d            Black (X) Prisoners: %d\n", 
              m_passes, board.get_prisoners(FastBoard::BLACK));

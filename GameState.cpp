@@ -87,6 +87,10 @@ void GameState::play_pass(void) {
     game_history.push_back(board);
 }
 
+void GameState::play_move(int vertex) {
+    play_move(board.m_tomove, vertex);
+}
+
 void GameState::play_move(int color, int vertex) {
     if (vertex != -1) {                   
         int kosq = board.update_board(color, vertex);

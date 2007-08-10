@@ -8,7 +8,7 @@ public:
     static const int AUTOGAMES = 1000000;
     static void do_playout_benchmark(GameState& game);    
 
-    Playout(FastState &state);
+    Playout(const FastState &state);
     void run();
     float get_score();
 

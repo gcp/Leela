@@ -15,7 +15,8 @@ class GameState : public FastState {
         
         int undo_move(void);
         void play_pass(void);
-        void play_move(int color, int vertex);       
+        void play_move(int color, int vertex);      
+        void play_move(int vertex); 
         int play_textmove(char *color, char *vertex);                
         
         std::vector<FullBoard> game_history;   

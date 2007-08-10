@@ -10,7 +10,7 @@
 
 using namespace Utils;
 
-Playout::Playout(FastState &state) {
+Playout::Playout(const FastState &state) {
     m_state = state;
     m_run = false;
 }
