@@ -33,7 +33,7 @@ int main (int argc, char *argv[]) {
     std::auto_ptr<GameState> maingame(new GameState);    
         
     /* set board limits */    
-    float komi = 0.0;         
+    float komi = 7.5;         
     maingame->init_game(9, komi);
             
     while (!done) {

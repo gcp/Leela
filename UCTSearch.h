@@ -16,7 +16,7 @@ private:
     UCTNode* uct_select(UCTNode* node);    
 
     GameState m_rootstate;
-    GameState m_currstate;
+    FastState m_currstate;
     UCTNode m_root;
     int m_nodes;
 };

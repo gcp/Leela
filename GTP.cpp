@@ -18,7 +18,7 @@ int GTP::execute(GameState& game, char *xinput) {
     char command[STR_BUFF], command2[STR_BUFF];
     char color[STR_BUFF], vertex[STR_BUFF];
     int id = -1;
-    int tmp, nw, move;
+    int tmp, nw;
     float ftmp;
     /* parse */    
     
@@ -199,7 +199,18 @@ int GTP::execute(GameState& game, char *xinput) {
             gtp_printf(id, "0");
         }                
         return 1;
-    } else if (!strcmp (command, "auto")) {
+    } else if (!strcmp (command, "auto")) {    
+        do {
+            std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+
+            int move = search->think(game.get_to_move());
+            game.play_move(move);  
+            game.display_state();
+                              
+        } while (game.get_passes() < 2);
+
+        return 1;
+    } else if (!strcmp (command, "bench")) {
         Playout::do_playout_benchmark(game);
         return 1;
     } else if (!strcmp (command, "influence")) {

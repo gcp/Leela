@@ -10,8 +10,7 @@
 
 using namespace Utils;
 
-Playout::Playout(const FastState &state) {
-    m_state = state;
+Playout::Playout() {    
     m_run = false;
 }
 
@@ -21,20 +20,20 @@ float Playout::get_score() {
     return m_score;
 }
 
-void Playout::run() {
-    const int boardsize = m_state.board.get_boardsize();
+void Playout::run(FastState & state) {
+    const int boardsize = state.board.get_boardsize();
     const int resign = (boardsize * boardsize) / 3;
     const int playoutlen = (boardsize * boardsize) * 2;        
 
      do {                                    
-        m_state.play_random_move();                                                                   
-    } while (m_state.get_passes() < 2 
-             && m_state.get_movenum() < playoutlen
-             && abs(m_state.estimate_score()) < resign); 
+        state.play_random_move();                                                                   
+    } while (state.get_passes() < 2 
+             && state.get_movenum() < playoutlen
+             && abs(state.estimate_score()) < resign); 
 
     m_run = true;                
-    m_length = m_state.get_movenum();
-    m_score = m_state.calculate_score();       
+    m_length = state.get_movenum();
+    m_score = state.calculate_score();       
 }
 
 void Playout::do_playout_benchmark(GameState& game) {   

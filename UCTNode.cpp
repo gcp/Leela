@@ -19,9 +19,9 @@ bool UCTNode::first_visit() {
 }
 
 float UCTNode::do_one_playout(FastState &startstate) {
-    Playout p(startstate);
+    Playout p;
 
-    p.run();
+    p.run(startstate);
 
     return p.get_score();
 }
