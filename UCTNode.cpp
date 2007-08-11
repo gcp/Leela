@@ -14,7 +14,7 @@ UCTNode::UCTNode()
 : m_visits(0), m_blackwins(0) {
 }
 
-bool UCTNode::first_visit() {
+bool UCTNode::first_visit() const {
     return m_visits == 0;
 }
 
@@ -41,12 +41,14 @@ void UCTNode::create_children(FastState &state) {
         }                   
     }      
 
-    UCTNode node;
-    node.set_move(FastBoard::PASS);              
-    m_children.push_back(node);    
+    if (state.get_passes() < 2) {
+        UCTNode node;
+        node.set_move(FastBoard::PASS);              
+        m_children.push_back(node);  
+    }  
 }
 
-int UCTNode::get_move() {
+int UCTNode::get_move() const {
     return m_move;
 }
 
@@ -62,19 +64,21 @@ void UCTNode::update(float gameresult) {
     m_blackwins += (gameresult > 0.0f);
 }
 
-bool UCTNode::has_children() {
+bool UCTNode::has_children() const {
     return m_children.size() > 0;
 }
 
-std::vector<UCTNode>::iterator UCTNode::first_child() {
+UCTNode::iterator UCTNode::begin() {
     return m_children.begin();
 }
 
-std::vector<UCTNode>::iterator UCTNode::end_child() {
+UCTNode::iterator UCTNode::end() {
     return m_children.end();
 }
 
-float UCTNode::get_winrate(int tomove) {
+float UCTNode::get_winrate(int tomove) const {
+    assert(m_visits > 0);
+
     float rate = (float)m_blackwins / (float)m_visits;
     
     if (tomove == FastBoard::WHITE) {
@@ -84,6 +88,6 @@ float UCTNode::get_winrate(int tomove) {
     return rate;
 }
 
-int UCTNode::get_visits() {
+int UCTNode::get_visits() const {
     return m_visits;
 }

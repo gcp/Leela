@@ -12,8 +12,13 @@ public:
     int think(int color);
     
 private:
+    static const int MATURE_TRESHOLD = 1;    
+
     float play_simulation(UCTNode* node);
     UCTNode* uct_select(UCTNode* node);    
+    
+    void dump_stats(GameState & state, UCTNode & parent);
+    void dump_pv(GameState & state, UCTNode & parent);
 
     GameState m_rootstate;
     FastState m_currstate;

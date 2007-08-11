@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
+#include <functional>
 #include <boost/foreach.hpp>
 
 #include "config.h"
@@ -23,12 +24,12 @@ UCTNode* UCTSearch::uct_select(UCTNode* node) {
     float best_uct = 0.0f;
     UCTNode* result = NULL;
     
-    std::vector<UCTNode>::iterator child = node->first_child();
+    UCTNode::iterator child = node->begin();
     
-    for (;child != node->end_child(); ++child) {    
+    for (;child != node->end(); ++child) {    
         float uctvalue;
         
-        if (!child->first_visit()) {
+        if (child->get_visits() >= MATURE_TRESHOLD) {
             float winrate = child->get_winrate(m_currstate.get_to_move());            
             //float uct = 1.0f * sqrtf(logf(node->get_visits())/(5.0f * child->get_visits()));
             
@@ -40,6 +41,7 @@ UCTNode* UCTSearch::uct_select(UCTNode* node) {
             float uct = uncertain;
             
             uctvalue = winrate + 1.2f * uct;
+            //uctvalue = winrate + uct;
         } else {            
             //uctvalue = 10000 + Random::get_Rng()->random();
             uctvalue = 1.0f;
@@ -51,69 +53,152 @@ UCTNode* UCTSearch::uct_select(UCTNode* node) {
         }            
     }
     
+    assert(result != NULL);
+    
     return result;
 }
 
 float UCTSearch::play_simulation(UCTNode* node) {
     float noderesult;
 
-    if (node->get_visits() < 100) {
+    if (node->get_visits() < MATURE_TRESHOLD) {
         noderesult = node->do_one_playout(m_currstate);
     } else {
         if (node->has_children() == false) {
-            node->create_children(m_currstate);
+            node->create_children(m_currstate);                                             
         }
+                
+        if (node->has_children() == true) {
+            UCTNode* next = uct_select(node); 
 
-        UCTNode* next = uct_select(node); 
-
-        int move = next->get_move();
-        
-        if (move != FastBoard::PASS) {
-            m_currstate.play_move_fast(move);
+            int move = next->get_move();
+            
+            if (move != FastBoard::PASS) {
+                m_currstate.play_move_fast(move);
+            } else {
+                m_currstate.play_pass_fast();
+            }            
+            
+            noderesult = play_simulation(next);
         } else {
-            m_currstate.play_pass_fast();
-        }            
-        
-        noderesult = play_simulation(next);
+            // terminal node, handle this smarter
+            noderesult = node->do_one_playout(m_currstate);
+        }        
     }
 
-    node->add_visit();
-    
+    node->add_visit();    
     node->update(noderesult);  
     
     return noderesult;  
 }
 
-static void dump_pv(GameState & state, UCTNode & parent) {
-    int bestmove;
-    int bestvisits = 0;
-    UCTNode bestchild;
+class NodeComp : public std::binary_function<UCTNode&, UCTNode&, bool> {   
+private:
+    const int m_color;
+public:   
+    NodeComp(const int color) : m_color(color) {}
+   
+    bool operator()(const UCTNode & a, const UCTNode & b) {  
+        if (a.first_visit() && !b.first_visit()) {
+            return false;
+        }  
+        if (b.first_visit() && !a.first_visit()) {
+            return true;
+        }
+        if (a.first_visit() && b.first_visit()) {
+            return false;
+        }
+        if (a.get_visits() == b.get_visits()) {
+            if (a.get_winrate(m_color) > b.get_winrate(m_color)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if (a.get_visits() > b.get_visits()) {
+            return true;
+        } else {
+            return false;
+        }        
+    }
+};
+
+void UCTSearch::dump_pv(GameState & state, UCTNode & parent) {
     
-    BOOST_FOREACH(UCTNode & node, std::make_pair(parent.first_child(), parent.end_child())) {                              
-        if (node.get_visits() >= bestvisits) {
-            bestmove = node.get_move();
-            bestchild = node;
-            bestvisits = node.get_visits();
-        }                  
-    }        
-    
-    char tmp[16];                
-    state.move_to_text(bestchild.get_move(), tmp);
-    
-    myprintf("%s ", tmp);
-    
-    if (!bestchild.has_children()) {
+    if (!parent.has_children()) {
         return;
     }
     
+    std::stable_sort(parent.begin(), parent.end(), NodeComp(state.get_to_move()));
+        
+    UCTNode* bestchild = &(*parent.begin());
+    int bestmove = bestchild->get_move();
+    
+    char tmp[16];                
+    state.move_to_text(bestmove, tmp);
+    
+    myprintf("%s ", tmp);             
+    
     state.play_move(bestmove);    
     
-    dump_pv(state, bestchild);
+    dump_pv(state, *bestchild);
+}
+
+void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
+    const int color = state.get_to_move();
+    int bestmove = FastBoard::PASS;
+    int bestvisits = 0;
+    float bestrate = 0.0f;      
+    UCTNode* bestnode = NULL;
+    
+    bestnode = &(*parent.begin());
+    
+    bestrate = bestnode->get_winrate(color);
+    bestvisits = bestnode->get_visits();
+    bestmove = bestnode->get_move();
+        
+    int movecount = 0;
+    
+    BOOST_FOREACH(UCTNode & node, parent) {
+    
+        if (++movecount > 6) break;
+    
+        char tmp[16];
+        
+        state.move_to_text(node.get_move(), tmp);
+        
+        myprintf("%4s -> %7d (%5.2f%%) PV: %s ", 
+                  tmp, 
+                  node.get_visits(), 
+                  node.get_visits() > 0 ? node.get_winrate(color)*100.0f : 0.0f,
+                  tmp);
+        
+        
+        GameState tmpstate = state;  
+        
+        tmpstate.play_move(node.get_move());                
+        dump_pv(tmpstate, node);                                        
+                              
+        myprintf("\n");                                                                          
+    }     
+    
+    char tmp[16];
+    state.move_to_text(bestnode->get_move(), tmp);
+    myprintf("====================================\n"
+             "%d visits, score %5.2f%% (from %5.2f%%) PV: ",   
+             bestnode->get_visits(), 
+             bestnode->get_visits() > 0 ? bestnode->get_winrate(color)*100.0f : 0.0f,
+             parent.get_winrate(color) * 100.0f,             
+             tmp);    
+                      
+    GameState tmpstate = state;                                
+    dump_pv(tmpstate, parent);      
+                          
+    myprintf("\n");
 }
 
 int UCTSearch::think(int color) {
     Time start;
-    int time_for_move = 500;
+    int time_for_move = 200;
 
     m_nodes = 0;    
     m_rootstate.board.m_tomove = color;
@@ -128,38 +213,16 @@ int UCTSearch::think(int color) {
 
         Time elapsed;
         centiseconds_elapsed = Time::timediff(start, elapsed);
-    } while (centiseconds_elapsed < time_for_move);        
+    } while (centiseconds_elapsed < time_for_move);  
     
-    int bestmove = FastBoard::PASS;
-    int bestvisits = 0;
-    float bestrate = 0.0f;    
-    
-    BOOST_FOREACH(UCTNode & node, std::make_pair(m_root.first_child(), m_root.end_child())) {
-        char tmp[16];
+    // sort children, put best move on top    
+    std::stable_sort(m_root.begin(), m_root.end(), NodeComp(color));
+            
+    dump_stats(m_rootstate, m_root);                          
         
-        m_rootstate.move_to_text(node.get_move(), tmp);
-        
-        myprintf("%4s -> %7d (%5.2f%%)\n", 
-                  tmp, 
-                  node.get_visits(), 
-                  node.get_winrate(m_rootstate.get_to_move())*100.0f);
-                  
-        if (node.get_visits() >= bestvisits) {
-            bestmove = node.get_move();
-            bestvisits = node.get_visits();
-            bestrate = node.get_winrate(m_rootstate.get_to_move());
-        }                  
-    }
-    
-    GameState tmpstate = m_rootstate;
-    
-    myprintf("PV: ");
-    dump_pv(tmpstate, m_root);    
-    
-    myprintf("(%5.2f%%) -> %5.2f%%\n", 
-             m_root.get_winrate(m_rootstate.get_to_move()) * 100.0f, 
-             bestrate * 100.0f);  
     myprintf("\n%d nodes, %d nps\n\n", m_nodes, (m_nodes * 100) / centiseconds_elapsed);             
+    
+    int bestmove = m_root.begin()->get_move();
 
     return bestmove;
 }
