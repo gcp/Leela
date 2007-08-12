@@ -89,7 +89,8 @@ uint64 FullBoard::calc_hash(void) {
 }
 
 
-int FullBoard::update_board(const int color, const int i) {            
+int FullBoard::update_board(const int color, const int i) {         
+    assert(m_square[i] == EMPTY);   
     
     hash    ^= Zobrist::zobrist[m_square[i]][i];
     ko_hash ^= Zobrist::zobrist[m_square[i]][i];      
@@ -142,7 +143,13 @@ int FullBoard::update_board(const int color, const int i) {
     /* move last vertex in list to our position */    
     int lastvertex           = m_empty[--m_empty_cnt];
     m_empty_idx[lastvertex]  = m_empty_idx[i];
-    m_empty[m_empty_idx[i]]  = lastvertex;                                                     
+    m_empty[m_empty_idx[i]]  = lastvertex;    
+    
+    /* check whether we still live (i.e. detect suicide) */    
+    if (m_plibs[m_parent[i]] == 0) {                                
+        assert(captured_stones == 0);        
+        remove_string_fast(i);                
+    }                                                  
             
     /* check for possible simple ko */
     if (captured_stones == 1 && eyeplay) {

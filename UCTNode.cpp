@@ -30,7 +30,9 @@ void UCTNode::create_children(FastState &state) {
     FastBoard & board = state.board;
         
     for (int i = 0; i < board.m_empty_cnt; i++) {  
-        int vertex = board.m_empty[i];               
+        int vertex = board.m_empty[i];  
+        
+        assert(board.get_square(vertex) == FastBoard::EMPTY);             
                 
         if (vertex != state.komove && board.no_eye_fill(vertex)) {
             if (!board.fast_ss_suicide(board.m_tomove, vertex)) {

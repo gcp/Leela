@@ -600,8 +600,8 @@ int FastBoard::update_board_eye(const int color, const int i) {
 /*    
     returns ko square or suicide tag
 */    
-int FastBoard::update_board_fast(const int color, const int i) {            
-    assert(m_square[i] != INVAL);        
+int FastBoard::update_board_fast(const int color, const int i) {                        
+    assert(m_square[i] == EMPTY);
     
     /* did we play into an opponent eye? */    
     int eyeplay = (m_neighbours[i] & s_eyemask[!color]);  
