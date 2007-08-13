@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
-#include <functional>
-#include <boost/foreach.hpp>
 
 #include "config.h"
 
@@ -20,44 +18,6 @@ UCTSearch::UCTSearch(GameState &g)
 : m_rootstate(g) {       
 }
 
-UCTNode* UCTSearch::uct_select(UCTNode* node) {
-    float best_uct = 0.0f;
-    UCTNode* result = NULL;
-    
-    UCTNode::iterator child = node->begin();
-    
-    for (;child != node->end(); ++child) {    
-        float uctvalue;
-        
-        if (child->get_visits() >= MATURE_TRESHOLD) {
-            float winrate = child->get_winrate(m_currstate.get_to_move());            
-            //float uct = 1.0f * sqrtf(logf(node->get_visits())/(5.0f * child->get_visits()));
-            
-            float logparent = logf(node->get_visits());
-            float childfactor = logparent / child->get_visits();
-            
-            float uct_v = winrate - (winrate * winrate) + sqrtf(2.0f * childfactor);
-            float uncertain = sqrt(childfactor * min(0.25f, uct_v));
-            float uct = uncertain;
-            
-            uctvalue = winrate + 1.2f * uct;
-            //uctvalue = winrate + uct;
-        } else {            
-            //uctvalue = 10000 + Random::get_Rng()->random();
-            uctvalue = 1.0f;
-        }
-
-        if (uctvalue >= best_uct) {
-            best_uct = uctvalue;
-            result = &(*child);
-        }            
-    }
-    
-    assert(result != NULL);
-    
-    return result;
-}
-
 float UCTSearch::play_simulation(UCTNode* node) {
     float noderesult;
 
@@ -69,7 +29,7 @@ float UCTSearch::play_simulation(UCTNode* node) {
         }
                 
         if (node->has_children() == true) {
-            UCTNode* next = uct_select(node); 
+            UCTNode* next = node->uct_select_child(m_currstate.get_to_move()); 
 
             int move = next->get_move();
             
@@ -92,45 +52,15 @@ float UCTSearch::play_simulation(UCTNode* node) {
     return noderesult;  
 }
 
-class NodeComp : public std::binary_function<UCTNode&, UCTNode&, bool> {   
-private:
-    const int m_color;
-public:   
-    NodeComp(const int color) : m_color(color) {}
-   
-    bool operator()(const UCTNode & a, const UCTNode & b) {  
-        if (a.first_visit() && !b.first_visit()) {
-            return false;
-        }  
-        if (b.first_visit() && !a.first_visit()) {
-            return true;
-        }
-        if (a.first_visit() && b.first_visit()) {
-            return false;
-        }
-        if (a.get_visits() == b.get_visits()) {
-            if (a.get_winrate(m_color) > b.get_winrate(m_color)) {
-                return true;
-            } else {
-                return false;
-            }
-        } else if (a.get_visits() > b.get_visits()) {
-            return true;
-        } else {
-            return false;
-        }        
-    }
-};
-
 void UCTSearch::dump_pv(GameState & state, UCTNode & parent) {
     
     if (!parent.has_children()) {
         return;
     }
     
-    std::stable_sort(parent.begin(), parent.end(), NodeComp(state.get_to_move()));
+    parent.sort_children(state.get_to_move());                    
         
-    UCTNode* bestchild = &(*parent.begin());
+    UCTNode * bestchild = parent.get_first_child();
     int bestmove = bestchild->get_move();
     
     char tmp[16];                
@@ -147,38 +77,39 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     const int color = state.get_to_move();
     int bestmove = FastBoard::PASS;
     int bestvisits = 0;
-    float bestrate = 0.0f;      
-    UCTNode* bestnode = NULL;
+    float bestrate = 0.0f;          
     
-    bestnode = &(*parent.begin());
+    UCTNode* bestnode = parent.get_first_child();
     
     bestrate = bestnode->get_winrate(color);
     bestvisits = bestnode->get_visits();
     bestmove = bestnode->get_move();
-        
+                    
     int movecount = 0;
+    UCTNode * node = bestnode;
     
-    BOOST_FOREACH(UCTNode & node, parent) {
-    
+    while (node != NULL) {            
         if (++movecount > 6) break;
     
         char tmp[16];
         
-        state.move_to_text(node.get_move(), tmp);
+        state.move_to_text(node->get_move(), tmp);
         
         myprintf("%4s -> %7d (%5.2f%%) PV: %s ", 
                   tmp, 
-                  node.get_visits(), 
-                  node.get_visits() > 0 ? node.get_winrate(color)*100.0f : 0.0f,
+                  node->get_visits(), 
+                  node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                   tmp);
         
         
         GameState tmpstate = state;  
         
-        tmpstate.play_move(node.get_move());                
-        dump_pv(tmpstate, node);                                        
+        tmpstate.play_move(node->get_move());                
+        dump_pv(tmpstate, *node);                                        
                               
-        myprintf("\n");                                                                          
+        myprintf("\n");   
+        
+        node = node->get_sibling();                                                                       
     }     
     
     char tmp[16];
@@ -198,7 +129,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 
 int UCTSearch::think(int color) {
     Time start;
-    int time_for_move = 200;
+    int time_for_move = 1000;
 
     m_nodes = 0;    
     m_rootstate.board.m_tomove = color;
@@ -216,13 +147,13 @@ int UCTSearch::think(int color) {
     } while (centiseconds_elapsed < time_for_move);  
     
     // sort children, put best move on top    
-    std::stable_sort(m_root.begin(), m_root.end(), NodeComp(color));
+    m_root.sort_children(color);
             
     dump_stats(m_rootstate, m_root);                          
         
     myprintf("\n%d nodes, %d nps\n\n", m_nodes, (m_nodes * 100) / centiseconds_elapsed);             
     
-    int bestmove = m_root.begin()->get_move();
+    int bestmove = m_root.get_first_child()->get_move();
 
     return bestmove;
 }
