@@ -8,12 +8,12 @@
 
 class UCTSearch {
 public:
+    static const int MATURE_TRESHOLD = 1;   
+    
     UCTSearch(GameState& g);
     int think(int color);
     
-private:
-    static const int MATURE_TRESHOLD = 1;    
-
+private:     
     float play_simulation(UCTNode* node);    
     
     void dump_stats(GameState & state, UCTNode & parent);

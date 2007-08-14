@@ -28,10 +28,11 @@ float UCTSearch::play_simulation(UCTNode* node) {
             node->create_children(m_currstate);                                             
         }
                 
-        if (node->has_children() == true) {
-            UCTNode* next = node->uct_select_child(m_currstate.get_to_move()); 
+        if (node->has_children() == true) {                        
+            UCTNode* next = node->uct_select_child(); 
 
             int move = next->get_move();
+            int color = m_currstate.get_to_move();
             
             if (move != FastBoard::PASS) {
                 m_currstate.play_move_fast(move);
@@ -40,14 +41,13 @@ float UCTSearch::play_simulation(UCTNode* node) {
             }            
             
             noderesult = play_simulation(next);
+            
+            next->update(noderesult, node, color);
         } else {
             // terminal node, handle this smarter
             noderesult = node->do_one_playout(m_currstate);
         }        
-    }
-
-    node->add_visit();    
-    node->update(noderesult);  
+    }         
     
     return noderesult;  
 }
@@ -130,17 +130,16 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 int UCTSearch::think(int color) {
     Time start;
     int time_for_move = 200;
-
-    m_nodes = 0;    
+       
     m_rootstate.board.m_tomove = color;
     
     int centiseconds_elapsed;
     
     do {
         m_currstate = m_rootstate;
-        play_simulation(&m_root);
 
-        m_nodes++;        
+        float simresult = play_simulation(&m_root);
+        m_root.update(simresult, NULL, color);           
 
         Time elapsed;
         centiseconds_elapsed = Time::timediff(start, elapsed);
@@ -151,7 +150,8 @@ int UCTSearch::think(int color) {
             
     dump_stats(m_rootstate, m_root);                          
         
-    myprintf("\n%d nodes, %d nps\n\n", m_nodes, (m_nodes * 100) / centiseconds_elapsed);             
+    myprintf("\n%d nodes, %d nps\n\n", m_root.get_visits(), 
+                                      (m_root.get_visits() * 100) / centiseconds_elapsed);             
     
     int bestmove = m_root.get_first_child()->get_move();
 
