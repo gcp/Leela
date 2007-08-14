@@ -16,23 +16,22 @@ public:
     int get_visits() const;    
     void set_best();    
     void set_move(int move);
-    void update(float gameresult, UCTNode * parent, int color); 
-    UCTNode* uct_select_child();
+    void update(float gameresult); 
+    UCTNode* uct_select_child(int color);
     UCTNode* get_first_child();
     UCTNode* get_sibling();
     void sort_children(int color);    
 
 private:                   
-    void link_child(UCTNode * newchild);
-    void update_uct(UCTNode * parent, int color);
+    void link_child(UCTNode * newchild);    
 
     UCTNode* m_firstchild;
-    UCTNode* m_nextsibling;
+    UCTNode* m_nextsibling;   
+    // store untrieds 
     
     int m_blackwins;
     int m_visits;
-    int m_move;    
-    float m_uct;
+    int m_move;        
 };
 
 #endif

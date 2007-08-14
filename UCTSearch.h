@@ -8,7 +8,7 @@
 
 class UCTSearch {
 public:
-    static const int MATURE_TRESHOLD = 1;   
+    static const int MATURE_TRESHOLD = 20;   
     
     UCTSearch(GameState& g);
     int think(int color);

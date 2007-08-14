@@ -14,7 +14,7 @@
 #include <functional>
 
 UCTNode::UCTNode(int vertex) 
-: m_visits(0), m_blackwins(0), m_firstchild(NULL), m_move(vertex), m_uct(1.1f) {
+: m_visits(0), m_blackwins(0), m_firstchild(NULL), m_move(vertex) {
 }
 
 UCTNode::~UCTNode() {
@@ -61,7 +61,7 @@ void UCTNode::create_children(FastState &state) {
 
     if (state.get_passes() < 2) {
         link_child(new UCTNode(FastBoard::PASS));
-    }  
+    }    
 }
 
 int UCTNode::get_move() const {
@@ -72,29 +72,9 @@ void UCTNode::set_move(int move) {
     m_move = move;
 }
 
-void UCTNode::update_uct(UCTNode * parent, int color) { 
-    float winrate = get_winrate(color);            
-    int parent_visits = parent->get_visits() + 1 - UCTSearch::MATURE_TRESHOLD;    
-    float uct = 1.0f * sqrtf(logf(parent_visits)/(5.0f * get_visits()));
-    
-    /*float logparent = logf(node->get_visits());
-    float childfactor = logparent / child->get_visits();
-    
-    float uct_v = winrate - (winrate * winrate) + sqrtf(2.0f * childfactor);
-    float uncertain = sqrt(childfactor * min(0.25f, uct_v));
-    float uct = uncertain;
-    
-    uctvalue = winrate + 1.2f * uct;*/
-    m_uct = winrate + uct; 
-}
-
-void UCTNode::update(float gameresult, UCTNode * parent, int color) {
+void UCTNode::update(float gameresult) {
     m_visits++;
-    m_blackwins += (gameresult > 0.0f);
-    
-    if (parent != NULL) {
-        update_uct(parent, color);
-    }
+    m_blackwins += (gameresult > 0.0f);        
 }
 
 bool UCTNode::has_children() const {
@@ -117,23 +97,43 @@ int UCTNode::get_visits() const {
     return m_visits;
 }
 
-UCTNode* UCTNode::uct_select_child() {
-    float best_uct = 0.0f;
-    UCTNode * child = m_firstchild;
+UCTNode* UCTNode::uct_select_child(int color) {            
     UCTNode * best = NULL;
+    UCTNode * child = m_firstchild;
+    float best_uct = 0.0f;
+        
+    while (child != NULL) {
+        float uctvalue;
+        
+        if (!child->first_visit()) {
+            float winrate = child->get_winrate(color);            
+            int parent_visits = get_visits() - UCTSearch::MATURE_TRESHOLD;   
+            assert(parent_visits >= 1); 
+            float uct = 1.0f * sqrtf(logf(parent_visits)/(5.0f * child->get_visits()));
             
-    while (child != NULL) {        
-        float uctvalue = child->m_uct;                       
-
-        if (uctvalue >= best_uct) {
+            uctvalue = winrate + uct;         
+        } else {
+            uctvalue = 1.0f;
+        }
+        
+        /*float logparent = logf(node->get_visits());
+        float childfactor = logparent / child->get_visits();
+        
+        float uct_v = winrate - (winrate * winrate) + sqrtf(2.0f * childfactor);
+        float uncertain = sqrt(childfactor * min(0.25f, uct_v));
+        float uct = uncertain;
+        
+        uctvalue = winrate + 1.2f * uct;*/                
+        
+        if (uctvalue > best_uct) {
             best_uct = uctvalue;
             best = child;
-        }     
+        }
         
-        child = child->m_nextsibling;       
-    }
+        child = child->m_nextsibling;
+    }   
     
-    assert(best != NULL);
+    assert(best != NULL);         
     
     return best;
 }
@@ -153,14 +153,14 @@ public:
         }
         if (a->first_visit() && b->first_visit()) {
             return false;
-        }
-        if (a->get_visits() == b->get_visits()) {
-            if (a->get_winrate(m_color) > b->get_winrate(m_color)) {
+        }               
+        if (a->get_winrate(m_color) == b->get_winrate(m_color)) {
+            if (a->get_visits() > b->get_visits()) {
                 return true;
             } else {
                 return false;
             }
-        } else if (a->get_visits() > b->get_visits()) {
+        } else if (a->get_winrate(m_color) > b->get_winrate(m_color)) {
             return true;
         } else {
             return false;
