@@ -20,8 +20,8 @@ UCTNode::~UCTNode() {
     UCTNode * next = m_firstchild;
     
     while (next != NULL) {
-        UCTNode * tmp = next->m_nextsibling;
-        delete next;
+        UCTNode * tmp = next->m_nextsibling;           
+        delete next;                    
         next = tmp;
     }
 }
@@ -53,13 +53,13 @@ void UCTNode::create_children(FastState &state) {
                 
         if (vertex != state.komove && board.no_eye_fill(vertex)) {
             if (!board.fast_ss_suicide(board.m_tomove, vertex)) {                                             
-                link_child(new UCTNode(vertex));                
+                link_child(new UCTNode(vertex));
             } 
         }                   
     }      
 
     if (state.get_passes() < 2) {
-        link_child(new UCTNode(FastBoard::PASS));        
+        link_child(new UCTNode(FastBoard::PASS));
     }  
 }
 
@@ -184,7 +184,8 @@ void UCTNode::sort_children(int color) {
     }        
     
     // reverse sort, because list reconstruction is backwards
-    std::stable_sort(tmp.rbegin(), tmp.rend(), NodeComp(color));        
+    std::stable_sort(tmp.begin(), tmp.end(), NodeComp(color));        
+    std::reverse(tmp.begin(), tmp.end());
     
     m_firstchild = NULL;
     

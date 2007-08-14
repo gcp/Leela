@@ -129,7 +129,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 
 int UCTSearch::think(int color) {
     Time start;
-    int time_for_move = 1000;
+    int time_for_move = 200;
 
     m_nodes = 0;    
     m_rootstate.board.m_tomove = color;
