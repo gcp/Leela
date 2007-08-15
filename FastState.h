@@ -1,11 +1,16 @@
 #ifndef FASTSTATE_H_INCLUDED
 #define FASTSTATE_H_INCLUDED
 
+#include <vector>
+
 #include "FullBoard.h"
 
 class FastState {
     public:        
         void init_game(int size = 19, float komi = 7.5f);
+        void reset_game();
+        void reset_board();  
+        
         int play_random_move();
         int play_random_move(int color);
         int play_pass_fast();
@@ -14,14 +19,15 @@ class FastState {
         int get_passes();
         int get_to_move();
         void set_passes(int val);
-        void increment_passes();    
-
-        int get_movenum();
-        float calculate_score();
+        void increment_passes();            
+        
+        float calculate_mc_score();
         int estimate_score();
-        int get_last_move();
-        void reset_game();
-        void reset_board();  
+        float final_score();
+        std::vector<bool> mark_dead();
+        
+        int get_movenum();
+        int get_last_move();        
         void display_state();
         void move_to_text(int move, char *vertex); 
 

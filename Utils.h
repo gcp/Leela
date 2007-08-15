@@ -4,8 +4,8 @@
 namespace Utils {
 
 void myprintf(const char *fmt, ...);
-void gtp_printf(int id, char *fmt, ...);
-void gtp_fail_printf(int id, char *fmt, ...);
+void gtp_printf(int id, const char *fmt, ...);
+void gtp_fail_printf(int id, const char *fmt, ...);
 
 }
 

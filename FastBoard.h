@@ -1,6 +1,7 @@
 #ifndef FASTBOARD_H_INCLUDED
 #define FASTBOARD_H_INCLUDED
 
+#include <vector>
 #include <boost/tr1/array.hpp>
 
 class FastBoard {
@@ -51,8 +52,9 @@ public:
 
     bool no_eye_fill(const int i);
        
-    float final_score(float komi = 7.5f);    
+    float final_mc_score(float komi = 7.5f);    
     int estimate_score(float komi = 7.5f); 
+    float final_score(float komi = 7.5f);
     
     int eval(float komi); 
     int get_prisoners(int side);
@@ -96,9 +98,9 @@ protected:
     void merge_strings(const int ip, const int aip);    
     int remove_string_fast(int i);        
     void add_neighbour(const int i, const int color);
-    void remove_neighbour(const int i, const int color);    
-    void calc_reach_color(bool *bd, int col);    
+    void remove_neighbour(const int i, const int color);        
     int update_board_eye(const int color, const int i);
+    std::vector<bool> calc_reach_color(int col);    
 
     void run_bouzy(int *influence, int dilat, int eros);
 };

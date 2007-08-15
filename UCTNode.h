@@ -26,12 +26,11 @@ private:
     void link_child(UCTNode * newchild);    
 
     UCTNode* m_firstchild;
-    UCTNode* m_nextsibling;   
-    // store untrieds 
+    UCTNode* m_nextsibling;       
     
     int m_blackwins;
     int m_visits;
-    int m_move;        
+    int m_move;            
 };
 
 #endif

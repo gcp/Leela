@@ -26,9 +26,9 @@ int main (int argc, char *argv[]) {
     setbuf (stdout, NULL);
     setbuf (stdin, NULL);
     setbuf (stderr, NULL);           
-                
-    Random::get_Rng()->seedrandom(5489UL);           
-    Zobrist::init_zobrist();
+                    
+    std::auto_ptr<Random> rng(new Random(5489UL));          
+    Zobrist::init_zobrist(*rng);
     
     std::auto_ptr<GameState> maingame(new GameState);    
         

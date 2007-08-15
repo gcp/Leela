@@ -41,11 +41,11 @@ float UCTNode::do_one_playout(FastState &startstate) {
 
 void UCTNode::link_child(UCTNode * newchild) {
     newchild->m_nextsibling = m_firstchild;
-    m_firstchild = newchild;
+    m_firstchild = newchild;    
 }
 
 void UCTNode::create_children(FastState &state) {             
-    FastBoard & board = state.board;
+    FastBoard & board = state.board;        
         
     for (int i = 0; i < board.m_empty_cnt; i++) {  
         int vertex = board.m_empty[i];  
@@ -100,7 +100,7 @@ int UCTNode::get_visits() const {
 UCTNode* UCTNode::uct_select_child(int color) {            
     UCTNode * best = NULL;
     UCTNode * child = m_firstchild;
-    float best_uct = 0.0f;
+    float best_uct = 0.0f;        
         
     while (child != NULL) {
         float uctvalue;
@@ -113,7 +113,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             
             uctvalue = winrate + uct;         
         } else {
-            uctvalue = 1.0f;
+            uctvalue = 1000.0f;
         }
         
         /*float logparent = logf(node->get_visits());

@@ -16,7 +16,7 @@ void myprintf(const char *fmt, ...) {
     va_end(ap);
 }
 
-void gtp_printf(int id, char *fmt, ...) {
+void gtp_printf(int id, const char *fmt, ...) {
     va_list ap;  
   
     if (id != -1) {
@@ -33,7 +33,7 @@ void gtp_printf(int id, char *fmt, ...) {
     va_end(ap);
 }
 
-void gtp_fail_printf(int id, char *fmt, ...) {
+void gtp_fail_printf(int id, const char *fmt, ...) {
     va_list ap;  
       
     if (id != -1) { 

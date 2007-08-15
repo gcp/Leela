@@ -237,15 +237,17 @@ int FastBoard::remove_string_fast(int i) {
 }
 
 
-void FastBoard::calc_reach_color(bool *bd, int col) {
-    int pass;
-    bool last[MAXSQ];
+std::vector<bool> FastBoard::calc_reach_color(int col) {    
     
-    memset(bd,   false, sizeof(bool) * m_maxsq); 
-    memset(last, false, sizeof(bool) * m_maxsq);
+    std::vector<bool> bd(m_maxsq);
+    std::vector<bool> last(m_maxsq);
     
+    fill(bd.begin(), bd.end(), false);
+    fill(last.begin(), last.end(), false);
+        
     /* needs multi pass propagation, slow */
-    for (pass = 0; pass < m_boardsize; pass++) {
+    do {
+        last = bd;
         for (int i = 0; i < m_boardsize; i++) {
             for (int j = 0; j < m_boardsize; j++) {            
                 int vertex = get_vertex(i, j);
@@ -256,7 +258,7 @@ void FastBoard::calc_reach_color(bool *bd, int col) {
                             bd[vertex + m_dirs[k]] = true;
                         }                        
                     }
-                } else if (m_square[vertex] == EMPTY && bd[i]) {               
+                } else if (m_square[vertex] == EMPTY && bd[vertex]) {               
                     for (int k = 0; k < 4; k++) {                    
                         if (m_square[vertex + m_dirs[k]] != INVAL) {
                             bd[vertex + m_dirs[k]] = true;
@@ -264,16 +266,33 @@ void FastBoard::calc_reach_color(bool *bd, int col) {
                     }
                 }
             }                    
-        }
-        if (memcmp(last, bd, sizeof(bool) * m_maxsq)) {
-            memcpy(last, bd, sizeof(bool) * m_maxsq);
-        } else {
-            return;
-        }
-    }   
-    return;
+        }        
+    } while (last != bd);  
+    
+    return bd;
 }
 
+float FastBoard::final_score(float komi) {
+    
+    std::vector<bool> white = calc_reach_color(WHITE);
+    std::vector<bool> black = calc_reach_color(BLACK);
+
+    float score = -komi;
+
+    for (int i = 0; i < m_boardsize; i++) {
+        for (int j = 0; j < m_boardsize; j++) {  
+            int vertex = get_vertex(i, j);
+            
+            if (white[vertex] && !black[vertex]) {
+                score -= 1.0f;
+            } else if (black[vertex] && !white[vertex]) {
+                score += 1.0f;
+            }
+        }
+    }        
+    
+    return score;
+}   
 
 int FastBoard::estimate_score(float komi) {    
     int wsc, bsc;        
@@ -284,7 +303,7 @@ int FastBoard::estimate_score(float komi) {
     return bsc-wsc-((int)komi)+1;
 }
 
-float FastBoard::final_score(float komi) {    
+float FastBoard::final_mc_score(float komi) {    
     int wsc, bsc;        
     int maxempty = m_empty_cnt;
     
@@ -326,10 +345,11 @@ void FastBoard::run_bouzy(int *influence, int dilat, int eros) {
         }
     }
     
-    memcpy(tmp, influence, sizeof(int) * MAXSQ);
+    memcpy(tmp, influence, sizeof(int) * m_maxsq);
         
     for (d = 0; d < dilat; d++) {    
         for (i = 0; i < m_maxsq; i++) {
+            if (get_square(i) == INVAL) continue;
             if (influence[i] >= 0) {
                 goodsec = badsec = 0;
                 for (int k = 0; k < 4; k++) {
@@ -355,11 +375,12 @@ void FastBoard::run_bouzy(int *influence, int dilat, int eros) {
                     tmp[i] -= goodsec;
             }
         }
-        memcpy(influence, tmp, sizeof(int)*MAXSQ);
+        memcpy(influence, tmp, sizeof(int) * m_maxsq);
     }
     
     for (e = 0; e < eros; e++) {        
         for (i = 0; i < m_maxsq; i++) {
+            if (get_square(i) == INVAL) continue;
             if (influence[i] > 0) {
                 badsec = 0;
                 for (int k = 0; k < 4; k++) {
@@ -382,7 +403,7 @@ void FastBoard::run_bouzy(int *influence, int dilat, int eros) {
                 if (tmp[i] > 0) tmp[i] = 0;                    
             }
         }        
-        memcpy(influence, tmp, sizeof(int)*MAXSQ);
+        memcpy(influence, tmp, sizeof(int) * m_maxsq);
     }        
 }
 
@@ -390,11 +411,30 @@ void FastBoard::display_influence(void) {
     int i, j;
     int influence[MAXSQ];
     /* 4/13 alternate 5/10 moyo 4/0 area */
-    run_bouzy(influence, 4, 13);
+    run_bouzy(influence, 5, 21);
     
-    for (i = m_boardsize-1; i >= 0; i--) {
-        for (j = 0; j < m_boardsize; j++) {
-            myprintf("%d ", influence[get_vertex(i,j)]);
+    for (j = m_boardsize-1; j >= 0; j--) {
+        for (i = 0; i < m_boardsize; i++) {
+            int infl = influence[get_vertex(i,j)];
+            if (infl > 0) {
+                if (get_square(i, j) ==  BLACK) {
+                    myprintf("X ");
+                } else if (get_square(i, j) == WHITE) {
+                    myprintf("o ");
+                } else {
+                    myprintf("x ");
+                }                               
+            } else if (infl < 0) {
+                if (get_square(i, j) ==  BLACK) {
+                    myprintf("x ");
+                } else if (get_square(i, j) == WHITE) {
+                    myprintf("O ");
+                } else {
+                    myprintf("o ");
+                }   
+            } else {
+                myprintf(". ");
+            }            
         }
         myprintf("\n");
     }

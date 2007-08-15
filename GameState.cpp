@@ -28,6 +28,14 @@ void GameState::init_game(int size, float komi) {
     return;
 };
 
+void GameState::reset_game() {
+    FastState::reset_game();
+    
+    hash_history.clear();
+    ko_hash_history.clear();
+    game_history.clear();
+}
+
 int GameState::gen_moves(int *moves) {    
     int num_moves = 0;        
     int color = board.m_tomove;
@@ -60,9 +68,9 @@ bool GameState::superko(void) {
 
 int GameState::undo_move(void) {
     if (movenum > 0) {
-        movenum--;             
-        board = game_history.back();
+        movenum--;                     
         game_history.pop_back();
+        board = game_history.back();
         return 1;
     } else {
         return 0;

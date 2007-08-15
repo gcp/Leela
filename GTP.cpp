@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <vector>
 
 #include "config.h"
 #include "Utils.h"
@@ -13,7 +14,31 @@
 
 using namespace Utils;
 
-int GTP::execute(GameState& game, char *xinput) {
+std::string GTP::get_life_list(GameState & game, bool live) {
+    std::string result;
+    FastBoard & board = game.board;
+    
+    std::vector<bool> dead = game.mark_dead();
+    
+    for (int i = 0; i < board.get_boardsize(); i++) {
+        for (int j = 0; j < board.get_boardsize(); j++) {
+            int vertex = board.get_vertex(i, j);           
+            
+            if (board.get_square(vertex) != FastBoard::EMPTY) {
+                if (live ^ dead[vertex]) {
+                    char vtx[16];
+                    game.move_to_text(vertex, &vtx[0]);
+                    std::string vertex(vtx);
+                    result += "\n" + vertex;
+                }
+            }
+        }
+    }    
+    
+    return result;                    
+}
+
+int GTP::execute(GameState & game, char *xinput) {
     char input[STR_BUFF];
     char command[STR_BUFF], command2[STR_BUFF];
     char color[STR_BUFF], vertex[STR_BUFF];
@@ -110,13 +135,17 @@ int GTP::execute(GameState& game, char *xinput) {
         } else if (!strcmp (command2, "showboard")) {
             gtp_printf(id, "true");
             return 1;        
+        } else if (!strcmp (command2, "final_status_list")) {
+            gtp_printf(id, "true");
+            return 1;        
         } else {
             gtp_printf(id, "false");
         }
         return 1;
     } else if (!strcmp (command, "list_commands")) {
         gtp_printf(id, "protocol_version\nname\nversion\nquit\nknown_command\nlist_commands\n"
-                       "quit\nboardsize\nclear_board\nkomi\nplay\ngenmove\nshowboard\nundo\nfinal_score");
+                       "quit\nboardsize\nclear_board\nkomi\nplay\ngenmove\nshowboard\nundo\n"
+                       "final_score\nfinal_status_list");
         return 1;
     } else if (!strncmp (command, "boardsize", 9)) {
         if (sscanf(command+10, "%d", &tmp) == 1) {
@@ -131,7 +160,7 @@ int GTP::execute(GameState& game, char *xinput) {
         }
         return 1;
     } else if (!strcmp (command, "clear_board")) {
-        game.reset_board();
+        game.reset_game();
         gtp_printf(id, "");
         return 1;
     } else if (!strncmp (command, "komi", 4)) {
@@ -188,8 +217,8 @@ int GTP::execute(GameState& game, char *xinput) {
         gtp_printf(id, "");
         game.display_state();
         return 1;
-    } else if (!strcmp (command, "final_score")) {
-        ftmp = game.board.final_score();   
+    } else if (!strcmp (command, "mc_score")) {
+        ftmp = game.board.final_mc_score();   
         /* white wins */        
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
@@ -198,6 +227,28 @@ int GTP::execute(GameState& game, char *xinput) {
         } else {
             gtp_printf(id, "0");
         }                
+        return 1;
+    } else if (!strcmp (command, "final_score")) {
+        ftmp = game.final_score();   
+        /* white wins */        
+        if (ftmp < -0.1) {
+            gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
+        } else if (ftmp > 0.1) {
+            gtp_printf(id, "B+%3.1f", ftmp);
+        } else {
+            gtp_printf(id, "0");
+        }                
+        return 1;
+    } else if (!strncmp (command, "final_status_list", 17)) {
+        if (strstr(command, "alive")) {
+            std::string livelist = get_life_list(game, true);
+            gtp_printf(id, livelist.c_str());                        
+        } else if (strstr(command, "dead")) {            
+            std::string deadlist = get_life_list(game, false);
+            gtp_printf(id, deadlist.c_str());                        
+        } else {
+            gtp_printf(id, "");
+        }
         return 1;
     } else if (!strcmp (command, "auto")) {    
         do {
@@ -212,6 +263,15 @@ int GTP::execute(GameState& game, char *xinput) {
         return 1;
     } else if (!strcmp (command, "bench")) {
         Playout::do_playout_benchmark(game);
+        return 1;
+    } else if (!strcmp (command, "go")) {
+        std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+
+        int move = search->think(game.get_to_move());
+        game.play_move(move);                    
+
+        game.move_to_text(move, vertex);            
+        myprintf("%s\n", vertex);
         return 1;
     } else if (!strcmp (command, "influence")) {
         gtp_printf(id, "");
