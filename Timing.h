@@ -1,11 +1,12 @@
 #ifndef TIMING_H_INCLUDED
 #define TIMING_H_INCLUDED
 
+#include "config.h"
+
 #include <time.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
-
 
 class Time {    
 public:    

@@ -75,7 +75,7 @@ public:
     int m_empty_cnt;                           /* count of empties */
      
     int m_tomove;       
-
+    
 protected:
     /*
         bit masks to detect eyes on neighbors
@@ -101,8 +101,7 @@ protected:
     void remove_neighbour(const int i, const int color);        
     int update_board_eye(const int color, const int i);
     std::vector<bool> calc_reach_color(int col);    
-
-    void run_bouzy(int *influence, int dilat, int eros);
+    void run_bouzy(int *influence, int dilat, int eros);    
 };
 
 #endif

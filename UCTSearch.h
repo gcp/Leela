@@ -8,9 +8,9 @@
 
 class UCTSearch {
 public:
-    static const int MATURE_TRESHOLD = 10;   
+    static const int MATURE_TRESHOLD = 30;   
     
-    UCTSearch(GameState& g);
+    UCTSearch(GameState & g);
     int think(int color);
     
 private:     
@@ -19,7 +19,7 @@ private:
     void dump_stats(GameState & state, UCTNode & parent);
     void dump_pv(GameState & state, UCTNode & parent);
 
-    GameState m_rootstate;
+    GameState & m_rootstate;
     FastState m_currstate;
     UCTNode m_root;
     int m_nodes;

@@ -14,7 +14,7 @@
 
 using namespace Utils;
 
-UCTSearch::UCTSearch(GameState &g)
+UCTSearch::UCTSearch(GameState & g)
 : m_rootstate(g) {       
 }
 
@@ -134,7 +134,9 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 
 int UCTSearch::think(int color) {
     Time start;
-    int time_for_move = 200;
+    int time_for_move = 300;
+    
+    m_rootstate.start_clock(color);
        
     m_rootstate.board.m_tomove = color;
     
@@ -148,6 +150,8 @@ int UCTSearch::think(int color) {
         Time elapsed;
         centiseconds_elapsed = Time::timediff(start, elapsed);
     } while (centiseconds_elapsed < time_for_move);  
+    
+    m_rootstate.stop_clock(color);
     
     if (!m_root.has_children()) {
         return FastBoard::PASS;

@@ -173,3 +173,17 @@ int GameState::play_textmove(char *color, char *vertex) {
                    
     return 1;
 }
+
+void GameState::stop_clock(int color) {
+    timecontrol.stop(color);
+}
+
+void GameState::start_clock(int color) {
+    timecontrol.start(color);
+}
+
+void GameState::display_state() {
+    FastState::display_state();
+
+    timecontrol.display_times();
+}
