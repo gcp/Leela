@@ -4,6 +4,9 @@
 #include <ctype.h>
 #include <math.h>
 #include <vector>
+#include <iostream>
+#include <string>
+#include <sstream>
 
 #include "config.h"
 #include "Utils.h"
@@ -47,7 +50,7 @@ int GTP::execute(GameState & game, char *xinput) {
     float ftmp;
     /* parse */    
     
-    /* eat empty lines, simple preprocessing */
+    /* eat empty lines, simple preprocessing, lower case */
     for (tmp = 0, nw = 0; xinput[tmp] != '\0'; tmp++) {
         if (xinput[tmp] == 9) {
             input[nw++] = 32;
@@ -138,6 +141,12 @@ int GTP::execute(GameState & game, char *xinput) {
         } else if (!strcmp (command2, "final_status_list")) {
             gtp_printf(id, "true");
             return 1;        
+        } else if (!strcmp (command2, "time_settings")) {
+            gtp_printf(id, "true");
+            return 1;        
+        } else if (!strcmp (command2, "time_left")) {
+            gtp_printf(id, "true");
+            return 1;        
         } else {
             gtp_printf(id, "false");
         }
@@ -145,7 +154,7 @@ int GTP::execute(GameState & game, char *xinput) {
     } else if (!strcmp (command, "list_commands")) {
         gtp_printf(id, "protocol_version\nname\nversion\nquit\nknown_command\nlist_commands\n"
                        "quit\nboardsize\nclear_board\nkomi\nplay\ngenmove\nshowboard\nundo\n"
-                       "final_score\nfinal_status_list");
+                       "final_score\nfinal_status_list\ntime_settings\ntime_left\n");
         return 1;
     } else if (!strncmp (command, "boardsize", 9)) {
         if (sscanf(command+10, "%d", &tmp) == 1) {
@@ -249,6 +258,42 @@ int GTP::execute(GameState & game, char *xinput) {
         } else {
             gtp_printf(id, "");
         }
+        return 1;
+    } else if (!strncmp (command, "time_settings", 13)) {
+        std::string cmdstring(command);
+        std::istringstream cmdstream(cmdstring, std::istringstream::in);
+        std::string tmp;
+        int maintime, byotime, byostones;
+        
+        cmdstream >> tmp >> maintime >> byotime >> byostones;
+                
+        // convert to centiseconds and set                
+        game.set_timecontrol(maintime * 100, byotime * 100, byostones);
+        
+        gtp_printf(id, "");        
+        return 1;
+    } else if (!strncmp (command, "time_left", 9)) {
+        std::string cmdstring(command);
+        std::istringstream cmdstream(cmdstring, std::istringstream::in);
+        std::string tmp, color;
+        int time, stones;
+        
+        cmdstream >> tmp >> color >> time >> stones;
+        
+        int icolor;
+        
+        if (color == "w" || color == "white") {
+            icolor = FastBoard::WHITE;
+        } else if (color == "b" || color == "black") {
+            icolor = FastBoard::BLACK;        
+        } else {
+            gtp_fail_printf(id, "Color in time adjust not understood.\n");
+            return 1;
+        }                                      
+                                      
+        game.adjust_time(icolor, time * 100, stones);
+        
+        gtp_printf(id, "");        
         return 1;
     } else if (!strcmp (command, "auto")) {    
         do {

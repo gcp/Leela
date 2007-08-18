@@ -100,7 +100,7 @@ int UCTNode::get_visits() const {
 UCTNode* UCTNode::uct_select_child(int color) {            
     UCTNode * best = NULL;
     UCTNode * child = m_firstchild;
-    float best_uct = 0.0f;        
+    float best_uct = -1000.0f;        
         
     while (child != NULL) {
         float uctvalue;

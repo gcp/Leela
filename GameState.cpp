@@ -12,7 +12,7 @@
 #include "Random.h"
 #include "Utils.h"
 
-void GameState::init_game(int size, float komi) {
+void GameState::init_game(int size, float komi) {        
     
     FastState::init_game(size, komi);
     
@@ -24,6 +24,9 @@ void GameState::init_game(int size, float komi) {
     ko_hash_history.push_back(board.calc_ko_hash());
     
     game_history.push_back(board); 
+    
+    TimeControl tmp;
+    m_timecontrol = tmp;
         
     return;
 };
@@ -34,6 +37,9 @@ void GameState::reset_game() {
     hash_history.clear();
     ko_hash_history.clear();
     game_history.clear();
+    
+    TimeControl tmp;
+    m_timecontrol = tmp;
 }
 
 int GameState::gen_moves(int *moves) {    
@@ -175,15 +181,29 @@ int GameState::play_textmove(char *color, char *vertex) {
 }
 
 void GameState::stop_clock(int color) {
-    timecontrol.stop(color);
+    m_timecontrol.stop(color);
 }
 
 void GameState::start_clock(int color) {
-    timecontrol.start(color);
+    m_timecontrol.start(color);
 }
 
 void GameState::display_state() {
     FastState::display_state();
 
-    timecontrol.display_times();
+    m_timecontrol.display_times();
+}
+
+TimeControl * GameState::get_timecontrol() {
+    return &m_timecontrol;
+}
+
+void GameState::set_timecontrol(int maintime, int byotime, int byostones) {
+    TimeControl timecontrol(maintime, byotime, byostones);
+    
+    m_timecontrol = timecontrol;
+}
+
+void GameState::adjust_time(int color, int time, int stones) {
+    m_timecontrol.adjust_time(color, time, stones);
 }

@@ -10,12 +10,14 @@ public:
     /*
         Initialize timecontrol. Timing info is per GTP and in centiseconds
     */        
-    TimeControl(int maintime = 5 * 60 * 100, int byotime = 0, int byostones = 25);
+    TimeControl(int maintime = 3 * 60 * 100, int byotime = 0, int byostones = 25);
     
     void start(int color);
     void stop(int color);
     bool time_forfeit(int color);
-    void display_times();
+    int max_time_for_move(int color);
+    void adjust_time(int color, int time, int stones);
+    void display_times();    
     
 private:
     int m_maintime;        

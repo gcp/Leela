@@ -89,7 +89,7 @@ protected:
     std::tr1::array<int, MAXSQ>      m_neighbours;  /* counts of neighboring stones */  
     std::tr1::array<int, 4>          m_dirs;        /* movement directions */
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
-    std::tr1::array<int, 2> m_stones;               /* stones per color */     
+    std::tr1::array<int, 2>          m_stones;      /* stones per color */     
 
     int m_boardsize;
     int m_maxsq;       
