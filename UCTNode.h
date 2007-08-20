@@ -17,8 +17,10 @@ public:
     void set_best();    
     void set_move(int move);
     void update(float gameresult); 
-    UCTNode* uct_select_child(int color);
+    UCTNode* uct_select_child(int color);    
     UCTNode* get_first_child();
+    UCTNode* get_pass_child();
+    UCTNode* get_nopass_child();
     UCTNode* get_sibling();
     void sort_children(int color);    
 

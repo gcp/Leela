@@ -25,7 +25,7 @@ void GameState::init_game(int size, float komi) {
     
     game_history.push_back(board); 
     
-    TimeControl tmp;
+    TimeControl tmp(size);
     m_timecontrol = tmp;
         
     return;
@@ -38,7 +38,7 @@ void GameState::reset_game() {
     ko_hash_history.clear();
     game_history.clear();
     
-    TimeControl tmp;
+    TimeControl tmp(board.get_boardsize());
     m_timecontrol = tmp;
 }
 
@@ -199,7 +199,7 @@ TimeControl * GameState::get_timecontrol() {
 }
 
 void GameState::set_timecontrol(int maintime, int byotime, int byostones) {
-    TimeControl timecontrol(maintime, byotime, byostones);
+    TimeControl timecontrol(board.get_boardsize(), maintime, byotime, byostones);
     
     m_timecontrol = timecontrol;
 }

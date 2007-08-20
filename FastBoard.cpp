@@ -113,11 +113,11 @@ bool FastBoard::is_suicide(int i, int color) {
     for (k = 0; k < 4; k++) {
         int ai = i + m_dirs[k];
                       
-        if (m_square[ai] == EMPTY) {
+        if (get_square(ai) == EMPTY) {
             return false;
         } else {
             int libs = m_plibs[m_parent[ai]];
-            if (m_square[ai] == color) {
+            if (get_square(ai) == color) {
                 if (libs > 4) {
                     // connecting to live group = never suicide                    
                     return false;
@@ -142,9 +142,9 @@ bool FastBoard::is_suicide(int i, int color) {
                  
         int libs = m_plibs[m_parent[ai]];
         
-        if (libs == 0 && m_square[ai] != color) {  
+        if (libs == 0 && get_square(ai) != color) {  
             opps_live = false;                                   
-        } else if (libs != 0 && m_square[ai] == color) {
+        } else if (libs != 0 && get_square(ai) == color) {
             ours_die = false;   
         }        
     }  

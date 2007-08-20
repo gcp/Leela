@@ -238,6 +238,14 @@ sub final_score {
     return $result;
 }
 
+sub timeset {
+	my $self = shift;
+	
+	GTP::exec_cmd($self->{in}, $self->{out}, "time_settings 180 0 0");
+	
+	return;
+}
+
 package GTP::Game::Result;
 
 use strict;
@@ -324,11 +332,13 @@ sub play {
     $self->black->boardsize($size);
     $self->black->clear_board();
     $self->black->komi($komi);
+    $self->black->timeset();
 
     print "Setting boardsize and komi for white\n" if $verbose;
     $self->white->boardsize($size);
     $self->white->clear_board();
     $self->white->komi($komi);
+    $self->white->timeset();
 
     my $pass = 0;
     my $resign = 0;
@@ -460,7 +470,7 @@ sub play {
     
 	    $game->size($self->size);
 	    $game->komi($self->komi);
-	    $game->handicap($self->handicap);
+	    $game->handicap($self->handicap);	    
 	    
 	    if (($i % 2) == 0) {
 	    	$game->black($self->first);
@@ -470,7 +480,7 @@ sub play {
 	    	$game->white($self->first);
 		}	    		
     
-        my $sgffile_game = sprintf "%s%03d.sgf", $sgffile_base, $i;
+        my $sgffile_game = sprintf "testgames\%s%03d.sgf", $sgffile_base, $i;
     	$game->play($sgffile_game);
 		my $result = new GTP::Game::Result;
 		$result->resultb($game->{result}->resultb);

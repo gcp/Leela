@@ -3,7 +3,7 @@
 
 using namespace Utils;
 
-TimeControl::TimeControl(int maintime, int byotime, int byostones)
+TimeControl::TimeControl(int boardsize, int maintime, int byotime, int byostones)
 : m_maintime(maintime), m_byotime(byotime), m_byostones(byostones) {
 
     m_remaining_time[0] = m_maintime;
@@ -12,6 +12,8 @@ TimeControl::TimeControl(int maintime, int byotime, int byostones)
     m_stones_left[1] = m_byostones;
     m_inbyo[0] = false;
     m_inbyo[1] = false;
+    
+    set_boardsize(boardsize);
 }
 
 void TimeControl::start(int color) {
@@ -86,14 +88,13 @@ int TimeControl::max_time_for_move(int color) {
     /*
         always keep a 5 second margin
     */        
-    static const int BUFFER_CENTISECS = 500;
-    static const int MOVES_EXPECTED = 20;
+    static const int BUFFER_CENTISECS = 500;    
     
     /*
         no byo yomi, easiest
     */
     if (m_byotime == 0) {    
-        return m_remaining_time[color] / MOVES_EXPECTED;                    
+        return m_remaining_time[color] / m_moves_expected;  
     }
     
     /*
@@ -109,10 +110,14 @@ int TimeControl::max_time_for_move(int color) {
     int byo_extra = m_byotime / m_byostones;
     int total_time = m_remaining_time[color] + byo_extra;    
     
-    return (total_time - BUFFER_CENTISECS) / m_byostones;    
+    return (total_time - BUFFER_CENTISECS) / m_moves_expected;    
 }
 
 void TimeControl::adjust_time(int color, int time, int stones) {
     m_remaining_time[color] = time;
     m_stones_left[color] = stones;
+}
+
+void TimeControl::set_boardsize(int boardsize) {
+    m_moves_expected = (boardsize * boardsize) / 4;
 }

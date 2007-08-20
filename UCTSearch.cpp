@@ -132,15 +132,17 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     myprintf("\n");
 }
 
-int UCTSearch::think(int color) {
-    Time start;
-    int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);
-    
-    m_rootstate.start_clock(color);
-       
+int UCTSearch::think(int color, passflag_t passflag) {
+
+    // set side to move
     m_rootstate.board.m_tomove = color;
-    
+
+    // set up timing info
+    Time start;
     int centiseconds_elapsed;
+    
+    int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);                       
+    m_rootstate.start_clock(color);        
     
     do {
         m_currstate = m_rootstate;
@@ -153,19 +155,53 @@ int UCTSearch::think(int color) {
     
     m_rootstate.stop_clock(color);
     
+    // not enough time, nothing we can do
     if (!m_root.has_children()) {
         return FastBoard::PASS;
     }      
     
     // sort children, put best move on top    
     m_root.sort_children(color);
-            
+    
+    // display search info        
     dump_stats(m_rootstate, m_root);                          
         
     myprintf("\n%d nodes, %d nps\n\n", m_root.get_visits(), 
                                       (m_root.get_visits() * 100) / centiseconds_elapsed);                                                                                     
     
+    // get the best move
     int bestmove = m_root.get_first_child()->get_move();
-
+    float bestscore = m_root.get_first_child()->get_winrate(color);
+    
+    // do we want to fiddle with the best move because of the rule set?
+    if (passflag == UCTSearch::PREFERPASS) {
+        float passscore = m_root.get_pass_child()->get_winrate(color);
+        
+        // is passing a winning move?
+        if (passscore > 0.85f) {
+            
+            // is passing within 5% of the best move?            
+            if (bestscore - passscore < 0.05f) {
+                myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
+                          passscore * 100.0f, bestscore * 100.0f);
+                bestmove = FastBoard::PASS;                
+            }
+        }
+    } else if (passflag == UCTSearch::NOPASS) {
+        // were we going to pass?
+        if (bestmove == FastBoard::PASS) {
+            UCTNode * nopass = m_root.get_nopass_child();
+            
+            if (nopass != NULL) {
+                myprintf("Preferring not to pass.\n");
+                bestmove = nopass->get_move();
+            } else {
+                myprintf("Pass is the only acceptable move.\n");
+            }
+        }
+    }
+    
+    // XXX: check for pass but no actual win on final_scoring
+       
     return bestmove;
 }

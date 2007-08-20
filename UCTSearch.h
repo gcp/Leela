@@ -8,10 +8,23 @@
 
 class UCTSearch {
 public:
-    static const int MATURE_TRESHOLD = 30;   
+    /*
+        Depending on rule set and state of the game, we might
+        prefer to pass, or we might prefer not to pass unless
+        it's the last resort.
+    */        
+    typedef enum { 
+        NORMAL = 0, PREFERPASS = 1, NOPASS = 2
+    } passflag_t;    
+    
+    /*
+        Don't expand children until at least this many
+        visits happened.
+    */        
+    static const int MATURE_TRESHOLD = 30;       
     
     UCTSearch(GameState & g);
-    int think(int color);
+    int think(int color, passflag_t passflag = NORMAL);
     
 private:     
     float play_simulation(UCTNode* node);    

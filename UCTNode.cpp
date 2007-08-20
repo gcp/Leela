@@ -53,7 +53,7 @@ void UCTNode::create_children(FastState &state) {
         assert(board.get_square(vertex) == FastBoard::EMPTY);             
                 
         if (vertex != state.komove && board.no_eye_fill(vertex)) {
-            if (!board.fast_ss_suicide(board.m_tomove, vertex)) {                                             
+            if (!board.is_suicide(vertex, board.m_tomove)) {                                             
                 link_child(new UCTNode(vertex));
             } 
         }                   
@@ -202,4 +202,34 @@ UCTNode* UCTNode::get_first_child() {
 
 UCTNode* UCTNode::get_sibling() {
     return m_nextsibling;
+}
+
+UCTNode* UCTNode::get_pass_child() {
+    UCTNode * child = m_firstchild;    
+    
+    while (child != NULL) {        
+        if (child->m_move == FastBoard::PASS) {
+            return child;
+        }
+                        
+        child = child->m_nextsibling;       
+    }      
+    
+    assert(FALSE && "No pass child");
+    
+    return NULL;  
+}
+
+UCTNode* UCTNode::get_nopass_child() {
+    UCTNode * child = m_firstchild;    
+    
+    while (child != NULL) {        
+        if (child->m_move != FastBoard::PASS) {
+            return child;
+        }
+                        
+        child = child->m_nextsibling;       
+    }              
+    
+    return NULL;  
 }

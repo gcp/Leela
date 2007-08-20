@@ -17,6 +17,29 @@
 
 using namespace Utils;
 
+const std::string GTP::s_commands[] = {
+    "protocol_version",
+    "name",
+    "version",
+    "quit",
+    "known_command",
+    "list_commands",
+    "quit",
+    "boardsize",
+    "clear_board",
+    "komi",
+    "play",
+    "genmove",
+    "showboard",
+    "undo",
+    "final_score",
+    "final_status_list",
+    "time_settings",
+    "time_left",
+    "kgs-genmove_cleanup",
+    ""
+};
+
 std::string GTP::get_life_list(GameState & game, bool live) {
     std::string result;
     FastBoard & board = game.board;
@@ -43,15 +66,15 @@ std::string GTP::get_life_list(GameState & game, bool live) {
 
 int GTP::execute(GameState & game, char *xinput) {
     char input[STR_BUFF];
-    char command[STR_BUFF], command2[STR_BUFF];
+    char command[STR_BUFF];
     char color[STR_BUFF], vertex[STR_BUFF];
-    int id = -1;
-    int tmp, nw;
+    int nw, id = -1;    
     float ftmp;
-    /* parse */    
     
+    /* parse */            
+    nw = 0;
     /* eat empty lines, simple preprocessing, lower case */
-    for (tmp = 0, nw = 0; xinput[tmp] != '\0'; tmp++) {
+    for (int tmp = 0; xinput[tmp] != '\0'; tmp++) {
         if (xinput[tmp] == 9) {
             input[nw++] = 32;
         } else if ((xinput[tmp] > 0 && xinput[tmp] <= 9)
@@ -97,66 +120,31 @@ int GTP::execute(GameState & game, char *xinput) {
         gtp_printf(id, "");
         exit(EXIT_SUCCESS);        
     } else if (!strncmp (command, "known_command", 13)) {
-        strncpy(command2, command+14, STR_BUFF);
+        std::string cmd(command);
+        std::istringstream cmdstream(cmd, std::istringstream::in);
+        std::string tmp;
         
-        if (!strcmp(command2, "protocol_version")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp(command2, "name")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp(command2, "version")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp(command2, "quit")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp(command2, "boardsize")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp(command2, "clear_board")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp(command2, "komi")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp(command2, "play")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp(command2, "genmove")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp(command2, "known_command")) {
-            gtp_printf(id, "true");
-            return 1;
-        } else if (!strcmp (command2, "undo")) {
-            gtp_printf(id, "true");
-            return 1;    
-        } else if (!strcmp (command2, "final_score")) {
-            gtp_printf(id, "true");
-            return 1;        
-        } else if (!strcmp (command2, "showboard")) {
-            gtp_printf(id, "true");
-            return 1;        
-        } else if (!strcmp (command2, "final_status_list")) {
-            gtp_printf(id, "true");
-            return 1;        
-        } else if (!strcmp (command2, "time_settings")) {
-            gtp_printf(id, "true");
-            return 1;        
-        } else if (!strcmp (command2, "time_left")) {
-            gtp_printf(id, "true");
-            return 1;        
-        } else {
-            gtp_printf(id, "false");
+        cmdstream >> tmp;     /* remove known_command */
+        cmdstream >> tmp;
+        
+        for (int i = 0; s_commands[i].size() > 0; i++) {
+            if (tmp == s_commands[i]) {
+                gtp_printf(id, "true");
+                return 1;
+            }
         }
+        
+        gtp_printf(id, "false");        
         return 1;
     } else if (!strcmp (command, "list_commands")) {
-        gtp_printf(id, "protocol_version\nname\nversion\nquit\nknown_command\nlist_commands\n"
-                       "quit\nboardsize\nclear_board\nkomi\nplay\ngenmove\nshowboard\nundo\n"
-                       "final_score\nfinal_status_list\ntime_settings\ntime_left\n");
+        std::string outtmp(s_commands[0]);
+        for (int i = 1; s_commands[i].size() > 0; i++) {            
+            outtmp = outtmp + "\n" + s_commands[i];            
+        }
+        gtp_printf(id, outtmp.c_str());    
         return 1;
     } else if (!strncmp (command, "boardsize", 9)) {
+        int tmp;
         if (sscanf(command+10, "%d", &tmp) == 1) {
             if (tmp < 2 || tmp > FastBoard::MAXBOARDSIZE) {
                 gtp_fail_printf(id, "unacceptable size");
@@ -209,6 +197,26 @@ int GTP::execute(GameState & game, char *xinput) {
         std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 
         int move = search->think(who);
+        game.play_move(who, move);                    
+
+        game.move_to_text(move, vertex);            
+        gtp_printf(id, "%s", vertex);
+                
+        return 1;
+    } else if (!strncmp (command, "kgs-genmove_cleanup", 19 )) {
+        int who;
+        if (!strcmp(command+8, "w") || !strcmp(command+8, "white")) {
+            who = FastBoard::WHITE;            
+        } else if (!strcmp(command+8, "b") || !strcmp(command+8, "black")) {
+            who = FastBoard::BLACK;         
+        } else {
+            gtp_fail_printf(id, "syntax error");
+            return 1;
+        }   
+
+        std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+
+        int move = search->think(who, UCTSearch::NOPASS);
         game.play_move(who, move);                    
 
         game.move_to_text(move, vertex);            
@@ -299,7 +307,7 @@ int GTP::execute(GameState & game, char *xinput) {
         do {
             std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 
-            int move = search->think(game.get_to_move());
+            int move = search->think(game.get_to_move(), UCTSearch::PREFERPASS);
             game.play_move(move);  
             game.display_state();
                               
