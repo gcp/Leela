@@ -84,6 +84,9 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     int bestvisits = 0;
     float bestrate = 0.0f;          
     
+    // sort children, put best move on top    
+    m_root.sort_children(color);
+
     UCTNode* bestnode = parent.get_first_child();       
     
     bestrate = bestnode->get_winrate(color);
@@ -132,47 +135,24 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     myprintf("\n");
 }
 
-int UCTSearch::think(int color, passflag_t passflag) {
+void UCTSearch::dump_thinking() {
+    GameState tempstate = m_rootstate;   
+    int color = tempstate.board.m_tomove;
+    myprintf("Nodes: %d, Winrate: %5.2f%%, PV: ", 
+              m_root.get_visits(), m_root.get_winrate(color) * 100.0f);
+    dump_pv(tempstate, m_root);
+    myprintf("\n");
+}
 
-    // set side to move
-    m_rootstate.board.m_tomove = color;
+int UCTSearch::get_best_move(passflag_t passflag) { 
+    int color = m_rootstate.board.m_tomove;    
 
-    // set up timing info
-    Time start;
-    int centiseconds_elapsed;
-    
-    int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);                       
-    m_rootstate.start_clock(color);        
-    
-    do {
-        m_currstate = m_rootstate;
-
-        play_simulation(&m_root);                   
-
-        Time elapsed;
-        centiseconds_elapsed = Time::timediff(start, elapsed);
-    } while (centiseconds_elapsed < time_for_move);  
-    
-    m_rootstate.stop_clock(color);
-    
-    // not enough time, nothing we can do
-    if (!m_root.has_children()) {
-        return FastBoard::PASS;
-    }      
-    
-    // sort children, put best move on top    
+    // make sure best is first
     m_root.sort_children(color);
     
-    // display search info        
-    dump_stats(m_rootstate, m_root);                          
-        
-    myprintf("\n%d nodes, %d nps\n\n", m_root.get_visits(), 
-                                      (m_root.get_visits() * 100) / centiseconds_elapsed);                                                                                     
-    
-    // get the best move
-    int bestmove = m_root.get_first_child()->get_move();
-    float bestscore = m_root.get_first_child()->get_winrate(color);
-    
+    float bestscore = m_root.get_first_child()->get_winrate(color);       
+    int bestmove = m_root.get_first_child()->get_move();    
+
     // do we want to fiddle with the best move because of the rule set?
     if (passflag == UCTSearch::PREFERPASS) {
         float passscore = m_root.get_pass_child()->get_winrate(color);
@@ -200,8 +180,53 @@ int UCTSearch::think(int color, passflag_t passflag) {
             }
         }
     }
+
+    return bestmove;
+}
+
+int UCTSearch::think(int color, passflag_t passflag) {
+    // set side to move
+    m_rootstate.board.m_tomove = color;
+
+    // set up timing info
+    Time start;
+    int centiseconds_elapsed;
+    int last_update = 0;
+
+    int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
+    m_rootstate.start_clock(color);        
     
+    do {
+        m_currstate = m_rootstate;
+
+        play_simulation(&m_root);                   
+
+        Time elapsed;
+        centiseconds_elapsed = Time::timediff(start, elapsed);        
+
+        // output some stats every 2.5 seconds
+        if (centiseconds_elapsed - last_update > 250) {
+            last_update = centiseconds_elapsed;
+            dump_thinking();            
+        }        
+    } while (centiseconds_elapsed < time_for_move);  
+    
+    m_rootstate.stop_clock(color);
+    
+    // not enough time, nothing we can do
+    if (!m_root.has_children()) {
+        return FastBoard::PASS;
+    }            
+        
+    // display search info        
+    myprintf("\n");
+    dump_stats(m_rootstate, m_root);                          
+        
+    myprintf("\n%d nodes, %d nps\n\n", m_root.get_visits(), 
+                                      (m_root.get_visits() * 100) / centiseconds_elapsed);                                                                                     
+            
     // XXX: check for pass but no actual win on final_scoring
+    int bestmove = get_best_move(passflag);
        
     return bestmove;
 }

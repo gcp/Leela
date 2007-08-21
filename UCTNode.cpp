@@ -14,7 +14,8 @@
 #include <functional>
 
 UCTNode::UCTNode(int vertex) 
-: m_visits(0), m_blackwins(0), m_firstchild(NULL), m_move(vertex) {
+: m_visits(0), m_blackwins(0.0f), m_square(0.0f),
+  m_firstchild(NULL), m_move(vertex) {
 }
 
 UCTNode::~UCTNode() {
@@ -74,7 +75,10 @@ void UCTNode::set_move(int move) {
 
 void UCTNode::update(float gameresult) {
     m_visits++;
-    m_blackwins += (gameresult > 0.0f);        
+    
+    float result = (gameresult > 0.0f);
+    m_blackwins +=  result;   
+    m_square    += (result * result);
 }
 
 bool UCTNode::has_children() const {
@@ -84,10 +88,10 @@ bool UCTNode::has_children() const {
 float UCTNode::get_winrate(int tomove) const {
     assert(m_visits > 0);
 
-    float rate = (float)m_blackwins / (float)m_visits;
+    float rate = m_blackwins / m_visits;
     
     if (tomove == FastBoard::WHITE) {
-        rate = 1.0 - rate;
+        rate = 1.0f - rate;
     }
     
     return rate;
@@ -106,24 +110,25 @@ UCTNode* UCTNode::uct_select_child(int color) {
         float uctvalue;
         
         if (!child->first_visit()) {
-            float winrate = child->get_winrate(color);            
-            int parent_visits = get_visits() - UCTSearch::MATURE_TRESHOLD;   
-            assert(parent_visits >= 1); 
-            float uct = 1.0f * sqrtf(logf(parent_visits)/(5.0f * child->get_visits()));
+            float winrate   = child->get_winrate(color);     
+            float childrate = logf(get_visits()) / child->get_visits();
+
+            // calculate upper bound of variance
+            //float var;
+            //var  = (1.0f / child->get_visits()) * child->m_square; 
+            //var -= (child->get_winrate(FastBoard::BLACK) * child->get_winrate(FastBoard::BLACK));
+            //var += sqrtf(2.0f * childrate);
             
-            uctvalue = winrate + uct;         
+            //faster formula for pure binomial
+            float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
+
+            float uncertain = min(0.25f, var);
+            float uct = sqrtf(childrate * uncertain);
+            
+            uctvalue = winrate + 1.2f * uct;            
         } else {
-            uctvalue = 1000.0f;
-        }
-        
-        /*float logparent = logf(node->get_visits());
-        float childfactor = logparent / child->get_visits();
-        
-        float uct_v = winrate - (winrate * winrate) + sqrtf(2.0f * childfactor);
-        float uncertain = sqrt(childfactor * min(0.25f, uct_v));
-        float uct = uncertain;
-        
-        uctvalue = winrate + 1.2f * uct;*/                
+            uctvalue = 1.1f;
+        }                        
         
         if (uctvalue > best_uct) {
             best_uct = uctvalue;

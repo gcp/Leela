@@ -224,6 +224,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\TTable.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\TTEntry.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\UCTNode.cpp"
 				>
 			</File>
@@ -287,6 +295,14 @@
 			</File>
 			<File
 				RelativePath="..\Timing.h"
+				>
+			</File>
+			<File
+				RelativePath="..\TTable.h"
+				>
+			</File>
+			<File
+				RelativePath="..\TTEntry.h"
 				>
 			</File>
 			<File

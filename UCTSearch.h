@@ -31,6 +31,8 @@ private:
     
     void dump_stats(GameState & state, UCTNode & parent);
     void dump_pv(GameState & state, UCTNode & parent);
+    void dump_thinking();
+    int get_best_move(passflag_t passflag);
 
     GameState & m_rootstate;
     FastState m_currstate;

@@ -10,7 +10,7 @@ public:
     bool first_visit() const;
     bool has_children() const;
     float do_one_playout(FastState &startstate);
-    float get_winrate(int tomove) const;
+    float get_winrate(int tomove) const;    
     void create_children(FastState &state);
     int get_move() const;
     int get_visits() const;    
@@ -27,10 +27,12 @@ public:
 private:                   
     void link_child(UCTNode * newchild);    
 
+    // keep this, move, and put rest in hash?
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;       
     
-    int m_blackwins;
+    float m_square;
+    float m_blackwins;
     int m_visits;
     int m_move;            
 };
