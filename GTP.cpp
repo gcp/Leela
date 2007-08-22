@@ -41,25 +41,32 @@ const std::string GTP::s_commands[] = {
 };
 
 std::string GTP::get_life_list(GameState & game, bool live) {
+    std::vector<std::string> stringlist;
     std::string result;
     FastBoard & board = game.board;
     
-    std::vector<bool> dead = game.mark_dead();
+    std::vector<bool> dead = game.mark_dead();        
     
     for (int i = 0; i < board.get_boardsize(); i++) {
         for (int j = 0; j < board.get_boardsize(); j++) {
             int vertex = board.get_vertex(i, j);           
             
-            if (board.get_square(vertex) != FastBoard::EMPTY) {
+            if (board.get_square(vertex) != FastBoard::EMPTY) {                                
                 if (live ^ dead[vertex]) {
-                    char vtx[16];
-                    game.move_to_text(vertex, &vtx[0]);
-                    std::string vertex(vtx);
-                    result += "\n" + vertex;
-                }
+                    stringlist.push_back(board.get_string(vertex));                    
+                }                
             }
         }
     }    
+    
+    // remove multiple mentions of the same string
+    // unique reorders and returns new iterator, erase actually deletes
+    std::sort(stringlist.begin(), stringlist.end());    
+    stringlist.erase(std::unique(stringlist.begin(), stringlist.end()), stringlist.end());
+    
+    for (int i = 0; i < stringlist.size(); i++) {
+        result += (i == 0 ? "" : "\n") + stringlist[i];
+    }
     
     return result;                    
 }

@@ -31,7 +31,7 @@ private:
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;       
     
-    float m_square;
+    //float m_square;
     float m_blackwins;
     int m_visits;
     int m_move;            

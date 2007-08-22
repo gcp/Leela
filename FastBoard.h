@@ -1,6 +1,7 @@
 #ifndef FASTBOARD_H_INCLUDED
 #define FASTBOARD_H_INCLUDED
 
+#include <string>
 #include <vector>
 #include <boost/tr1/array.hpp>
 
@@ -60,7 +61,8 @@ public:
     int get_prisoners(int side);
     bool black_to_move();
     
-    void move_to_text(int move, char *vertex);    
+    void move_to_text(int move, char *vertex);
+    std::string get_string(int vertex);    
     
     void reset_board(int size);                    
     void display_influence(void);            

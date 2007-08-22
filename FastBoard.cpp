@@ -805,3 +805,23 @@ int FastBoard::get_prisoners(int side) {
 bool FastBoard::black_to_move() {
     return m_tomove == BLACK;
 }
+
+std::string FastBoard::get_string(int vertex) {
+    std::string result;
+    
+    int start = m_parent[vertex];
+    int newpos = start;
+    
+    do {       
+        char vtx[16];
+        move_to_text(newpos, &vtx[0]);
+        std::string vertstring(vtx);
+        result += vertstring + " "; 
+        newpos = m_next[newpos];
+    } while (newpos != start);   
+    
+    // eat last space
+    result.resize(result.size() - 1);
+    
+    return result;
+}
