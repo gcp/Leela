@@ -11,16 +11,20 @@
 #include "Timing.h"
 #include "Random.h"
 #include "Utils.h"
+#include "TTable.h"
 
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
-: m_rootstate(g) {       
+: m_rootstate(g) {    
 }
 
 float UCTSearch::play_simulation(UCTNode* node) {
     const int color = m_currstate.get_to_move();
-    float noderesult;        
+    const uint64 hash = m_currstate.board.get_hash();
+    float noderesult;  
+    
+    TTable::get_TT()->sync(hash, node);      
 
     if (node->get_visits() < MATURE_TRESHOLD) {
         noderesult = node->do_one_playout(m_currstate);
@@ -35,19 +39,20 @@ float UCTSearch::play_simulation(UCTNode* node) {
             int move = next->get_move();            
             
             if (move != FastBoard::PASS) {
-                m_currstate.play_move_fast(move);
+                m_currstate.play_move(move);
             } else {
-                m_currstate.play_pass_fast();
-            }            
+                m_currstate.play_pass();
+            }                                                
             
-            noderesult = play_simulation(next);                        
+            noderesult = play_simulation(next);                                                            
         } else {
             // terminal node, handle this smarter
             noderesult = node->do_one_playout(m_currstate);
         }        
     }         
     
-    node->update(noderesult);
+    node->update(noderesult);    
+    TTable::get_TT()->update(hash, node);
     
     return noderesult;  
 }

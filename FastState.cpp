@@ -4,6 +4,7 @@
 #include "Random.h"
 #include "Utils.h"
 #include "Playout.h"
+#include "Zobrist.h"
 
 using namespace Utils;
 
@@ -91,15 +92,55 @@ int FastState::play_move_fast(int vertex) {
     return vertex;
 }
 
-int FastState::play_pass_fast(void) {    
+void FastState::play_pass_fast(void) {    
     movenum++;            
                    
     lastmove = FastBoard::PASS;
     
     board.m_tomove = !board.m_tomove;                 
+    increment_passes();        
+}
+
+   
+void FastState::play_pass(void) {
+    movenum++;
+        
+    lastmove = FastBoard::PASS;
+        
+    board.hash  ^= 0xABCDABCDABCDABCDUI64;    
+    board.m_tomove = !board.m_tomove;     
+        
+    board.hash ^= Zobrist::zobrist_pass[get_passes()];
     increment_passes();
+    board.hash ^= Zobrist::zobrist_pass[get_passes()];              
+}
+
+void FastState::play_move(int vertex) {
+    play_move(board.m_tomove, vertex);
+}
+
+void FastState::play_move(int color, int vertex) {
+    if (vertex != -1) {                   
+        int kosq = board.update_board(color, vertex);
     
-    return FastBoard::PASS;
+        komove = kosq;   
+        lastmove = vertex;
+    
+        movenum++;
+        
+        if (board.m_tomove == color) {
+            board.hash  ^= 0xABCDABCDABCDABCDUI64;
+        }            
+        board.m_tomove = !color;        
+        
+        if (get_passes() > 0) {
+            board.hash ^= Zobrist::zobrist_pass[get_passes()];
+            set_passes(0);
+            board.hash ^= Zobrist::zobrist_pass[0];
+        }            
+    } else {
+        play_pass();
+    }    
 }
 
 int FastState::get_movenum() {

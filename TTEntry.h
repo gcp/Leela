@@ -5,9 +5,11 @@
 
 class TTEntry {
 public:
-    uint64 hash;
+    TTEntry();
+    
+    uint64 m_hash;
 
-    int m_blackwins;
+    float m_blackwins;
     int m_visits;
 };
 

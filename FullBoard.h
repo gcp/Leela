@@ -10,6 +10,7 @@ class FullBoard : public FastBoard {
         int update_board(const int color, const int i);
         
         uint64 calc_hash(void);
+        uint64 get_hash(void);
         uint64 calc_ko_hash(void);
         
         void reset_board(int size); 

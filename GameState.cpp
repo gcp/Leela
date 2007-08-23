@@ -84,16 +84,7 @@ int GameState::undo_move(void) {
 }
 
 void GameState::play_pass(void) {
-    movenum++;
-        
-    lastmove = -1;
-        
-    board.hash  ^= 0xABCDABCDABCDABCDUI64;    
-    board.m_tomove = !board.m_tomove;     
-        
-    board.hash ^= Zobrist::zobrist_pass[get_passes()];
-    increment_passes();
-    board.hash ^= Zobrist::zobrist_pass[get_passes()];      
+    FastState::play_pass();
     
     hash_history.push_back(board.hash); 
     ko_hash_history.push_back(board.ko_hash);  
@@ -107,23 +98,7 @@ void GameState::play_move(int vertex) {
 
 void GameState::play_move(int color, int vertex) {
     if (vertex != -1) {                   
-        int kosq = board.update_board(color, vertex);
-    
-        komove = kosq;   
-        lastmove = vertex;
-    
-        movenum++;
-        
-        if (board.m_tomove == color) {
-            board.hash  ^= 0xABCDABCDABCDABCDUI64;
-        }            
-        board.m_tomove = !color;        
-        
-        if (get_passes() > 0) {
-            board.hash ^= Zobrist::zobrist_pass[get_passes()];
-            set_passes(0);
-            board.hash ^= Zobrist::zobrist_pass[0];
-        }
+        FastState::play_move(color, vertex);        
     
         hash_history.push_back(board.hash); 
         ko_hash_history.push_back(board.ko_hash);         
