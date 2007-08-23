@@ -8,7 +8,7 @@ Random* Random::s_rng = 0;
 
 Random* Random::get_Rng(void) {
     if (s_rng == 0) {
-        s_rng = new Random();
+        s_rng = new Random;
     }
     
     return s_rng;

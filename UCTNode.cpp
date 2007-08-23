@@ -14,7 +14,7 @@
 #include <functional>
 
 UCTNode::UCTNode(int vertex) 
-: m_visits(0), m_blackwins(0.0f),/* m_square(0.0f),*/
+: m_visits(0), m_blackwins(0.0f),
   m_firstchild(NULL), m_move(vertex) {
 }
 
@@ -77,8 +77,7 @@ void UCTNode::update(float gameresult) {
     m_visits++;
     
     float result = (gameresult > 0.0f);
-    m_blackwins +=  result;   
-    //m_square    += (result * result);
+    m_blackwins +=  result;       
 }
 
 bool UCTNode::has_children() const {
@@ -116,10 +115,10 @@ UCTNode* UCTNode::uct_select_child(int color) {
             float childrate = logparent / child->get_visits();            
             
             //faster formula for pure binomial
-            //float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
+            float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
 
-            //float uncertain = min(0.25f, var);
-            float uct = 0.30f * sqrtf(childrate);
+            float uncertain = min(0.25f, var);
+            float uct = 1.2f * sqrtf(childrate * uncertain);
             
             uctvalue = winrate + uct;            
         } else {
