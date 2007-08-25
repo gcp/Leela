@@ -4,17 +4,18 @@
 #include <assert.h>
 #include <math.h>
 
+#include <vector>
+#include <functional>
+
 #include "config.h"
 #include "FastState.h"
 #include "Playout.h"
 #include "UCTNode.h"
 #include "UCTSearch.h"
-
-#include <vector>
-#include <functional>
+#include "HistoryTable.h"
 
 UCTNode::UCTNode(int vertex) 
-: m_firstchild(NULL), m_move(vertex),
+: m_firstchild(NULL), m_move(vertex), 
   m_blackwins(0.0f), m_visits(0) {
 }
 
@@ -45,24 +46,29 @@ void UCTNode::link_child(UCTNode * newchild) {
     m_firstchild = newchild;    
 }
 
-void UCTNode::create_children(FastState &state) {             
-    FastBoard & board = state.board;        
-        
-    for (int i = 0; i < board.m_empty_cnt; i++) {  
-        int vertex = board.m_empty[i];  
-        
-        assert(board.get_square(vertex) == FastBoard::EMPTY);             
-                
-        if (vertex != state.komove && board.no_eye_fill(vertex)) {
-            if (!board.is_suicide(vertex, board.m_tomove)) {                                             
-                link_child(new UCTNode(vertex));
-            } 
-        }                   
-    }      
+int UCTNode::create_children(FastState &state) {             
+    FastBoard & board = state.board;  
+    int children = 0;
 
-    if (state.get_passes() < 2) {
+    if (state.get_passes() < 2) {         
+        for (int i = 0; i < board.m_empty_cnt; i++) {  
+            int vertex = board.m_empty[i];  
+            
+            assert(board.get_square(vertex) == FastBoard::EMPTY);             
+                    
+            if (vertex != state.komove && board.no_eye_fill(vertex)) {
+                if (!board.is_suicide(vertex, board.m_tomove)) {                                             
+                    link_child(new UCTNode(vertex));
+                    children++;
+                } 
+            }                   
+        }      
+        
         link_child(new UCTNode(FastBoard::PASS));
+        children++;
     }    
+
+    return children;
 }
 
 int UCTNode::get_move() const {
@@ -112,16 +118,31 @@ int UCTNode::get_visits() const {
     return m_visits;
 }
 
-UCTNode* UCTNode::uct_select_child(int color) {            
-    UCTNode * best = NULL;
+UCTNode* UCTNode::uct_select_child(int color) {                           
+    // start with counting children statistics to get root totals
+    int parent_visits = 0;
+    int parent_rave_visits = 0;
+        
     UCTNode * child = m_firstchild;
-    float best_uct = -1000.0f;        
+    
+    while (child != NULL) {
+        parent_visits      += child->get_visits();
+        parent_rave_visits += HistoryTable::get_HT()->get_visits(child->get_move());
+        child = child->m_nextsibling;
+    }       
+    
+    float logparent = logf(parent_visits);      
+    float lograve   = logf(parent_rave_visits);
+    
+    // now do the UCT-RAVE selection
+    UCTNode * best = NULL;    
+    float best_uct = -1000.0f;                  
         
-    float logparent = logf(get_visits() - UCTSearch::MATURE_TRESHOLD);
-        
+    child = m_firstchild;        
     while (child != NULL) {
         float uctvalue;
-                
+
+        // UCT
         if (!child->first_visit()) {
             float winrate   = child->get_winrate(color);     
             float childrate = logparent / child->get_visits();            
@@ -134,8 +155,26 @@ UCTNode* UCTNode::uct_select_child(int color) {
             
             uctvalue = winrate + uct;            
         } else {
-            uctvalue = 1.1f;
+            uctvalue = 1000.0f;
         }                        
+
+        // RAVE
+        int childmove = child->get_move();        
+        int ravevisits = HistoryTable::get_HT()->get_visits(childmove);         
+
+        if (ravevisits > 0) {
+            float ravescore = HistoryTable::get_HT()->get_score(childmove, color);
+            float ravechildrate = lograve / ravevisits;
+            float ravevar = ravescore - (ravescore * ravescore) + sqrtf(2.0f * ravechildrate);
+            float raveuncer = min(0.25f, ravevar);
+            float ravevalue = ravescore + 1.2f * sqrtf(ravechildrate * raveuncer);
+            
+            int k = min(UCTSearch::RAVE_VALUE, ravevisits);
+            
+            float beta = sqrtf(k / (3.0f * child->get_visits() + k));
+
+            uctvalue = beta * ravevalue + (1.0f - beta) * uctvalue;        
+        }
         
         if (uctvalue > best_uct) {
             best_uct = uctvalue;

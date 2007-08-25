@@ -3,8 +3,18 @@
 
 #include <vector>
 
-#include "TTEntry.h"
 #include "UCTNode.h"
+
+class TTEntry {
+public:
+    TTEntry();
+    
+    uint64 m_hash;
+
+    float m_blackwins;
+    int m_visits;
+};
+
 
 class TTable {
 public:    
@@ -24,7 +34,7 @@ public:
     void sync(uint64 hash, UCTNode * node);
     
 private:   
-    TTable(int size = 10000);
+    TTable(int size = 50000);
 
     std::vector<TTEntry> m_buckets;
 

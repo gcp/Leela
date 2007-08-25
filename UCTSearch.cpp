@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
+#include <vector>
+#include <utility>
 
 #include "config.h"
 
@@ -12,11 +14,12 @@
 #include "Random.h"
 #include "Utils.h"
 #include "TTable.h"
+#include "HistoryTable.h"
 
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
-: m_rootstate(g) {    
+: m_rootstate(g), m_nodes(0) {    
 }
 
 float UCTSearch::play_simulation(UCTNode* node) {
@@ -26,11 +29,11 @@ float UCTSearch::play_simulation(UCTNode* node) {
     
     TTable::get_TT()->sync(hash, node);      
 
-    if (node->get_visits() < MATURE_TRESHOLD) {
+    if (node->get_visits() <= MATURE_TRESHOLD) {
         noderesult = node->do_one_playout(m_currstate);
     } else {
         if (node->has_children() == false) {
-            node->create_children(m_currstate);                                             
+            m_nodes += node->create_children(m_currstate);                                             
         }
                 
         if (node->has_children() == true) {                        
@@ -53,6 +56,7 @@ float UCTSearch::play_simulation(UCTNode* node) {
     
     node->update(noderesult);    
     TTable::get_TT()->update(hash, node);
+    HistoryTable::get_HT()->update(node->get_move(), noderesult);
     
     return noderesult;  
 }
@@ -67,7 +71,7 @@ void UCTSearch::dump_pv(GameState & state, UCTNode & parent) {
         
     UCTNode * bestchild = parent.get_first_child();    
     
-    if (bestchild->get_visits() < MATURE_TRESHOLD) {
+    if (bestchild->get_visits() <= MATURE_TRESHOLD) {
         return;
     }
     
@@ -189,6 +193,34 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     return bestmove;
 }
 
+void UCTSearch::dump_rave(UCTNode *root, int color) {
+    UCTNode * child = root->get_first_child();
+        
+    std::vector<std::pair<float, int>> movelist;
+    
+    while (child != NULL) {        
+        int move = child->get_move();
+        float rave = HistoryTable::get_HT()->get_score(move, color);
+        
+        movelist.push_back(std::make_pair(rave, move));
+                        
+        child = child->get_sibling();       
+    }            
+    
+    std::sort(movelist.rbegin(), movelist.rend());  
+    
+    myprintf("RAVE statistics\n");
+    myprintf("---------------\n");
+    for (int i = 0; i < 6; i++) {                
+        char vtx[16];
+        m_rootstate.move_to_text(movelist[i].second, vtx);
+        printf("%4s -- > score %5.2f%%, %d visits\n",  vtx,
+               movelist[i].first * 100.0f,
+               HistoryTable::get_HT()->get_visits(movelist[i].second));
+    }
+    myprintf("\n");
+}
+
 int UCTSearch::think(int color, passflag_t passflag) {
     // set side to move
     m_rootstate.board.m_tomove = color;
@@ -199,8 +231,11 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int last_update = 0;
 
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
-    m_rootstate.start_clock(color);        
-    
+    m_rootstate.start_clock(color);
+
+    // clear search info
+    HistoryTable::clear();
+
     do {
         m_currstate = m_rootstate;
 
@@ -214,7 +249,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;
             dump_thinking();            
         }        
-    } while (centiseconds_elapsed < time_for_move);  
+    } while (/*centiseconds_elapsed < time_for_move*/m_root.get_visits() < 10000);  
     
     m_rootstate.stop_clock(color);
     
@@ -227,8 +262,12 @@ int UCTSearch::think(int color, passflag_t passflag) {
     myprintf("\n");
     dump_stats(m_rootstate, m_root);                          
         
-    myprintf("\n%d nodes, %d nps\n\n", m_root.get_visits(), 
-                                      (m_root.get_visits() * 100) / centiseconds_elapsed);                                                                                     
+    myprintf("\n%d visits, %d nodes, %d vps\n\n", 
+             m_root.get_visits(), 
+             m_nodes,
+             (m_root.get_visits() * 100) / centiseconds_elapsed);
+             
+    dump_rave(&m_root, color);             
             
     // XXX: check for pass but no actual win on final_scoring
     int bestmove = get_best_move(passflag);

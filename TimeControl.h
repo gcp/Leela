@@ -28,8 +28,8 @@ private:
     int m_byostones;    
     int m_moves_expected;
     
-    std::tr1::array<int, 2>  m_remaining_time;    /* main time per player */
-    std::tr1::array<int, 2>  m_stones_left;       /* stones to play in byo period */
+    std::tr1::array<int,  2> m_remaining_time;    /* main time per player */
+    std::tr1::array<int,  2> m_stones_left;       /* stones to play in byo period */
     std::tr1::array<bool, 2> m_inbyo;             /* player is in byo yomi */
     
     std::tr1::array<Time, 2> m_times;             /* storage for player times */

@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "TTable.h"
-#include "TTEntry.h"
 
 TTable* TTable::s_ttable = 0;
 
@@ -55,3 +54,7 @@ void TTable::sync(uint64 hash, UCTNode * node) {
         node->set_blackwins(m_buckets[index].m_blackwins);
     } 
 }
+
+TTEntry::TTEntry() 
+: m_blackwins(0.0f), m_visits(0), m_hash(0) {
+};

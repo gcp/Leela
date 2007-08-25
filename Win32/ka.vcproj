@@ -200,6 +200,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\HistoryTable.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\Ka.cpp"
 				>
 			</File>
@@ -225,10 +229,6 @@
 			</File>
 			<File
 				RelativePath="..\TTable.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\TTEntry.cpp"
 				>
 			</File>
 			<File
@@ -278,6 +278,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\HistoryTable.h"
+				>
+			</File>
+			<File
 				RelativePath="..\Playout.h"
 				>
 			</File>
@@ -299,10 +303,6 @@
 			</File>
 			<File
 				RelativePath="..\TTable.h"
-				>
-			</File>
-			<File
-				RelativePath="..\TTEntry.h"
 				>
 			</File>
 			<File

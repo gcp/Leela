@@ -2,7 +2,6 @@
 #define UCTNODE_H_INCLUDED
 
 #include "GameState.h"
-#include "TTEntry.h"
 
 class UCTNode {
 public:        
@@ -13,7 +12,7 @@ public:
     float do_one_playout(FastState &startstate);
     float get_winrate(int tomove) const;    
     float get_blackwins() const;
-    void create_children(FastState &state);
+    int create_children(FastState &state);
     int get_move() const;
     int get_visits() const;    
     void set_best();    
@@ -34,10 +33,10 @@ private:
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;       
     
-    int m_move;            
+    int m_move;      
     
     float m_blackwins;
-    int m_visits;    
+    int m_visits;        
 };
 
 #endif

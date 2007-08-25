@@ -22,6 +22,7 @@ public:
         visits happened.
     */        
     static const int MATURE_TRESHOLD = 30;           
+    static const int RAVE_VALUE = 1000;  
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
@@ -32,12 +33,13 @@ private:
     void dump_stats(GameState & state, UCTNode & parent);
     void dump_pv(GameState & state, UCTNode & parent);
     void dump_thinking();
+    void dump_rave(UCTNode *root, int color);
     int get_best_move(passflag_t passflag);
 
     GameState & m_rootstate;
     FastState m_currstate;
     UCTNode m_root;
-    int m_nodes;
+    int m_nodes;    
 };
 
 #endif
