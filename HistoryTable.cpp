@@ -56,5 +56,5 @@ void HistoryTable::clear() {
 }
 
 HistoryEntry::HistoryEntry()
-: m_visits(0), m_blackwins(0.0f) {
+: m_visits(30), m_blackwins(15.0f) {
 }

@@ -13,6 +13,9 @@
 #include "UCTNode.h"
 #include "UCTSearch.h"
 #include "HistoryTable.h"
+#include "Utils.h"
+
+using namespace Utils;
 
 UCTNode::UCTNode(int vertex) 
 : m_firstchild(NULL), m_move(vertex), 
@@ -240,9 +243,9 @@ void UCTNode::sort_children(int color) {
     
     m_firstchild = NULL;
     
-    std::vector<UCTNode*>::iterator it = tmp.begin();
+    std::vector<UCTNode*>::iterator it;
     
-    for (; it != tmp.end(); ++it) {
+    for (it = tmp.begin(); it != tmp.end(); ++it) {
         link_child(*it);   
     } 
 }
@@ -283,4 +286,43 @@ UCTNode* UCTNode::get_nopass_child() {
     }              
     
     return NULL;  
+}
+
+void UCTNode::kill_ko(GameState &state) {
+    // to make this easier, convert the list to a vector
+    std::vector<UCTNode*> tmp;
+    
+    UCTNode * child = m_firstchild;    
+    
+    while (child != NULL) {        
+        tmp.push_back(child);
+                        
+        child = child->m_nextsibling;       
+    }                
+        
+    // now find the superkos in the vector and delete them    
+    std::vector<UCTNode*>::iterator it;
+    
+    for (it = tmp.begin(); it != tmp.end(); ++it) {
+        GameState tempstate = state;
+        
+        int move = (*it)->get_move();
+        tempstate.play_move(move);
+        
+        if (move != FastBoard::PASS && tempstate.superko()) {
+            char vtx[16];
+            state.move_to_text(move, &vtx[0]);
+            myprintf("Removing %s because it is a superko.\n", vtx);
+            tmp.erase(it);
+            delete (*it); 
+        } 
+    }                                
+        
+    // reconstruct linked list        
+    m_firstchild = NULL;        
+    
+    for (it = tmp.begin(); it != tmp.end(); ++it) {
+        link_child(*it);   
+    }               
+        
 }

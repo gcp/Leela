@@ -28,7 +28,8 @@ void FastState::set_komi(float komi) {
 void FastState::reset_game(void) {
     reset_board();
 
-    movenum = 0;                          
+    movenum = 0;   
+    m_passes = 0;                       
     
     lastmove = FastBoard::MAXSQ;
 }

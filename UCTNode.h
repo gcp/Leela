@@ -13,6 +13,7 @@ public:
     float get_winrate(int tomove) const;    
     float get_blackwins() const;
     int create_children(FastState &state);
+    void kill_ko(GameState &state);    
     int get_move() const;
     int get_visits() const;    
     void set_best();    

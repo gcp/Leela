@@ -164,16 +164,18 @@ int UCTSearch::get_best_move(passflag_t passflag) {
 
     // do we want to fiddle with the best move because of the rule set?
     if (passflag == UCTSearch::PREFERPASS) {
-        float passscore = m_root.get_pass_child()->get_winrate(color);
-        
-        // is passing a winning move?
-        if (passscore > 0.85f) {
+        if (!m_root.get_pass_child()->first_visit()) {
+            float passscore = m_root.get_pass_child()->get_winrate(color);
             
-            // is passing within 5% of the best move?            
-            if (bestscore - passscore < 0.05f) {
-                myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
-                          passscore * 100.0f, bestscore * 100.0f);
-                bestmove = FastBoard::PASS;                
+            // is passing a winning move?
+            if (passscore > 0.85f) {
+                
+                // is passing within 5% of the best move?            
+                if (bestscore - passscore < 0.05f) {
+                    myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
+                              passscore * 100.0f, bestscore * 100.0f);
+                    bestmove = FastBoard::PASS;                
+                }
             }
         }
     } else if (passflag == UCTSearch::NOPASS) {
@@ -211,7 +213,7 @@ void UCTSearch::dump_rave(UCTNode *root, int color) {
     
     myprintf("RAVE statistics\n");
     myprintf("---------------\n");
-    for (int i = 0; i < 6; i++) {                
+    for (int i = 0; i < 6 && i < movelist.size(); i++) {                
         char vtx[16];
         m_rootstate.move_to_text(movelist[i].second, vtx);
         printf("%4s -- > score %5.2f%%, %d visits\n",  vtx,
@@ -235,6 +237,10 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // clear search info
     HistoryTable::clear();
+    
+    // expand root with legal moves
+    m_root.create_children(m_rootstate);
+    m_root.kill_ko(m_rootstate);
 
     do {
         m_currstate = m_rootstate;
@@ -249,14 +255,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;
             dump_thinking();            
         }        
-    } while (/*centiseconds_elapsed < time_for_move*/m_root.get_visits() < 10000);  
+    } while (centiseconds_elapsed < time_for_move);  
     
-    m_rootstate.stop_clock(color);
-    
-    // not enough time, nothing we can do
-    if (!m_root.has_children()) {
-        return FastBoard::PASS;
-    }            
+    m_rootstate.stop_clock(color);     
         
     // display search info        
     myprintf("\n");
