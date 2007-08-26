@@ -21,7 +21,7 @@ public:
         Don't expand children until at least this many
         visits happened.
     */        
-    static const int MATURE_TRESHOLD = 30;           
+    static const int MATURE_TRESHOLD = 10;           
     static const int RAVE_VALUE = 1000;  
     
     UCTSearch(GameState & g);
@@ -37,7 +37,7 @@ private:
     int get_best_move(passflag_t passflag);
 
     GameState & m_rootstate;
-    FastState m_currstate;
+    KoState m_currstate;
     UCTNode m_root;
     int m_nodes;    
 };

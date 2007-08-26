@@ -208,6 +208,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\KoState.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\Playout.cpp"
 				>
 			</File>
@@ -279,6 +283,10 @@
 			</File>
 			<File
 				RelativePath="..\HistoryTable.h"
+				>
+			</File>
+			<File
+				RelativePath="..\KoState.h"
 				>
 			</File>
 			<File

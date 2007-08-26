@@ -13,7 +13,7 @@
 
 /* Hard limits */
 
-#define NAME            "KaTT"
+#define NAME            "KaBi"
 #define VERSION         "0.1"
 #define STR_BUFF        (255)
 #define GTP_VERSION     "2"

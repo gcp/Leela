@@ -43,11 +43,18 @@ float UCTSearch::play_simulation(UCTNode* node) {
             
             if (move != FastBoard::PASS) {
                 m_currstate.play_move(move);
+                
+                if (!m_currstate.superko()) {
+                    noderesult = play_simulation(next);                    
+                } else {
+                    node->delete_child(next);   
+                    noderesult = node->do_one_playout(m_currstate);     
+                }
             } else {
                 m_currstate.play_pass();
-            }                                                
-            
-            noderesult = play_simulation(next);                                                            
+                
+                noderesult = play_simulation(next);
+            }                                                     
         } else {
             // terminal node, handle this smarter
             noderesult = node->do_one_playout(m_currstate);
@@ -56,7 +63,7 @@ float UCTSearch::play_simulation(UCTNode* node) {
     
     node->update(noderesult);    
     TTable::get_TT()->update(hash, node);
-    HistoryTable::get_HT()->update(node->get_move(), noderesult);
+    //HistoryTable::get_HT()->update(node->get_move(), noderesult);
     
     return noderesult;  
 }
@@ -236,11 +243,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_rootstate.start_clock(color);
 
     // clear search info
-    HistoryTable::clear();
-    
-    // expand root with legal moves
-    m_root.create_children(m_rootstate);
-    m_root.kill_ko(m_rootstate);
+    HistoryTable::clear();        
 
     do {
         m_currstate = m_rootstate;
@@ -257,6 +260,10 @@ int UCTSearch::think(int color, passflag_t passflag) {
         }        
     } while (centiseconds_elapsed < time_for_move);  
     
+    if (!m_root.has_children()) {
+        return FastBoard::PASS;
+    }
+    
     m_rootstate.stop_clock(color);     
         
     // display search info        
@@ -268,7 +275,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
              m_nodes,
              (m_root.get_visits() * 100) / centiseconds_elapsed);
              
-    dump_rave(&m_root, color);             
+    //dump_rave(&m_root, color);             
             
     // XXX: check for pass but no actual win on final_scoring
     int bestmove = get_best_move(passflag);

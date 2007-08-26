@@ -41,5 +41,4 @@ private:
     static TTable* s_ttable;   
 };
 
-
 #endif

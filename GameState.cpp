@@ -5,7 +5,7 @@
 
 #include "config.h"
 
-#include "FastState.h"
+#include "KoState.h"
 #include "GameState.h"
 #include "FullBoard.h"
 #include "Zobrist.h"
@@ -14,15 +14,12 @@
 
 void GameState::init_game(int size, float komi) {        
     
-    FastState::init_game(size, komi);
+    KoState::init_game(size, komi);
     
     hash_history.clear();
-    game_history.clear();
-    ko_hash_history.clear();
+    game_history.clear();    
     
-    hash_history.push_back(board.calc_hash());
-    ko_hash_history.push_back(board.calc_ko_hash());
-    
+    hash_history.push_back(board.calc_hash());        
     game_history.push_back(board); 
     
     TimeControl tmp(size);
@@ -32,10 +29,9 @@ void GameState::init_game(int size, float komi) {
 };
 
 void GameState::reset_game() {
-    FastState::reset_game();
+    KoState::reset_game();
     
-    hash_history.clear();
-    ko_hash_history.clear();
+    hash_history.clear();    
     game_history.clear();
     
     TimeControl tmp(board.get_boardsize());
@@ -62,16 +58,6 @@ int GameState::gen_moves(int *moves) {
     return num_moves;
 }
 
-bool GameState::superko(void) {        
-    std::vector<uint64>::const_reverse_iterator first = ko_hash_history.rbegin();
-    std::vector<uint64>::const_reverse_iterator last = ko_hash_history.rend();  
-    std::vector<uint64>::const_reverse_iterator res;
-  
-    res = std::find(++first, last, board.ko_hash);
-
-    return (res != last);        
-}
-
 int GameState::undo_move(void) {
     if (movenum > 0) {
         movenum--;                     
@@ -84,11 +70,9 @@ int GameState::undo_move(void) {
 }
 
 void GameState::play_pass(void) {
-    FastState::play_pass();
+    KoState::play_pass();
     
-    hash_history.push_back(board.hash); 
-    ko_hash_history.push_back(board.ko_hash);  
-    
+    hash_history.push_back(board.hash);         
     game_history.push_back(board);
 }
 
@@ -97,12 +81,10 @@ void GameState::play_move(int vertex) {
 }
 
 void GameState::play_move(int color, int vertex) {
-    if (vertex != -1) {                   
-        FastState::play_move(color, vertex);        
+    if (vertex != FastBoard::PASS) {                   
+        KoState::play_move(color, vertex);        
     
-        hash_history.push_back(board.hash); 
-        ko_hash_history.push_back(board.ko_hash);         
-    
+        hash_history.push_back(board.hash);             
         game_history.push_back(board);        
     } else {
         play_pass();

@@ -121,27 +121,13 @@ int UCTNode::get_visits() const {
     return m_visits;
 }
 
-UCTNode* UCTNode::uct_select_child(int color) {                           
-    // start with counting children statistics to get root totals
-    int parent_visits = 0;
-    int parent_rave_visits = 0;
-        
-    UCTNode * child = m_firstchild;
-    
-    while (child != NULL) {
-        parent_visits      += child->get_visits();
-        parent_rave_visits += HistoryTable::get_HT()->get_visits(child->get_move());
-        child = child->m_nextsibling;
-    }       
-    
-    float logparent = logf(parent_visits);      
-    float lograve   = logf(parent_rave_visits);
-    
-    // now do the UCT-RAVE selection
+UCTNode* UCTNode::uct_select_child(int color) {                                   
     UCTNode * best = NULL;    
     float best_uct = -1000.0f;                  
         
-    child = m_firstchild;        
+    float logparent = logf(get_visits() - UCTSearch::MATURE_TRESHOLD);        
+        
+    UCTNode * child = m_firstchild;        
     while (child != NULL) {
         float uctvalue;
 
@@ -158,26 +144,8 @@ UCTNode* UCTNode::uct_select_child(int color) {
             
             uctvalue = winrate + uct;            
         } else {
-            uctvalue = 1000.0f;
-        }                        
-
-        // RAVE
-        int childmove = child->get_move();        
-        int ravevisits = HistoryTable::get_HT()->get_visits(childmove);         
-
-        if (ravevisits > 0) {
-            float ravescore = HistoryTable::get_HT()->get_score(childmove, color);
-            float ravechildrate = lograve / ravevisits;
-            float ravevar = ravescore - (ravescore * ravescore) + sqrtf(2.0f * ravechildrate);
-            float raveuncer = min(0.25f, ravevar);
-            float ravevalue = ravescore + 1.2f * sqrtf(ravechildrate * raveuncer);
-            
-            int k = min(UCTSearch::RAVE_VALUE, ravevisits);
-            
-            float beta = sqrtf(k / (3.0f * child->get_visits() + k));
-
-            uctvalue = beta * ravevalue + (1.0f - beta) * uctvalue;        
-        }
+            uctvalue = 1.1f;
+        }                                
         
         if (uctvalue > best_uct) {
             best_uct = uctvalue;
@@ -288,41 +256,28 @@ UCTNode* UCTNode::get_nopass_child() {
     return NULL;  
 }
 
-void UCTNode::kill_ko(GameState &state) {
-    // to make this easier, convert the list to a vector
-    std::vector<UCTNode*> tmp;
+void UCTNode::delete_child(UCTNode * del_child) {    
+    assert(del_child != NULL);
     
-    UCTNode * child = m_firstchild;    
+    if (del_child == m_firstchild) {        
+        m_firstchild = m_firstchild->m_nextsibling;
+        return;
+    } else {
+        UCTNode * child = m_firstchild;    
+        UCTNode * prev  = NULL;
     
-    while (child != NULL) {        
-        tmp.push_back(child);
-                        
-        child = child->m_nextsibling;       
-    }                
-        
-    // now find the superkos in the vector and delete them    
-    std::vector<UCTNode*>::iterator it;
+        do {
+            prev  = child;
+            child = child->m_nextsibling;                       
+            
+            if (child == del_child) {
+                UCTNode * next = child->m_nextsibling;
+                delete child;
+                prev->m_nextsibling = next;
+                return;
+            }                                    
+        } while (child != NULL);     
+    }
     
-    for (it = tmp.begin(); it != tmp.end(); ++it) {
-        GameState tempstate = state;
-        
-        int move = (*it)->get_move();
-        tempstate.play_move(move);
-        
-        if (move != FastBoard::PASS && tempstate.superko()) {
-            char vtx[16];
-            state.move_to_text(move, &vtx[0]);
-            myprintf("Removing %s because it is a superko.\n", vtx);
-            tmp.erase(it);
-            delete (*it); 
-        } 
-    }                                
-        
-    // reconstruct linked list        
-    m_firstchild = NULL;        
-    
-    for (it = tmp.begin(); it != tmp.end(); ++it) {
-        link_child(*it);   
-    }               
-        
+    assert(0 && "Child to delete not found");           
 }

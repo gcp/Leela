@@ -5,12 +5,12 @@
 
 #include "FastState.h"
 #include "FullBoard.h"
+#include "KoState.h"
 #include "TimeControl.h"
 
-class GameState : public FastState {
+class GameState : public KoState {
 public:                    
-    void init_game(int size = 19, float komi = 7.5f);
-    bool superko(void);
+    void init_game(int size = 19, float komi = 7.5f);    
     void reset_game();        
     
     int gen_moves(int *moves);
@@ -31,8 +31,7 @@ public:
           
 private:
     std::vector<FullBoard> game_history;   
-    std::vector<uint64> hash_history;                    
-    std::vector<uint64> ko_hash_history;            
+    std::vector<uint64> hash_history;                        
     
     TimeControl m_timecontrol;               
 };
