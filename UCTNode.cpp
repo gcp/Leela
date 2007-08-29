@@ -12,7 +12,6 @@
 #include "Playout.h"
 #include "UCTNode.h"
 #include "UCTSearch.h"
-#include "HistoryTable.h"
 #include "Utils.h"
 
 using namespace Utils;
@@ -49,18 +48,6 @@ void UCTNode::link_child(UCTNode * newchild) {
     m_firstchild = newchild;            
 }
 
-void UCTNode::apply_prior(UCTNode * node, int color) {
-    float htscore = HistoryTable::get_HT()->get_score(node->get_move());
-    
-    node->m_visits = UCTSearch::HT_VALUE;
-    
-    if (color == FastBoard::BLACK) {
-        node->m_blackwins = ((float)UCTSearch::HT_VALUE) * htscore;
-    } else {
-        node->m_blackwins = ((float)UCTSearch::HT_VALUE) * (1.0f - htscore);
-    }        
-}
-
 int UCTNode::create_children(FastState &state) {             
     FastBoard & board = state.board;  
     int children = 0;
@@ -74,15 +61,13 @@ int UCTNode::create_children(FastState &state) {
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {  
                     UCTNode * vtx = new UCTNode(vertex);
-                    apply_prior(vtx, board.m_tomove);
                     link_child(vtx);                    
                     children++;                                        
                 } 
             }                   
         }      
         
-        UCTNode * vtx = new UCTNode(FastBoard::PASS);
-        apply_prior(vtx, board.m_tomove);
+        UCTNode * vtx = new UCTNode(FastBoard::PASS);        
         link_child(vtx);
         children++;
     }    
@@ -147,18 +132,20 @@ UCTNode* UCTNode::uct_select_child(int color) {
     while (child != NULL) {
         float uctvalue;
 
-        assert(!child->first_visit());
-        
-        float winrate   = child->get_winrate(color);     
-        float childrate = logparent / (child->get_visits() + 1 - UCTSearch::HT_VALUE);            
-        
-        //faster formula for pure binomial
-        float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
+        if (!child->first_visit()) {        
+            float winrate   = child->get_winrate(color);     
+            float childrate = logparent / child->get_visits();            
+            
+            //faster formula for pure binomial
+            float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
 
-        float uncertain = min(0.25f, var);
-        float uct = 1.2f * sqrtf(childrate * uncertain);
-        
-        uctvalue = winrate + uct;                                                    
+            float uncertain = min(0.25f, var);
+            float uct = 0.8f * sqrtf(childrate * uncertain);
+            
+            uctvalue = winrate + uct;                                                    
+        } else {
+            uctvalue = 1.1f;
+        }        
         
         if (uctvalue > best_uct) {
             best_uct = uctvalue;

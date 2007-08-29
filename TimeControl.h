@@ -11,7 +11,7 @@ public:
         Initialize time control. Timing info is per GTP and in centiseconds
     */        
     TimeControl(int boardsize = 9, 
-                int maintime = 30 * 60 * 100, 
+                int maintime = 5 * 60 * 100, 
                 int byotime = 0, int byostones = 25);
     
     void start(int color);

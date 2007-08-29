@@ -13,7 +13,7 @@
 
 /* Hard limits */
 
-#define NAME            "KaHTX"
+#define NAME            "KaCP80"
 #define VERSION         "0.1"
 #define STR_BUFF        (255)
 #define GTP_VERSION     "2"

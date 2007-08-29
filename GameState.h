@@ -30,8 +30,7 @@ public:
     void display_state();
           
 private:
-    std::vector<FullBoard> game_history;   
-    std::vector<uint64> hash_history;                        
+    std::vector<FullBoard> game_history;                          
     
     TimeControl m_timecontrol;               
 };

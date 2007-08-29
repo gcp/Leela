@@ -42,34 +42,94 @@ int FastState::play_random_move() {
     return play_random_move(board.m_tomove);
 }
 
-int FastState::play_random_move(int color) {                
-    int vidx = Random::get_Rng()->randint(board.m_empty_cnt);         
-    
+int FastState::play_random_move(int color) {                            
     board.m_tomove = color;            
+        
+    int rnd = Random::get_Rng()->randint(5);
     
-    /* alternate direction for less bias */
-    for (int i = vidx; i < board.m_empty_cnt; i++) {  
-        int vertex = board.m_empty[i];
+    int vidx;
+    
+    // XXX: check for capture possibility first
+    //
+    // 80% chance to try a close square
+    if (rnd < 4) {         
+        int h, v; 
+
+        do {
+            v = Random::get_Rng()->randint(3) - 1;
+            h = Random::get_Rng()->randint(3) - 1;
+        } while (h == 0 && v == 0);
+    
+        vidx = lastmove + v * (board.get_boardsize() + 2) + h; 
         
-        assert(board.get_square(vertex) == FullBoard::EMPTY);
-                
-        if (vertex != komove && board.no_eye_fill(vertex)) {
-            if (!board.fast_ss_suicide(color, vertex)) {
-                return play_move_fast(vertex);                
-            } 
-        }                   
-    }  
-    for (int i = 0; i < vidx; i++) {      
-        int vertex = board.m_empty[i];
-        
-        assert(board.get_square(vertex) == FullBoard::EMPTY);
+        if (vidx < 0) { 
+            vidx = 0; 
+        } else if (vidx >= board.m_maxsq) {
+            vidx = board.m_maxsq - 1;
+        }   
+
+        if (board.get_square(vidx) == FastBoard::INVAL) {
+            int vv = Random::get_Rng()->randint(board.get_boardsize());
+            int hh = Random::get_Rng()->randint(board.get_boardsize());
+
+            vidx = board.get_vertex(vv, hh);
+        }
+    } else {    
+        int v = Random::get_Rng()->randint(board.get_boardsize());
+        int h = Random::get_Rng()->randint(board.get_boardsize());
+
+        vidx = board.get_vertex(v, h);
+    }     
+    
+    rnd = Random::get_Rng()->randint(2);
+
+    if (rnd == 0) {        
+        for (int i = vidx; i < board.m_maxsq; i++) {  
+            int vertex = i;
             
-        if (vertex != komove && board.no_eye_fill(vertex)) {
-            if (!board.fast_ss_suicide(color, vertex)) {
-                return play_move_fast(vertex);                
-            } 
-        }       
-    }              
+            if (board.get_square(vertex) == FullBoard::EMPTY) {                                
+                if (vertex != komove && board.no_eye_fill(vertex)) {
+                    if (!board.fast_ss_suicide(color, vertex)) {
+                        return play_move_fast(vertex);                
+                    } 
+                }                   
+            }
+        }  
+        for (int i = 0; i < vidx; i++) {      
+            int vertex = i;
+            
+            if (board.get_square(vertex) == FullBoard::EMPTY) {                            
+                if (vertex != komove && board.no_eye_fill(vertex)) {
+                    if (!board.fast_ss_suicide(color, vertex)) {
+                        return play_move_fast(vertex);                
+                    } 
+                }       
+            }
+        }     
+    } else {        
+        for (int i = vidx; i >= 0; i--) {  
+            int vertex = i;
+            
+            if (board.get_square(vertex) == FullBoard::EMPTY) {                                
+                if (vertex != komove && board.no_eye_fill(vertex)) {
+                    if (!board.fast_ss_suicide(color, vertex)) {
+                        return play_move_fast(vertex);                
+                    } 
+                }                   
+            }
+        }  
+        for (int i = board.m_maxsq - 1; i > vidx; i--) {      
+            int vertex = i;
+            
+            if (board.get_square(vertex) == FullBoard::EMPTY) {                            
+                if (vertex != komove && board.no_eye_fill(vertex)) {
+                    if (!board.fast_ss_suicide(color, vertex)) {
+                        return play_move_fast(vertex);                
+                    } 
+                }       
+            }
+        }
+    }
               
     play_pass_fast();                
     return FastBoard::PASS;        

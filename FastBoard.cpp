@@ -20,10 +20,10 @@ int FastBoard::get_boardsize(void) {
 }
     
 int FastBoard::get_vertex(int x, int y) {
-    assert(x >= 0 && x <= MAXBOARDSIZE);
-    assert(y >= 0 && y <= MAXBOARDSIZE);
-    assert(x >= 0 && x <= m_boardsize);
-    assert(y >= 0 && y <= m_boardsize);
+    assert(x >= 0 && x < MAXBOARDSIZE);
+    assert(y >= 0 && y < MAXBOARDSIZE);
+    assert(x >= 0 && x < m_boardsize);
+    assert(y >= 0 && y < m_boardsize);
     
     int vertex = ((y + 1) * (get_boardsize() + 2)) + (x + 1);        
     

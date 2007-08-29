@@ -15,11 +15,8 @@
 void GameState::init_game(int size, float komi) {        
     
     KoState::init_game(size, komi);
-    
-    hash_history.clear();
-    game_history.clear();    
-    
-    hash_history.push_back(board.calc_hash());        
+        
+    game_history.clear();        
     game_history.push_back(board); 
     
     TimeControl tmp(size);
@@ -30,8 +27,7 @@ void GameState::init_game(int size, float komi) {
 
 void GameState::reset_game() {
     KoState::reset_game();
-    
-    hash_history.clear();    
+      
     game_history.clear();
     
     TimeControl tmp(board.get_boardsize());
@@ -60,8 +56,10 @@ int GameState::gen_moves(int *moves) {
 
 int GameState::undo_move(void) {
     if (movenum > 0) {
+        // This also restores hashes as they're part of
+        // the game state
         movenum--;                     
-        game_history.pop_back();
+        game_history.pop_back();        
         board = game_history.back();
         return 1;
     } else {
@@ -71,8 +69,7 @@ int GameState::undo_move(void) {
 
 void GameState::play_pass(void) {
     KoState::play_pass();
-    
-    hash_history.push_back(board.hash);         
+               
     game_history.push_back(board);
 }
 
@@ -83,8 +80,7 @@ void GameState::play_move(int vertex) {
 void GameState::play_move(int color, int vertex) {
     if (vertex != FastBoard::PASS) {                   
         KoState::play_move(color, vertex);        
-    
-        hash_history.push_back(board.hash);             
+
         game_history.push_back(board);        
     } else {
         play_pass();

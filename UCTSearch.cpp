@@ -14,7 +14,6 @@
 #include "Random.h"
 #include "Utils.h"
 #include "TTable.h"
-#include "HistoryTable.h"
 
 using namespace Utils;
 
@@ -201,34 +200,6 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     return bestmove;
 }
 
-void UCTSearch::dump_ht(UCTNode *root, int color) {
-    UCTNode * child = root->get_first_child();
-        
-    std::vector<std::pair<float, int>> movelist;
-    
-    while (child != NULL) {        
-        int move = child->get_move();
-        float rave = HistoryTable::get_HT()->get_score(move);
-        
-        movelist.push_back(std::make_pair(rave, move));
-                        
-        child = child->get_sibling();       
-    }            
-    
-    std::sort(movelist.rbegin(), movelist.rend());  
-    
-    myprintf("History statistics\n");
-    myprintf("------------------\n");
-    for (int i = 0; i < 6 && i < movelist.size(); i++) {                
-        char vtx[16];
-        m_rootstate.move_to_text(movelist[i].second, vtx);
-        myprintf("%4s -- > score %5.2f%%, %d visits\n",  vtx,
-                 movelist[i].first * 100.0f,
-                 HistoryTable::get_HT()->get_visits(movelist[i].second));
-    }
-    myprintf("\n");
-}
-
 int UCTSearch::think(int color, passflag_t passflag) {
     // set side to move
     m_rootstate.board.m_tomove = color;
@@ -240,9 +211,6 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     m_rootstate.start_clock(color);
-
-    // clear search info
-    HistoryTable::clear();        
 
     do {
         m_currstate = m_rootstate;
@@ -272,9 +240,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     myprintf("\n%d visits, %d nodes, %d vps\n\n", 
              m_root.get_visits(), 
              m_nodes,
-             (m_root.get_visits() * 100) / centiseconds_elapsed);
-             
-    dump_ht(&m_root, color);             
+             (m_root.get_visits() * 100) / centiseconds_elapsed);              
             
     // XXX: check for pass but no actual win on final_scoring
     int bestmove = get_best_move(passflag);
