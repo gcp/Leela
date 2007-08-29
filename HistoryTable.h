@@ -7,7 +7,7 @@ class HistoryEntry {
 public:
     HistoryEntry();
 
-    float m_blackwins;
+    int m_wins;
     int m_visits;
 };
 
@@ -22,9 +22,9 @@ public:
     /*
         update corresponding entry
     */            
-    void update(int vertex, float noderesult);     
+    void update(int vertex, bool win);     
 
-    float get_score(int vertex, int color);
+    float get_score(int vertex);
     int get_visits(int vertex);
     
 private:   

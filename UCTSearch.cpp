@@ -62,8 +62,7 @@ float UCTSearch::play_simulation(UCTNode* node) {
     }         
     
     node->update(noderesult);    
-    TTable::get_TT()->update(hash, node);
-    //HistoryTable::get_HT()->update(node->get_move(), noderesult);
+    TTable::get_TT()->update(hash, node);    
     
     return noderesult;  
 }
@@ -202,14 +201,14 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     return bestmove;
 }
 
-void UCTSearch::dump_rave(UCTNode *root, int color) {
+void UCTSearch::dump_ht(UCTNode *root, int color) {
     UCTNode * child = root->get_first_child();
         
     std::vector<std::pair<float, int>> movelist;
     
     while (child != NULL) {        
         int move = child->get_move();
-        float rave = HistoryTable::get_HT()->get_score(move, color);
+        float rave = HistoryTable::get_HT()->get_score(move);
         
         movelist.push_back(std::make_pair(rave, move));
                         
@@ -218,14 +217,14 @@ void UCTSearch::dump_rave(UCTNode *root, int color) {
     
     std::sort(movelist.rbegin(), movelist.rend());  
     
-    myprintf("RAVE statistics\n");
-    myprintf("---------------\n");
+    myprintf("History statistics\n");
+    myprintf("------------------\n");
     for (int i = 0; i < 6 && i < movelist.size(); i++) {                
         char vtx[16];
         m_rootstate.move_to_text(movelist[i].second, vtx);
-        printf("%4s -- > score %5.2f%%, %d visits\n",  vtx,
-               movelist[i].first * 100.0f,
-               HistoryTable::get_HT()->get_visits(movelist[i].second));
+        myprintf("%4s -- > score %5.2f%%, %d visits\n",  vtx,
+                 movelist[i].first * 100.0f,
+                 HistoryTable::get_HT()->get_visits(movelist[i].second));
     }
     myprintf("\n");
 }
@@ -275,7 +274,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
              m_nodes,
              (m_root.get_visits() * 100) / centiseconds_elapsed);
              
-    //dump_rave(&m_root, color);             
+    dump_ht(&m_root, color);             
             
     // XXX: check for pass but no actual win on final_scoring
     int bestmove = get_best_move(passflag);

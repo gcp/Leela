@@ -19,26 +19,24 @@ HistoryTable::HistoryTable() {
     m_entries.resize(FastBoard::MAXSQ);
 }
 
-void HistoryTable::update(int vertex, float noderesult) {
+void HistoryTable::update(int vertex, bool win) {
     if (vertex == FastBoard::PASS) {
         vertex = 0;
     } 
-    m_entries[vertex].m_blackwins += (noderesult > 0.0f);
+    if (win) {
+        m_entries[vertex].m_wins++;
+    }
     m_entries[vertex].m_visits++;    
 }
 
-float HistoryTable::get_score(int vertex, int color) {    
+float HistoryTable::get_score(int vertex) {    
     if (vertex == FastBoard::PASS) {
         vertex = 0;
     } 
     
     assert(m_entries[vertex].m_visits > 0);
     
-    float wins = m_entries[vertex].m_blackwins / m_entries[vertex].m_visits;
-
-    if (color == FastBoard::WHITE) {
-        wins = 1.0f - wins;            
-    }
+    float wins = (float)m_entries[vertex].m_wins / (float)m_entries[vertex].m_visits;    
 
     return wins;
 }
@@ -56,5 +54,5 @@ void HistoryTable::clear() {
 }
 
 HistoryEntry::HistoryEntry()
-: m_visits(30), m_blackwins(15.0f) {
+: m_visits(2), m_wins(1) {
 }

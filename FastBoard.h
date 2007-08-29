@@ -77,6 +77,7 @@ public:
     int m_empty_cnt;                           /* count of empties */
      
     int m_tomove;       
+    int m_maxsq;       
     
 protected:
     /*
@@ -93,8 +94,7 @@ protected:
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
     std::tr1::array<int, 2>          m_stones;      /* stones per color */     
 
-    int m_boardsize;
-    int m_maxsq;       
+    int m_boardsize;    
     
     int count_liberties(const int i);    
     void merge_strings(const int ip, const int aip);    

@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>
+#include <boost/tr1/array.hpp>
 #include "config.h"
 
 #include "Timing.h"
+#include "HistoryTable.h"
 #include "GameState.h"
 #include "Playout.h"
 #include "Utils.h"
@@ -23,17 +25,51 @@ float Playout::get_score() {
 void Playout::run(FastState & state, bool resigning) {
     const int boardsize = state.board.get_boardsize();
     const int resign = (boardsize * boardsize) / 3;
-    const int playoutlen = (boardsize * boardsize) * 2;        
+    const int playoutlen = (boardsize * boardsize) * 2;    
+    
+    std::tr1::array<bool, FastBoard::MAXSQ> whitevtx;
+    std::tr1::array<bool, FastBoard::MAXSQ> blackvtx;    
+    
+    std::fill(whitevtx.begin(), whitevtx.end(), false);
+    std::fill(blackvtx.begin(), blackvtx.end(), false);
 
      do {                                    
-        state.play_random_move();                                                                   
+        int move = state.play_random_move();  
+        
+        if (move == FastBoard::PASS) {
+            move = 0;
+        }
+        
+        // state after move
+        if (state.get_to_move() == FastBoard::BLACK) {
+            whitevtx[move] = true;            
+        } else {
+            blackvtx[move] = true;
+        }                                                                 
     } while (state.get_passes() < 2 
              && state.get_movenum() < playoutlen
              && (!resigning || abs(state.estimate_score()) < resign)); 
 
     m_run = true;                
     m_length = state.get_movenum();
-    m_score = state.calculate_mc_score();       
+    m_score = state.calculate_mc_score();   
+        
+    for (int i = 0; i < whitevtx.size(); i++) {
+        if (whitevtx[i]) {
+            if (m_score > 0.0f) {
+                HistoryTable::get_HT()->update(i, false);
+            } else {
+                HistoryTable::get_HT()->update(i, true);
+            }
+        }   
+        if (blackvtx[i]) {
+           if (m_score > 0.0f) {
+                HistoryTable::get_HT()->update(i, true);
+            } else {
+                HistoryTable::get_HT()->update(i, false);
+            }
+        }      
+    }    
 }
 
 void Playout::do_playout_benchmark(GameState& game) {   

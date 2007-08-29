@@ -30,6 +30,7 @@ public:
 
 private:                   
     void link_child(UCTNode * newchild);    
+    void apply_prior(UCTNode * newchild, int color); 
     
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;       
