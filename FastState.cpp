@@ -43,45 +43,33 @@ int FastState::play_random_move() {
 }
 
 int FastState::play_random_move(int color) {                            
-    board.m_tomove = color;            
-        
-    int rnd = Random::get_Rng()->randint(5);
+    board.m_tomove = color;                        
     
     int vidx;
+    bool foundcap = false;
     
-    // XXX: check for capture possibility first
-    //
-    // 80% chance to try a close square
-    if (rnd < 4) {         
-        int h, v; 
-
-        do {
-            v = Random::get_Rng()->randint(3) - 1;
-            h = Random::get_Rng()->randint(3) - 1;
-        } while (h == 0 && v == 0);
-    
-        vidx = lastmove + v * (board.get_boardsize() + 2) + h; 
+    for (int k = 0; k < 4 && !foundcap; k++) {
+        int ai = lastmove + board.get_dir(k);
         
-        if (vidx < 0) { 
-            vidx = 0; 
-        } else if (vidx >= board.m_maxsq) {
-            vidx = board.m_maxsq - 1;
-        }   
-
-        if (board.get_square(vidx) == FastBoard::INVAL) {
-            int vv = Random::get_Rng()->randint(board.get_boardsize());
-            int hh = Random::get_Rng()->randint(board.get_boardsize());
-
-            vidx = board.get_vertex(vv, hh);
+        if (ai < board.m_maxsq && ai > 0) {        
+            if (board.get_square(ai) == FastBoard::EMPTY) {
+                if (board.critical_neighbour(ai)) {
+                    foundcap = true;
+                    vidx = ai;                    
+                }    
+            }
         }
-    } else {    
+    }
+    
+        
+    if (!foundcap) { 
         int v = Random::get_Rng()->randint(board.get_boardsize());
         int h = Random::get_Rng()->randint(board.get_boardsize());
 
         vidx = board.get_vertex(v, h);
-    }     
-    
-    rnd = Random::get_Rng()->randint(2);
+    }
+             
+    int rnd = Random::get_Rng()->randint(2);
 
     if (rnd == 0) {        
         for (int i = vidx; i < board.m_maxsq; i++) {  

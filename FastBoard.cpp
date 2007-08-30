@@ -825,3 +825,41 @@ std::string FastBoard::get_string(int vertex) {
     
     return result;
 }
+
+int FastBoard::get_liberties(int vertex) {    
+    return m_plibs[m_parent[vertex]];           
+}
+
+bool FastBoard::critical_neighbour(int vertex) {
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        
+        int par = m_parent[ai];
+        int lib = m_plibs[par];
+        
+        if (lib <= 4) {
+            // 4 or less liberties
+            int samenbrs = 0;
+            
+            // count original square nbrs with same parent
+            for (int kk = 0; kk < 4; kk++) {
+                int aix = vertex + m_dirs[kk];
+                if (m_parent[aix] == par) {
+                    samenbrs++;
+                }
+            }
+            
+            assert(samenbrs <= lib);
+            
+            if (samenbrs >= lib)  {
+                return true;
+            }            
+        }
+    }
+    
+    return false;
+}
+
+int FastBoard::get_dir(int i) {
+    return m_dirs[i];
+}

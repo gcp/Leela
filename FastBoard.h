@@ -50,6 +50,9 @@ public:
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
     int update_board_fast(const int color, const int i);
+    int get_liberties(int vertex);
+    bool critical_neighbour(int vertex);
+    int get_dir(int i);
 
     bool no_eye_fill(const int i);
        
