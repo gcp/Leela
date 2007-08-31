@@ -54,9 +54,9 @@ float UCTSearch::play_simulation(UCTNode* node) {
                 
                 noderesult = play_simulation(next);
             }                                                     
-        } else {
-            // terminal node, handle this smarter
-            noderesult = node->do_one_playout(m_currstate);
+        } else {            
+            noderesult = m_currstate.board.area_score();
+            node->finalize(noderesult);
         }        
     }         
     

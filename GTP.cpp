@@ -64,7 +64,7 @@ std::string GTP::get_life_list(GameState & game, bool live) {
     std::sort(stringlist.begin(), stringlist.end());    
     stringlist.erase(std::unique(stringlist.begin(), stringlist.end()), stringlist.end());
     
-    for (int i = 0; i < stringlist.size(); i++) {
+    for (unsigned int i = 0; i < stringlist.size(); i++) {
         result += (i == 0 ? "" : "\n") + stringlist[i];
     }
     

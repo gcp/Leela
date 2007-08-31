@@ -21,6 +21,7 @@ public:
     void set_visits(int visits);
     void set_blackwins(float wins);
     void update(float gameresult); 
+    void finalize(float gameresult);
     UCTNode* uct_select_child(int color);    
     UCTNode* get_first_child();
     UCTNode* get_pass_child();

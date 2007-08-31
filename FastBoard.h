@@ -55,10 +55,10 @@ public:
     int get_dir(int i);
 
     bool no_eye_fill(const int i);
-       
-    float final_mc_score(float komi = 7.5f);    
-    int estimate_score(float komi = 7.5f); 
-    float final_score(float komi = 7.5f);
+    
+    int estimate_mc_score(float komi = 7.5f);    
+    float final_mc_score(float komi = 7.5f);        
+    float area_score(float komi = 7.5f);
     
     int eval(float komi); 
     int get_prisoners(int side);

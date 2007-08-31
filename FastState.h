@@ -26,7 +26,7 @@ public:
     void increment_passes();            
     
     float calculate_mc_score();
-    int estimate_score();
+    int estimate_mc_score();
     float final_score();
     std::vector<bool> mark_dead();
     

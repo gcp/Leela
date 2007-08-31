@@ -90,6 +90,14 @@ void UCTNode::update(float gameresult) {
     m_blackwins +=  result;       
 }
 
+// terminal node
+void UCTNode::finalize(float gameresult) {
+    m_visits += 100;
+    
+    float result = (gameresult > 0.0f);
+    m_blackwins += 100.0f * result;
+}
+
 bool UCTNode::has_children() const {    
     return m_firstchild != NULL;
 }
@@ -126,7 +134,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;    
     float best_uct = -1000.0f;                  
         
-    float logparent = logf(get_visits() - UCTSearch::MATURE_TRESHOLD);        
+    float logparent = logf((float)(get_visits() - UCTSearch::MATURE_TRESHOLD));  
         
     UCTNode * child = m_firstchild;        
     while (child != NULL) {

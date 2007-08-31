@@ -272,7 +272,7 @@ std::vector<bool> FastBoard::calc_reach_color(int col) {
     return bd;
 }
 
-float FastBoard::final_score(float komi) {
+float FastBoard::area_score(float komi) {
     
     std::vector<bool> white = calc_reach_color(WHITE);
     std::vector<bool> black = calc_reach_color(BLACK);
@@ -294,7 +294,7 @@ float FastBoard::final_score(float komi) {
     return score;
 }   
 
-int FastBoard::estimate_score(float komi) {    
+int FastBoard::estimate_mc_score(float komi) {    
     int wsc, bsc;        
 
     bsc = m_stones[BLACK];       
@@ -458,13 +458,9 @@ int FastBoard::eval(float komi) {
 	}
     }		            
    
-    if (m_tomove == BLACK) {
-	tmp += 1;
-    } else {
-        tmp -= 1;			
-    }	    
-    
-    tmp -= komi;
+    if (m_tomove == WHITE) {	
+        tmp -= (int)komi;			
+    }	            
     
     if (m_tomove == WHITE) {
         tmp = -tmp;

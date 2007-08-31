@@ -196,8 +196,8 @@ int FastState::get_movenum() {
     return movenum;
 }
 
-int FastState::estimate_score(void) {
-    return board.estimate_score(m_komi);
+int FastState::estimate_mc_score(void) {
+    return board.estimate_mc_score(m_komi);
 }
 
 float FastState::calculate_mc_score(void) {
@@ -299,5 +299,5 @@ float FastState::final_score() {
         }
     }        
     
-    return workstate.board.final_score(m_komi);
+    return workstate.board.area_score(m_komi);
 }

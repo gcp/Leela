@@ -31,7 +31,7 @@ void Playout::run(FastState & state, bool resigning) {
         state.play_random_move();               
     } while (state.get_passes() < 2 
              && state.get_movenum() < playoutlen
-             && (!resigning || abs(state.estimate_score()) < resign)); 
+             && (!resigning || abs(state.estimate_mc_score()) < resign)); 
 
     m_run = true;                
     m_length = state.get_movenum();
@@ -57,7 +57,7 @@ void Playout::do_playout_benchmark(GameState& game) {
             
         } while (game.get_passes() < 2 
                  && game.get_movenum() < playoutlen
-                 && abs(game.estimate_score()) < resign); 
+                 && abs(game.estimate_mc_score()) < resign); 
                 
         len += game.get_movenum();
         ftmp = game.calculate_mc_score();   
