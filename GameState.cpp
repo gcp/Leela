@@ -17,7 +17,7 @@ void GameState::init_game(int size, float komi) {
     KoState::init_game(size, komi);
         
     game_history.clear();        
-    game_history.push_back(board); 
+    game_history.push_back(*this); 
     
     TimeControl tmp(size);
     m_timecontrol = tmp;
@@ -56,11 +56,12 @@ int GameState::gen_moves(int *moves) {
 
 int GameState::undo_move(void) {
     if (movenum > 0) {
-        // This also restores hashes as they're part of
-        // the game state
+        // This also restores hashes as they're part of state
         movenum--;                     
-        game_history.pop_back();        
-        board = game_history.back();
+        game_history.pop_back(); 
+        // this is not so nice, but it should work
+        FastState & f = *this; 
+        f = game_history.back();
         return 1;
     } else {
         return 0;
@@ -70,7 +71,7 @@ int GameState::undo_move(void) {
 void GameState::play_pass(void) {
     KoState::play_pass();
                
-    game_history.push_back(board);
+    game_history.push_back(*this);
 }
 
 void GameState::play_move(int vertex) {
@@ -81,7 +82,7 @@ void GameState::play_move(int color, int vertex) {
     if (vertex != FastBoard::PASS) {                   
         KoState::play_move(color, vertex);        
 
-        game_history.push_back(board);        
+        game_history.push_back(*this);        
     } else {
         play_pass();
     }    
@@ -160,3 +161,4 @@ void GameState::set_timecontrol(int maintime, int byotime, int byostones) {
 void GameState::adjust_time(int color, int time, int stones) {
     m_timecontrol.adjust_time(color, time, stones);
 }
+

@@ -212,9 +212,9 @@ int GTP::execute(GameState & game, char *xinput) {
         return 1;
     } else if (!strncmp (command, "kgs-genmove_cleanup", 19 )) {
         int who;
-        if (!strcmp(command+8, "w") || !strcmp(command+8, "white")) {
+        if (!strcmp(command+20, "w") || !strcmp(command+20, "white")) {
             who = FastBoard::WHITE;            
-        } else if (!strcmp(command+8, "b") || !strcmp(command+8, "black")) {
+        } else if (!strcmp(command+20, "b") || !strcmp(command+20, "black")) {
             who = FastBoard::BLACK;         
         } else {
             gtp_fail_printf(id, "syntax error");

@@ -29,8 +29,8 @@ public:
 
     void display_state();
           
-private:
-    std::vector<FullBoard> game_history;                          
+private:    
+    std::vector<FastState> game_history;                          
     
     TimeControl m_timecontrol;               
 };
