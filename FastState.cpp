@@ -42,6 +42,16 @@ int FastState::play_random_move() {
     return play_random_move(board.m_tomove);
 }
 
+int FastState::try_move(int color, int vertex) {    
+    if (vertex != komove && board.no_eye_fill(vertex)) {
+        if (!board.fast_ss_suicide(color, vertex)) {
+            return play_move_fast(vertex);                
+        } 
+    }                       
+    
+    return FastBoard::PASS;
+}
+
 int FastState::play_random_move(int color) {                            
     board.m_tomove = color;                        
     
@@ -55,66 +65,50 @@ int FastState::play_random_move(int color) {
             if (board.get_square(ai) == FastBoard::EMPTY) {
                 if (board.critical_neighbour(ai)) {
                     foundcap = true;
-                    vidx = ai;                    
+                    vidx = board.m_empty_idx[ai];
                 }    
             }
         }
     }
-    
-        
-    if (!foundcap) { 
-        int v = Random::get_Rng()->randint(board.get_boardsize());
-        int h = Random::get_Rng()->randint(board.get_boardsize());
-
-        vidx = board.get_vertex(v, h);
+            
+    if (!foundcap) {         
+        vidx = Random::get_Rng()->randint(board.m_empty_cnt);                    
     }
              
-    int rnd = Random::get_Rng()->randint(2);
+    int dir = Random::get_Rng()->randint(2);    
 
-    if (rnd == 0) {        
-        for (int i = vidx; i < board.m_maxsq; i++) {  
-            int vertex = i;
+    if (dir == 0) {        
+        for (int i = vidx; i < board.m_empty_cnt; i++) {
+            int e = board.m_empty[i];
+            int vertex = try_move(color, e);
             
-            if (board.get_square(vertex) == FullBoard::EMPTY) {                                
-                if (vertex != komove && board.no_eye_fill(vertex)) {
-                    if (!board.fast_ss_suicide(color, vertex)) {
-                        return play_move_fast(vertex);                
-                    } 
-                }                   
+            if (vertex != FastBoard::PASS) {
+                return vertex;
             }
-        }  
-        for (int i = 0; i < vidx; i++) {      
-            int vertex = i;
-            
-            if (board.get_square(vertex) == FullBoard::EMPTY) {                            
-                if (vertex != komove && board.no_eye_fill(vertex)) {
-                    if (!board.fast_ss_suicide(color, vertex)) {
-                        return play_move_fast(vertex);                
-                    } 
-                }       
+        }
+        for (int i = 0; i < vidx; i++) {
+            int e = board.m_empty[i];
+            int vertex = try_move(color, e);
+        
+            if (vertex != FastBoard::PASS) {
+                return vertex;
             }
-        }     
+        }
     } else {        
-        for (int i = vidx; i >= 0; i--) {  
-            int vertex = i;
+        for (int i = vidx; i >= 0; i--) {
+            int e = board.m_empty[i];
+            int vertex = try_move(color, e);
             
-            if (board.get_square(vertex) == FullBoard::EMPTY) {                                
-                if (vertex != komove && board.no_eye_fill(vertex)) {
-                    if (!board.fast_ss_suicide(color, vertex)) {
-                        return play_move_fast(vertex);                
-                    } 
-                }                   
+            if (vertex != FastBoard::PASS) {
+                return vertex;
             }
-        }  
-        for (int i = board.m_maxsq - 1; i > vidx; i--) {      
-            int vertex = i;
-            
-            if (board.get_square(vertex) == FullBoard::EMPTY) {                            
-                if (vertex != komove && board.no_eye_fill(vertex)) {
-                    if (!board.fast_ss_suicide(color, vertex)) {
-                        return play_move_fast(vertex);                
-                    } 
-                }       
+        }
+        for (int i = board.m_empty_cnt - 1; i > vidx; i--) {
+            int e = board.m_empty[i];
+            int vertex = try_move(color, e);
+        
+            if (vertex != FastBoard::PASS) {
+                return vertex;
             }
         }
     }

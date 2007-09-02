@@ -44,6 +44,7 @@ public:
     int lastmove;        
     
 protected:
+    int try_move(int color, int vertex);
     void play_move(int color, int vertex);     
 };
 
