@@ -13,7 +13,7 @@
 
 /* Hard limits */
 
-#define NAME            "KaLi80"
+#define NAME            "KaSA80"
 #define VERSION         "0.1"
 #define STR_BUFF        (255)
 #define GTP_VERSION     "2"

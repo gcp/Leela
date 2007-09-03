@@ -822,10 +822,6 @@ std::string FastBoard::get_string(int vertex) {
     return result;
 }
 
-int FastBoard::get_liberties(int vertex) {    
-    return m_plibs[m_parent[vertex]];           
-}
-
 bool FastBoard::critical_neighbour(int vertex) {
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
@@ -858,4 +854,123 @@ bool FastBoard::critical_neighbour(int vertex) {
 
 int FastBoard::get_dir(int i) {
     return m_dirs[i];
+}
+
+bool FastBoard::kill_or_connect(int color, int vertex) {     
+    int connecting = false;
+    int i = vertex;          
+    
+    add_neighbour(i, color);
+    
+    bool opps_live = true;    
+    bool live_connect = false;
+    
+    for (int k = 0; k < 4; k++) {
+        int ai = i + m_dirs[k];
+                 
+        int libs = m_plibs[m_parent[ai]];
+        
+        if (libs == 0 && get_square(ai) != color) {  
+            opps_live = false;                                   
+        } else if (libs >= 8 && get_square(ai) == color) {
+            live_connect = true;
+        }      
+    }  
+    
+    remove_neighbour(i, color);      
+    
+    return live_connect || !opps_live;    
+}
+
+void FastBoard::add_string_liberties(int vertex, std::vector<int> & libs) {
+    int pos = vertex;    
+    int color = m_square[pos];
+  
+    do {               
+        assert(m_square[pos] == color);
+        
+        if (count_liberties(pos)) {        
+            // look for empties near this stone
+            for (int k = 0; k < 4; k++) {
+                int ai = pos + m_dirs[k];                                
+                
+                if (m_square[ai] == EMPTY) {                                
+                    std::vector<int>::const_iterator it;
+                    
+                    it = std::find(libs.begin(), libs.end(), ai);                
+                    
+                    // not in list yet, so add
+                    if (it == libs.end()) {
+                        libs.push_back(ai);  
+                        
+                        // more than 2 liberties means we are not critical
+                        if (libs.size() > 2) {
+                            return;
+                        }  
+                    }
+                }
+            }                    
+        }
+        
+        pos = m_next[pos];
+    } while (pos != vertex);    
+}
+
+bool FastBoard::self_atari(int color, int vertex) {
+    assert(get_square(vertex) == FastBoard::EMPTY);
+    
+    // 1) count new liberties, if we add 2 or more we're safe    
+    
+    int newlibs = count_liberties(vertex);
+    
+    if (newlibs >= 2) {
+        return false;                
+    }
+    
+    // 2) if we kill an enemy, or connect to safety, we're good 
+    // as well
+    
+    if (kill_or_connect(color, vertex)) {
+        return false;
+    }
+    
+    // 3) we only add at most 1 liberty, and we removed 1, so check if 
+    // the sum of friendly neighbors had 2 or less that might have 
+    // become one (or less, in which case this is multi stone suicide)
+    
+    // vector of all liberties, this never gets big
+    // XXX: threadsafe?
+    static std::vector<int> nbr_libs; 
+    nbr_libs.clear();
+    
+    // add the vertex we play in to the liberties list
+    nbr_libs.push_back(vertex);           
+    
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        
+        if (get_square(ai) == FastBoard::EMPTY) {
+            nbr_libs.push_back(ai);
+        } else if (get_square(ai) == color) {        
+            int par = m_parent[ai];
+            int lib = m_plibs[par];
+            
+            // we already know this neighbor does not have a large 
+            // number of liberties, and to contribute, he must have
+            // more liberties than just the one that is "vertex"
+            if (lib > 1) {
+                add_string_liberties(ai, nbr_libs);
+            }            
+        }
+        
+        if (nbr_libs.size() > 2) {
+            return false;
+        }
+    }
+    
+    // if we get here, there are no more than 2 liberties,
+    // and we just removed 1 of those (since we added the play square
+    // to the list), so it must be an auto-atari
+        
+    return true;
 }

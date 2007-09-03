@@ -42,18 +42,58 @@ int FastState::play_random_move() {
     return play_random_move(board.m_tomove);
 }
 
-int FastState::try_move(int color, int vertex) {    
+bool FastState::try_move(int color, int vertex) {    
     if (vertex != komove && board.no_eye_fill(vertex)) {
         if (!board.fast_ss_suicide(color, vertex)) {
-            return play_move_fast(vertex);                
+            if (!board.self_atari(color, vertex)) {
+                return true;
+            }
         } 
     }                       
     
-    return FastBoard::PASS;
+    return false;
+}
+
+int FastState::walk_empty_list(int color, int vidx) {
+    int dir = Random::get_Rng()->randint(2);    
+
+    if (dir == 0) {        
+        for (int i = vidx; i < board.m_empty_cnt; i++) {
+            int e = board.m_empty[i];
+            
+            if (try_move(color, e)) {
+                return e;
+            }                        
+        }
+        for (int i = 0; i < vidx; i++) {
+            int e = board.m_empty[i];
+            
+            if (try_move(color, e)) {
+                return e;
+            }    
+        }
+    } else {        
+        for (int i = vidx; i >= 0; i--) {
+            int e = board.m_empty[i];
+            
+            if (try_move(color, e)) {
+                return e;
+            }    
+        }
+        for (int i = board.m_empty_cnt - 1; i > vidx; i--) {
+            int e = board.m_empty[i];
+            
+            if (try_move(color, e)) {
+                return e;
+            }    
+        }
+    }
+                               
+    return FastBoard::PASS;        
 }
 
 int FastState::play_random_move(int color) {                            
-    board.m_tomove = color;                        
+    board.m_tomove = color;                             
     
     int vidx;
     bool foundcap = false;
@@ -74,76 +114,26 @@ int FastState::play_random_move(int color) {
     if (!foundcap) {         
         vidx = Random::get_Rng()->randint(board.m_empty_cnt);                    
     }
-             
-    int dir = Random::get_Rng()->randint(2);    
-
-    if (dir == 0) {        
-        for (int i = vidx; i < board.m_empty_cnt; i++) {
-            int e = board.m_empty[i];
-            int vertex = try_move(color, e);
-            
-            if (vertex != FastBoard::PASS) {
-                return vertex;
-            }
-        }
-        for (int i = 0; i < vidx; i++) {
-            int e = board.m_empty[i];
-            int vertex = try_move(color, e);
         
-            if (vertex != FastBoard::PASS) {
-                return vertex;
-            }
-        }
-    } else {        
-        for (int i = vidx; i >= 0; i--) {
-            int e = board.m_empty[i];
-            int vertex = try_move(color, e);
-            
-            if (vertex != FastBoard::PASS) {
-                return vertex;
-            }
-        }
-        for (int i = board.m_empty_cnt - 1; i > vidx; i--) {
-            int e = board.m_empty[i];
-            int vertex = try_move(color, e);
-        
-            if (vertex != FastBoard::PASS) {
-                return vertex;
-            }
-        }
-    }
+    int vtx = walk_empty_list(color, vidx); 
               
-    play_pass_fast();                
-    return FastBoard::PASS;        
+    return play_move_fast(vtx);                         
 }
-
 
 int FastState::play_move_fast(int vertex) {
-    assert(vertex != FastBoard::PASS);
-        
-    int color = board.m_tomove;           
-              
-    int kosq = board.update_board_fast(color, vertex);        
-        
-    komove = kosq;        
-    lastmove = vertex;
+    if (vertex == FastBoard::PASS) {                       
+        increment_passes();                 
+    } else {                                                      
+        komove = board.update_board_fast(board.m_tomove, vertex);        
+        set_passes(0);                                            
+    }
     
-    movenum++;        
-    board.m_tomove = !color;                
-    set_passes(0);    
-                
+    lastmove = vertex;                                              
+    board.m_tomove = !board.m_tomove;
+    movenum++; 
+    
     return vertex;
 }
-
-void FastState::play_pass_fast(void) {    
-    movenum++;            
-                   
-    lastmove = FastBoard::PASS;
-    
-    board.m_tomove = !board.m_tomove;                 
-    increment_passes();        
-}
-
    
 void FastState::play_pass(void) {
     movenum++;
@@ -163,7 +153,7 @@ void FastState::play_move(int vertex) {
 }
 
 void FastState::play_move(int color, int vertex) {
-    if (vertex != -1) {                   
+    if (vertex != FastBoard::PASS) {                   
         int kosq = board.update_board(color, vertex);
     
         komove = kosq;   

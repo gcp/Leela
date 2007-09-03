@@ -12,8 +12,7 @@ public:
     void reset_board();  
     
     int play_random_move();
-    int play_random_move(int color);
-    void play_pass_fast();
+    int play_random_move(int color);    
     int play_move_fast(int vertex);
     
     void play_pass(void);    
@@ -44,7 +43,8 @@ public:
     int lastmove;        
     
 protected:
-    int try_move(int color, int vertex);
+    int walk_empty_list(int color, int vidx);
+    bool try_move(int color, int vertex);
     void play_move(int color, int vertex);     
 };
 

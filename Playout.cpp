@@ -35,7 +35,7 @@ void Playout::run(FastState & state, bool resigning) {
 
     m_run = true;                
     m_length = state.get_movenum();
-    m_score = state.calculate_mc_score();               
+    m_score = state.calculate_mc_score();                   
 }
 
 void Playout::do_playout_benchmark(GameState& game) {   
