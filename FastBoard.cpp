@@ -1,6 +1,6 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <string>
+#include <iostream>
+#include <sstream>
 #include <assert.h>
 
 #include "config.h"
@@ -738,7 +738,9 @@ bool FastBoard::no_eye_fill(const int i) {
     return false;    
 }
 
- void FastBoard::move_to_text(int move, char *vertex) {        
+std::string FastBoard::move_to_text(int move) {    
+    std::ostringstream result;
+    
     int column = move % (m_boardsize + 2);
     int row = move / (m_boardsize + 2);
     
@@ -749,16 +751,17 @@ bool FastBoard::no_eye_fill(const int i) {
     assert(move == FastBoard::PASS || (column >= 0 && column < m_boardsize));
     
     if (move >= 0 && move <= m_maxsq) {
-        sprintf(vertex, "%c%d", (column < 8 ? 'A' + column : 'A' + column + 1), row+1); 
+        result << static_cast<char>(column < 8 ? 'A' + column : 'A' + column + 1);
+        result << (row + 1);        
     } else if (move == FastBoard::PASS) {
-        sprintf(vertex, "pass");
+        result << "pass";
     } else if (move == -2) {
-	sprintf(vertex, "?");
+	result << "?";
     } else {
-	sprintf(vertex, "error");
+	result << "error";
     }
     	
-    return;
+    return result.str();
 }
 
 bool FastBoard::starpoint(int size, int point) {
@@ -808,11 +811,8 @@ std::string FastBoard::get_string(int vertex) {
     int start = m_parent[vertex];
     int newpos = start;
     
-    do {       
-        char vtx[16];
-        move_to_text(newpos, &vtx[0]);
-        std::string vertstring(vtx);
-        result += vertstring + " "; 
+    do {                           
+        result += move_to_text(newpos) + " "; 
         newpos = m_next[newpos];
     } while (newpos != start);   
     

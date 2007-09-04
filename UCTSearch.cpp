@@ -81,11 +81,9 @@ void UCTSearch::dump_pv(GameState & state, UCTNode & parent) {
     }
     
     int bestmove = bestchild->get_move();
-    
-    char tmp[16];                
-    state.move_to_text(bestmove, tmp);
-    
-    myprintf("%s ", tmp);             
+                   
+    std::string tmp = state.move_to_text(bestmove);    
+    myprintf("%s ", tmp.c_str());
     
     state.play_move(bestmove);    
     
@@ -111,17 +109,15 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     UCTNode * node = bestnode;
     
     while (node != NULL) {            
-        if (++movecount > 6) break;
-    
-        char tmp[16];
+        if (++movecount > 6) break;            
         
-        state.move_to_text(node->get_move(), tmp);
+        std::string tmp = state.move_to_text(node->get_move());
         
         myprintf("%4s -> %7d (%5.2f%%) PV: %s ", 
-                  tmp, 
+                  tmp.c_str(), 
                   node->get_visits(), 
                   node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
-                  tmp);
+                  tmp.c_str());
         
         
         GameState tmpstate = state;  
@@ -133,15 +129,14 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
         
         node = node->get_sibling();                                                                       
     }     
-    
-    char tmp[16];
-    state.move_to_text(bestnode->get_move(), tmp);
+        
+    std::string tmp = state.move_to_text(bestnode->get_move());
     myprintf("====================================\n"
              "%d visits, score %5.2f%% (from %5.2f%%) PV: ",   
              bestnode->get_visits(), 
              bestnode->get_visits() > 0 ? bestnode->get_winrate(color)*100.0f : 0.0f,
              parent.get_winrate(color) * 100.0f,             
-             tmp);    
+             tmp.c_str());    
                       
     GameState tmpstate = state;                                
     dump_pv(tmpstate, parent);      

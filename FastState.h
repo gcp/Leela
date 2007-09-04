@@ -31,8 +31,8 @@ public:
     
     int get_movenum();
     int get_last_move();        
-    void display_state();
-    void move_to_text(int move, char *vertex); 
+    void display_state();    
+    std::string move_to_text(int move);
 
     FullBoard board;
      

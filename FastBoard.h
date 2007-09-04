@@ -63,8 +63,8 @@ public:
     int eval(float komi); 
     int get_prisoners(int side);
     bool black_to_move();
-    
-    void move_to_text(int move, char *vertex);
+        
+    std::string move_to_text(int move);
     std::string get_string(int vertex);    
     
     void reset_board(int size);                    

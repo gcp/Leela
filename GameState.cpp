@@ -1,7 +1,6 @@
 #include <assert.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
+#include <cctype>
+#include <string>
 
 #include "config.h"
 
@@ -88,33 +87,20 @@ void GameState::play_move(int color, int vertex) {
     }    
 }
 
-int GameState::play_textmove(char *color, char *vertex) {
-    int i;
+int GameState::play_textmove(std::string color, std::string vertex) {
     int who;
     int column, row;
     int boardsize = board.get_boardsize();
-    
-    /* case conversion */
-    i = 0;
-    while (color[i] != '\0') {
-        color[i] = tolower(color[i]);
-        i++;
-    }
-    
-    i = 0;
-    while (vertex[i] != '\0') {
-        vertex[i] = tolower(vertex[i]);
-        i++;
-    }
-    
-    if (!strncmp(color, "w", 1)) {
+        
+    if (color == "w" || color == "white") {
         who = FullBoard::WHITE;
-    } else if (!strncmp(color, "b", 1)) {
+    } else if (color == "b" || color == "black") {
         who = FullBoard::BLACK;
     } else return 0;
     
-    if (!isalpha(vertex[0])) return 0;
-    if (!isdigit(vertex[1])) return 0;    
+    if (vertex.size() < 2) return 0;    
+    if (!std::isalpha(vertex[0])) return 0;
+    if (!std::isdigit(vertex[1])) return 0;    
     if (vertex[0] == 'i') return 0;
         
     if (vertex[0] < 'i') 
@@ -122,12 +108,12 @@ int GameState::play_textmove(char *color, char *vertex) {
     else
         column = (vertex[0] - 'a')-1;
         
-    row = atol(&vertex[1]);
+    row = vertex[1] - '1';
     
-    if (row > boardsize) return 0;
+    if (row >= boardsize) return 0;
     if (column >= boardsize) return 0; 
     
-    int move = board.get_vertex(column, row - 1);       
+    int move = board.get_vertex(column, row);       
         
     play_move(who, move);                           
                    

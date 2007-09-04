@@ -221,8 +221,8 @@ void FastState::display_state() {
     board.display_board(lastmove);
 }
 
-void FastState::move_to_text(int move, char *vertex) {
-    board.move_to_text(move, vertex);
+std::string FastState::move_to_text(int move) {
+    return board.move_to_text(move);
 }
 
 std::vector<bool> FastState::mark_dead() {

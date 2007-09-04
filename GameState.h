@@ -19,7 +19,7 @@ public:
     void play_pass(void);
     void play_move(int color, int vertex);      
     void play_move(int vertex); 
-    int play_textmove(char *color, char *vertex);                            
+    int play_textmove(std::string color, std::string vertex);                            
     
     void start_clock(int color);
     void stop_clock(int color);

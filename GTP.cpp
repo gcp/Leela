@@ -1,12 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <math.h>
 #include <vector>
 #include <iostream>
+#include <cctype>
 #include <string>
 #include <sstream>
+#include <cmath>
 
 #include "config.h"
 #include "Utils.h"
@@ -71,64 +68,63 @@ std::string GTP::get_life_list(GameState & game, bool live) {
     return result;                    
 }
 
-int GTP::execute(GameState & game, char *xinput) {
-    char input[STR_BUFF];
-    char command[STR_BUFF];
-    char color[STR_BUFF], vertex[STR_BUFF];
-    int nw, id = -1;    
-    float ftmp;
-    
-    /* parse */            
-    nw = 0;
+int GTP::execute(GameState & game, std::string xinput) {            
+    std::string input;
+                    
     /* eat empty lines, simple preprocessing, lower case */
-    for (int tmp = 0; xinput[tmp] != '\0'; tmp++) {
+    for (unsigned int tmp = 0; tmp < xinput.size(); tmp++) {
         if (xinput[tmp] == 9) {
-            input[nw++] = 32;
+            input += " ";
         } else if ((xinput[tmp] > 0 && xinput[tmp] <= 9)
 	        || (xinput[tmp] >= 11 && xinput[tmp] <= 31)
 	        || xinput[tmp] == 127) {
 	       continue;
         } else {        
-            input[nw++] = tolower(xinput[tmp]);
+            input += std::tolower(xinput[tmp]);
         }            
         
-        /* eat multi whitespace */
-        if (nw >= 2 && input[nw-2] == 32 && input[nw-1] == 32) {
-            nw--;
+        // eat multi whitespace
+        if (input.size() > 1) {
+            if (std::isspace(input[input.size() - 2]) &&
+                std::isspace(input[input.size() - 1])) {
+                input.resize(input.size() - 1);
+            }
         }
     }    
-    input[nw] = '\0';
     
-    if (!strcmp(input, "")) {
+    std::string command;    
+    int id = -1;
+    
+    if (input == "") {
         return 1;
-    } else if (!strcmp(input, "exit")) {
+    } else if (input == "exit") {
         exit(EXIT_SUCCESS);
         return 1;
-    } else if (!strncmp(input, "#", 1)) {
+    } else if (input == "#") {
         return 1;
-    } else if (isdigit(input[0])) {
-        /* starts with number, likely GTP command */
-        sscanf(input, "%d %[^\n\r]s", &id, command);                        
+    } else if (std::isdigit(input[0])) {        
+        std::istringstream strm(input);
+        strm >> id;
+        std::getline(strm, command);
     } else {
-        strncpy(command, input, STR_BUFF);
+        command = input;
     }
     
     /* process commands */
-    if (!strcmp(command, "protocol_version")) {
-        gtp_printf(id, GTP_VERSION);
+    if (command == "protocol_version") {
+        gtp_printf(id, "%d", GTP_VERSION);
         return 1;
-    } else if (!strcmp (command, "name")) {
+    } else if (command == "name") {
         gtp_printf(id, NAME);
         return 1;  
-    } else if (!strcmp (command, "version")) {
+    } else if (command == "version") {
         gtp_printf(id, VERSION);
         return 1;
-    } else if (!strcmp (command, "quit")) {
+    } else if (command == "quit") {
         gtp_printf(id, "");
         exit(EXIT_SUCCESS);        
-    } else if (!strncmp (command, "known_command", 13)) {
-        std::string cmd(command);
-        std::istringstream cmdstream(cmd, std::istringstream::in);
+    } else if (command.find("known_command") == 0) {        
+        std::istringstream cmdstream(command);
         std::string tmp;
         
         cmdstream >> tmp;     /* remove known_command */
@@ -143,16 +139,22 @@ int GTP::execute(GameState & game, char *xinput) {
         
         gtp_printf(id, "false");        
         return 1;
-    } else if (!strcmp (command, "list_commands")) {
+    } else if (command.find("list_commands") == 0) {
         std::string outtmp(s_commands[0]);
         for (int i = 1; s_commands[i].size() > 0; i++) {            
             outtmp = outtmp + "\n" + s_commands[i];            
         }
         gtp_printf(id, outtmp.c_str());    
         return 1;
-    } else if (!strncmp (command, "boardsize", 9)) {
+    } else if (command.find("boardsize") == 0) {
+        std::istringstream cmdstream(command);
+        std::string stmp;
         int tmp;
-        if (sscanf(command+10, "%d", &tmp) == 1) {
+        
+        cmdstream >> stmp;  // eat boardsize
+        cmdstream >> tmp;                
+        
+        if (!cmdstream.fail()) {        
             if (tmp < 2 || tmp > FastBoard::MAXBOARDSIZE) {
                 gtp_fail_printf(id, "unacceptable size");
             } else {
@@ -160,89 +162,127 @@ int GTP::execute(GameState & game, char *xinput) {
                 gtp_printf(id, "");
             }
         } else {
-            gtp_fail_printf(id, "syntax error");
+            gtp_fail_printf(id, "syntax not understood");
         }
+        
         return 1;
-    } else if (!strcmp (command, "clear_board")) {
+    } else if (command.find("clear_board") == 0) {
         game.reset_game();
         gtp_printf(id, "");
         return 1;
-    } else if (!strncmp (command, "komi", 4)) {
-        float komi;
-        if (sscanf(command+5, "%f", &komi) != 1) {
-            gtp_fail_printf(id, "syntax error");
-         } else {
+    } else if (command.find("komi") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp;
+        float komi = 7.5f;
+        
+        cmdstream >> tmp;  // eat komi
+        cmdstream >> komi;            
+        
+        if (!cmdstream.fail()) {
             game.set_komi(komi);
             gtp_printf(id, "");
-         }
+        } else {
+            gtp_fail_printf(id, "syntax not understood");
+        }
+        
         return 1;
-    } else if (!strncmp (command, "play", 4)) {
-        if (strstr(command+5, "pass")) {
+    } else if (command.find("play") == 0) {
+        if (command.find("pass") != std::string.npos) {
             game.play_pass();
             gtp_printf(id, "");
-        } else if (sscanf(command+5, "%s %s", color, vertex) == 2) {            
-            if (!game.play_textmove(color, vertex)) {
-                gtp_fail_printf(id, "illegal move");
+        } else {
+            std::istringstream cmdstream(command);
+            std::string tmp;            
+            std::string color, vertex;
+            
+            cmdstream >> tmp;   //eat play
+            cmdstream >> color;
+            cmdstream >> vertex;
+            
+            if (!cmdstream.fail()) {    
+                if (!game.play_textmove(color, vertex)) {
+                    gtp_fail_printf(id, "illegal move");
+                } else {
+                    gtp_printf(id, "");
+                }
             } else {
-                gtp_printf(id, "");
+                gtp_fail_printf(id, "syntax not understood");
             }
-        } else {
-            gtp_fail_printf(id, "syntax error");
-        };
+        } 
         return 1;
-    } else if (!strncmp (command, "genmove", 7 )) {
-        int who;
-        if (!strcmp(command+8, "w") || !strcmp(command+8, "white")) {
-            who = FastBoard::WHITE;            
-        } else if (!strcmp(command+8, "b") || !strcmp(command+8, "black")) {
-            who = FastBoard::BLACK;         
+    } else if (command.find("genmove") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp;
+        
+        cmdstream >> tmp;  // eat genmove
+        cmdstream >> tmp;
+        
+        if (!cmdstream.fail()) {
+            int who;
+            if (tmp == "w" || tmp == "white") {
+                who = FastBoard::WHITE;            
+            } else if (tmp == "b" || tmp == "black") {
+                who = FastBoard::BLACK;         
+            } else {
+                gtp_fail_printf(id, "syntax error");
+                return 1;
+            }   
+            
+            std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+
+            int move = search->think(who);
+            game.play_move(who, move);                    
+
+            std::string vertex = game.move_to_text(move);            
+            gtp_printf(id, "%s", vertex.c_str());
         } else {
-            gtp_fail_printf(id, "syntax error");
-            return 1;
-        }   
-
-        std::auto_ptr<UCTSearch> search(new UCTSearch(game));
-
-        int move = search->think(who);
-        game.play_move(who, move);                    
-
-        game.move_to_text(move, vertex);            
-        gtp_printf(id, "%s", vertex);
+            gtp_fail_printf(id, "syntax not understood");
+        }
                 
         return 1;
-    } else if (!strncmp (command, "kgs-genmove_cleanup", 19 )) {
-        int who;
-        if (!strcmp(command+20, "w") || !strcmp(command+20, "white")) {
-            who = FastBoard::WHITE;            
-        } else if (!strcmp(command+20, "b") || !strcmp(command+20, "black")) {
-            who = FastBoard::BLACK;         
+    } else if (command.find("kgs-genmove_cleanup") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp;
+        
+        cmdstream >> tmp;  // eat kgs-genmove
+        cmdstream >> tmp;
+        
+        if (!cmdstream.fail()) {
+            int who;
+            if (tmp == "w" || tmp == "white") {
+                who = FastBoard::WHITE;            
+            } else if (tmp == "b" || tmp == "black") {
+                who = FastBoard::BLACK;         
+            } else {
+                gtp_fail_printf(id, "syntax error");
+                return 1;
+            } 
+
+            std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+
+            int move = search->think(who, UCTSearch::NOPASS);
+            game.play_move(who, move);                    
+
+            std::string vertex = game.move_to_text(move);             
+            gtp_printf(id, "%s", vertex.c_str());
         } else {
-            gtp_fail_printf(id, "syntax error");
-            return 1;
-        }   
-
-        std::auto_ptr<UCTSearch> search(new UCTSearch(game));
-
-        int move = search->think(who, UCTSearch::NOPASS);
-        game.play_move(who, move);                    
-
-        game.move_to_text(move, vertex);            
-        gtp_printf(id, "%s", vertex);
+            gtp_fail_printf(id, "syntax not understood");
+        }
                 
         return 1;
-    } else if (!strcmp (command, "undo")) {
+    } else if (!command.find("undo") == 0) {
         if (game.undo_move()) {
             gtp_printf(id, "");
         } else {
             gtp_fail_printf(id, "cannot undo");
         }            
         return 1;
-    } else if (!strcmp (command, "showboard")) {
+    } else if (command.find("showboard") == 0) {
         gtp_printf(id, "");
         game.display_state();
         return 1;
-    } else if (!strcmp (command, "mc_score")) {
-        ftmp = game.board.final_mc_score();   
+    } else if (command.find("mc_score") == 0) {
+        float ftmp = game.board.final_mc_score();   
         /* white wins */        
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
@@ -252,8 +292,8 @@ int GTP::execute(GameState & game, char *xinput) {
             gtp_printf(id, "0");
         }                
         return 1;
-    } else if (!strcmp (command, "final_score")) {
-        ftmp = game.final_score();   
+    } else if (command.find("final_score") == 0) {
+        float ftmp = game.final_score();   
         /* white wins */        
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
@@ -263,54 +303,60 @@ int GTP::execute(GameState & game, char *xinput) {
             gtp_printf(id, "0");
         }                
         return 1;
-    } else if (!strncmp (command, "final_status_list", 17)) {
-        if (strstr(command, "alive")) {
+    } else if (command.find("final_status_list") == 0) {
+        if (command.find("alive") != std::string.npos) {
             std::string livelist = get_life_list(game, true);
             gtp_printf(id, livelist.c_str());                        
-        } else if (strstr(command, "dead")) {            
+        } else if (command.find("dead") != std::string.npos) {            
             std::string deadlist = get_life_list(game, false);
             gtp_printf(id, deadlist.c_str());                        
         } else {
             gtp_printf(id, "");
         }
         return 1;
-    } else if (!strncmp (command, "time_settings", 13)) {
-        std::string cmdstring(command);
-        std::istringstream cmdstream(cmdstring, std::istringstream::in);
+    } else if (command.find("time_settings") == 0) {        
+        std::istringstream cmdstream(command);
         std::string tmp;
         int maintime, byotime, byostones;
         
         cmdstream >> tmp >> maintime >> byotime >> byostones;
                 
-        // convert to centiseconds and set                
-        game.set_timecontrol(maintime * 100, byotime * 100, byostones);
-        
-        gtp_printf(id, "");        
+        if (!cmdstream.fail()) {                
+            // convert to centiseconds and set                
+            game.set_timecontrol(maintime * 100, byotime * 100, byostones);
+            
+            gtp_printf(id, "");    
+        } else {
+            gtp_fail_printf(id, "syntax not understood");
+        }    
         return 1;
-    } else if (!strncmp (command, "time_left", 9)) {
-        std::string cmdstring(command);
-        std::istringstream cmdstream(cmdstring, std::istringstream::in);
+    } else if (command.find("time_left") == 9) {        
+        std::istringstream cmdstream(command);
         std::string tmp, color;
         int time, stones;
         
         cmdstream >> tmp >> color >> time >> stones;
         
-        int icolor;
-        
-        if (color == "w" || color == "white") {
-            icolor = FastBoard::WHITE;
-        } else if (color == "b" || color == "black") {
-            icolor = FastBoard::BLACK;        
+        if (!cmdstream.fail()) {
+            int icolor;
+            
+            if (color == "w" || color == "white") {
+                icolor = FastBoard::WHITE;
+            } else if (color == "b" || color == "black") {
+                icolor = FastBoard::BLACK;        
+            } else {
+                gtp_fail_printf(id, "Color in time adjust not understood.\n");
+                return 1;
+            }                                      
+                                          
+            game.adjust_time(icolor, time * 100, stones);
+            
+            gtp_printf(id, "");    
         } else {
-            gtp_fail_printf(id, "Color in time adjust not understood.\n");
-            return 1;
-        }                                      
-                                      
-        game.adjust_time(icolor, time * 100, stones);
-        
-        gtp_printf(id, "");        
+            gtp_fail_printf(id, "syntax not understood");
+        }    
         return 1;
-    } else if (!strcmp (command, "auto")) {    
+    } else if (command.find("auto") == 0) {    
         do {
             std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 
@@ -321,19 +367,19 @@ int GTP::execute(GameState & game, char *xinput) {
         } while (game.get_passes() < 2);
 
         return 1;
-    } else if (!strcmp (command, "bench")) {
+    } else if (command.find("bench") == 0) {
         Playout::do_playout_benchmark(game);
         return 1;
-    } else if (!strcmp (command, "go")) {
+    } else if (command.find("go") == 0) {
         std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 
         int move = search->think(game.get_to_move());
         game.play_move(move);                    
 
-        game.move_to_text(move, vertex);            
-        myprintf("%s\n", vertex);
+        std::string vertex = game.move_to_text(move);        
+        myprintf("%s\n", vertex.c_str());
         return 1;
-    } else if (!strcmp (command, "influence")) {
+    } else if (command.find("influence") == 0) {
         gtp_printf(id, "");
         game.board.display_influence();        
         return 1;

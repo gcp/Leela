@@ -1,9 +1,7 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <memory>
+#include <iostream>
+
 #include "config.h"
+
 #include "Zobrist.h"
 #include "GTP.h"
 #include "Random.h"
@@ -14,7 +12,7 @@ using namespace Utils;
 int main (int argc, char *argv[]) {        
     int done = false;
     int gtp_mode;
-    char input[STR_BUFF];      
+    std::string input;      
     
     /* default to prompt */
     gtp_mode = false;
@@ -23,9 +21,9 @@ int main (int argc, char *argv[]) {
         gtp_mode = true;
     }   
 
-    setbuf (stdout, NULL);
-    setbuf (stdin, NULL);
-    setbuf (stderr, NULL);           
+    std::cout.setf(std::ios::unitbuf);
+    std::cin.setf(std::ios::unitbuf);
+    std::cerr.setf(std::ios::unitbuf);    
                     
     std::auto_ptr<Random> rng(new Random(5489UL));          
     Zobrist::init_zobrist(*rng);
@@ -41,12 +39,8 @@ int main (int argc, char *argv[]) {
             maingame->display_state();
             myprintf("Ka: ");
         }            
-        
-        /* get input line */         
-        fgets(input, STR_BUFF, stdin);                
-        
-        /* eat CR/LF */
-        input[strlen(input)-1] = '\0';
+                
+        std::getline(std::cin, input);       
         
         if (!GTP::execute(*maingame, input)) {
             myprintf("? unknown command\n");                   
