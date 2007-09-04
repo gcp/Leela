@@ -95,7 +95,7 @@ protected:
     std::tr1::array<int, MAXSQ>      m_neighbours;  /* counts of neighboring stones */  
     std::tr1::array<int, 4>          m_dirs;        /* movement directions */
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
-    std::tr1::array<int, 2>          m_stones;      /* stones per color */     
+    std::tr1::array<int, 2>          m_stones;      /* stones per color */             
 
     int m_boardsize;    
     
@@ -108,7 +108,7 @@ protected:
     std::vector<bool> calc_reach_color(int col);    
     void run_bouzy(int *influence, int dilat, int eros);  
     bool kill_or_connect(int color, int vertex);  
-    void add_string_liberties(int vertex, std::vector<int> & libs);
+    void add_string_liberties(int vertex, std::tr1::array<int, 3> & nbr_libs, int & nbr_libs_cnt);
 };
 
 #endif

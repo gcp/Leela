@@ -826,26 +826,28 @@ bool FastBoard::critical_neighbour(int vertex) {
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
         
-        int par = m_parent[ai];
-        int lib = m_plibs[par];
-        
-        if (lib <= 4) {
-            // 4 or less liberties
-            int samenbrs = 0;
+        if (m_square[ai] < EMPTY) {        
+            int par = m_parent[ai];
+            int lib = m_plibs[par];
             
-            // count original square nbrs with same parent
-            for (int kk = 0; kk < 4; kk++) {
-                int aix = vertex + m_dirs[kk];
-                if (m_parent[aix] == par) {
-                    samenbrs++;
+            if (lib <= 4) {
+                // 4 or less liberties
+                int samenbrs = 0;
+                
+                // count original square nbrs with same parent
+                for (int kk = 0; kk < 4; kk++) {
+                    int aix = vertex + m_dirs[kk];
+                    if (m_parent[aix] == par) {
+                        samenbrs++;
+                    }
                 }
+                
+                assert(samenbrs <= lib);
+                
+                if (samenbrs >= lib)  {
+                    return true;
+                }            
             }
-            
-            assert(samenbrs <= lib);
-            
-            if (samenbrs >= lib)  {
-                return true;
-            }            
         }
     }
     
@@ -882,7 +884,9 @@ bool FastBoard::kill_or_connect(int color, int vertex) {
     return live_connect || !opps_live;    
 }
 
-void FastBoard::add_string_liberties(int vertex, std::vector<int> & libs) {
+void FastBoard::add_string_liberties(int vertex, 
+                                     std::tr1::array<int, 3> & nbr_libs, 
+                                     int & nbr_libs_cnt) {
     int pos = vertex;    
     int color = m_square[pos];
   
@@ -895,16 +899,16 @@ void FastBoard::add_string_liberties(int vertex, std::vector<int> & libs) {
                 int ai = pos + m_dirs[k];                                
                 
                 if (m_square[ai] == EMPTY) {                                
-                    std::vector<int>::const_iterator it;
+                    std::tr1::array<int, 3>::iterator it;
                     
-                    it = std::find(libs.begin(), libs.end(), ai);                
+                    it = std::find(nbr_libs.begin(), nbr_libs.end(), ai);                
                     
                     // not in list yet, so add
-                    if (it == libs.end()) {
-                        libs.push_back(ai);  
+                    if (it == nbr_libs.end()) {
+                        nbr_libs[nbr_libs_cnt++] = ai; 
                         
                         // more than 2 liberties means we are not critical
-                        if (libs.size() > 2) {
+                        if (nbr_libs_cnt > 2) {
                             return;
                         }  
                     }
@@ -938,19 +942,18 @@ bool FastBoard::self_atari(int color, int vertex) {
     // the sum of friendly neighbors had 2 or less that might have 
     // become one (or less, in which case this is multi stone suicide)
     
-    // vector of all liberties, this never gets big
-    // XXX: threadsafe?
-    static std::vector<int> nbr_libs; 
-    nbr_libs.clear();
+    // list of all liberties, this never gets big    
+    std::tr1::array<int, 3> nbr_libs;
+    int nbr_libs_cnt = 0;
     
     // add the vertex we play in to the liberties list
-    nbr_libs.push_back(vertex);           
+    nbr_libs[nbr_libs_cnt++] = vertex;           
     
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
         
         if (get_square(ai) == FastBoard::EMPTY) {
-            nbr_libs.push_back(ai);
+            nbr_libs[nbr_libs_cnt++] = ai;
         } else if (get_square(ai) == color) {        
             int par = m_parent[ai];
             int lib = m_plibs[par];
@@ -959,11 +962,11 @@ bool FastBoard::self_atari(int color, int vertex) {
             // number of liberties, and to contribute, he must have
             // more liberties than just the one that is "vertex"
             if (lib > 1) {
-                add_string_liberties(ai, nbr_libs);
+                add_string_liberties(ai, nbr_libs, nbr_libs_cnt);
             }            
         }
         
-        if (nbr_libs.size() > 2) {
+        if (nbr_libs_cnt > 2) {
             return false;
         }
     }
