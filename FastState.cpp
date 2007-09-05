@@ -100,8 +100,14 @@ int FastState::play_random_move(int color) {
     if (lastmove > 0 && lastmove < board.m_maxsq) {
         if (board.get_square(lastmove) == !color) {
             board.save_critical_neighbours(color, lastmove, m_work);         
+            if (m_work.empty()) {
+                board.add_pattern_moves(color, lastmove, m_work);            
+            }                
+            if (m_work.empty()) {
+                board.add_captures(color, m_work);
+            }        
         }        
-    }   
+    }           
     
     int vidx;     
                 
@@ -112,7 +118,7 @@ int FastState::play_random_move(int color) {
             // remove multiple moves    
             std::sort(m_work.begin(), m_work.end());    
             m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end());
-            
+                       
             int idx = Random::get_Rng()->randint(m_work.size());        
             int sq = m_work[idx];                       
             

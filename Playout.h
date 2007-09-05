@@ -5,7 +5,7 @@
 
 class Playout {
 public:
-    static const int AUTOGAMES = 1000000;
+    static const int AUTOGAMES = 100000;
     static void do_playout_benchmark(GameState & game);    
 
     Playout();

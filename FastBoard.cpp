@@ -69,6 +69,16 @@ void FastBoard::reset_board(int size) {
     m_dirs[2] = +1;
     m_dirs[3] = +size+2;
     
+    m_extradirs[0] = -size-2-1;
+    m_extradirs[1] = -size-2;
+    m_extradirs[2] = -size-2+1;    
+    m_extradirs[3] = -1;
+    m_extradirs[4] = +1;
+    m_extradirs[5] = +size+2-1;
+    m_extradirs[6] = +size+2;
+    m_extradirs[7] = +size+2+1;    
+    
+    
     for (int i = 0; i < m_maxsq; i++) {
         m_square[i]     = INVAL;        
         m_neighbours[i] = 0;
@@ -159,7 +169,12 @@ bool FastBoard::is_suicide(int i, int color) {
 }
 
 int FastBoard::count_liberties(const int i) {          
-    return m_neighbours[i] >> (NBR_SHIFT * EMPTY);
+    return count_neighbours(EMPTY, i);
+}
+
+int FastBoard::count_neighbours(const int c, const int v) {
+    assert(c == WHITE || c == BLACK || c == EMPTY);
+    return (m_neighbours[v] >> (NBR_SHIFT * c)) & 7;
 }
 
 int FastBoard::fast_ss_suicide(const int color, const int i)  {    
@@ -897,7 +912,9 @@ void FastBoard::save_critical_neighbours(int color, int vertex,
             if (lib <= 4) {                
                 int atari = in_atari(ai);
                 
-                if (atari) {                      
+                if (atari) {      
+                    size_t startsize = work.size();
+                                    
                     // find saving moves for atari square "atari"                
                     // we can save by either
                     // 1) playing in the atari if it increases liberties,
@@ -908,7 +925,16 @@ void FastBoard::save_critical_neighbours(int color, int vertex,
                         work.push_back(atari);        
                     } 
                     
-                    kill_neighbours(ai, work);                    
+                    kill_neighbours(ai, work);     
+                    
+                    // saving moves failed, add this to critical points
+                    if (work.size() == startsize) {
+                        // keep the queue small
+                        while (m_critical.size() > 8) {
+                            m_critical.pop();
+                        }
+                        m_critical.push(atari);
+                    }
                 }
             }
         }
@@ -1038,4 +1064,71 @@ bool FastBoard::self_atari(int color, int vertex) {
     // to the list), so it must be an auto-atari
         
     return true;
+}
+
+// look for a neighbors of vertex with "color" that are critical,
+// and add moves that save them to work
+// vertex is sure to be filled with !color
+void FastBoard::add_pattern_moves(int color, int vertex,
+                                  std::vector<int> & work) {                                  
+    for (int i = 0; i < 8; i++) {        
+        int sq = vertex + m_extradirs[i];
+        
+        if (m_square[sq] == EMPTY) {
+            if (match_pattern(color, sq)) {
+                if (!self_atari(color, sq)) {
+                    work.push_back(sq);
+                }
+            }
+        }                                        
+    }                                            
+}        
+
+// check for fixed patters around vertex with color
+// include rotations
+bool FastBoard::match_pattern(int color, int vertex) {
+    return false;
+}
+
+// add capture moves for color
+void FastBoard::add_captures(int color, std::vector<int> & work) {
+    // walk critical squares    
+    while (!m_critical.empty()) {
+        int sq = m_critical.front();
+        m_critical.pop();                
+        
+        if (m_square[sq] == EMPTY) {                
+            for (int k = 0; k < 4; k++) {
+                int ai = sq + m_dirs[k];
+                
+                if (m_square[ai] == !color) {
+                    int par = m_parent[ai];
+                    int lib = m_plibs[par];
+                                        
+                    if (lib <= 4) {
+                        // less than 4 liberties, we are sitting on one
+                        int samenbrs = 0;
+                        
+                        // check nbrs of original empty square
+                        for (int kk = 0; kk < 4; kk++) {
+                            int aai = sq + m_dirs[kk];
+                            
+                            if (m_square[aai] == !color) {
+                                if (m_parent[aai] == par) {
+                                    samenbrs++;
+                                }
+                            }                            
+                        }
+                        
+                        assert(samenbrs <= lib);    
+                        
+                        if (samenbrs >= lib) {                            
+                            work.push_back(sq);
+                            display_board(sq);
+                        }                    
+                    }                        
+                }                                                
+            }  
+        }      
+    }
 }

@@ -270,7 +270,7 @@ int GTP::execute(GameState & game, std::string xinput) {
         }
                 
         return 1;
-    } else if (!command.find("undo") == 0) {
+    } else if (command.find("undo") == 0) {
         if (game.undo_move()) {
             gtp_printf(id, "");
         } else {

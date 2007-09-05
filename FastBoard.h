@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <queue>
 #include <boost/tr1/array.hpp>
 
 class FastBoard {
@@ -50,9 +51,10 @@ public:
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
     int update_board_fast(const int color, const int i);    
-    void save_critical_neighbours(int color, int vertex, 
-                                  std::vector<int> & work);
-    void kill_neighbours(int vertex, std::vector<int> & work);
+    void save_critical_neighbours(int color, int vertex, std::vector<int> & work);
+    void add_pattern_moves(int color, int vertex, std::vector<int> & work);
+    void add_captures(int color, std::vector<int> & work);
+    
     bool self_atari(int color, int vertex);
     int get_dir(int i);
 
@@ -95,13 +97,16 @@ protected:
     std::tr1::array<int, MAXSQ+1>    m_parent;      /* parent node of string */        
     std::tr1::array<int, MAXSQ+1>    m_plibs;       /* pseudoliberties per string parent */        
     std::tr1::array<int, MAXSQ>      m_neighbours;  /* counts of neighboring stones */  
-    std::tr1::array<int, 4>          m_dirs;        /* movement directions */
+    std::tr1::array<int, 4>          m_dirs;        /* movement directions 4 way */
+    std::tr1::array<int, 8>          m_extradirs;   /* movement directions 8 way */
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
     std::tr1::array<int, 2>          m_stones;      /* stones per color */             
+    std::queue<int>                  m_critical;    /* queue of critical points */
 
     int m_boardsize;    
     
-    int count_liberties(const int i);    
+    int count_liberties(const int i); 
+    int count_neighbours(const int color, const int i);   
     void merge_strings(const int ip, const int aip);    
     int remove_string_fast(int i);        
     void add_neighbour(const int i, const int color);
@@ -114,6 +119,8 @@ protected:
     void add_string_liberties(int vertex, 
                               std::tr1::array<int, 3> & nbr_libs, 
                               int & nbr_libs_cnt);
+    void kill_neighbours(int vertex, std::vector<int> & work);                              
+    bool match_pattern(int color, int vertex);
 };
 
 #endif
