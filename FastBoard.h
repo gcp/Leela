@@ -50,7 +50,9 @@ public:
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
     int update_board_fast(const int color, const int i);    
-    bool critical_neighbour(int vertex);
+    void save_critical_neighbours(int color, int vertex, 
+                                  std::vector<int> & work);
+    void kill_neighbours(int vertex, std::vector<int> & work);
     bool self_atari(int color, int vertex);
     int get_dir(int i);
 
@@ -108,7 +110,10 @@ protected:
     std::vector<bool> calc_reach_color(int col);    
     void run_bouzy(int *influence, int dilat, int eros);  
     bool kill_or_connect(int color, int vertex);  
-    void add_string_liberties(int vertex, std::tr1::array<int, 3> & nbr_libs, int & nbr_libs_cnt);
+    int in_atari(int vertex);
+    void add_string_liberties(int vertex, 
+                              std::tr1::array<int, 3> & nbr_libs, 
+                              int & nbr_libs_cnt);
 };
 
 #endif

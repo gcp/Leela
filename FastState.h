@@ -43,6 +43,8 @@ public:
     int lastmove;        
     
 protected:
+    std::vector<int> m_work;   // working area for move generation
+
     int walk_empty_list(int color, int vidx);
     bool try_move(int color, int vertex);
     void play_move(int color, int vertex);     

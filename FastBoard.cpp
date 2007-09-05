@@ -822,36 +822,97 @@ std::string FastBoard::get_string(int vertex) {
     return result;
 }
 
-bool FastBoard::critical_neighbour(int vertex) {
+// check if string is in atari, returns 0 if not,
+// single liberty if it is
+int FastBoard::in_atari(int vertex) {        
+    int pos = vertex;        
+    int liberty = 0;
+    
+    assert(m_square[vertex] < EMPTY);
+  
+    do {                               
+        if (count_liberties(pos)) {                    
+            for (int k = 0; k < 4; k++) {
+                int ai = pos + m_dirs[k];                                
+                
+                if (m_square[ai] == EMPTY) { 
+                    if (liberty == 0) {                               
+                        liberty = ai;
+                    } else if (ai != liberty) {
+                        return 0;
+                    }
+                }
+            }                    
+        }
+        
+        pos = m_next[pos];
+    } while (pos != vertex);    
+    
+    return liberty; 
+}
+
+// loop over a string and try to kill neighbors
+void FastBoard::kill_neighbours(int vertex, std::vector<int> & work) {       
+    int scolor = m_square[vertex];            
+    int kcolor = !scolor;
+    int pos = vertex;
+          
+    do {                               
+        assert(m_square[pos] == scolor);
+            
+        for (int k = 0; k < 4; k++) {
+            int ai = pos + m_dirs[k];                                
+            
+            if (m_square[ai] == kcolor) { 
+                int par = m_parent[ai];
+                int lib = m_plibs[par];
+                
+                if (lib <= 4) {
+                    int atari = in_atari(ai);
+                    
+                    if (atari) {
+                        assert(m_square[atari] == EMPTY);
+                        work.push_back(atari);
+                    }
+                }
+            }
+        }                        
+        
+        pos = m_next[pos];
+    } while (pos != vertex);                                                    
+}                                         
+
+// look for a neighbors of vertex with "color" that are critical,
+// and add moves that save them to work
+// vertex is sure to be filled with !color
+void FastBoard::save_critical_neighbours(int color, int vertex,
+                                         std::vector<int> & work) {        
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
         
-        if (m_square[ai] < EMPTY) {        
+        if (m_square[ai] == color) {        
             int par = m_parent[ai];
             int lib = m_plibs[par];
             
-            if (lib <= 4) {
-                // 4 or less liberties
-                int samenbrs = 0;
+            if (lib <= 4) {                
+                int atari = in_atari(ai);
                 
-                // count original square nbrs with same parent
-                for (int kk = 0; kk < 4; kk++) {
-                    int aix = vertex + m_dirs[kk];
-                    if (m_parent[aix] == par) {
-                        samenbrs++;
-                    }
+                if (atari) {                      
+                    // find saving moves for atari square "atari"                
+                    // we can save by either
+                    // 1) playing in the atari if it increases liberties,
+                    //    i.e. it is not self-atari 
+                    // 2) capturing an opponent, which means that he should
+                    //    also be in atari                                                        
+                    if (!self_atari(color, atari)) {
+                        work.push_back(atari);        
+                    } 
+                    
+                    kill_neighbours(ai, work);                    
                 }
-                
-                assert(samenbrs <= lib);
-                
-                if (samenbrs >= lib)  {
-                    return true;
-                }            
             }
         }
-    }
-    
-    return false;
+    }        
 }
 
 int FastBoard::get_dir(int i) {
@@ -920,6 +981,7 @@ void FastBoard::add_string_liberties(int vertex,
     } while (pos != vertex);    
 }
 
+// check whether this move is a self-atari
 bool FastBoard::self_atari(int color, int vertex) {
     assert(get_square(vertex) == FastBoard::EMPTY);
     

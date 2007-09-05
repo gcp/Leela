@@ -93,26 +93,33 @@ int FastState::walk_empty_list(int color, int vidx) {
 }
 
 int FastState::play_random_move(int color) {                            
-    board.m_tomove = color;                             
+    board.m_tomove = color;                                         
     
-    int vidx;
-    bool foundcap = false;
+    m_work.clear();
     
-    for (int k = 0; k < 4 && !foundcap; k++) {
-        int ai = lastmove + board.get_dir(k);
-        
-        if (ai < board.m_maxsq && ai > 0) {        
-            if (board.get_square(ai) == FastBoard::EMPTY) {
-                if (board.critical_neighbour(ai)) {
-                    foundcap = true;
-                    vidx = board.m_empty_idx[ai];
-                }    
-            }
-        }
-    }
-            
-    if (!foundcap) {         
+    if (lastmove > 0 && lastmove < board.m_maxsq) {
+        if (board.get_square(lastmove) == !color) {
+            board.save_critical_neighbours(color, lastmove, m_work);         
+        }        
+    }   
+    
+    int vidx;     
+                
+    if (m_work.empty()) {         
         vidx = Random::get_Rng()->randint(board.m_empty_cnt);                    
+    } else {        
+        if (m_work.size() > 1) {
+            // remove multiple moves    
+            std::sort(m_work.begin(), m_work.end());    
+            m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end());
+            
+            int idx = Random::get_Rng()->randint(m_work.size());        
+            int sq = m_work[idx];                       
+            
+            vidx = board.m_empty_idx[sq];
+        } else {            
+            vidx = board.m_empty_idx[m_work[0]];
+        }                
     }
         
     int vtx = walk_empty_list(color, vidx); 
@@ -192,7 +199,7 @@ int FastState::get_last_move(void) {
     return lastmove;
 }
 
-int FastState::get_passes() { 
+int FastState::get_passes() {     
     return m_passes; 
 }
 
@@ -201,7 +208,8 @@ void FastState::set_passes(int val) {
 }
 
 void FastState::increment_passes() { 
-    set_passes(get_passes() + 1); 
+    m_passes++;
+    if (m_passes > 4) m_passes = 4;
 }
 
 int FastState::get_to_move() {
