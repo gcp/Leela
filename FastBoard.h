@@ -54,7 +54,8 @@ public:
     void play_critical_neighbours(int color, int vertex, std::vector<int> & work);
     void save_critical_neighbours(int color, int vertex, std::vector<int> & work);
     void add_pattern_moves(int color, int vertex, std::vector<int> & work);
-    void add_captures(int color, std::vector<int> & work);
+    void add_global_captures(int color, std::vector<int> & work);
+    void add_near_captures(int color, int vertex, std::vector<int> & work);
     
     bool self_atari(int color, int vertex);
     int get_dir(int i);
@@ -122,6 +123,7 @@ protected:
                               int & nbr_libs_cnt);
     void kill_neighbours(int vertex, std::vector<int> & work);                              
     bool match_pattern(int color, int vertex);
+    void try_capture(int color, int vertex, std::vector<int> & work);
 };
 
 #endif
