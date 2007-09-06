@@ -99,13 +99,13 @@ int FastState::play_random_move(int color) {
     
     if (lastmove > 0 && lastmove < board.m_maxsq) {
         if (board.get_square(lastmove) == !color) {
-            board.save_critical_neighbours(color, lastmove, m_work);         
-            if (m_work.empty()) {
+            board.play_critical_neighbours(color, lastmove, m_work);         
+            /*if (m_work.empty()) {
                 board.add_pattern_moves(color, lastmove, m_work);            
             }                
             if (m_work.empty()) {
                 board.add_captures(color, m_work);
-            }        
+            } */       
         }        
     }           
     

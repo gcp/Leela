@@ -1123,8 +1123,7 @@ void FastBoard::add_captures(int color, std::vector<int> & work) {
                         assert(samenbrs <= lib);    
                         
                         if (samenbrs >= lib) {                            
-                            work.push_back(sq);
-                            display_board(sq);
+                            work.push_back(sq);                            
                         }                    
                     }                        
                 }                                                
@@ -1132,3 +1131,43 @@ void FastBoard::add_captures(int color, std::vector<int> & work) {
         }      
     }
 }
+
+void FastBoard::play_critical_neighbours(int color, int vertex,
+                                         std::vector<int> & work) {   
+    for (int k = 0; k < 4; k++) {
+        int sq = vertex + m_dirs[k];
+        
+        if (m_square[sq] == EMPTY) {                
+            for (int k = 0; k < 4; k++) {
+                int ai = sq + m_dirs[k];
+                                
+                int par = m_parent[ai];
+                int lib = m_plibs[par];
+                                    
+                if (lib <= 4) {
+                    // less than 4 liberties, we are sitting on one
+                    int samenbrs = 0;
+                    
+                    // check nbrs of original empty square
+                    for (int kk = 0; kk < 4; kk++) {
+                        int aai = sq + m_dirs[kk];
+                        
+                        if (m_square[aai] < EMPTY) {
+                            if (m_parent[aai] == par) {
+                                samenbrs++;
+                            }
+                        }                            
+                    }
+                    
+                    assert(samenbrs <= lib);    
+                    
+                    if (samenbrs >= lib) {    
+                        if (!self_atari(color, sq)) {                        
+                            work.push_back(sq);          
+                        }                  
+                    }                    
+                }                                                                                        
+            }              
+        }
+    }                                                 
+}                                         

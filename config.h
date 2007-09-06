@@ -13,7 +13,7 @@
 
 /* Hard limits */
 
-#define NAME            "KaMG"
+#define NAME            "KaMG2"
 #define VERSION         "0.1"
 
 /* Integer types */
