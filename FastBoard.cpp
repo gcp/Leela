@@ -65,9 +65,14 @@ void FastBoard::reset_board(int size) {
     m_empty_cnt = 0;        
 
     m_dirs[0] = -size-2;
-    m_dirs[1] = -1;
-    m_dirs[2] = +1;
-    m_dirs[3] = +size+2;
+    m_dirs[1] = +1;
+    m_dirs[2] = +size+2;
+    m_dirs[3] = -1;    
+    
+    m_alterdirs[0] = 1;
+    m_alterdirs[1] = size+2;
+    m_alterdirs[2] = 1;
+    m_alterdirs[3] = size+2;    
     
     m_extradirs[0] = -size-2-1;
     m_extradirs[1] = -size-2;
@@ -76,8 +81,7 @@ void FastBoard::reset_board(int size) {
     m_extradirs[4] = +1;
     m_extradirs[5] = +size+2-1;
     m_extradirs[6] = +size+2;
-    m_extradirs[7] = +size+2+1;    
-    
+    m_extradirs[7] = +size+2+1;        
     
     for (int i = 0; i < m_maxsq; i++) {
         m_square[i]     = INVAL;        
@@ -1075,8 +1079,8 @@ void FastBoard::add_pattern_moves(int color, int vertex,
         int sq = vertex + m_extradirs[i];
         
         if (m_square[sq] == EMPTY) {
-            if (match_pattern(color, sq)) {
-                if (!self_atari(color, sq)) {
+            if (match_pattern(color, sq)) {                
+                if (!self_atari(color, sq)) {                    
                     work.push_back(sq);
                 }
             }
@@ -1084,9 +1088,172 @@ void FastBoard::add_pattern_moves(int color, int vertex,
     }                                            
 }        
 
-// check for fixed patters around vertex with color
+// check for fixed patterns around vertex for color to move
 // include rotations
 bool FastBoard::match_pattern(int color, int vertex) {
+    for (int k = 0; k < 4; k++) {
+        int ss = vertex + m_dirs[k];
+        
+        if (m_square[ss] < EMPTY) {
+            int c1 = m_square[ss];
+            // pattern 1
+            if (m_square[vertex + m_dirs[(k + 1) % 4]] == EMPTY
+                && m_square[vertex + m_dirs[(k + 3) % 4]] == EMPTY) {
+                // pattern 2 empties
+                if (m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY) {
+                    // pattern 2 white stone nbrs
+                    if ((m_square[ss + m_alterdirs[k]] == !c1
+                        && m_square[ss - m_alterdirs[k]] == EMPTY) 
+                        ||
+                        (m_square[ss - m_alterdirs[k]] == !c1
+                         && m_square[ss + m_alterdirs[k]] == EMPTY)) {
+                         return true;
+                    }
+                }
+                // pattern 1 white stone nbrs
+                if (m_square[ss + m_alterdirs[k]] == !c1
+                    && m_square[ss - m_alterdirs[k]] == !c1) {
+                    return true;
+                }
+            }
+            // pattern 3
+            if (m_square[vertex + m_dirs[(k + 1) % 4]] == EMPTY
+                && m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY
+                 && m_square[vertex + m_dirs[(k + 3) % 4]] == !c1) {
+                if (m_square[vertex + m_dirs[k] + m_dirs[(k + 3) % 4]] == !c1) {
+                    return true;
+                }                 
+            }
+            // pattern 3 (other rotation)
+            if (m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY
+               && m_square[vertex + m_dirs[(k + 3) % 4]] == EMPTY
+               && m_square[vertex + m_dirs[(k + 1) % 4]] == !c1) {
+               if (m_square[vertex + m_dirs[k] + m_dirs[(k + 1) % 4]] == !c1) {
+                   return true;
+                }                 
+            }      
+            // pattern 4       
+            if (c1 != color) {
+                if (m_square[vertex + m_dirs[(k + 1) % 4]] == EMPTY
+                    && m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY
+                    && m_square[vertex + m_dirs[(k + 3) % 4]] == EMPTY) {                    
+                    if (m_square[ss + m_alterdirs[k]] == c1
+                        && m_square[ss - m_alterdirs[k]] == !c1) {
+                        return true;
+                    }
+                    if (m_square[ss - m_alterdirs[k]] == c1
+                        && m_square[ss + m_alterdirs[k]] == !c1) {
+                        return true;
+                    }
+                }
+            }
+            // pattern 5             
+            if (m_square[vertex + m_dirs[(k + 1) % 4]] == c1) {
+                if (m_square[vertex + m_dirs[k] + m_dirs[(k + 1) % 4]] == !c1) { 
+                    // pattern 6 & 7                                       
+                    if ((m_square[vertex + m_dirs[(k + 3) % 4]] == c1
+                        && m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY)
+                        ||
+                        (m_square[vertex + m_dirs[(k + 2) % 4]] == c1
+                        && m_square[vertex + m_dirs[(k + 3) % 4]] == EMPTY)) {
+                    } else {
+                        return true;
+                    }                        
+                }
+            }
+            if (m_square[vertex + m_dirs[(k + 3) % 4]] == c1) {
+                if (m_square[vertex + m_dirs[k] + m_dirs[(k + 3) % 4]] == !c1) {
+                    // pattern 6 & 7
+                    if ((m_square[vertex + m_dirs[(k + 1) % 4]] == c1
+                         && m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY)
+                         ||
+                         (m_square[vertex + m_dirs[(k + 2) % 4]] == c1
+                         && m_square[vertex + m_dirs[(k + 1) % 4]] == EMPTY)) {
+                     } else {
+                         return true;
+                     }      
+                 } 
+            }
+            // pattern 8
+            if (m_square[vertex + m_dirs[(k + 1) % 4]] == !c1
+                && m_square[vertex + m_dirs[(k + 3) % 4]] == !c1) {
+                if (m_square[vertex + m_dirs[(k + 2) % 4]] != c1
+                   || m_square[vertex + m_dirs[(k + 2) % 4] + m_alterdirs[k]] != c1
+                   || m_square[vertex + m_dirs[(k + 2) % 4] - m_alterdirs[k]] != c1) {
+                   return true;
+                }
+            }
+        } else if (m_square[ss] == INVAL) {
+            // edge patterns    
+            // pattern 9
+            if (m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY) {
+                if (m_square[vertex + m_dirs[(k + 1) % 4]] != EMPTY) {
+                    int c1 = m_square[vertex + m_dirs[(k + 1) % 4]];
+                    if (m_square[vertex + m_dirs[(k + 1) % 4] + m_dirs[k]] == !c1
+                        || m_square[vertex + m_dirs[(k + 1) % 4] - m_dirs[k]] == !c1) {
+                        return true;
+                    }
+                }
+                if (m_square[vertex + m_dirs[(k + 3) % 4]] != EMPTY) {
+                    int c1 = m_square[vertex + m_dirs[(k + 3) % 4]];
+                    if (m_square[vertex + m_dirs[(k + 3) % 4] + m_dirs[k]] == !c1
+                        || m_square[vertex + m_dirs[(k + 3) % 4] - m_dirs[k]] == !c1) {
+                        return true;
+                    }
+                }
+            }
+            // pattern 10
+            if (m_square[vertex + m_dirs[(k + 2) % 4]] != EMPTY) {
+                int c1 = m_square[vertex + m_dirs[(k + 2) % 4]];
+                if (m_square[vertex + m_dirs[(k + 3) % 4]] == !c1
+                  && m_square[vertex + m_dirs[(k + 1) % 4]] != !c1) {
+                    return true;
+                }
+                if (m_square[vertex + m_dirs[(k + 3) % 4]] != !c1
+                  && m_square[vertex + m_dirs[(k + 1) % 4]] == c1) {
+                    return true;
+                }
+            }
+            // pattern 11
+            if (m_square[vertex + m_dirs[(k + 2) % 4]] == color
+                && m_square[vertex + m_dirs[(k + 2) % 4] + m_alterdirs[k]] == !color) {
+                return true;
+            }
+            if (m_square[vertex + m_dirs[(k + 2) % 4]] == color
+                && m_square[vertex + m_dirs[(k + 2) % 4] - m_alterdirs[k]] == !color) {
+                return true;
+            }
+            // pattern 12
+            if (m_square[vertex + m_dirs[(k + 2) % 4]] == !color) {
+                if (m_square[vertex + m_dirs[(k + 1) % 4]] != !color) {
+                    if (m_square[vertex + m_dirs[(k + 2) % 4] + m_dirs[(k + 1) % 4]] == color) {
+                        return true;
+                    }
+                }
+                if (m_square[vertex + m_dirs[(k + 3) % 4]] != !color) {
+                    if (m_square[vertex + m_dirs[(k + 2) % 4] + m_dirs[(k + 3) % 4]] == color) {
+                        return true;
+                    }
+                }
+            }
+            // pattern 13
+            if (m_square[vertex + m_dirs[(k + 2) % 4]] == !color) {
+                if (m_square[vertex + m_dirs[(k + 1) % 4]] == !color
+                    && m_square[vertex + m_dirs[(k + 3) % 4]] == color) {
+                    if (m_square[vertex + m_dirs[(k + 1) % 4] + m_dirs[(k + 2) % 4]] == color) {
+                        return true;
+                    }
+                }
+                if (m_square[vertex + m_dirs[(k + 3) % 4]] == !color
+                   && m_square[vertex + m_dirs[(k + 1) % 4]] == color) {
+                    if (m_square[vertex + m_dirs[(k + 3) % 4] + m_dirs[(k + 2) % 4]] == color) {
+                        return true;
+                    }
+                }
+            }
+        }    
+    }
+    
     return false;
 }
 
