@@ -6,7 +6,7 @@
 
 class GTP {
 public:                        
-    static int execute(GameState &game, std::string xinput);
+    static bool execute(GameState &game, std::string xinput);
 private:        
     static const int GTP_VERSION = 2;
     

@@ -71,7 +71,8 @@ public:
     bool black_to_move();
         
     std::string move_to_text(int move);
-    std::string get_string(int vertex);    
+    std::string get_string(int vertex);   
+    std::string get_stone_list(); 
     
     void reset_board(int size);                    
     void display_influence(void);            

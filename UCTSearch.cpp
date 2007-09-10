@@ -220,7 +220,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;
             dump_thinking();            
         }        
-    } while(centiseconds_elapsed < time_for_move);  
+    } while(centiseconds_elapsed < time_for_move);
     
     if (!m_root.has_children()) {
         return FastBoard::PASS;

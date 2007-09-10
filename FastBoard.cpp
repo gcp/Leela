@@ -1351,4 +1351,23 @@ void FastBoard::play_critical_neighbours(int color, int vertex,
             }              
         }
     }                                                 
-}                                         
+}
+
+std::string FastBoard::get_stone_list() {
+    std::string res;
+    
+    for (int i = 0; i < m_boardsize; i++) {
+        for (int j = 0; j < m_boardsize; j++) {
+            int vertex = get_vertex(i, j);
+            
+            if (get_square(vertex) != EMPTY) {
+                res += move_to_text(vertex) + " ";
+            }
+        }
+    }
+    
+    // eat final space
+    res.resize(res.size() - 1);
+    
+    return res;
+}

@@ -2,6 +2,7 @@
 #define GAMESTATE_H_INCLUDED
 
 #include <vector>
+#include <string>
 
 #include "FastState.h"
 #include "FullBoard.h"
@@ -12,6 +13,9 @@ class GameState : public KoState {
 public:                    
     void init_game(int size = 19, float komi = 7.5f);    
     void reset_game();        
+    bool set_fixed_handicap(int stones); 
+    void place_free_handicap(int stones);
+    void anchor_game_history(void);
     
     int gen_moves(int *moves);
     
@@ -29,7 +33,9 @@ public:
 
     void display_state();
           
-private:    
+private:
+    bool valid_handicap(int stones);        
+    
     std::vector<FastState> game_history;                          
     
     TimeControl m_timecontrol;               

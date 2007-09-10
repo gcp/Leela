@@ -98,15 +98,17 @@ int FastState::play_random_move(int color) {
     m_work.clear();
     
     // save, patter, global, near = kapat2
-    // global, near, save, pattern = kapat3
+    // global, near, save, pattern = kapat3    
+    // no global = kapx
+    // no global, no save = kapx2
     
     if (lastmove > 0 && lastmove < board.m_maxsq) {
         if (board.get_square(lastmove) == !color) {
-            board.add_global_captures(color, m_work);            
+            //board.add_global_captures(color, m_work);            
             board.add_near_captures(color, lastmove, m_work);         
-            if (m_work.empty()) {
-                board.save_critical_neighbours(color, lastmove, m_work);                         
-            }
+            //if (m_work.empty()) {
+            //    board.save_critical_neighbours(color, lastmove, m_work);                         
+            //}
             if (m_work.empty()) {
                 board.add_pattern_moves(color, lastmove, m_work);            
             }               
