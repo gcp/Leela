@@ -24,6 +24,10 @@ int main (int argc, char *argv[]) {
     std::cout.setf(std::ios::unitbuf);
     std::cin.setf(std::ios::unitbuf);
     std::cerr.setf(std::ios::unitbuf);    
+    
+    setbuf(stdout, NULL);
+    setbuf(stdin, NULL);
+    setbuf(stderr, NULL);    
                     
     std::auto_ptr<Random> rng(new Random(5489UL));          
     Zobrist::init_zobrist(*rng);

@@ -220,7 +220,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;
             dump_thinking();            
         }        
-    } while (centiseconds_elapsed < time_for_move);  
+    } while(centiseconds_elapsed < time_for_move);  
     
     if (!m_root.has_children()) {
         return FastBoard::PASS;
@@ -232,10 +232,12 @@ int UCTSearch::think(int color, passflag_t passflag) {
     myprintf("\n");
     dump_stats(m_rootstate, m_root);                          
         
-    myprintf("\n%d visits, %d nodes, %d vps\n\n", 
-             m_root.get_visits(), 
-             m_nodes,
-             (m_root.get_visits() * 100) / centiseconds_elapsed);              
+    if (centiseconds_elapsed > 0) {    
+        myprintf("\n%d visits, %d nodes, %d vps\n\n", 
+                 m_root.get_visits(), 
+                 m_nodes,
+                 (m_root.get_visits() * 100) / centiseconds_elapsed);              
+    }             
             
     // XXX: check for pass but no actual win on final_scoring
     int bestmove = get_best_move(passflag);

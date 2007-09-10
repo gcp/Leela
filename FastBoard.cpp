@@ -1078,9 +1078,11 @@ void FastBoard::add_pattern_moves(int color, int vertex,
     for (int i = 0; i < 8; i++) {        
         int sq = vertex + m_extradirs[i];
         
-        if (m_square[sq] == EMPTY) {
-            if (match_pattern(color, sq)) {                
-                if (!self_atari(color, sq)) {                    
+        if (m_square[sq] == EMPTY) {            
+            if (match_pattern(color, sq)) { 
+  //              display_board(sq);   
+//                printf("\ntomove: %s\n", m_tomove == 0 ? "X" : "O");
+                if (!self_atari(color, sq)) {
                     work.push_back(sq);
                 }
             }
@@ -1206,11 +1208,11 @@ bool FastBoard::match_pattern(int color, int vertex) {
             if (m_square[vertex + m_dirs[(k + 2) % 4]] != EMPTY) {
                 int c1 = m_square[vertex + m_dirs[(k + 2) % 4]];
                 if (m_square[vertex + m_dirs[(k + 3) % 4]] == !c1
-                  && m_square[vertex + m_dirs[(k + 1) % 4]] != !c1) {
+                  && m_square[vertex + m_dirs[(k + 1) % 4]] != c1) {
                     return true;
                 }
-                if (m_square[vertex + m_dirs[(k + 3) % 4]] != !c1
-                  && m_square[vertex + m_dirs[(k + 1) % 4]] == c1) {
+                if (m_square[vertex + m_dirs[(k + 3) % 4]] == !c1
+                  && m_square[vertex + m_dirs[(k + 1) % 4]] != c1) {
                     return true;
                 }
             }
@@ -1313,8 +1315,8 @@ void FastBoard::try_capture(int color, int vertex, std::vector<int> & work) {
 
 void FastBoard::play_critical_neighbours(int color, int vertex,
                                          std::vector<int> & work) {   
-    for (int k = 0; k < 8; k++) {
-        int sq = vertex + m_extradirs[k];
+    for (int i = 0; i < 4; i++) {
+        int sq = vertex + m_dirs[i];
         
         if (m_square[sq] == EMPTY) {                
             for (int k = 0; k < 4; k++) {
