@@ -6,6 +6,7 @@
 #include "GTP.h"
 #include "Random.h"
 #include "Utils.h"
+#include "Matcher.h"
 
 using namespace Utils;
 
@@ -31,6 +32,8 @@ int main (int argc, char *argv[]) {
                     
     std::auto_ptr<Random> rng(new Random(5489UL));          
     Zobrist::init_zobrist(*rng);
+
+    Matcher::get_Matcher();
     
     std::auto_ptr<GameState> maingame(new GameState);    
         

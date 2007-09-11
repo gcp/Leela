@@ -7,6 +7,7 @@
 
 #include "FastBoard.h"
 #include "Utils.h"
+#include "Matcher.h"
 
 using namespace Utils;
 
@@ -42,6 +43,7 @@ FastBoard::square_t FastBoard::get_square(int vertex) {
 void FastBoard::set_square(int vertex, FastBoard::square_t content) {
     assert(vertex >= 0 && vertex < MAXSQ);
     assert(vertex >= 0 && vertex < m_maxsq);
+    assert(content >= BLACK && content <= INVAL);
 
     m_square[vertex] = content;
 }
@@ -85,7 +87,7 @@ void FastBoard::reset_board(int size) {
     
     for (int i = 0; i < m_maxsq; i++) {
         m_square[i]     = INVAL;        
-        m_neighbours[i] = 0;
+        m_neighbours[i] = 0;        
         m_parent[i]     = MAXSQ;
     }      
             
@@ -95,7 +97,7 @@ void FastBoard::reset_board(int size) {
                                     
             m_square[vertex]          = EMPTY;            
             m_empty_idx[vertex]       = m_empty_cnt;
-            m_empty[m_empty_cnt++]    = vertex;                        
+            m_empty[m_empty_cnt++]    = vertex;            
             
             if (i == 0 || i == size - 1) {
                 m_neighbours[vertex] += (1 << (NBR_SHIFT * BLACK))
@@ -113,7 +115,7 @@ void FastBoard::reset_board(int size) {
                 m_neighbours[vertex] +=  2 << (NBR_SHIFT * EMPTY);
             }
         }
-    }      
+    }         
     
     m_parent[MAXSQ] = MAXSQ;
     m_plibs[MAXSQ]  = 999;
@@ -207,8 +209,8 @@ void FastBoard::add_neighbour(const int i, const int color) {
     m_neighbours[i - 1]               += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));                       
     m_neighbours[i + 1]               += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));  
     m_neighbours[i + m_boardsize + 2] += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));  
-    m_neighbours[i - m_boardsize - 2] += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));  
-    
+    m_neighbours[i - m_boardsize - 2] += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));         
+
     m_plibs[m_parent[i - 1]]--;
     m_plibs[m_parent[i + 1]]--;
     m_plibs[m_parent[i + m_boardsize + 2]]--;
@@ -225,7 +227,7 @@ void FastBoard::remove_neighbour(const int i, const int color) {
                           - (1 << (NBR_SHIFT * color));        
                             
         m_plibs[m_parent[ai]]++;                 
-    }               
+    }     
 }
 
 int FastBoard::remove_string_fast(int i) {
@@ -254,7 +256,6 @@ int FastBoard::remove_string_fast(int i) {
 
     return removed;
 }
-
 
 std::vector<bool> FastBoard::calc_reach_color(int col) {    
     
@@ -949,6 +950,10 @@ int FastBoard::get_dir(int i) {
     return m_dirs[i];
 }
 
+int FastBoard::get_extra_dir(int i) {
+    return m_extradirs[i];
+}
+
 bool FastBoard::kill_or_connect(int color, int vertex) {     
     int connecting = false;
     int i = vertex;          
@@ -1070,18 +1075,27 @@ bool FastBoard::self_atari(int color, int vertex) {
     return true;
 }
 
-// look for a neighbors of vertex with "color" that are critical,
-// and add moves that save them to work
-// vertex is sure to be filled with !color
+int FastBoard::get_pattern(const int sq) {
+    int result = 0;
+
+    for (int k = 0; k < 8; k++) {       
+        result = (result << 2) | m_square[sq + m_extradirs[k]];        
+    }
+
+    return result;
+}
+
 void FastBoard::add_pattern_moves(int color, int vertex,
-                                  std::vector<int> & work) {                                  
+                                  std::vector<int> & work) {                                      
+    Matcher * matcher = Matcher::get_Matcher();
+
     for (int i = 0; i < 8; i++) {        
         int sq = vertex + m_extradirs[i];
         
-        if (m_square[sq] == EMPTY) {            
-            if (match_pattern(color, sq)) { 
-  //              display_board(sq);   
-//                printf("\ntomove: %s\n", m_tomove == 0 ? "X" : "O");
+        if (m_square[sq] == EMPTY) {      
+            int pattern = get_pattern(sq);            
+            
+            if (matcher->matches(color, pattern)) {
                 if (!self_atari(color, sq)) {
                     work.push_back(sq);
                 }
@@ -1259,7 +1273,6 @@ bool FastBoard::match_pattern(int color, int vertex) {
     return false;
 }
 
-
 // add capture moves for color near last move
 void FastBoard::add_near_captures(int color, int vertex, std::vector<int> & work) {
     for (int k = 0; k < 4; k++) {                        
@@ -1311,46 +1324,6 @@ void FastBoard::try_capture(int color, int vertex, std::vector<int> & work) {
             }                                                
         }  
     }      
-}
-
-void FastBoard::play_critical_neighbours(int color, int vertex,
-                                         std::vector<int> & work) {   
-    for (int i = 0; i < 4; i++) {
-        int sq = vertex + m_dirs[i];
-        
-        if (m_square[sq] == EMPTY) {                
-            for (int k = 0; k < 4; k++) {
-                int ai = sq + m_dirs[k];
-                                
-                int par = m_parent[ai];
-                int lib = m_plibs[par];
-                                    
-                if (lib <= 4) {
-                    // less than 4 liberties, we are sitting on one
-                    int samenbrs = 0;
-                    
-                    // check nbrs of original empty square
-                    for (int kk = 0; kk < 4; kk++) {
-                        int aai = sq + m_dirs[kk];
-                        
-                        if (m_square[aai] < EMPTY) {
-                            if (m_parent[aai] == par) {
-                                samenbrs++;
-                            }
-                        }                            
-                    }
-                    
-                    assert(samenbrs <= lib);    
-                    
-                    if (samenbrs >= lib) {    
-                        if (!self_atari(color, sq)) {                        
-                            work.push_back(sq);          
-                        }                  
-                    }                    
-                }                                                                                        
-            }              
-        }
-    }                                                 
 }
 
 std::string FastBoard::get_stone_list() {

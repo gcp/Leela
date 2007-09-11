@@ -50,17 +50,19 @@ public:
         
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
-    int update_board_fast(const int color, const int i);    
-    void play_critical_neighbours(int color, int vertex, std::vector<int> & work);
+    int update_board_fast(const int color, const int i);        
     void save_critical_neighbours(int color, int vertex, std::vector<int> & work);
-    void add_pattern_moves(int color, int vertex, std::vector<int> & work);
+    void add_pattern_moves(int color, int vertex, std::vector<int> & work);    
     void add_global_captures(int color, std::vector<int> & work);
-    void add_near_captures(int color, int vertex, std::vector<int> & work);
+    void add_near_captures(int color, int vertex, std::vector<int> & work);    
+    bool match_pattern(int color, int vertex);
     
     bool self_atari(int color, int vertex);
     int get_dir(int i);
+    int get_extra_dir(int i);
 
     bool no_eye_fill(const int i);
+    int get_pattern(const int sq);
     
     int estimate_mc_score(float komi = 7.5f);    
     float final_mc_score(float komi = 7.5f);        
@@ -99,7 +101,7 @@ protected:
     std::tr1::array<int, MAXSQ+1>    m_next;        /* next stone in string */ 
     std::tr1::array<int, MAXSQ+1>    m_parent;      /* parent node of string */        
     std::tr1::array<int, MAXSQ+1>    m_plibs;       /* pseudoliberties per string parent */        
-    std::tr1::array<int, MAXSQ>      m_neighbours;  /* counts of neighboring stones */  
+    std::tr1::array<int, MAXSQ>      m_neighbours;  /* counts of neighboring stones */       
     std::tr1::array<int, 4>          m_dirs;        /* movement directions 4 way */
     std::tr1::array<int, 4>          m_alterdirs;   /* to change movement direction */
     std::tr1::array<int, 8>          m_extradirs;   /* movement directions 8 way */
@@ -123,8 +125,7 @@ protected:
     void add_string_liberties(int vertex, 
                               std::tr1::array<int, 3> & nbr_libs, 
                               int & nbr_libs_cnt);
-    void kill_neighbours(int vertex, std::vector<int> & work);                              
-    bool match_pattern(int color, int vertex);
+    void kill_neighbours(int vertex, std::vector<int> & work);                                  
     void try_capture(int color, int vertex, std::vector<int> & work);
 };
 
