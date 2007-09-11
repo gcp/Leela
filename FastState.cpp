@@ -1,4 +1,7 @@
 #include <assert.h>
+#include <vector>
+#include <algorithm>
+
 #include "FastBoard.h"
 #include "FastState.h"
 #include "Random.h"
@@ -98,13 +101,13 @@ int FastState::play_random_move(int color) {
     m_work.clear();    
     
     if (lastmove > 0 && lastmove < board.m_maxsq) {
-        if (board.get_square(lastmove) == !color) {
+        if (board.get_square(lastmove) == !color) {            
             board.add_global_captures(color, m_work);                        
-            board.add_near_captures(color, lastmove, m_work);                                     
-            if (m_work.empty()) {
+            board.add_near_captures(color, lastmove, m_work);                        
+            if (m_work.empty()) {                
                 board.save_critical_neighbours(color, lastmove, m_work);
             }
-            if (m_work.empty()) {
+            if (m_work.empty()) {                
                 board.add_pattern_moves(color, lastmove, m_work);            
             }                           
         }        
@@ -113,7 +116,7 @@ int FastState::play_random_move(int color) {
     int vidx;     
                 
     if (m_work.empty()) {         
-        vidx = Random::get_Rng()->randint(board.m_empty_cnt);                    
+        vidx = Random::get_Rng()->randint(board.m_empty_cnt);                                    
     } else {        
         if (m_work.size() > 1) {
             // remove multiple moves    
@@ -123,13 +126,14 @@ int FastState::play_random_move(int color) {
             int idx = Random::get_Rng()->randint(m_work.size());        
             int sq = m_work[idx];                       
             
-            vidx = board.m_empty_idx[sq];
+            vidx = board.m_empty_idx[sq];                                    
         } else {            
-            vidx = board.m_empty_idx[m_work[0]];
-        }                
-    }
-        
-    int vtx = walk_empty_list(color, vidx); 
+            vidx = board.m_empty_idx[m_work[0]];            
+        }                        
+    }    
+    
+    // XXX: slow if we already did the checks!!!!  
+    int vtx = walk_empty_list(color, vidx);         
               
     return play_move_fast(vtx);                         
 }

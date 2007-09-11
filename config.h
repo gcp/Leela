@@ -13,7 +13,7 @@
 
 /* Hard limits */
 
-#define NAME            "Ka"
+#define NAME            "KaFP2"
 #define VERSION         "0.1"
 
 /* Integer types */

@@ -106,8 +106,7 @@ protected:
     std::tr1::array<int, 4>          m_alterdirs;   /* to change movement direction */
     std::tr1::array<int, 8>          m_extradirs;   /* movement directions 8 way */
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
-    std::tr1::array<int, 2>          m_stones;      /* stones per color */             
-    std::queue<int>                  m_critical;    /* queue of critical points */
+    std::tr1::array<int, 2>          m_stones;      /* stones per color */                 
 
     int m_boardsize;    
     
@@ -127,6 +126,8 @@ protected:
                               int & nbr_libs_cnt);
     void kill_neighbours(int vertex, std::vector<int> & work);                                  
     void try_capture(int color, int vertex, std::vector<int> & work);
+public:
+    std::queue<int>                  m_critical;    /* queue of critical points */    
 };
 
 #endif

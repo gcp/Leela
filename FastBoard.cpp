@@ -917,7 +917,7 @@ void FastBoard::save_critical_neighbours(int color, int vertex,
             if (lib <= 4) {                
                 int atari = in_atari(ai);
                 
-                if (atari) {      
+                if (atari) {                        
                     size_t startsize = work.size();
                                     
                     // find saving moves for atari square "atari"                
@@ -968,7 +968,7 @@ bool FastBoard::kill_or_connect(int color, int vertex) {
                  
         int libs = m_plibs[m_parent[ai]];
         
-        if (libs == 0 && get_square(ai) != color) {  
+        if (libs == 0 && get_square(ai) == !color) {  
             opps_live = false;                                   
         } else if (libs >= 8 && get_square(ai) == color) {
             live_connect = true;
@@ -995,12 +995,16 @@ void FastBoard::add_string_liberties(int vertex,
                 int ai = pos + m_dirs[k];                                
                 
                 if (m_square[ai] == EMPTY) {                                
-                    std::tr1::array<int, 3>::iterator it;
+                    bool found = false;
                     
-                    it = std::find(nbr_libs.begin(), nbr_libs.end(), ai);                
-                    
+                    for (int i = 0; i < nbr_libs_cnt; i++) {
+                        if (nbr_libs[i] == ai) {
+                            found = true;
+                        }
+                    }
+                                        
                     // not in list yet, so add
-                    if (it == nbr_libs.end()) {
+                    if (!found) {
                         nbr_libs[nbr_libs_cnt++] = ai; 
                         
                         // more than 2 liberties means we are not critical
@@ -1017,21 +1021,21 @@ void FastBoard::add_string_liberties(int vertex,
 }
 
 // check whether this move is a self-atari
-bool FastBoard::self_atari(int color, int vertex) {
+bool FastBoard::self_atari(int color, int vertex) {    
     assert(get_square(vertex) == FastBoard::EMPTY);
     
     // 1) count new liberties, if we add 2 or more we're safe    
     
     int newlibs = count_liberties(vertex);
     
-    if (newlibs >= 2) {
+    if (newlibs >= 2) {        
         return false;                
     }
     
     // 2) if we kill an enemy, or connect to safety, we're good 
     // as well
     
-    if (kill_or_connect(color, vertex)) {
+    if (kill_or_connect(color, vertex)) {        
         return false;
     }
     
@@ -1050,7 +1054,18 @@ bool FastBoard::self_atari(int color, int vertex) {
         int ai = vertex + m_dirs[k];
         
         if (get_square(ai) == FastBoard::EMPTY) {
-            nbr_libs[nbr_libs_cnt++] = ai;
+            bool found = false;
+                    
+            for (int i = 0; i < nbr_libs_cnt; i++) {
+                if (nbr_libs[i] == ai) {
+                    found = true;
+                }
+            }
+                                        
+            // not in list yet, so add
+            if (!found) {
+                nbr_libs[nbr_libs_cnt++] = ai;
+            }                
         } else if (get_square(ai) == color) {        
             int par = m_parent[ai];
             int lib = m_plibs[par];
@@ -1063,15 +1078,14 @@ bool FastBoard::self_atari(int color, int vertex) {
             }            
         }
         
-        if (nbr_libs_cnt > 2) {
+        if (nbr_libs_cnt > 2) {            
             return false;
         }
     }
     
     // if we get here, there are no more than 2 liberties,
     // and we just removed 1 of those (since we added the play square
-    // to the list), so it must be an auto-atari
-        
+    // to the list), so it must be an auto-atari    
     return true;
 }
 
@@ -1293,15 +1307,25 @@ void FastBoard::add_global_captures(int color, std::vector<int> & work) {
 
 void FastBoard::try_capture(int color, int vertex, std::vector<int> & work) {
     if (m_square[vertex] == EMPTY) {                
+        int limitlibs = count_neighbours(!color, vertex);
+        
+        // no enemy neighbors, nothing to capture
+        if (!limitlibs) {
+            return;
+        }
+    
         for (int k = 0; k < 4; k++) {
             int ai = vertex + m_dirs[k];
             
             if (m_square[ai] == !color) {
                 int par = m_parent[ai];
                 int lib = m_plibs[par];
-                                    
-                if (lib <= 4) {
-                    // less than 4 liberties, we are sitting on one
+                    
+                // less than 4 liberties, we are sitting on one                                    
+                // quick check if there are more psuedoliberties 
+                // than there are liberties around the starting square,
+                // which means they certainly are not just 1 true liberty
+                if (lib <= 4 && limitlibs >= lib) {                    
                     int samenbrs = 0;
                     
                     // check nbrs of original empty square
@@ -1318,8 +1342,9 @@ void FastBoard::try_capture(int color, int vertex, std::vector<int> & work) {
                     assert(samenbrs <= lib);    
                     
                     if (samenbrs >= lib) {                            
-                        work.push_back(vertex);                            
-                    }                    
+                        work.push_back(vertex);  
+                        return;                                                  
+                    }                                        
                 }                        
             }                                                
         }  
