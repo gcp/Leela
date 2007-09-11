@@ -103,37 +103,37 @@ int FastState::play_random_move(int color) {
     if (lastmove > 0 && lastmove < board.m_maxsq) {
         if (board.get_square(lastmove) == !color) {            
             board.add_global_captures(color, m_work);                        
-            board.add_near_captures(color, lastmove, m_work);                        
+            //board.add_near_captures(color, lastmove, m_work);                                    
             if (m_work.empty()) {                
                 board.save_critical_neighbours(color, lastmove, m_work);
-            }
+            }            
             if (m_work.empty()) {                
                 board.add_pattern_moves(color, lastmove, m_work);            
-            }                           
+            }
+            // remove ko captures     
+            m_work.erase(std::remove(m_work.begin(), m_work.end(), komove), m_work.end());                               
         }        
-    }           
+    }                   
     
     int vidx;     
+    int vtx;
                 
     if (m_work.empty()) {         
-        vidx = Random::get_Rng()->randint(board.m_empty_cnt);                                    
+        vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
+        vtx  = walk_empty_list(color, vidx); 
     } else {        
-        if (m_work.size() > 1) {
+        if (m_work.size() > 1) {            
             // remove multiple moves    
             std::sort(m_work.begin(), m_work.end());    
-            m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end());
+            m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end()); 
                        
-            int idx = Random::get_Rng()->randint(m_work.size());        
-            int sq = m_work[idx];                       
-            
-            vidx = board.m_empty_idx[sq];                                    
+            int idx = Random::get_Rng()->randint(m_work.size()); 
+                        
+            vtx = m_work[idx]; 
         } else {            
-            vidx = board.m_empty_idx[m_work[0]];            
-        }                        
-    }    
-    
-    // XXX: slow if we already did the checks!!!!  
-    int vtx = walk_empty_list(color, vidx);         
+            vtx = m_work[0];
+        }
+    }            
               
     return play_move_fast(vtx);                         
 }
