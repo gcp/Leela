@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <cctype>
 #include <string>
+#include <sstream>
 
 #include "config.h"
 
@@ -104,12 +105,18 @@ int GameState::play_textmove(std::string color, std::string vertex) {
     if (!std::isdigit(vertex[1])) return 0;    
     if (vertex[0] == 'i') return 0;
         
-    if (vertex[0] < 'i') 
+    if (vertex[0] < 'i') {
         column = vertex[0] - 'a';
-    else
+    } else {
         column = (vertex[0] - 'a')-1;
+    }
         
-    row = vertex[1] - '1';
+    std::string rowstring(vertex); 
+    rowstring.erase(0, 1);
+    std::istringstream parsestream(rowstring); 
+        
+    parsestream >> row;
+    row--;
     
     if (row >= boardsize) return 0;
     if (column >= boardsize) return 0; 

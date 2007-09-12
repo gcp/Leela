@@ -1287,13 +1287,6 @@ bool FastBoard::match_pattern(int color, int vertex) {
     return false;
 }
 
-// add capture moves for color near last move
-void FastBoard::add_near_captures(int color, int vertex, std::vector<int> & work) {
-    for (int k = 0; k < 4; k++) {                        
-        try_capture(color, vertex + m_dirs[k], work); 
-    }
-}
-
 // add capture moves for color
 void FastBoard::add_global_captures(int color, std::vector<int> & work) {
     // walk critical squares    
