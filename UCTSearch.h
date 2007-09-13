@@ -5,6 +5,7 @@
 
 #include "GameState.h"
 #include "UCTNode.h"
+#include "Playout.h"
 
 class UCTSearch {
 public:
@@ -27,7 +28,7 @@ public:
     int think(int color, passflag_t passflag = NORMAL);
     
 private:     
-    float play_simulation(UCTNode* node);    
+    Playout play_simulation(UCTNode* node);    
     
     void dump_stats(GameState & state, UCTNode & parent);
     void dump_pv(GameState & state, UCTNode & parent);
@@ -36,8 +37,8 @@ private:
 
     GameState & m_rootstate;
     KoState m_currstate;
-    UCTNode m_root;
-    int m_nodes;    
+    UCTNode m_root;    
+    int m_nodes;       
 };
 
 #endif

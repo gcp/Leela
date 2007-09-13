@@ -39,7 +39,7 @@ int main (int argc, char *argv[]) {
         
     /* set board limits */    
     float komi = 7.5;         
-    maingame->init_game(19, komi);
+    maingame->init_game(9, komi);
             
     while (!done) {
         if (!gtp_mode) {

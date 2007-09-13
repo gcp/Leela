@@ -1,5 +1,3 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <vector>
 #include <boost/tr1/array.hpp>
 #include "config.h"
@@ -14,6 +12,8 @@ using namespace Utils;
 
 Playout::Playout() {    
     m_run = false;
+    m_sq[0].reset();
+    m_sq[1].reset();
 }
 
 float Playout::get_score() {
@@ -22,20 +22,43 @@ float Playout::get_score() {
     return m_score;
 }
 
+void Playout::set_final_score(float score) {
+    m_run = true;
+    m_score = score;
+}
+
 void Playout::run(FastState & state, bool resigning) {
     const int boardsize = state.board.get_boardsize();
     const int resign = (boardsize * boardsize) / 3;
     const int playoutlen = (boardsize * boardsize) * 2;    
         
      do {                                    
-        state.play_random_move();               
+        int vtx = state.play_random_move();
+
+        if (vtx != FastBoard::PASS) {
+            int color = !state.get_to_move();
+            
+            if (!m_sq[!color][vtx]) {
+                m_sq[color][vtx] = true;
+            }                
+        }
     } while (state.get_passes() < 2 
              && state.get_movenum() < playoutlen
              && (!resigning || abs(state.estimate_mc_score()) < resign)); 
 
-    m_run = true;                
-    m_length = state.get_movenum();
+    m_run = true;                    
     m_score = state.calculate_mc_score();                   
+}
+
+
+bool Playout::passthrough(int color, int vertex) {
+    assert(m_run);
+    
+    if (vertex == FastBoard::PASS) {
+        return false;
+    }
+    
+    return m_sq[color][vertex];
 }
 
 void Playout::do_playout_benchmark(GameState& game) {   

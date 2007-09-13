@@ -53,8 +53,7 @@ public:
     int update_board_fast(const int color, const int i);        
     void save_critical_neighbours(int color, int vertex, std::vector<int> & work);
     void add_pattern_moves(int color, int vertex, std::vector<int> & work);    
-    void add_global_captures(int color, std::vector<int> & work);
-    void add_near_captures(int color, int vertex, std::vector<int> & work);    
+    void add_global_captures(int color, std::vector<int> & work);     
     bool match_pattern(int color, int vertex);
     
     bool self_atari(int color, int vertex);
@@ -107,6 +106,7 @@ protected:
     std::tr1::array<int, 8>          m_extradirs;   /* movement directions 8 way */
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
     std::tr1::array<int, 2>          m_stones;      /* stones per color */                 
+    std::queue<int>                  m_critical;    /* queue of critical points */    
 
     int m_boardsize;    
     
@@ -126,8 +126,6 @@ protected:
                               int & nbr_libs_cnt);
     void kill_neighbours(int vertex, std::vector<int> & work);                                  
     void try_capture(int color, int vertex, std::vector<int> & work);
-public:
-    std::queue<int>                  m_critical;    /* queue of critical points */    
 };
 
 #endif

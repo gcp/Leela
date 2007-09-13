@@ -1,7 +1,12 @@
 #ifndef PLAYOUT_H_INCLUDED
 #define PLAYOUT_H_INCLUDED
 
+#include <bitset>
+#include <vector>
+#include <boost/tr1/array.hpp>
+
 #include "GameState.h"
+#include "FastState.h"
 
 class Playout {
 public:
@@ -11,11 +16,14 @@ public:
     Playout();
     void run(FastState & state, bool resigning = true);
     float get_score();    
+    void set_final_score(float score);
+    bool passthrough(int color, int vertex);
 
 private:        
-    bool m_run;
-    int m_length;
-    float m_score;    
+    bool m_run;    
+    float m_score; 
+    
+    std::tr1::array<std::bitset<FastBoard::MAXSQ>, 2> m_sq;    
 };
 
 #endif

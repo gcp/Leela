@@ -18,7 +18,8 @@ using namespace Utils;
 
 UCTNode::UCTNode(int vertex) 
 : m_firstchild(NULL), m_move(vertex), 
-  m_blackwins(0.0f), m_visits(0) {
+  m_blackwins(0.0f), m_visits(0),
+  m_raveblackwins(25.0f), m_ravevisits(50) {
 }
 
 UCTNode::~UCTNode() {
@@ -33,14 +34,6 @@ UCTNode::~UCTNode() {
 
 bool UCTNode::first_visit() const {        
     return m_visits == 0;
-}
-
-float UCTNode::do_one_playout(FastState &startstate) {
-    Playout p;
-
-    p.run(startstate);
-
-    return p.get_score();
 }
 
 void UCTNode::link_child(UCTNode * newchild) {
@@ -83,10 +76,10 @@ void UCTNode::set_move(int move) {
     m_move = move;
 }
 
-void UCTNode::update(float gameresult) {        
+void UCTNode::update(Playout & gameresult) {        
     m_visits++;
     
-    float result = (gameresult > 0.0f);
+    float result = (gameresult.get_score() > 0.0f);
     m_blackwins +=  result;       
 }
 
@@ -118,6 +111,16 @@ float UCTNode::get_winrate(int tomove) const {
     assert(!first_visit());
 
     float rate = get_blackwins() / get_visits();
+    
+    if (tomove == FastBoard::WHITE) {
+        rate = 1.0f - rate;
+    }
+    
+    return rate;
+}
+
+float UCTNode::get_raverate(int tomove) const {
+    float rate = m_raveblackwins / m_ravevisits;
     
     if (tomove == FastBoard::WHITE) {
         rate = 1.0f - rate;
@@ -288,4 +291,29 @@ void UCTNode::delete_child(UCTNode * del_child) {
     }
     
     assert(0 && "Child to delete not found");           
+}
+
+// update all siblings with matching RAVE info
+void UCTNode::updateRAVE(Playout & playout) {
+    float score = playout.get_score();    
+    UCTNode * child = m_firstchild;    
+    
+    while (child != NULL) {        
+        int move = child->get_move();                
+        
+        bool bpass = playout.passthrough(FastBoard::BLACK, move);
+        //bool wpass = playout.passthrough(FastBoard::WHITE, move);
+        
+        if (/*wpass ||*/ bpass) {                
+            m_ravevisits++;
+                    
+            if (score > 0.0f) {
+                m_raveblackwins += bpass;
+            } /*else {
+                m_raveblackwins += wpass;
+            }*/
+        }        
+                        
+        child = child->m_nextsibling;       
+    }      
 }

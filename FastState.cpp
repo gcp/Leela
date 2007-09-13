@@ -108,9 +108,9 @@ int FastState::play_random_move(int color) {
             }            
             if (m_work.empty()) {                
                 board.add_pattern_moves(color, lastmove, m_work);            
-            }
+            }            
             // remove ko captures     
-            m_work.erase(std::remove(m_work.begin(), m_work.end(), komove), m_work.end());                               
+            m_work.erase(std::remove(m_work.begin(), m_work.end(), komove), m_work.end());                                           
         }        
     }                   
     

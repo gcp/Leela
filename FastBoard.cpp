@@ -1089,14 +1089,17 @@ bool FastBoard::self_atari(int color, int vertex) {
     return true;
 }
 
-int FastBoard::get_pattern(const int sq) {
-    int result = 0;
-
-    for (int k = 0; k < 8; k++) {       
-        result = (result << 2) | m_square[sq + m_extradirs[k]];        
-    }
-
-    return result;
+int FastBoard::get_pattern(const int sq) {          
+    const int size = m_boardsize;
+    
+    return (m_square[sq - size - 2 - 1] << 14)
+         | (m_square[sq - size - 2]     << 12)
+         | (m_square[sq - size - 2 + 1] << 10)
+         | (m_square[sq - 1]            <<  8)
+         | (m_square[sq + 1]            <<  6)
+         | (m_square[sq + size + 2 - 1] <<  4)
+         | (m_square[sq + size + 2]     <<  2)
+         | (m_square[sq + size + 2 + 1] <<  0);  
 }
 
 void FastBoard::add_pattern_moves(int color, int vertex,

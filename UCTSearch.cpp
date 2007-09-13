@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include <assert.h>
 #include <math.h>
 #include <vector>
@@ -21,15 +18,15 @@ UCTSearch::UCTSearch(GameState & g)
 : m_rootstate(g), m_nodes(0) {    
 }
 
-float UCTSearch::play_simulation(UCTNode* node) {
+Playout UCTSearch::play_simulation(UCTNode* node) {
     const int color = m_currstate.get_to_move();
     const uint64 hash = m_currstate.board.get_hash();
-    float noderesult;  
+    Playout noderesult;  
     
     TTable::get_TT()->sync(hash, node);      
 
     if (node->get_visits() <= MATURE_TRESHOLD) {
-        noderesult = node->do_one_playout(m_currstate);
+        noderesult.run(m_currstate);
     } else {
         if (node->has_children() == false) {
             m_nodes += node->create_children(m_currstate);                                             
@@ -47,16 +44,17 @@ float UCTSearch::play_simulation(UCTNode* node) {
                     noderesult = play_simulation(next);                    
                 } else {
                     node->delete_child(next);   
-                    noderesult = node->do_one_playout(m_currstate);     
+                    noderesult.run(m_currstate);     
                 }
             } else {
                 m_currstate.play_pass();
                 
                 noderesult = play_simulation(next);
-            }                                                     
-        } else {            
-            noderesult = m_currstate.board.area_score();
-            node->finalize(noderesult);
+            }               
+            node->updateRAVE(noderesult);
+        } else {                     
+            noderesult.set_final_score(m_currstate.board.area_score());            
+            node->finalize(noderesult.get_score());
         }        
     }         
     
@@ -113,10 +111,11 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
         
         std::string tmp = state.move_to_text(node->get_move());
         
-        myprintf("%4s -> %7d (%5.2f%%) PV: %s ", 
+        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%) PV: %s ", 
                   tmp.c_str(), 
                   node->get_visits(), 
                   node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
+                  node->get_visits() > 0 ? node->get_raverate(color)*100.0f : 0.0f,
                   tmp.c_str());
         
         
@@ -220,7 +219,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;
             dump_thinking();            
         }        
-    } while(/*centiseconds_elapsed < time_for_move*/ m_root.get_visits() < 20000);
+    } while(centiseconds_elapsed < time_for_move/* m_root.get_visits() < 20000*/);
     
     if (!m_root.has_children()) {
         return FastBoard::PASS;
