@@ -13,7 +13,7 @@
 
 /* Hard limits */
 
-#define NAME            "KaRAVE1"
+#define NAME            "KaRAVE09"
 #define VERSION         "0.1"
 
 /* Integer types */

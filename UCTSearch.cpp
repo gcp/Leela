@@ -50,13 +50,14 @@ Playout UCTSearch::play_simulation(UCTNode* node) {
                 m_currstate.play_pass();
                 
                 noderesult = play_simulation(next);
-            }               
-            node->updateRAVE(noderesult);
+            }       
+                    
+            node->updateRAVE(noderesult);                        
         } else {                     
             noderesult.set_final_score(m_currstate.board.area_score());            
             node->finalize(noderesult.get_score());
         }        
-    }         
+    }             
     
     node->update(noderesult);    
     TTable::get_TT()->update(hash, node);    
@@ -111,11 +112,12 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
         
         std::string tmp = state.move_to_text(node->get_move());
         
-        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%) PV: %s ", 
+        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) PV: %s ", 
                   tmp.c_str(), 
                   node->get_visits(), 
                   node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                   node->get_visits() > 0 ? node->get_raverate(color)*100.0f : 0.0f,
+                  node->get_ravevisits(),
                   tmp.c_str());
         
         
@@ -219,7 +221,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;
             dump_thinking();            
         }        
-    } while(centiseconds_elapsed < time_for_move/* m_root.get_visits() < 20000*/);
+    } while(/*centiseconds_elapsed < time_for_move*/  m_root.get_visits() < 20000);
     
     if (!m_root.has_children()) {
         return FastBoard::PASS;

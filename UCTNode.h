@@ -17,6 +17,7 @@ public:
     void delete_child(UCTNode * child);        
     int get_move() const;
     int get_visits() const;
+    int get_ravevisits() const;
     void set_best();
     void set_move(int move);
     void set_visits(int visits);

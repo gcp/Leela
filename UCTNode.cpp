@@ -78,9 +78,12 @@ void UCTNode::set_move(int move) {
 
 void UCTNode::update(Playout & gameresult) {        
     m_visits++;
+    m_ravevisits++;
     
     float result = (gameresult.get_score() > 0.0f);
-    m_blackwins +=  result;       
+    m_blackwins     += result;       
+    m_raveblackwins += result;
+    
 }
 
 // terminal node
@@ -133,33 +136,58 @@ int UCTNode::get_visits() const {
     return m_visits;
 }
 
+int UCTNode::get_ravevisits() const {
+    return m_ravevisits;
+}
+
 UCTNode* UCTNode::uct_select_child(int color) {                                   
     UCTNode * best = NULL;    
-    float best_uct = -1000.0f;                  
-        
-    float logparent = logf((float)(get_visits() - UCTSearch::MATURE_TRESHOLD));  
+    float best_value = -1000.0f;                  
+    
+    int   parentvisits  = get_visits();    
+    float logparent     = logf((float)(parentvisits - UCTSearch::MATURE_TRESHOLD));
+    float lograveparent = logf((float)get_ravevisits());    
         
     UCTNode * child = m_firstchild;        
     while (child != NULL) {
-        float uctvalue;
+        float value;
 
         if (!child->first_visit()) {        
+            // UCT part
             float winrate   = child->get_winrate(color);     
             float childrate = logparent / child->get_visits();            
-            
-            //faster formula for pure binomial
+                        
             float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
 
             float uncertain = min(0.25f, var);
             float uct = 0.8f * sqrtf(childrate * uncertain);
             
-            uctvalue = winrate + uct;                                                    
+            float uctvalue = winrate + uct;                                                    
+            
+            // RAVE part
+            float ravewinrate = child->get_raverate(color);
+            float ravechildrate = lograveparent / child->get_ravevisits();
+            
+            float ravevar = ravewinrate - (ravewinrate * ravewinrate) 
+                            + sqrtf(2.0f * ravechildrate);
+                            
+            float raveuncertain = min(0.25f, ravevar);                            
+            float rave = 0.8f * sqrtf(ravechildrate * raveuncertain);
+            
+            float ravevalue = ravewinrate + rave;
+            
+            // Mixing
+            float beta = sqrtf(1000.0f / (3.0f * parentvisits + 1000.0f));                                    
+                                   
+            value = beta * ravevalue + (1.0f - beta) * uctvalue;
+            
         } else {
-            uctvalue = 1.1f;
+            // FPU
+            value = 1.1f;
         }        
         
-        if (uctvalue > best_uct) {
-            best_uct = uctvalue;
+        if (value > best_value) {
+            best_value = value;
             best = child;
         }
         
@@ -293,25 +321,24 @@ void UCTNode::delete_child(UCTNode * del_child) {
     assert(0 && "Child to delete not found");           
 }
 
-// update all siblings with matching RAVE info
-void UCTNode::updateRAVE(Playout & playout) {
-    float score = playout.get_score();    
+// update siblings with matching RAVE info
+void UCTNode::updateRAVE(Playout & playout) {    
+    float score = playout.get_score();            
+    
+    // siblings
     UCTNode * child = m_firstchild;    
     
     while (child != NULL) {        
         int move = child->get_move();                
         
-        bool bpass = playout.passthrough(FastBoard::BLACK, move);
-        //bool wpass = playout.passthrough(FastBoard::WHITE, move);
+        bool bpass = playout.passthrough(FastBoard::BLACK, move);        
         
-        if (/*wpass ||*/ bpass) {                
-            m_ravevisits++;
+        if (bpass) { 
+            child->m_ravevisits++;
                     
             if (score > 0.0f) {
-                m_raveblackwins += bpass;
-            } /*else {
-                m_raveblackwins += wpass;
-            }*/
+                child->m_raveblackwins += 1.0f;
+            } 
         }        
                         
         child = child->m_nextsibling;       
