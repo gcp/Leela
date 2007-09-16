@@ -142,27 +142,36 @@ int UCTNode::get_ravevisits() const {
 
 UCTNode* UCTNode::uct_select_child(int color) {                                   
     UCTNode * best = NULL;    
-    float best_value = -1000.0f;                  
+    float best_value = -1000.0f;                                
     
-    int   parentvisits  = get_visits();    
-    float logparent     = logf((float)(parentvisits - UCTSearch::MATURE_TRESHOLD));
-    float lograveparent = logf((float)get_ravevisits());    
+    float rave_parentvisits = (float)get_ravevisits();
+    
+    float logparent     = logf((float)(get_visits() - UCTSearch::MATURE_TRESHOLD));    
+    float lograveparent = logf(rave_parentvisits); 
+    
+    // Mixing
+    float beta = sqrtf(1000.0f / ((3.0f * rave_parentvisits) + 1000.0f));     
         
     UCTNode * child = m_firstchild;        
     while (child != NULL) {
         float value;
+        float uctvalue;
 
-        if (!child->first_visit()) {        
-            // UCT part
-            float winrate   = child->get_winrate(color);     
-            float childrate = logparent / child->get_visits();            
-                        
-            float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
+        if (child->get_ravevisits() > 0) {        
+            if (!child->first_visit()) {
+                // UCT part
+                float winrate   = child->get_winrate(color);     
+                float childrate = logparent / child->get_visits();            
+                            
+                float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
 
-            float uncertain = min(0.25f, var);
-            float uct = 0.8f * sqrtf(childrate * uncertain);
-            
-            float uctvalue = winrate + uct;                                                    
+                float uncertain = min(0.25f, var);
+                float uct = 0.8f * sqrtf(childrate * uncertain);
+                
+                uctvalue = winrate + uct;
+            } else {
+                uctvalue = 1.1f;
+            }                                                    
             
             // RAVE part
             float ravewinrate = child->get_raverate(color);
@@ -174,17 +183,12 @@ UCTNode* UCTNode::uct_select_child(int color) {
             float raveuncertain = min(0.25f, ravevar);                            
             float rave = 0.8f * sqrtf(ravechildrate * raveuncertain);
             
-            float ravevalue = ravewinrate + rave;
-            
-            // Mixing
-            float beta = sqrtf(1000.0f / (3.0f * parentvisits + 1000.0f));                                    
+            float ravevalue = ravewinrate + rave;                                              
                                    
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
-            
         } else {
-            // FPU
             value = 1.1f;
-        }        
+        }
         
         if (value > best_value) {
             best_value = value;
