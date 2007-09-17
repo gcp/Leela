@@ -19,7 +19,7 @@ using namespace Utils;
 UCTNode::UCTNode(int vertex) 
 : m_firstchild(NULL), m_move(vertex), 
   m_blackwins(0.0f), m_visits(0),
-  m_raveblackwins(25.0f), m_ravevisits(50) {
+  m_ravestmwins(25.0f), m_ravevisits(50) {
 }
 
 UCTNode::~UCTNode() {
@@ -77,13 +77,10 @@ void UCTNode::set_move(int move) {
 }
 
 void UCTNode::update(Playout & gameresult) {        
-    m_visits++;
-    m_ravevisits++;
+    m_visits++;    
     
     float result = (gameresult.get_score() > 0.0f);
-    m_blackwins     += result;       
-    m_raveblackwins += result;
-    
+    m_blackwins += result;               
 }
 
 // terminal node
@@ -123,11 +120,7 @@ float UCTNode::get_winrate(int tomove) const {
 }
 
 float UCTNode::get_raverate(int tomove) const {
-    float rate = m_raveblackwins / m_ravevisits;
-    
-    if (tomove == FastBoard::WHITE) {
-        rate = 1.0f - rate;
-    }
+    float rate = m_ravestmwins / m_ravevisits;        
     
     return rate;
 }
@@ -144,10 +137,18 @@ UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
     
-    float rave_parentvisits = (float)get_ravevisits();
+    int rave_parentvisits = 0;
+    int parentvisits      = 0;
     
-    float logparent     = logf((float)(get_visits() - UCTSearch::MATURE_TRESHOLD));    
-    float lograveparent = logf(rave_parentvisits); 
+    UCTNode * c = m_firstchild;        
+    while (c != NULL) {
+       parentvisits      += c->get_visits();
+       rave_parentvisits += c->get_ravevisits();
+       c = c->m_nextsibling;    
+    }
+    
+    float logparent     = logf((float)parentvisits);    
+    float lograveparent = logf((float)rave_parentvisits); 
     
     // Mixing
     float beta = sqrtf(1000.0f / ((3.0f * rave_parentvisits) + 1000.0f));     
@@ -326,7 +327,7 @@ void UCTNode::delete_child(UCTNode * del_child) {
 }
 
 // update siblings with matching RAVE info
-void UCTNode::updateRAVE(Playout & playout) {    
+void UCTNode::updateRAVE(Playout & playout, int color) {    
     float score = playout.get_score();            
     
     // siblings
@@ -335,15 +336,27 @@ void UCTNode::updateRAVE(Playout & playout) {
     while (child != NULL) {        
         int move = child->get_move();                
         
-        bool bpass = playout.passthrough(FastBoard::BLACK, move);        
-        
-        if (bpass) { 
-            child->m_ravevisits++;
-                    
-            if (score > 0.0f) {
-                child->m_raveblackwins += 1.0f;
-            } 
-        }        
+        if (color == FastBoard::BLACK) {
+            bool bpass = playout.passthrough(FastBoard::BLACK, move);        
+            
+            if (bpass) { 
+                child->m_ravevisits++;
+                        
+                if (score > 0.0f) {
+                    child->m_ravestmwins += 1.0f;
+                } 
+            }        
+        } else {
+            bool wpass = playout.passthrough(FastBoard::WHITE, move);        
+            
+            if (wpass) { 
+                child->m_ravevisits++;
+                        
+                if (score < 0.0f) {
+                    child->m_ravestmwins += 1.0f;
+                } 
+            }
+        }
                         
         child = child->m_nextsibling;       
     }      

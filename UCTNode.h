@@ -23,7 +23,7 @@ public:
     void set_visits(int visits);
     void set_blackwins(float wins);
     void update(Playout & gameresult); 
-    void updateRAVE(Playout & playout);
+    void updateRAVE(Playout & playout, int color);
     void finalize(float gameresult);
     UCTNode* uct_select_child(int color);    
     UCTNode* get_first_child();
@@ -44,7 +44,7 @@ private:
     float m_blackwins;
     int m_visits;      
     // RAVE
-    float m_raveblackwins;
+    float m_ravestmwins;    
     int m_ravevisits;  
 };
 

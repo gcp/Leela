@@ -13,7 +13,7 @@
 
 /* Hard limits */
 
-#define NAME            "KaRAVENFPU"
+#define NAME            "KaRAVEB"
 #define VERSION         "0.1"
 
 /* Integer types */
