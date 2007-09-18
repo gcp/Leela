@@ -30,6 +30,7 @@ void GameState::reset_game() {
     KoState::reset_game();
       
     game_history.clear();
+    game_history.push_back(*this);
     
     TimeControl tmp(board.get_boardsize());
     m_timecontrol = tmp;

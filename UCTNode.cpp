@@ -76,11 +76,22 @@ void UCTNode::set_move(int move) {
     m_move = move;
 }
 
-void UCTNode::update(Playout & gameresult) {        
+void UCTNode::update(Playout & gameresult, int color) {        
     m_visits++;    
+    m_ravevisits++;
     
-    float result = (gameresult.get_score() > 0.0f);
-    m_blackwins += result;               
+    bool result = (gameresult.get_score() > 0.0f);
+    m_blackwins += (result ? 1.0f : 0.0f);                  
+    
+    if (color == FastBoard::WHITE) {
+        if (!result) {
+            m_ravestmwins += 1.0f;
+        }
+    } else if (color == FastBoard::BLACK) {
+        if (result) {
+            m_ravestmwins += 1.0f;
+        }
+    }
 }
 
 // terminal node
@@ -151,7 +162,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
     float lograveparent = logf((float)rave_parentvisits); 
     
     // Mixing
-    float beta = sqrtf(1000.0f / ((3.0f * rave_parentvisits) + 1000.0f));     
+    float beta = sqrtf(1000.0f / ((3.0f * parentvisits) + 1000.0f));     
         
     UCTNode * child = m_firstchild;        
     while (child != NULL) {

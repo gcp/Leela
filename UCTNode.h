@@ -22,7 +22,7 @@ public:
     void set_move(int move);
     void set_visits(int visits);
     void set_blackwins(float wins);
-    void update(Playout & gameresult); 
+    void update(Playout & gameresult, int color); 
     void updateRAVE(Playout & playout, int color);
     void finalize(float gameresult);
     UCTNode* uct_select_child(int color);    

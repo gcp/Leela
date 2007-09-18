@@ -59,7 +59,7 @@ Playout UCTSearch::play_simulation(UCTNode* node) {
         }        
     }             
     
-    node->update(noderesult);    
+    node->update(noderesult, !color);    
     TTable::get_TT()->update(hash, node);    
     
     return noderesult;  

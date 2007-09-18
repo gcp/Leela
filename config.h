@@ -13,7 +13,7 @@
 
 /* Hard limits */
 
-#define NAME            "KaRAVEB"
+#define NAME            "KaR2"
 #define VERSION         "0.1"
 
 /* Integer types */

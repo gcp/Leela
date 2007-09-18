@@ -33,8 +33,11 @@ bool KoState::superko(void) {
 void KoState::reset_game() {
     FastState::reset_game();
         
-    ko_hash_history.clear();            
-    hash_history.clear();            
+    ko_hash_history.clear();
+    hash_history.clear();
+    
+    ko_hash_history.push_back(board.calc_ko_hash());    
+    hash_history.push_back(board.calc_hash());                
 }
 
 void KoState::play_pass(void) {
