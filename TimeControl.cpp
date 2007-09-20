@@ -98,11 +98,18 @@ int TimeControl::max_time_for_move(int color) {
     }
     
     /*
+        infinite time = 1 month
+    */        
+    if (m_byostones == 0) {
+        return 31 * 24 * 60 * 60 * 100;
+    }
+    
+    /*
         byo yomi and in byo yomi
     */        
     if (m_inbyo[color]) {
         return (m_remaining_time[color] - BUFFER_CENTISECS) / m_byostones;
-    }
+    }       
     
     /*
         byo yomi time but not in byo yomi yet

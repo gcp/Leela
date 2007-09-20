@@ -23,7 +23,7 @@ Playout UCTSearch::play_simulation(UCTNode* node) {
     const uint64 hash = m_currstate.board.get_hash();
     Playout noderesult;  
     
-    TTable::get_TT()->sync(hash, node);      
+    //TTable::get_TT()->sync(hash, node);      
 
     if (node->get_visits() <= MATURE_TRESHOLD) {
         noderesult.run(m_currstate);
@@ -60,7 +60,7 @@ Playout UCTSearch::play_simulation(UCTNode* node) {
     }             
     
     node->update(noderesult, !color);    
-    TTable::get_TT()->update(hash, node);    
+    //TTable::get_TT()->update(hash, node);    
     
     return noderesult;  
 }
@@ -221,7 +221,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;
             dump_thinking();            
         }        
-    } while(/*centiseconds_elapsed < time_for_move*/  m_root.get_visits() < 20000);
+    } while(/*centiseconds_elapsed < time_for_move*/ m_root.get_visits() < 10000);
+    
+    //assert(centiseconds_elapsed > 10);
     
     if (!m_root.has_children()) {
         return FastBoard::PASS;
@@ -237,7 +239,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         myprintf("\n%d visits, %d nodes, %d vps\n\n", 
                  m_root.get_visits(), 
                  m_nodes,
-                 (m_root.get_visits() * 100) / centiseconds_elapsed);              
+                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));              
     }             
             
     // XXX: check for pass but no actual win on final_scoring

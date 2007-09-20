@@ -192,7 +192,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         
         return true;
     } else if (command.find("play") == 0) {
-        if (command.find("pass") != std::string.npos) {
+        if (command.find("pass") != std::string.npos) {            
             game.play_pass();
             gtp_printf(id, "");
         } else {
@@ -262,6 +262,8 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 gtp_fail_printf(id, "syntax error");
                 return 1;
             } 
+            
+            game.set_passes(0);
 
             std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 

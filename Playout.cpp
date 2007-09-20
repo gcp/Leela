@@ -32,18 +32,22 @@ void Playout::run(FastState & state, bool resigning) {
 
     const int boardsize = state.board.get_boardsize();
     const int resign = (boardsize * boardsize) / 3;
-    const int playoutlen = (boardsize * boardsize) * 2;            
+    const int playoutlen = (boardsize * boardsize) * 2;                    
+    
+    int counter = 0; 
         
-     do {                                    
+    do {                                    
         int vtx = state.play_random_move();
 
-        if (vtx != FastBoard::PASS) {
+        if (counter < 40 && vtx != FastBoard::PASS) {
             int color = !state.get_to_move();
                         
             if (!m_sq[!color][vtx]) {
                 m_sq[color][vtx] = true;
             }                
-        }                
+        }           
+        
+        counter++;                 
     } while (state.get_passes() < 2 
              && state.get_movenum() < playoutlen
              && (!resigning || abs(state.estimate_mc_score()) < resign)); 

@@ -158,7 +158,7 @@ void FastState::play_pass(void) {
     lastmove = FastBoard::PASS;
         
     board.hash  ^= 0xABCDABCDABCDABCDUI64;    
-    board.m_tomove = !board.m_tomove;     
+    board.m_tomove = !board.m_tomove;                 
         
     board.hash ^= Zobrist::zobrist_pass[get_passes()];
     increment_passes();
