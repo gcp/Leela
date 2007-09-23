@@ -32,14 +32,14 @@ void Playout::run(FastState & state, bool resigning) {
 
     const int boardsize = state.board.get_boardsize();
     const int resign = (boardsize * boardsize) / 3;
-    const int playoutlen = (boardsize * boardsize) * 2;                    
+    const int playoutlen = (boardsize * boardsize) * 2;                            
     
     int counter = 0; 
         
     do {                                    
         int vtx = state.play_random_move();
 
-        if (counter < 40 && vtx != FastBoard::PASS) {
+        if (counter < 20 && vtx != FastBoard::PASS) {
             int color = !state.get_to_move();
                         
             if (!m_sq[!color][vtx]) {
@@ -50,10 +50,28 @@ void Playout::run(FastState & state, bool resigning) {
         counter++;                 
     } while (state.get_passes() < 2 
              && state.get_movenum() < playoutlen
-             && (!resigning || abs(state.estimate_mc_score()) < resign)); 
+             && (!resigning || abs(state.estimate_mc_score()) < resign));                  
 
     m_run = true;                    
     m_score = state.calculate_mc_score();                   
+    
+    // collect history table stats
+    int wincolor;
+    
+    if (m_score > 0) {
+        wincolor = FastBoard::BLACK;        
+    } else {
+        wincolor = FastBoard::WHITE;        
+    }
+                     
+    for (int i = 0; i < FastBoard::MAXSQ; i++) {
+        // playout results 
+        if (m_sq[wincolor][i]) {
+            HistoryTable::get_HT()->update(i, true);
+        } else if (m_sq[!wincolor][i]) {
+            HistoryTable::get_HT()->update(i, false);
+        }
+    }             
 }
 
 

@@ -902,6 +902,29 @@ void FastBoard::kill_neighbours(int vertex, std::vector<int> & work) {
     } while (pos != vertex);                                                    
 }                                         
 
+int FastBoard::saving_size(int color, int vertex) {                        
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        
+        if (m_square[ai] == color) {        
+            int par = m_parent[ai];
+            int lib = m_plibs[par];
+            
+            if (lib <= 4) {                
+                int atari = in_atari(ai);
+                
+                if (atari) {                                            
+                    if (!self_atari(color, atari)) {
+                        return string_size(ai);  
+                    }                                         
+                }
+            }
+        } 
+    }
+    
+    return 0;        
+}
+
 // look for a neighbors of vertex with "color" that are critical,
 // and add moves that save them to work
 // vertex is sure to be filled with !color
@@ -1301,6 +1324,48 @@ void FastBoard::add_global_captures(int color, std::vector<int> & work) {
     }
 }
 
+int FastBoard::capture_size(int color, int vertex) {
+    assert(m_square[vertex] == EMPTY);
+    
+    int limitlibs = count_neighbours(!color, vertex);
+            
+    if (!limitlibs) {
+        return 0;
+    }
+    
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        
+        if (m_square[ai] == !color) {
+            int par = m_parent[ai];
+            int lib = m_plibs[par];
+                           
+            if (lib <= 4 && limitlibs >= lib) {                    
+                int samenbrs = 0;
+                
+                // check nbrs of original empty square
+                for (int kk = 0; kk < 4; kk++) {
+                    int aai = vertex + m_dirs[kk];
+                    
+                    if (m_square[aai] == !color) {
+                        if (m_parent[aai] == par) {
+                            samenbrs++;
+                        }
+                    }                            
+                }
+                
+                assert(samenbrs <= lib);    
+                
+                if (samenbrs >= lib) {                                                
+                    return string_size(ai);           
+                }                                        
+            }                        
+        }                                                
+    }  
+    
+    return false;
+}
+
 void FastBoard::try_capture(int color, int vertex, std::vector<int> & work) {
     if (m_square[vertex] == EMPTY) {                
         int limitlibs = count_neighbours(!color, vertex);
@@ -1363,5 +1428,22 @@ std::string FastBoard::get_stone_list() {
     // eat final space
     res.resize(res.size() - 1);
     
+    return res;
+}
+
+int FastBoard::string_size(int vertex) {
+    int pos = vertex;
+    int res = 0;
+    int color = m_square[vertex];
+
+    assert(color == WHITE || color == BLACK || color == EMPTY);
+  
+    do {       
+        assert(m_square[pos] == color);
+        
+        res++;
+        pos = m_next[pos];
+    } while (pos != vertex);    
+
     return res;
 }

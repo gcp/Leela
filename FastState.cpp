@@ -8,6 +8,8 @@
 #include "Utils.h"
 #include "Playout.h"
 #include "Zobrist.h"
+#include "Matcher.h"
+#include "HistoryTable.h"
 
 using namespace Utils;
 
@@ -135,6 +137,21 @@ int FastState::play_random_move(int color) {
     }            
               
     return play_move_fast(vtx);                         
+}
+
+
+float FastState::score_move(int color, int vertex) {
+    float res = 0.0f;
+        
+    int pattern = board.get_pattern(vertex);                          
+        
+    res += 100000.0f * board.capture_size(color, vertex);  
+    res +=  10000.0f * board.saving_size(color, vertex);
+    res +=   1000.0f * Matcher::get_Matcher()->matches(color, pattern); 
+    res +=    100.0f * HistoryTable::get_HT()->get_score(vertex);
+    res += -10000.0f * board.self_atari(color, vertex);    
+    
+    return res;
 }
 
 int FastState::play_move_fast(int vertex) {

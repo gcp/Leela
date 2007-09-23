@@ -11,6 +11,7 @@
 #include "Random.h"
 #include "Utils.h"
 #include "TTable.h"
+#include "HistoryTable.h"
 
 using namespace Utils;
 
@@ -196,6 +197,59 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     return bestmove;
 }
 
+void UCTSearch::dump_history(void) {        
+    HistoryTable * ht = HistoryTable::get_HT();
+    
+    std::vector<std::pair<std::pair<float, int>, std::string> > ht_list;
+    
+    for (int i = 0; i < FastBoard::MAXSQ; i++) {                
+        if (ht->get_visits(i) > 5) {            
+            ht_list.push_back(std::make_pair(std::make_pair(ht->get_score(i) * 100.0f, 
+                                                            ht->get_visits(i)),
+                              m_rootstate.move_to_text(i)));
+        }
+    }
+    
+    std::sort(ht_list.rbegin(), ht_list.rend());
+    
+    myprintf("\nHistory Table\n");
+    myprintf("---------------\n");
+    for (unsigned int i = 0; i < min(6, ht_list.size()); i++) {
+        myprintf("%4s -> %5.2f%% (%7d)\n", ht_list[i].second.c_str(), 
+                                           ht_list[i].first.first, 
+                                           ht_list[i].first.second);
+    }
+    myprintf("---------------\n");        
+}
+
+void UCTSearch::dump_order(void) {            
+    
+    std::vector<std::pair<float, std::string> > ord_list;
+    
+    UCTNode* node = m_root.get_first_child();
+    
+    while (node != NULL) {
+        if (node->get_move() != FastBoard::PASS) {
+            ord_list.push_back(std::make_pair(
+                               m_rootstate.score_move(m_rootstate.get_to_move(), node->get_move()), 
+                               m_rootstate.move_to_text(node->get_move())));
+        } else {
+            ord_list.push_back(std::make_pair(0.0f, "pass"));
+        }
+        node = node->get_sibling();                                                                       
+    }    
+    
+    std::sort(ord_list.rbegin(), ord_list.rend());
+    
+    myprintf("\nOrder Table\n");
+    myprintf("-------------------\n");
+    for (unsigned int i = 0; i < min(10, ord_list.size()); i++) {
+        myprintf("%4s -> %10.2f\n", ord_list[i].second.c_str(), 
+                                    ord_list[i].first);                              
+    }
+    myprintf("-------------------\n");        
+}
+
 int UCTSearch::think(int color, passflag_t passflag) {
     // set side to move
     m_rootstate.board.m_tomove = color;
@@ -207,6 +261,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     m_rootstate.start_clock(color);
+    
+    HistoryTable::get_HT()->clear();
 
     do {
         m_currstate = m_rootstate;
@@ -221,9 +277,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;
             dump_thinking();            
         }        
-    } while(/*centiseconds_elapsed < time_for_move*/ m_root.get_visits() < 10000);
-    
-    //assert(centiseconds_elapsed > 10);
+    } while(centiseconds_elapsed < time_for_move /*m_root.get_visits() < 20000*/);        
     
     if (!m_root.has_children()) {
         return FastBoard::PASS;
@@ -233,7 +287,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
         
     // display search info        
     myprintf("\n");
-    dump_stats(m_rootstate, m_root);                          
+    dump_stats(m_rootstate, m_root);
+    //dump_history();   
+    dump_order();                          
         
     if (centiseconds_elapsed > 0) {    
         myprintf("\n%d visits, %d nodes, %d vps\n\n", 

@@ -55,7 +55,9 @@ public:
     void add_pattern_moves(int color, int vertex, std::vector<int> & work);    
     void add_global_captures(int color, std::vector<int> & work);     
     bool match_pattern(int color, int vertex);
-    
+    int capture_size(int color, int vertex);
+    int saving_size(int color, int vertex);
+        
     bool self_atari(int color, int vertex);
     int get_dir(int i);
     int get_extra_dir(int i);
@@ -126,6 +128,7 @@ protected:
                               int & nbr_libs_cnt);
     void kill_neighbours(int vertex, std::vector<int> & work);                                  
     void try_capture(int color, int vertex, std::vector<int> & work);
+    int string_size(int vertex);
 };
 
 #endif

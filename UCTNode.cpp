@@ -44,6 +44,9 @@ void UCTNode::link_child(UCTNode * newchild) {
 int UCTNode::create_children(FastState &state) {             
     FastBoard & board = state.board;  
     int children = 0;
+    
+    typedef std::pair<float, UCTNode*> scored_node; 
+    std::vector<scored_node> nodelist;
 
     if (state.get_passes() < 2) {         
         for (int i = 0; i < board.m_empty_cnt; i++) {  
@@ -54,14 +57,24 @@ int UCTNode::create_children(FastState &state) {
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {  
                     UCTNode * vtx = new UCTNode(vertex);
-                    link_child(vtx);                    
-                    children++;                                        
+                    float score = state.score_move(board.m_tomove, vertex);
+                    nodelist.push_back(std::make_pair(score, vtx));                    
                 } 
             }                   
         }      
         
-        UCTNode * vtx = new UCTNode(FastBoard::PASS);        
-        link_child(vtx);
+        UCTNode * vtx = new UCTNode(FastBoard::PASS);
+        nodelist.push_back(std::make_pair(0.0f, vtx));        
+    }    
+    
+    // sort (this will reverse scores, but linking is backwards too)
+    std::sort(nodelist.begin(), nodelist.end());
+    
+    // link
+    std::vector<scored_node>::const_iterator it; 
+    
+    for (it = nodelist.begin(); it != nodelist.end(); ++it) {
+        link_child((*it).second);
         children++;
     }    
 
@@ -148,14 +161,19 @@ UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
     
+    int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.182322f) - 0.5f));
+    //int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.336472f) - 0.5f));
+    int childcount = 0;
+    
     int rave_parentvisits = 0;
     int parentvisits      = 0;
     
     UCTNode * c = m_firstchild;        
-    while (c != NULL) {
+    while (c != NULL && childcount < childbound) {
        parentvisits      += c->get_visits();
        rave_parentvisits += c->get_ravevisits();
        c = c->m_nextsibling;    
+       childcount++;
     }
     
     float logparent     = logf((float)parentvisits);    
@@ -165,7 +183,9 @@ UCTNode* UCTNode::uct_select_child(int color) {
     float beta = sqrtf(1000.0f / ((3.0f * parentvisits) + 1000.0f));     
         
     UCTNode * child = m_firstchild;        
-    while (child != NULL) {
+    childcount = 0;
+    
+    while (child != NULL && childcount < childbound) {
         float value;
         float uctvalue;
 
@@ -208,6 +228,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
         }
         
         child = child->m_nextsibling;
+        childcount++;
     }   
     
     assert(best != NULL);         
@@ -231,17 +252,17 @@ public:
         if (a->first_visit() && b->first_visit()) {
             return false;
         }               
-        if (a->get_winrate(m_color) == b->get_winrate(m_color)) {
+        //if (a->get_winrate(m_color) == b->get_winrate(m_color)) {
             if (a->get_visits() > b->get_visits()) {
                 return true;
             } else {
                 return false;
             }
-        } else if (a->get_winrate(m_color) > b->get_winrate(m_color)) {
-            return true;
-        } else {
-            return false;
-        } 
+        //} else if (a->get_winrate(m_color) > b->get_winrate(m_color)) {
+        //    return true;
+        //} else {
+        //    return false;
+        //} 
     }
 };
 
