@@ -161,7 +161,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
     
-    int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.182322f) - 0.5f));
+    int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.1823216f) - 0.5f));
     //int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.336472f) - 0.5f));
     int childcount = 0;
     

@@ -192,7 +192,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         
         return true;
     } else if (command.find("play") == 0) {
-        if (command.find("pass") != std::string.npos) {            
+        if (command.find("pass") != std::string::npos) { 
             game.play_pass();
             gtp_printf(id, "");
         } else {
@@ -311,10 +311,10 @@ bool GTP::execute(GameState & game, std::string xinput) {
         }                
         return true;
     } else if (command.find("final_status_list") == 0) {
-        if (command.find("alive") != std::string.npos) {
+        if (command.find("alive") != std::string::npos) {
             std::string livelist = get_life_list(game, true);
             gtp_printf(id, livelist.c_str());                        
-        } else if (command.find("dead") != std::string.npos) {            
+        } else if (command.find("dead") != std::string::npos) {            
             std::string deadlist = get_life_list(game, false);
             gtp_printf(id, deadlist.c_str());                        
         } else {

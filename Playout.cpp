@@ -39,7 +39,7 @@ void Playout::run(FastState & state, bool resigning) {
     do {                                    
         int vtx = state.play_random_move();
 
-        if (counter < 20 && vtx != FastBoard::PASS) {
+        if (counter < 60 && vtx != FastBoard::PASS) {
             int color = !state.get_to_move();
                         
             if (!m_sq[!color][vtx]) {
