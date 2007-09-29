@@ -457,9 +457,9 @@ bool GTP::execute(GameState & game, std::string xinput) {
             movenum = 999;
         }
         
-        std::auto_ptr<SGFTree> sgftree(new SGFTree);
+        SGFTree sgftree;
         
-        sgftree->load_from_file(filename);
+        sgftree.load_from_file(filename);
         
         //game = sgftree.get_move(movenum);
         

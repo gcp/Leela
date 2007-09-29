@@ -2,13 +2,17 @@
 #define SGFPARSER_H_INCLUDED
 
 #include <string>
+#include <sstream>
 
 #include "SGFTree.h"
 
 class SGFParser {
+private:
+    static std::string parse_property_name(std::istringstream & strm);
+    static std::string parse_property_value(std::istringstream & strm);
 public:
     static std::string chop_from_file(std::string fname, int index);
-    static void parse(std::istringstream & strm, SGFTree * node);
+    static void parse(std::istringstream & strm, SGFTree * node);    
 };
 
 

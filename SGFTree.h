@@ -11,15 +11,26 @@ class SGFTree {
 public:
     SGFTree();
     
-    KoState get_move(int movenum);
+    KoState get_state(int movenum);
     KoState get_state();
-    void load_from_file(std::string filename);    
+    void load_from_file(std::string filename); 
     
-private:         
-    KoState m_state;
+    void add_property(std::string property, std::string value); 
+    SGFTree * add_child(SGFTree child);                  
     
+private:     
+    static const int EOT = 0;               // End-Of-Tree marker
+    
+    void populate_states(SGFTree * tree);
+    int get_move(int tomove);
+    void apply_move(int move);
+    void set_state(KoState & state);
+    
+    typedef std::map<std::string, std::string> PropertyMap;
+        
+    KoState m_state;    
     std::vector<SGFTree> m_children;
-    std::map<std::string, std::string> m_properties;
+    PropertyMap m_properties;
 };
 
 #endif
