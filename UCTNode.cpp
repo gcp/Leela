@@ -93,16 +93,22 @@ void UCTNode::update(Playout & gameresult, int color) {
     m_visits++;    
     m_ravevisits++;
     
-    bool result = (gameresult.get_score() > 0.0f);
-    m_blackwins += (result ? 1.0f : 0.0f);                  
+    // prefer winning with more territory    
+    float score = gameresult.get_score();
+           
+    m_blackwins += 0.05f * score; 
+    
+    if (score > 0.0f) {
+        m_blackwins += 1.0f;
+    }        
     
     if (color == FastBoard::WHITE) {
-        if (!result) {
-            m_ravestmwins += 1.0f;
+        if (score < 0.0f) {
+            m_ravestmwins += 1.0f + 0.05f * -score;
         }
     } else if (color == FastBoard::BLACK) {
-        if (result) {
-            m_ravestmwins += 1.0f;
+        if (score > 0.0f) {
+            m_ravestmwins += 1.0f + 0.05f * score;
         }
     }
 }
@@ -111,8 +117,11 @@ void UCTNode::update(Playout & gameresult, int color) {
 void UCTNode::finalize(float gameresult) {
     m_visits += 100;
     
-    float result = (gameresult > 0.0f);
-    m_blackwins += 100.0f * result;
+    m_blackwins += 5.0f * gameresult;
+    
+    if (gameresult > 0.0f) {
+        m_blackwins += 100.0f;
+    }
 }
 
 bool UCTNode::has_children() const {    
@@ -197,7 +206,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
                             
                 float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
 
-                float uncertain = min(0.25f, var);
+                float uncertain = max(0.0f, min(0.25f, var));
                 float uct = 0.8f * sqrtf(childrate * uncertain);
                 
                 uctvalue = winrate + uct;
@@ -212,15 +221,17 @@ UCTNode* UCTNode::uct_select_child(int color) {
             float ravevar = ravewinrate - (ravewinrate * ravewinrate) 
                             + sqrtf(2.0f * ravechildrate);
                             
-            float raveuncertain = min(0.25f, ravevar);                            
+            float raveuncertain = max(0.0f, min(0.25f, ravevar));
             float rave = 0.8f * sqrtf(ravechildrate * raveuncertain);
             
             float ravevalue = ravewinrate + rave;                                              
                                    
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
+            
+            assert(value > -1000.0f);
         } else {
             value = 1.1f;
-        }
+        }                
         
         if (value > best_value) {
             best_value = value;
@@ -375,7 +386,7 @@ void UCTNode::updateRAVE(Playout & playout, int color) {
                 child->m_ravevisits++;
                         
                 if (score > 0.0f) {
-                    child->m_ravestmwins += 1.0f;
+                    child->m_ravestmwins += 1.0f + 0.05f * score;
                 } 
             }        
         } else {
@@ -385,7 +396,7 @@ void UCTNode::updateRAVE(Playout & playout, int color) {
                 child->m_ravevisits++;
                         
                 if (score < 0.0f) {
-                    child->m_ravestmwins += 1.0f;
+                    child->m_ravestmwins += 1.0f + 0.05f * -score;
                 } 
             }
         }

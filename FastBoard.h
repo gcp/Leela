@@ -68,6 +68,7 @@ public:
     int estimate_mc_score(float komi = 7.5f);    
     float final_mc_score(float komi = 7.5f);        
     float area_score(float komi = 7.5f);
+    float percentual_area_score(float komi = 7.5f);
     
     int eval(float komi); 
     int get_prisoners(int side);

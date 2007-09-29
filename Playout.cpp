@@ -18,6 +18,7 @@ Playout::Playout() {
 
 float Playout::get_score() {
     assert(m_run);
+    assert(m_score > -2.00f && m_score < 2.00f);
 
     return m_score;
 }
@@ -53,12 +54,12 @@ void Playout::run(FastState & state, bool resigning) {
              && (!resigning || abs(state.estimate_mc_score()) < resign));                  
 
     m_run = true;                    
-    m_score = state.calculate_mc_score();                   
+    m_score = state.calculate_mc_score() / (boardsize * boardsize); 
     
     // collect history table stats
     int wincolor;
     
-    if (m_score > 0) {
+    if (m_score > 0.0f) {
         wincolor = FastBoard::BLACK;        
     } else {
         wincolor = FastBoard::WHITE;        

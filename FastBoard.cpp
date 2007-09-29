@@ -292,6 +292,10 @@ std::vector<bool> FastBoard::calc_reach_color(int col) {
     return bd;
 }
 
+float FastBoard::percentual_area_score(float komi) {
+    return area_score(komi) / (float)(m_boardsize * m_boardsize);
+}
+
 float FastBoard::area_score(float komi) {
     
     std::vector<bool> white = calc_reach_color(WHITE);

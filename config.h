@@ -13,7 +13,7 @@
 
 /* Hard limits */
 
-#define NAME            "KaPW2"
+#define NAME            "KaPW3Ter"
 #define VERSION         "0.1"
 
 /* Integer types */

@@ -11,6 +11,7 @@
 #include "GTP.h"
 #include "Playout.h"
 #include "UCTSearch.h"
+#include "SGFTree.h"
 
 using namespace Utils;
 
@@ -39,6 +40,7 @@ const std::string GTP::s_commands[] = {
     "fixed_handicap",
     "place_free_handicap",
     "set_free_handicap",
+    "loadsgf",
     ""
 };
 
@@ -440,6 +442,28 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::string stonestring = game.board.get_stone_list();
         gtp_printf(id, "%s", stonestring.c_str());
         
+        return true;
+    } else if (command.find("loadsgf") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp, filename;
+        int movenum;
+
+        cmdstream >> tmp;   // eat loadsgf                
+        
+        cmdstream >> filename;        
+        cmdstream >> movenum;
+        
+        if (cmdstream.fail()) {
+            movenum = 999;
+        }
+        
+        std::auto_ptr<SGFTree> sgftree(new SGFTree);
+        
+        sgftree->load_from_file(filename);
+        
+        //game = sgftree.get_move(movenum);
+        
+        gtp_printf(id, "");
         return true;
     }
     

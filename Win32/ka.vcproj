@@ -97,7 +97,7 @@
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="0"
-			WholeProgramOptimization="1"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -118,16 +118,8 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions=""
 				Optimization="2"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="true"
-				WholeProgramOptimization="true"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
-				BufferSecurityCheck="false"
-				EnableEnhancedInstructionSet="2"
-				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -234,6 +226,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\SGFParser.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\SGFTree.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\TimeControl.cpp"
 				>
 			</File>
@@ -313,6 +313,14 @@
 			</File>
 			<File
 				RelativePath="..\Ruleset.h"
+				>
+			</File>
+			<File
+				RelativePath="..\SGFParser.h"
+				>
+			</File>
+			<File
+				RelativePath="..\SGFTree.h"
 				>
 			</File>
 			<File

@@ -36,26 +36,6 @@ void GameState::reset_game() {
     m_timecontrol = tmp;
 }
 
-int GameState::gen_moves(int *moves) {    
-    int num_moves = 0;        
-    int color = board.m_tomove;
-    
-    for (int i = 0; i < board.get_boardsize(); i++) {   
-        for (int j = 0; j < board.get_boardsize(); j++) {      
-            if (board.get_square(i, j) == FastBoard::EMPTY         
-                && board.no_eye_fill(board.get_vertex(i, j))
-                && !board.is_suicide(board.get_vertex(i, j), color)
-                && board.get_vertex(i, j) != komove) {    
-                moves[num_moves++] = i;
-            }
-        }            
-    }  
-
-    /* pass */
-    moves[num_moves++] = -1;
-    return num_moves;
-}
-
 int GameState::undo_move(void) {
     if (movenum > 0) {
         // This also restores hashes as they're part of state

@@ -15,9 +15,7 @@ public:
     void reset_game();        
     bool set_fixed_handicap(int stones); 
     void place_free_handicap(int stones);
-    void anchor_game_history(void);
-    
-    int gen_moves(int *moves);
+    void anchor_game_history(void);        
     
     int undo_move(void);
     void play_pass(void);

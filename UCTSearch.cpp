@@ -55,7 +55,7 @@ Playout UCTSearch::play_simulation(UCTNode* node) {
                     
             node->updateRAVE(noderesult, color);                        
         } else {                     
-            noderesult.set_final_score(m_currstate.board.area_score());            
+            noderesult.set_final_score(m_currstate.board.percentual_area_score(m_currstate.m_komi));            
             node->finalize(noderesult.get_score());
         }        
     }             
