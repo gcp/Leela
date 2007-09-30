@@ -14,8 +14,37 @@ KoState SGFTree::get_state(void) {
     return m_state;
 }
 
-KoState SGFTree::get_state(int movenum) {
-    return get_state();
+SGFTree * SGFTree::get_child(unsigned int count) {
+    if (count < m_children.size()) {
+        return &(m_children[count]);
+    } else {
+        return NULL;
+    }        
+}
+
+// this follows the entire line, and doesn't really
+// need the intermediate states
+GameState SGFTree::get_mainline(unsigned int movenum) {
+    GameState result;        
+    SGFTree * link = this;
+        
+    KoState & helper = result;
+    helper = get_state();    
+    
+    int tomove = result.get_to_move();
+    
+    for (unsigned int i = 0; i <= movenum && link != NULL; i++) {
+        // root position has no associated move
+        if (i != 0) {    
+            int move = link->get_move(tomove);        
+            result.play_move(move);
+            tomove = !tomove;
+        }
+                
+        link = link->get_child(0);
+    }
+    
+    return result;
 }
 
 // load a single game from a file
@@ -118,11 +147,13 @@ int SGFTree::get_move(int tomove) {
             return FastBoard::PASS;
         }
         
+        int bsize = m_state.board.get_boardsize();
+        
         char c1 = movestring[0];
         char c2 = movestring[1];
         
         int cc1 = c1 - 'a';
-        int cc2 = c2 - 'a';
+        int cc2 = bsize - (c2 - 'a') - 1;
         
         int vtx = m_state.board.get_vertex(cc1, cc2);
         

@@ -6,13 +6,14 @@
 #include <string>
 #include <sstream>
 #include "KoState.h"
+#include "GameState.h"
 
 class SGFTree {
 public:
     SGFTree();
-    
-    KoState get_state(int movenum);
+        
     KoState get_state();
+    GameState get_mainline(unsigned int movenum);
     void load_from_file(std::string filename); 
     
     void add_property(std::string property, std::string value); 
@@ -25,6 +26,7 @@ private:
     int get_move(int tomove);
     void apply_move(int move);
     void set_state(KoState & state);
+    SGFTree * get_child(unsigned int count);
     
     typedef std::map<std::string, std::string> PropertyMap;
         
