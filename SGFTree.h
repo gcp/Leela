@@ -21,7 +21,7 @@ public:
 private:     
     static const int EOT = 0;               // End-Of-Tree marker
     
-    void populate_states(SGFTree * tree);
+    void populate_states(void);
     int get_move(int tomove);
     void apply_move(int move);
     void set_state(KoState & state);

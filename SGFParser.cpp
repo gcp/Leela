@@ -110,6 +110,8 @@ std::string SGFParser::parse_property_value(std::istringstream & strm) {
 }
 
 void SGFParser::parse(std::istringstream & strm, SGFTree * node) {    
+    bool splitpoint = false;
+    
     while (!strm.eof()) {
         char c;        
         strm >> c;
@@ -126,13 +128,11 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
         if (std::isalpha(c) && std::isupper(c)) {
             strm.unget();
             
-            std::string propname = parse_property_name(strm);
-            std::cout << "property name :" << propname << std::endl;
-            std::string propval  = parse_property_value(strm);
-            std::cout << "property value :" << propval << std::endl;
+            std::string propname = parse_property_name(strm);            
+            std::string propval  = parse_property_value(strm);            
             
             node->add_property(propname, propval);
-            
+                        
             continue;
         }
         
@@ -144,12 +144,23 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
                 strm.unget();
             }
             // start a variation here
+            splitpoint = true;
+            // new node
             std::auto_ptr<SGFTree> newnode(new SGFTree);
             SGFTree * newptr = node->add_child(*newnode);            
             parse(strm, newptr);
         } else if (c == ')') {
             // variation ends, go back
-            return;
+            // if the variation didn't start here, then
+            // push the "variation ends" mark back
+            // and try again one level up the tree
+            if (!splitpoint) {
+                strm.unget();
+                return;
+            } else {
+                splitpoint = false;
+                continue;
+            }  
         } else if (c == ';') {
             // new node
             std::auto_ptr<SGFTree> newnode(new SGFTree);

@@ -30,10 +30,10 @@ void SGFTree::load_from_file(std::string filename) {
     SGFParser::parse(pstream, this);
     
     // populates the states from the moves
-    populate_states(this);
+    populate_states();
 }
 
-void SGFTree::populate_states(SGFTree * tree) {
+void SGFTree::populate_states(void) {
     PropertyMap::iterator it;
     
     // first check for go game setup in properties    
@@ -77,7 +77,7 @@ void SGFTree::populate_states(SGFTree * tree) {
         
         if (move != EOT) {            
             stateit->apply_move(move);            
-            populate_states(&(*stateit));
+            stateit->populate_states();
         }                                  
     }        
 }
@@ -113,6 +113,11 @@ int SGFTree::get_move(int tomove) {
     
     if (it != m_properties.end()) {
         std::string movestring = it->second;
+        
+        if (movestring == "") {
+            return FastBoard::PASS;
+        }
+        
         char c1 = movestring[0];
         char c2 = movestring[1];
         
