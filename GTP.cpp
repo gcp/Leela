@@ -12,6 +12,7 @@
 #include "Playout.h"
 #include "UCTSearch.h"
 #include "SGFTree.h"
+#include "Attributes.h"
 
 using namespace Utils;
 
@@ -40,7 +41,7 @@ const std::string GTP::s_commands[] = {
     "fixed_handicap",
     "place_free_handicap",
     "set_free_handicap",
-    "loadsgf",
+    "loadsgf",    
     ""
 };
 
@@ -461,6 +462,20 @@ bool GTP::execute(GameState & game, std::string xinput) {
         
         sgftree->load_from_file(filename);                
         game = sgftree->get_mainline(movenum);
+        
+        gtp_printf(id, "");
+        return true;
+    } else if (command.find("tune") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp, filename;
+
+        cmdstream >> tmp;   // eat autotune 
+
+        cmdstream >> filename;        
+        
+        std::auto_ptr<Attributes> attributes(new Attributes);
+        
+        attributes->autotune_from_file(filename);
         
         gtp_printf(id, "");
         return true;

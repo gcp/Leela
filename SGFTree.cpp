@@ -47,6 +47,29 @@ GameState SGFTree::get_mainline(unsigned int movenum) {
     return result;
 }
 
+KoState SGFTree::get_state_from_mainline(unsigned int movenum) {     
+    SGFTree * link = this;             
+
+    for (unsigned int i = 0; i <= movenum && link != NULL; i++) {        
+        link = link->get_child(0);
+    }
+
+    return link->get_state();
+}
+
+// the number of states is one more than the number of moves
+int SGFTree::count_mainline_moves(void) {
+    SGFTree * link = this;             
+    int count = -1;
+
+    while (link != NULL) {        
+        link = link->get_child(0);
+        count++;
+    }
+
+    return count;
+}
+
 // load a single game from a file
 void SGFTree::load_from_file(std::string filename) {           
     std::string gamebuff = SGFParser::chop_from_file(filename, 1);        
