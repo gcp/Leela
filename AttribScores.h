@@ -11,9 +11,8 @@
 class AttribScores {
 public:          
     void autotune_from_file(std::string filename);                 
-private:    
-    typedef std::pair<int, Attributes> MoveAttrPair;
-    typedef std::vector<MoveAttrPair> MoveAttrList;
+private:        
+    typedef std::vector<Attributes> AttrList;
 
     std::vector<float> m_weight;    
 };

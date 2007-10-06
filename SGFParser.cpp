@@ -19,6 +19,8 @@ std::string SGFParser::chop_from_file(std::string filename, int index) {
         throw new std::exception("Error opening file");
     }
     
+    ins >> std::noskipws;
+    
     int count = 0;
     int nesting = 0;
     
@@ -72,8 +74,9 @@ std::string SGFParser::parse_property_name(std::istringstream & strm) {
     return result;
 }
 
-std::string SGFParser::parse_property_value(std::istringstream & strm) {
-    std::string result;
+bool SGFParser::parse_property_value(std::istringstream & strm,
+                                            std::string & result) {        
+    strm >> std::noskipws;
     
     char c;
     while (strm >> c) {
@@ -86,8 +89,8 @@ std::string SGFParser::parse_property_value(std::istringstream & strm) {
     strm >> c;
     
     if (c != '[') {
-        strm.unget();
-        return "";
+        strm.unget();        
+        return false;
     }
     
     while (strm >> c) {                        
@@ -99,7 +102,9 @@ std::string SGFParser::parse_property_value(std::istringstream & strm) {
         result.push_back(c);                
     }
     
-    return result;
+    strm >> std::skipws;
+    
+    return true;
 }
 
 void SGFParser::parse(std::istringstream & strm, SGFTree * node) {    
@@ -119,15 +124,16 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
         if (std::isalpha(c) && std::isupper(c)) {
             strm.unget();                        
 
-            std::string propname = parse_property_name(strm);  
-            std::string propval;
-
-            do {
-                propval  = parse_property_value(strm);
-                if (propval != "") {
-                    node->add_property(propname, propval);
-                }
-            } while (propval != "");           
+            std::string propname = parse_property_name(strm);                          
+            bool success;
+            
+            do {                
+                std::string propval;
+                success = parse_property_value(strm, propval);
+                if (success) {                                
+                    node->add_property(propname, propval);                
+                }                    
+            } while (success);           
                         
             continue;
         }

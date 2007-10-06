@@ -91,7 +91,7 @@ void SGFTree::load_from_string(std::string gamebuff) {
 void SGFTree::load_from_file(std::string filename, int index) {           
     std::string gamebuff = SGFParser::chop_from_file(filename, index); 
     
-    //myprintf("Parsing: %s\n", gamebuff.c_str());
+    myprintf("Parsing: %s\n", gamebuff.c_str());
 
     load_from_string(gamebuff);
 }
@@ -172,9 +172,15 @@ SGFTree * SGFTree::add_child(SGFTree child) {
 }
 
 int SGFTree::string_to_vertex(std::string movestring) {
-    if (movestring == "") {
+    if (movestring.size() == 0) {
         return FastBoard::PASS;
     } 
+    
+    if (m_state.board.get_boardsize() <= 19) {
+        if (movestring == "tt") {
+            return FastBoard::PASS;
+        }
+    }
     
     int bsize = m_state.board.get_boardsize();
     
