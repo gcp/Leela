@@ -6,9 +6,12 @@
 
 #include "SGFParser.h"
 
+//XXX: The scanners don't handle escape sequences
+//XXX: make a char reading routine for this
+
 // scan the file and extract the game with number index
 std::string SGFParser::chop_from_file(std::string filename, int index) {
-    std::ifstream ins(filename.c_str()); 
+    std::ifstream ins(filename.c_str(), std::ifstream::binary | std::ifstream::in); 
     std::string gamebuff;
     std::string result;
     
@@ -21,9 +24,8 @@ std::string SGFParser::chop_from_file(std::string filename, int index) {
     
     gamebuff.clear();
 
-    while (!ins.eof() && count != index) {
-        char c;
-        ins >> c;
+    char c;
+    while (ins >> c && count <= index) {                
         
         gamebuff.push_back(c);
         
@@ -38,14 +40,13 @@ std::string SGFParser::chop_from_file(std::string filename, int index) {
         } else if (c == ')') {
             nesting--;
                         
-            if (nesting == 0) {
-                // one game processed
-                count++;
-                
+            if (nesting == 0) {                
                 if (count == index) {
                     result = gamebuff;
                     result.erase(result.size() - 1);
                 }
+                // one game processed
+                count++;
             }
         }                
     }
@@ -58,10 +59,8 @@ std::string SGFParser::chop_from_file(std::string filename, int index) {
 std::string SGFParser::parse_property_name(std::istringstream & strm) {
     std::string result;
     
-    while (!strm.eof()) {
-        char c;
-        strm >> c;
-        
+    char c;
+    while (strm >> c) {        
         if (!std::isupper(c)) {
             strm.unget();
             break;
@@ -76,31 +75,25 @@ std::string SGFParser::parse_property_name(std::istringstream & strm) {
 std::string SGFParser::parse_property_value(std::istringstream & strm) {
     std::string result;
     
-    while (!strm.eof()) {
-        char c;
-        strm >> c;
-
+    char c;
+    while (strm >> c) {
         if (!std::isspace(c)) {
             strm.unget();
             break;           
         }
     }
     
-    char c;
     strm >> c;
     
     if (c != '[') {
-        throw new std::exception("SGF Parse error: property starting [ not found");
+        strm.unget();
+        return "";
     }
     
-    while (!strm.eof()) {
-        char c;
-        strm >> c;
-        
-        if (c == ']') {
-            break;
-        } else if (c == '\\') {
-            result.push_back(c);
+    while (strm >> c) {                        
+        if (c == ']') {            
+            break;                        
+        } else if (c == '\\') {            
             strm >> c;
         }        
         result.push_back(c);                
@@ -112,10 +105,8 @@ std::string SGFParser::parse_property_value(std::istringstream & strm) {
 void SGFParser::parse(std::istringstream & strm, SGFTree * node) {    
     bool splitpoint = false;
     
-    while (!strm.eof()) {
-        char c;        
-        strm >> c;
-        
+    char c;
+    while (strm >> c) {                                
         if (strm.fail()) {
             return;
         }
@@ -126,12 +117,17 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
 
         // parse a property
         if (std::isalpha(c) && std::isupper(c)) {
-            strm.unget();
-            
-            std::string propname = parse_property_name(strm);            
-            std::string propval  = parse_property_value(strm);            
-            
-            node->add_property(propname, propval);
+            strm.unget();                        
+
+            std::string propname = parse_property_name(strm);  
+            std::string propval;
+
+            do {
+                propval  = parse_property_value(strm);
+                if (propval != "") {
+                    node->add_property(propname, propval);
+                }
+            } while (propval != "");           
                         
             continue;
         }
@@ -168,4 +164,42 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
             parse(strm, newptr);
         }
     }
+}
+
+int SGFParser::count_games_in_file(std::string filename) {
+    std::ifstream ins(filename.c_str(), std::ifstream::binary | std::ifstream::in);         
+
+    if (ins.fail()) {
+        throw new std::exception("Error opening file");
+    }
+
+    int count = 0;
+    int nesting = 0;    
+
+    char c;
+    while (ins >> c) {                
+        if (c > 127 || c < 0) {
+            do {
+                ins >> c;
+            } while (c > 127 || c < 0);
+            continue;
+        }
+
+        if (c == '(') {            
+            nesting++;
+        } else if (c == ')') {
+            nesting--;
+
+            assert(nesting >= 0);
+
+            if (nesting == 0) {
+                // one game processed
+                count++;
+            }
+        }                
+    }
+
+    ins.close();
+
+    return count;
 }

@@ -1451,3 +1451,19 @@ int FastBoard::string_size(int vertex) {
 
     return res;
 }
+
+std::pair<int, int> FastBoard::get_xy(int vertex) {
+    std::pair<int, int> xy;
+
+    //int vertex = ((y + 1) * (get_boardsize() + 2)) + (x + 1);  
+    int x = (vertex % (get_boardsize() + 2)) - 1;
+    int y = (vertex / (get_boardsize() + 2)) - 1;
+
+    assert(x >= 0 && x < get_boardsize());
+    assert(y >= 0 && y < get_boardsize());
+
+    xy.first  = x;
+    xy.second = y;
+
+    return xy;
+}

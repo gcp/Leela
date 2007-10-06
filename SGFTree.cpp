@@ -6,12 +6,15 @@
 #include "SGFTree.h"
 #include "KoState.h"
 #include "SGFParser.h"
+#include "Utils.h"
+
+using namespace Utils;
 
 SGFTree::SGFTree(void) {    
 }
 
-KoState SGFTree::get_state(void) {
-    return m_state;
+KoState * SGFTree::get_state(void) {
+    return &m_state;
 }
 
 SGFTree * SGFTree::get_child(unsigned int count) {
@@ -29,7 +32,7 @@ GameState SGFTree::get_mainline(unsigned int movenum) {
     SGFTree * link = this;
         
     KoState & helper = result;
-    helper = get_state();    
+    helper = *(get_state());    
     
     int tomove = result.get_to_move();
     
@@ -47,7 +50,7 @@ GameState SGFTree::get_mainline(unsigned int movenum) {
     return result;
 }
 
-KoState SGFTree::get_state_from_mainline(unsigned int movenum) {     
+KoState * SGFTree::get_state_from_mainline(unsigned int movenum) {     
     SGFTree * link = this;             
 
     for (unsigned int i = 0; i <= movenum && link != NULL; i++) {        
@@ -70,19 +73,27 @@ int SGFTree::count_mainline_moves(void) {
     return count;
 }
 
-// load a single game from a file
-void SGFTree::load_from_file(std::string filename) {           
-    std::string gamebuff = SGFParser::chop_from_file(filename, 1);        
+void SGFTree::load_from_string(std::string gamebuff) {
     std::istringstream pstream(gamebuff);
-    
+
     // initialize root state with defaults
     m_state.init_game();
-    
+
     // loads properties with moves
     SGFParser::parse(pstream, this);
-    
+
     // populates the states from the moves
+    // split this up in root node, achor (handicap), other nodes
     populate_states();
+}
+
+// load a single game from a file
+void SGFTree::load_from_file(std::string filename, int index) {           
+    std::string gamebuff = SGFParser::chop_from_file(filename, index); 
+    
+    //myprintf("Parsing: %s\n", gamebuff.c_str());
+
+    load_from_string(gamebuff);
 }
 
 void SGFTree::populate_states(void) {
@@ -115,7 +126,15 @@ void SGFTree::populate_states(void) {
         strm >> komi;
         m_state.init_game(m_state.board.get_boardsize(), komi);
     }
-    
+
+    // handicap stone    
+    std::pair<PropertyMap::iterator, 
+              PropertyMap::iterator> range = m_properties.equal_range("AB");
+    for (it = range.first; it != range.second; ++it) {
+        std::string move = it->second;      
+        int vtx = string_to_vertex(move);
+        m_state.play_move(FastBoard::BLACK, vtx);        
+    }    
     
     // now for all children play out the moves
     std::vector<SGFTree>::iterator stateit;
@@ -124,6 +143,7 @@ void SGFTree::populate_states(void) {
         // propagate state    
         stateit->set_state(m_state);
         
+        // XXX: maybe move this to the recursive call
         // get move for side to move        
         int move = stateit->get_move(m_state.get_to_move());  
         
@@ -143,12 +163,30 @@ void SGFTree::apply_move(int move) {
 }
 
 void SGFTree::add_property(std::string property, std::string value) {
-    m_properties[property] = value;
+    m_properties.insert(std::make_pair(property, value));
 }
 
 SGFTree * SGFTree::add_child(SGFTree child) {
     m_children.push_back(child);
     return &(m_children.back());
+}
+
+int SGFTree::string_to_vertex(std::string movestring) {
+    if (movestring == "") {
+        return FastBoard::PASS;
+    } 
+    
+    int bsize = m_state.board.get_boardsize();
+    
+    char c1 = movestring[0];
+    char c2 = movestring[1];
+    
+    int cc1 = c1 - 'a';
+    int cc2 = bsize - (c2 - 'a') - 1;
+    
+    int vtx = m_state.board.get_vertex(cc1, cc2);
+    
+    return vtx;
 }
 
 int SGFTree::get_move(int tomove) {
@@ -164,23 +202,8 @@ int SGFTree::get_move(int tomove) {
     it = m_properties.find(movestring);
     
     if (it != m_properties.end()) {
-        std::string movestring = it->second;
-        
-        if (movestring == "") {
-            return FastBoard::PASS;
-        }
-        
-        int bsize = m_state.board.get_boardsize();
-        
-        char c1 = movestring[0];
-        char c2 = movestring[1];
-        
-        int cc1 = c1 - 'a';
-        int cc2 = bsize - (c2 - 'a') - 1;
-        
-        int vtx = m_state.board.get_vertex(cc1, cc2);
-        
-        return vtx;
+        std::string movestring = it->second;        
+        return string_to_vertex(movestring);
     }
     
     return SGFTree::EOT;

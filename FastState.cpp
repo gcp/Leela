@@ -19,7 +19,7 @@ void FastState::init_game(int size, float komi) {
     
     movenum = 0;                          
     
-    lastmove = FastBoard::MAXSQ;
+    lastmove = FastBoard::PASS;
     m_komi = komi;
     m_passes = 0;
     
@@ -45,6 +45,24 @@ void FastState::reset_board(void) {
 
 int FastState::play_random_move() {
     return play_random_move(board.m_tomove);
+}
+
+std::vector<int> FastState::generate_moves(int color) {
+    std::vector<int> result;
+    
+    result.reserve(board.m_empty_cnt);        
+    
+    for (int i = 0; i < board.m_empty_cnt; i++) {
+        int vertex = board.m_empty[i];
+
+        if (vertex != komove && !board.is_suicide(vertex, color)) {   
+            result.push_back(vertex);
+        }                                
+    }
+
+    result.push_back(FastBoard::PASS);
+
+    return result;
 }
 
 bool FastState::try_move(int color, int vertex) {    
@@ -128,7 +146,7 @@ int FastState::play_random_move(int color) {
             std::sort(m_work.begin(), m_work.end());    
             m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end()); 
                        
-            int idx = Random::get_Rng()->randint(m_work.size()); 
+            int idx = Random::get_Rng()->randint((uint16)m_work.size()); 
                         
             vtx = m_work[idx]; 
         } else {            

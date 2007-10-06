@@ -18,6 +18,8 @@ public:
     
     void play_pass(void);    
     void play_move(int vertex); 
+    
+    std::vector<int> generate_moves(int color);
           
     void set_komi(float komi);         
     int get_passes();

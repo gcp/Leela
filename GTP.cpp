@@ -12,7 +12,7 @@
 #include "Playout.h"
 #include "UCTSearch.h"
 #include "SGFTree.h"
-#include "Attributes.h"
+#include "AttribScores.h"
 
 using namespace Utils;
 
@@ -469,13 +469,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::istringstream cmdstream(command);
         std::string tmp, filename;
 
-        cmdstream >> tmp;   // eat autotune 
+        cmdstream >> tmp;   // eat tune 
 
         cmdstream >> filename;        
         
-        std::auto_ptr<Attributes> attributes(new Attributes);
+        std::auto_ptr<AttribScores> scores(new AttribScores);
         
-        attributes->autotune_from_file(filename);
+        scores->autotune_from_file(filename);
         
         gtp_printf(id, "");
         return true;

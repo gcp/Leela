@@ -12,7 +12,8 @@ private:
     static std::string parse_property_value(std::istringstream & strm);
 public:
     static std::string chop_from_file(std::string fname, int index);
-    static void parse(std::istringstream & strm, SGFTree * node);    
+    static void parse(std::istringstream & strm, SGFTree * node);  
+    static int count_games_in_file(std::string filename);  
 };
 
 

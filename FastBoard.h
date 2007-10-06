@@ -46,14 +46,15 @@ public:
     square_t get_square(int vertex); 
     int get_vertex(int i, int j);
     void set_square(int x, int y, square_t content);
-    void set_square(int vertex, square_t content);  
+    void set_square(int vertex, square_t content); 
+    std::pair<int, int> get_xy(int vertex);
         
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
     int update_board_fast(const int color, const int i);        
     void save_critical_neighbours(int color, int vertex, std::vector<int> & work);
     void add_pattern_moves(int color, int vertex, std::vector<int> & work);    
-    void add_global_captures(int color, std::vector<int> & work);     
+    void add_global_captures(int color, std::vector<int> & work);         
     bool match_pattern(int color, int vertex);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
