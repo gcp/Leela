@@ -238,7 +238,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             
             std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 
-            int move = search->think(who);
+            int move = search->think(who, UCTSearch::NOPASS);
             game.play_move(who, move);                    
 
             std::string vertex = game.move_to_text(move);            
@@ -340,7 +340,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_fail_printf(id, "syntax not understood");
         }    
         return true;
-    } else if (command.find("time_left") == 9) {        
+    } else if (command.find("time_left") == 0) {        
         std::istringstream cmdstream(command);
         std::string tmp, color;
         int time, stones;

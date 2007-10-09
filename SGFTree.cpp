@@ -91,7 +91,7 @@ void SGFTree::load_from_string(std::string gamebuff) {
 void SGFTree::load_from_file(std::string filename, int index) {           
     std::string gamebuff = SGFParser::chop_from_file(filename, index); 
     
-    myprintf("Parsing: %s\n", gamebuff.c_str());
+    //myprintf("Parsing: %s\n", gamebuff.c_str());
 
     load_from_string(gamebuff);
 }

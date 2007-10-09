@@ -55,7 +55,8 @@ void AttribScores::autotune_from_file(std::string filename) {
             std::vector<int>::iterator it; 
             LrnPos position;                        
             bool moveseen = false;
-                        
+            
+            position.second.clear();
             position.second.reserve(moves.size() - 1);
 
             for(it = moves.begin(); it != moves.end(); ++it) {
@@ -80,6 +81,53 @@ void AttribScores::autotune_from_file(std::string filename) {
             counter++;
             treewalk = treewalk->get_child(0);            
         }    
+
+        // Add 2 passes to game end 
+        if (treewalk->get_state()->get_passes() == 0) {             
+            KoState * state = treewalk->get_state();
+            int tomove = state->get_to_move();
+            std::vector<int> moves = state->generate_moves(tomove);            
+
+            // make list of move - attributes pairs                       
+            std::vector<int>::iterator it; 
+            LrnPos position;                                    
+                        
+            position.second.reserve(moves.size() - 1);
+
+            for(it = moves.begin(); it != moves.end(); ++it) {
+                Attributes attributes;
+                // gather attribute set of current move
+                attributes.get_from_move(state, *it);
+                
+                if (*it == FastBoard::PASS) {
+                    position.first = attributes;                    
+                } else {                    
+                    position.second.push_back(attributes);
+                }                
+            }                                      
+            
+            data.push_back(position);  
+            
+            state->play_move(FastBoard::PASS);
+            moves = state->generate_moves(tomove);            
+
+            position.second.clear();                        
+            position.second.reserve(moves.size() - 1);
+
+            for(it = moves.begin(); it != moves.end(); ++it) {
+                Attributes attributes;
+                // gather attribute set of current move
+                attributes.get_from_move(state, *it);
+                
+                if (*it == FastBoard::PASS) {
+                    position.first = attributes;                    
+                } else {                    
+                    position.second.push_back(attributes);
+                }                
+            }                                      
+            
+            data.push_back(position);  
+        }
         
         gamecount++;                
         
@@ -87,4 +135,53 @@ void AttribScores::autotune_from_file(std::string filename) {
     }
     
     myprintf("Pass done.\n");
+
+    // initialize the pattern list with a sparse map     
+    std::map<int, int> patlist; 
+    LearnVector::iterator it;
+
+    for (it = data.begin(); it != data.end(); ++it) {
+        int pat = it->first.get_pattern();
+        
+        patlist[pat]++;
+
+        /*AttrList::iterator ita;        
+
+        for (ita = it->second.begin(); ita != it->second.end(); ++ita) {
+            int pata = ita->get_pattern();
+
+            patlist[pata]++;
+        }*/
+    }
+
+    // reverse the map to a multimap
+    std::multimap<int, int, std::greater<int> > revpatlist;
+    std::map<int, int>::iterator itr;
+
+    for (itr = patlist.begin(); itr != patlist.end(); ++itr) {
+        int key = itr->first;
+        int val = itr->second;
+
+        revpatlist.insert(std::make_pair(val, key));
+    }
+
+    //std::ofstream(std::string("patx.txt")) os;
+
+    // print the multimap
+    std::multimap<int, int, std::greater<int> >::iterator itrr;        
+    for (itrr = revpatlist.begin();itrr != revpatlist.end();++itrr) {
+        int key = itrr->first;
+        int val = itrr->second;
+        
+        if (key < 500) {
+            break;
+        }
+
+        myprintf("%7d %7d\n", key, val);
+        
+        //os << key << " " << val << std::endl;
+    }
+
+    //os.close();
+
 }

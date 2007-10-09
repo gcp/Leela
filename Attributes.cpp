@@ -4,7 +4,7 @@
 #include "FastBoard.h"
 
 Attributes::Attributes() {    
-    m_present.reserve(32);
+//    m_present.reserve(32);
 }
 
 int Attributes::move_distance(std::pair<int, int> xy1, 
@@ -28,10 +28,10 @@ int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
 }
 
 void Attributes::get_from_move(KoState * state, int vtx) {
-    m_present.clear();
+//    m_present.clear();
 
     int tomove = state->get_to_move();
-
+#ifdef BLA
     // saving size
     // 0, 1, 2, 3, >3
     int ss;
@@ -123,7 +123,7 @@ void Attributes::get_from_move(KoState * state, int vtx) {
     // prev prev move
 
     // mc owner
-    
+#endif    
     // shape 
     int pat;
     if (vtx != FastBoard::PASS) {
@@ -136,4 +136,8 @@ void Attributes::get_from_move(KoState * state, int vtx) {
         pat |= (1 << 15);
     }
     m_pattern = pat;
+}
+
+int Attributes::get_pattern(void) {
+    return m_pattern;
 }

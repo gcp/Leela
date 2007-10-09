@@ -29,13 +29,17 @@ std::string SGFParser::chop_from_file(std::string filename, int index) {
     char c;
     while (ins >> c && count <= index) {                
         
-        gamebuff.push_back(c);
+        if (count == index) {
+            gamebuff.push_back(c);
+        }
         
         if (c == '(') {
             if (nesting == 0) {
                 // eat ; too
                 ins >> c;  
-                gamebuff.clear();                
+                if (count == index) {
+                    gamebuff.clear();
+                }
             }
         
             nesting++;
