@@ -141,3 +141,7 @@ void Attributes::get_from_move(KoState * state, int vtx) {
 int Attributes::get_pattern(void) {
     return m_pattern;
 }
+
+bool Attributes::attribute_enabled(int idx) {
+    return m_pattern == idx;
+}

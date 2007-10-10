@@ -44,7 +44,7 @@ int main (int argc, char *argv[]) {
     while (!done) {
         if (!gtp_mode) {
             maingame->display_state();
-            myprintf("Ka: ");
+            myprintf("Leela: ");
         }            
                 
         std::getline(std::cin, input);       

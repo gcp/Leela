@@ -1,5 +1,8 @@
 #include <cassert>
 #include <list>
+#include <set>
+#include <fstream>
+#include <boost/lexical_cast.hpp>
 
 #include "config.h"
 
@@ -12,17 +15,12 @@
 
 using namespace Utils;
 
-void AttribScores::autotune_from_file(std::string filename) {        
+void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
     int gametotal = SGFParser::count_games_in_file(filename);    
- 
-    myprintf("Total games in file: %d\n", gametotal);
-    
-    typedef std::pair<Attributes, AttrList> LrnPos;
-    typedef std::list<LrnPos> LearnVector;
-    
-    LearnVector data;
-    
+    myprintf("Total games in file: %d\n", gametotal);    
+
     int gamecount = 0;
+    int allcount = 0;
     
     while (gamecount < gametotal) {        
         std::auto_ptr<SGFTree> sgftree(new SGFTree);        
@@ -70,9 +68,10 @@ void AttribScores::autotune_from_file(std::string filename) {
                 } else {                    
                     position.second.push_back(attributes);
                 }                
-            }                                      
+            }                          
             
             if (moveseen) {
+                allcount += position.second.size();
                 data.push_back(position);         
             } else {
                 myprintf("Mainline move not found: %d\n", move);
@@ -122,66 +121,153 @@ void AttribScores::autotune_from_file(std::string filename) {
                 if (*it == FastBoard::PASS) {
                     position.first = attributes;                    
                 } else {                    
-                    position.second.push_back(attributes);
+                    position.second.push_back(attributes);                    
                 }                
             }                                      
+
+            allcount += position.second.size();
             
             data.push_back(position);  
         }
         
         gamecount++;                
         
-        myprintf("Game %d, %3d moves, %d positions\n", gamecount, movecount, data.size());                
+        myprintf("Game %d, %3d moves, %d positions, %d allpos\n", 
+                 gamecount, movecount, data.size(), allcount);                
     }
     
-    myprintf("Pass done.\n");
+    myprintf("Gathering pass done.\n");
+}
 
-    // initialize the pattern list with a sparse map     
-    std::map<int, int> patlist; 
-    LearnVector::iterator it;
+void AttribScores::autotune_from_file(std::string filename) {                    
+    LearnVector data;
 
-    for (it = data.begin(); it != data.end(); ++it) {
-        int pat = it->first.get_pattern();
-        
-        patlist[pat]++;
+    gather_attributes(filename, data);
+    
+    // patterns worth learning
+    std::set<int> goodpats;
 
-        /*AttrList::iterator ita;        
+    // start a new block for memory alloc reasons
+    {
+        // initialize the pattern list with a sparse map     
+        std::map<int, int> patlist; 
+        LearnVector::iterator it;
 
-        for (ita = it->second.begin(); ita != it->second.end(); ++ita) {
-            int pata = ita->get_pattern();
+        for (it = data.begin(); it != data.end(); ++it) {
+            int pat = it->first.get_pattern();
+            
+            patlist[pat]++;  
 
-            patlist[pata]++;
-        }*/
-    }
+            /*AttrList::iterator ita;        
 
-    // reverse the map to a multimap
-    std::multimap<int, int, std::greater<int> > revpatlist;
-    std::map<int, int>::iterator itr;
+            for (ita = it->second.begin(); ita != it->second.end(); ++ita) {
+                int pata = ita->get_pattern();
 
-    for (itr = patlist.begin(); itr != patlist.end(); ++itr) {
-        int key = itr->first;
-        int val = itr->second;
-
-        revpatlist.insert(std::make_pair(val, key));
-    }
-
-    //std::ofstream(std::string("patx.txt")) os;
-
-    // print the multimap
-    std::multimap<int, int, std::greater<int> >::iterator itrr;        
-    for (itrr = revpatlist.begin();itrr != revpatlist.end();++itrr) {
-        int key = itrr->first;
-        int val = itrr->second;
-        
-        if (key < 500) {
-            break;
+                patlist[pata]++;
+            }*/
         }
 
-        myprintf("%7d %7d\n", key, val);
+        // reverse the map to a multimap
+        std::multimap<int, int, std::greater<int> > revpatlist;
+        std::map<int, int>::iterator itr;
+
+        for (itr = patlist.begin(); itr != patlist.end(); ++itr) {
+            int key = itr->first;
+            int val = itr->second;
+
+            revpatlist.insert(std::make_pair(val, key));
+        }
+
+        // print the multimap and make it a set of 
+        // useful patterns
+        std::multimap<int, int, std::greater<int> >::iterator itrr;        
+        for (itrr = revpatlist.begin();itrr != revpatlist.end();++itrr) {
+            int key = itrr->first;
+            int val = itrr->second;
+            
+            if (key < 20) {
+                break;
+            }
+
+            //myprintf("%7d %7d\n", key, val);             
+
+            // add to good patterns list
+            goodpats.insert(val);
+        }
+    }    
+
+    myprintf("Good patterns: %d (reduced: %d)\n", goodpats.size(), goodpats.size()/16);
+
+    // setup the weights
+    m_weight.resize((1 << 16));
+    fill(m_weight.begin(), m_weight.end(), 1.0f);    
+
+    // now run the tuning:
+    // for all convergence passes
+    int pass = 0;
+    while (1) {
+
+        // for each parameter
+        std::set<int>::iterator it;
+        int pcount = 0;
+
+        for (it = goodpats.begin(); it != goodpats.end(); ++it, ++pcount) {            
+            int meidx = (*it);
+            
+            // prior
+            int  wins = 1;            
+            float sum = 2.0f / (1.0f + m_weight[meidx]);
+
+            // gather all positions
+            LearnVector::iterator posit;            
+            for (posit = data.begin(); posit != data.end(); ++posit) {                
+                
+                float us = 1.0f;
+                float them = us * m_weight[meidx];                
+                
+                AttrList::iterator ait;
+                for (ait = posit->second.begin(); ait != posit->second.end(); ++ait) {
+                    int pp = ait->get_pattern();
+                   
+                    if (goodpats.find(pp) != goodpats.end()) {
+                        them += m_weight[pp];  
+                    } else {
+                        them += 1.0f;
+                    }
+                }
+
+                sum += (us / them); 
+
+                // only works for pattern right now
+                if (posit->first.attribute_enabled(meidx)) {
+                    wins++;                    
+                }                
+            }            
+             // parameter modification
+            float oldp = m_weight[*it];            
+            float newp = (float)wins / (float)sum;
+            myprintf("Parm %d, %d wins (out of %d), %f sum, %f -> %f\n", 
+                      pcount, wins, data.size(), sum, oldp, newp); 
+            m_weight[*it] = newp;
+        }                    
+
+        myprintf("Pass %d done\n", pass);
         
-        //os << key << " " << val << std::endl;
+        std::ofstream fp_out;
+        std::string fname = "param" + boost::lexical_cast<std::string>(pass) + ".txt";
+        fp_out.open(fname.c_str());
+        
+        for (int i = 0; i < (1 << 16); i++) {
+            fp_out << m_weight[i] << std::endl;
+        }
+        
+        fp_out.close();
     }
+}
 
-    //os.close();
+// product of feature weights
+float AttribScores::team_strength(Attributes & team) {
+    int pattern = team.get_pattern();
 
+    return m_weight[pattern];
 }

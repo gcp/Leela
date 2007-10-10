@@ -261,7 +261,7 @@ std::vector<bool> FastBoard::calc_reach_color(int col) {
     
     std::vector<bool> bd(m_maxsq);
     std::vector<bool> last(m_maxsq);
-    
+        
     fill(bd.begin(), bd.end(), false);
     fill(last.begin(), last.end(), false);
         
@@ -273,14 +273,15 @@ std::vector<bool> FastBoard::calc_reach_color(int col) {
                 int vertex = get_vertex(i, j);
                 /* colored field, spread */
                 if (m_square[vertex] == col) {
+                    bd[vertex] = true;
                     for (int k = 0; k < 4; k++) {                    
-                        if (m_square[vertex + m_dirs[k]] != INVAL) {
+                        if (m_square[vertex + m_dirs[k]] == EMPTY) {
                             bd[vertex + m_dirs[k]] = true;
                         }                        
                     }
                 } else if (m_square[vertex] == EMPTY && bd[vertex]) {               
                     for (int k = 0; k < 4; k++) {                    
-                        if (m_square[vertex + m_dirs[k]] != INVAL) {
+                        if (m_square[vertex + m_dirs[k]] == EMPTY) {
                             bd[vertex + m_dirs[k]] = true;
                         }                        
                     }
@@ -292,7 +293,7 @@ std::vector<bool> FastBoard::calc_reach_color(int col) {
     return bd;
 }
 
-float FastBoard::percentual_area_score(float komi) {
+float FastBoard::percentual_area_score(float komi) {    
     return area_score(komi) / (float)(m_boardsize * m_boardsize);
 }
 
@@ -306,6 +307,10 @@ float FastBoard::area_score(float komi) {
     for (int i = 0; i < m_boardsize; i++) {
         for (int j = 0; j < m_boardsize; j++) {  
             int vertex = get_vertex(i, j);
+            
+            assert(!(white[vertex] && black[vertex]));
+            assert(!(white[vertex] && m_square[vertex] == BLACK));
+            assert(!(black[vertex] && m_square[vertex] == WHITE));
             
             if (white[vertex] && !black[vertex]) {
                 score -= 1.0f;
@@ -352,11 +357,12 @@ float FastBoard::final_mc_score(float komi) {
     return (float)(bsc)-((float)(wsc)+komi);
 }
 
-void FastBoard::run_bouzy(int *influence, int dilat, int eros) {
+std::vector<int> FastBoard::run_bouzy(int dilat, int eros) {
     int i;
     int d, e;
     int goodsec, badsec;
-    int tmp[MAXSQ];
+    std::vector<int> tmp(MAXSQ);
+    std::vector<int> influence(MAXSQ);
     
     /* init stones */
     for (i = 0; i < m_maxsq; i++) {
@@ -369,7 +375,7 @@ void FastBoard::run_bouzy(int *influence, int dilat, int eros) {
         }
     }
     
-    memcpy(tmp, influence, sizeof(int) * m_maxsq);
+    tmp = influence;
         
     for (d = 0; d < dilat; d++) {    
         for (i = 0; i < m_maxsq; i++) {
@@ -399,7 +405,7 @@ void FastBoard::run_bouzy(int *influence, int dilat, int eros) {
                     tmp[i] -= goodsec;
             }
         }
-        memcpy(influence, tmp, sizeof(int) * m_maxsq);
+        influence = tmp;
     }
     
     for (e = 0; e < eros; e++) {        
@@ -427,15 +433,16 @@ void FastBoard::run_bouzy(int *influence, int dilat, int eros) {
                 if (tmp[i] > 0) tmp[i] = 0;                    
             }
         }        
-        memcpy(influence, tmp, sizeof(int) * m_maxsq);
-    }        
+        influence = tmp;
+    }
+    
+    return influence;        
 }
 
 void FastBoard::display_influence(void) {
-    int i, j;
-    int influence[MAXSQ];
+    int i, j;    
     /* 4/13 alternate 5/10 moyo 4/0 area */
-    run_bouzy(influence, 5, 21);
+    std::vector<int> influence = run_bouzy(5, 21);
     
     for (j = m_boardsize-1; j >= 0; j--) {
         for (i = 0; i < m_boardsize; i++) {
@@ -466,10 +473,9 @@ void FastBoard::display_influence(void) {
 
 int FastBoard::eval(float komi) {
     int tmp = 0;       
-    int influence[MAXSQ];
-    
+        
     /* 2/3 3/7 4/13 alternate: 5/10 moyo 4/0 area */    
-    run_bouzy(influence, 5, 21);
+    std::vector<int> influence = run_bouzy(5, 21);
 
     for (int i = 0; i < m_boardsize; i++) {
         for (int j = 0; j < m_boardsize; j++) {

@@ -292,7 +292,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         game.display_state();
         return true;
     } else if (command.find("mc_score") == 0) {
-        float ftmp = game.board.final_mc_score();   
+        float ftmp = game.board.final_mc_score(game.get_komi());   
         /* white wins */        
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));

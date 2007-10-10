@@ -13,6 +13,7 @@ public:
     Attributes();
     void get_from_move(KoState * state, int move);    
     int get_pattern(void);
+    bool attribute_enabled(int idx);
 private:
     int border_distance(std::pair<int, int> xy, int bsize);
     int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);

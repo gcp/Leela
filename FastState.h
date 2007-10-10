@@ -21,7 +21,8 @@ public:
     
     std::vector<int> generate_moves(int color);
           
-    void set_komi(float komi);         
+    void set_komi(float komi);        
+    float get_komi(); 
     int get_passes();
     int get_to_move();
     void set_passes(int val);

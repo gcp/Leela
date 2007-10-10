@@ -122,7 +122,7 @@ protected:
     void remove_neighbour(const int i, const int color);        
     int update_board_eye(const int color, const int i);
     std::vector<bool> calc_reach_color(int col);    
-    void run_bouzy(int *influence, int dilat, int eros);  
+    std::vector<int> run_bouzy(int dilat, int eros);  
     bool kill_or_connect(int color, int vertex);  
     int in_atari(int vertex);
     void add_string_liberties(int vertex, 

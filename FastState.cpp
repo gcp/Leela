@@ -336,5 +336,9 @@ float FastState::final_score() {
         }
     }        
     
-    return workstate.board.area_score(m_komi);
+    return workstate.board.area_score(get_komi());
+}
+
+float FastState::get_komi() {
+    return m_komi;
 }

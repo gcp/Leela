@@ -15,7 +15,7 @@ public:
     KoState * get_state();
     KoState * get_state_from_mainline(unsigned int count);
     GameState get_mainline(unsigned int movenum = 999);
-    void load_from_file(std::string filename, int index = 1); 
+    void load_from_file(std::string filename, int index = 0); 
     void load_from_string(std::string gamebuff);
     
     int count_mainline_moves(void);
