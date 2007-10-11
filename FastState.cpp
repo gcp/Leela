@@ -10,6 +10,7 @@
 #include "Zobrist.h"
 #include "Matcher.h"
 #include "HistoryTable.h"
+#include "AttribScores.h"
 
 using namespace Utils;
 
@@ -160,13 +161,20 @@ int FastState::play_random_move(int color) {
 
 float FastState::score_move(int color, int vertex) {
     float res = 0.0f;
-        
-    int pattern = board.get_pattern(vertex);                          
+    
+    int pat = board.get_pattern(vertex);    
+
+    if (!board.black_to_move()) {
+        // this is similar as adding vtx in the middle
+        pat |= (1 << 16);
+    }      
         
     res += 100000.0f * board.capture_size(color, vertex);  
     res +=  10000.0f * board.saving_size(color, vertex);
-    res +=   1000.0f * Matcher::get_Matcher()->matches(color, pattern); 
-    res +=    100.0f * HistoryTable::get_HT()->get_score(vertex);
+    res +=   1000.0f * Matcher::get_Matcher()->matches(color, pat); 
+    //res +=    100.0f * ;
+    //res +=  HistoryTable::get_HT()->get_score(vertex) 
+    //        * AttribScores::get_attribscores()->m_pweight[pat];
     res += -10000.0f * board.self_atari(color, vertex);    
     
     return res;

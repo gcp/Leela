@@ -15,6 +15,17 @@
 
 using namespace Utils;
 
+AttribScores* AttribScores::s_attribscores = 0;
+
+AttribScores* AttribScores::get_attribscores(void) {
+    if (s_attribscores == 0) {
+        s_attribscores = new AttribScores;
+        s_attribscores->load_from_file("param.dat");
+    }
+    
+    return s_attribscores;
+}
+
 void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
     int gametotal = SGFParser::count_games_in_file(filename);    
     myprintf("Total games in file: %d\n", gametotal);    
@@ -55,18 +66,18 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             bool moveseen = false;
             
             position.second.clear();
-            position.second.reserve(moves.size() - 1);
+            position.second.reserve(moves.size());
 
             for(it = moves.begin(); it != moves.end(); ++it) {
                 Attributes attributes;
                 // gather attribute set of current move
                 attributes.get_from_move(state, *it);
                 
+                position.second.push_back(attributes);
+                
                 if (*it == move) {
-                    position.first = attributes;
+                    position.first = position.second.size() - 1;
                     moveseen = true;
-                } else {                    
-                    position.second.push_back(attributes);
                 }                
             }                          
             
@@ -98,11 +109,14 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 // gather attribute set of current move
                 attributes.get_from_move(state, *it);
                 
+                // gather attribute set of current move
+                attributes.get_from_move(state, *it);
+
+                position.second.push_back(attributes);                    
+
                 if (*it == FastBoard::PASS) {
-                    position.first = attributes;                    
-                } else {                    
-                    position.second.push_back(attributes);
-                }                
+                    position.first = position.second.size() - 1;
+                }                  
             }                                      
             
             data.push_back(position);  
@@ -111,17 +125,17 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             moves = state->generate_moves(tomove);            
 
             position.second.clear();                        
-            position.second.reserve(moves.size() - 1);
+            position.second.reserve(moves.size());
 
             for(it = moves.begin(); it != moves.end(); ++it) {
                 Attributes attributes;
                 // gather attribute set of current move
                 attributes.get_from_move(state, *it);
                 
+                position.second.push_back(attributes);                    
+                
                 if (*it == FastBoard::PASS) {
-                    position.first = attributes;                    
-                } else {                    
-                    position.second.push_back(attributes);                    
+                    position.first = position.second.size() - 1;
                 }                
             }                                      
 
@@ -145,26 +159,22 @@ void AttribScores::autotune_from_file(std::string filename) {
     gather_attributes(filename, data);
     
     // patterns worth learning
-    std::set<int> goodpats;
-
+    std::vector<int> goodpats;
+        
     // start a new block for memory alloc reasons
     {
         // initialize the pattern list with a sparse map     
         std::map<int, int> patlist; 
         LearnVector::iterator it;
 
-        for (it = data.begin(); it != data.end(); ++it) {
-            int pat = it->first.get_pattern();
-            
-            patlist[pat]++;  
-
-            /*AttrList::iterator ita;        
+        for (it = data.begin(); it != data.end(); ++it) {            
+            AttrList::iterator ita;        
 
             for (ita = it->second.begin(); ita != it->second.end(); ++ita) {
                 int pata = ita->get_pattern();
 
                 patlist[pata]++;
-            }*/
+            }
         }
 
         // reverse the map to a multimap
@@ -184,72 +194,127 @@ void AttribScores::autotune_from_file(std::string filename) {
         for (itrr = revpatlist.begin();itrr != revpatlist.end();++itrr) {
             int key = itrr->first;
             int val = itrr->second;
-            
-            if (key < 20) {
+
+            if (key < 1000) {
                 break;
             }
 
             //myprintf("%7d %7d\n", key, val);             
 
             // add to good patterns list
-            goodpats.insert(val);
+            goodpats.push_back(val);            
         }
     }    
 
     myprintf("Good patterns: %d (reduced: %d)\n", goodpats.size(), goodpats.size()/16);
 
     // setup the weights
-    m_weight.resize((1 << 16));
-    fill(m_weight.begin(), m_weight.end(), 1.0f);    
+    m_pweight.resize((1 << 26));
+    fill(m_pweight.begin(), m_pweight.end(), 1.0f);  
+    
+    m_fweight.resize(32);
+    fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     // now run the tuning:
     // for all convergence passes
     int pass = 0;
     while (1) {
+        {
+            // for each parameter
+            std::vector<int>::iterator it;
+            int pcount = 0;
 
-        // for each parameter
-        std::set<int>::iterator it;
-        int pcount = 0;
-
-        for (it = goodpats.begin(); it != goodpats.end(); ++it, ++pcount) {            
-            int meidx = (*it);
-            
-            // prior
-            int  wins = 1;            
-            float sum = 2.0f / (1.0f + m_weight[meidx]);
-
-            // gather all positions
-            LearnVector::iterator posit;            
-            for (posit = data.begin(); posit != data.end(); ++posit) {                
+            for (it = goodpats.begin(); it != goodpats.end(); ++it, ++pcount) {            
+                int meidx = (*it);
                 
-                float us = 1.0f;
-                float them = us * m_weight[meidx];                
-                
-                AttrList::iterator ait;
-                for (ait = posit->second.begin(); ait != posit->second.end(); ++ait) {
-                    int pp = ait->get_pattern();
-                   
-                    if (goodpats.find(pp) != goodpats.end()) {
-                        them += m_weight[pp];  
-                    } else {
-                        them += 1.0f;
+                // prior
+                int  wins = 1;            
+                float sum = 2.0f / (1.0f + m_pweight[meidx]);
+
+                // gather all positions/competitions
+                LearnVector::iterator posit;            
+                for (posit = data.begin(); posit != data.end(); ++posit) {                                    
+                    // teammates strength
+                    float us = 0.0f;                    
+                    // all participants strength
+                    float them = 0.0f;                                         
+
+                    // for each participating team                                                            
+                    for (int k = 0; k < posit->second.size(); ++k) {
+                        // are we in it? if so update teammates
+                        if (posit->second[k].get_pattern() == meidx) {
+                            // teammates
+                            float teams = team_strength(posit->second[k]);
+                            // remove us
+                            teams = teams / m_pweight[meidx];
+                            // total teammates
+                            us += teams;
+                            
+                            // did we win?
+                            if (posit->first == k) {
+                                wins++;
+                            }
+                        }
+                        // total opposition
+                        them += team_strength(posit->second[k]);                                                                        
                     }
-                }
 
-                sum += (us / them); 
+                    sum += (us / them);                                  
+                }            
+                 // parameter modification
+                float oldp = m_pweight[meidx];            
+                float newp = (float)wins / (float)sum;
+                myprintf("PParm %d, %5d wins (out of %d), %f prob, %f -> %f\n", 
+                          pcount, wins, data.size(), sum/(float)data.size(), oldp, newp); 
+                m_pweight[meidx] = newp;
+            }
+        } 
+        {                                 
+            for (int pcount = 0; pcount < m_fweight.size(); ++pcount) {                            
+                // prior
+                int  wins = 1;            
+                float sum = 2.0f / (1.0f + m_fweight[pcount]);
 
-                // only works for pattern right now
-                if (posit->first.attribute_enabled(meidx)) {
-                    wins++;                    
-                }                
-            }            
-             // parameter modification
-            float oldp = m_weight[*it];            
-            float newp = (float)wins / (float)sum;
-            myprintf("Parm %d, %d wins (out of %d), %f sum, %f -> %f\n", 
-                      pcount, wins, data.size(), sum, oldp, newp); 
-            m_weight[*it] = newp;
-        }                    
+                // gather all positions
+                LearnVector::iterator posit;            
+                for (posit = data.begin(); posit != data.end(); ++posit) {                
+                    // teammates strength
+                    float us = 0.0f;                    
+                    // all participants strength
+                    float them = 0.0f;                                         
+
+                    // for each participating team                                                            
+                    for (int k = 0; k < posit->second.size(); ++k) {
+                        // are we in it? if so update teammates
+                        if (posit->second[k].attribute_enabled(pcount)) {
+                            // teammates
+                            float teams = team_strength(posit->second[k]);
+                            // remove us
+                            teams = teams / m_fweight[pcount];
+                            // total teammates
+                            us += teams;
+
+                            // did we win?
+                            if (posit->first == k) {
+                                wins++;
+                            }
+                        }
+                        // total opposition
+                        them += team_strength(posit->second[k]);                                                                        
+                    }
+
+                    sum += (us / them);                                      
+                }            
+                // parameter modification
+                float oldp = m_fweight[pcount];            
+                float newp = (float)wins / (float)sum;
+                myprintf("FParm %d, %5d wins (out of %d), %f prob, %f -> %f\n", 
+                    pcount, wins, data.size(), sum/(float)data.size(), oldp, newp); 
+                m_fweight[pcount] = newp;
+            }           
+        }
+        
+        pass++;       
 
         myprintf("Pass %d done\n", pass);
         
@@ -257,8 +322,14 @@ void AttribScores::autotune_from_file(std::string filename) {
         std::string fname = "param" + boost::lexical_cast<std::string>(pass) + ".txt";
         fp_out.open(fname.c_str());
         
-        for (int i = 0; i < (1 << 16); i++) {
-            fp_out << m_weight[i] << std::endl;
+        for (int i = 0; i < m_fweight.size(); i++) {
+            fp_out << m_fweight[i] << std::endl;
+        }
+        
+        for (int i = 0; i < goodpats.size(); i++) {
+            int idx = goodpats[i];
+            
+            fp_out << idx << " " << m_pweight[idx] << std::endl;
         }
         
         fp_out.close();
@@ -269,5 +340,39 @@ void AttribScores::autotune_from_file(std::string filename) {
 float AttribScores::team_strength(Attributes & team) {
     int pattern = team.get_pattern();
 
-    return m_weight[pattern];
+    float rating = m_pweight[pattern];
+    
+    for (int i = 0; i < m_fweight.size(); i++) {
+        if (team.attribute_enabled(i)) {
+            rating *= m_fweight[i];
+        }        
+    }
+    
+    return rating;
+}
+
+
+void AttribScores::load_from_file(std::string filename) {
+    try {
+        std::ifstream inf;
+
+        inf.open(filename.c_str(), std::ifstream::in);
+
+        if (!inf.is_open()) {
+            throw std::exception("Error opening file");
+        }
+
+        m_pweight.clear();
+
+        while (!inf.eof()) {
+            float wt;
+            inf >> wt;
+            m_pweight.push_back(wt);
+        }
+
+        myprintf("%d weights loaded\n", m_pweight.size());
+    } catch(std::exception & e) {
+        myprintf("Error loading weights\n");
+        throw e;
+    } 
 }

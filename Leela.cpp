@@ -7,6 +7,7 @@
 #include "Random.h"
 #include "Utils.h"
 #include "Matcher.h"
+#include "AttribScores.h"
 
 using namespace Utils;
 
@@ -31,8 +32,9 @@ int main (int argc, char *argv[]) {
     setbuf(stderr, NULL);    
                     
     std::auto_ptr<Random> rng(new Random(5489UL));          
-    Zobrist::init_zobrist(*rng);
+    Zobrist::init_zobrist(*rng);    
 
+    //AttribScores::get_attribscores();
     Matcher::get_Matcher();
     
     std::auto_ptr<GameState> maingame(new GameState);    

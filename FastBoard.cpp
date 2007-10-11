@@ -1135,6 +1135,23 @@ int FastBoard::get_pattern(const int sq) {
          | (m_square[sq + size + 2 + 1] <<  0);  
 }
 
+int FastBoard::get_pattern4(const int sq) {          
+    const int size = m_boardsize;
+
+    return (m_square[sq - 2*(size + 2)]      << 22)
+         | (m_square[sq + 2*(size + 2)]      << 20)
+         | (m_square[sq + 2]                 << 18)
+         | (m_square[sq - 2]                 << 16)
+         | (m_square[sq - (size + 2) - 1]    << 14)
+         | (m_square[sq - (size + 2)]        << 12)
+         | (m_square[sq - (size + 2) + 1]    << 10)
+         | (m_square[sq - 1]                 <<  8)
+         | (m_square[sq + 1]                 <<  6)
+         | (m_square[sq + (size + 2) - 1]    <<  4)
+         | (m_square[sq + (size + 2)]        <<  2)
+         | (m_square[sq + (size + 2) + 1]    <<  0);  
+}
+
 void FastBoard::add_pattern_moves(int color, int vertex,
                                   std::vector<int> & work) {                                      
     Matcher * matcher = Matcher::get_Matcher();

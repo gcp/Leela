@@ -65,6 +65,7 @@ public:
 
     bool no_eye_fill(const int i);
     int get_pattern(const int sq);
+    int get_pattern4(const int sq);
     
     int estimate_mc_score(float komi = 7.5f);    
     float final_mc_score(float komi = 7.5f);        

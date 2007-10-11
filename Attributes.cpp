@@ -4,7 +4,7 @@
 #include "FastBoard.h"
 
 Attributes::Attributes() {    
-//    m_present.reserve(32);
+    m_present.reserve(32);
 }
 
 int Attributes::move_distance(std::pair<int, int> xy1, 
@@ -20,18 +20,18 @@ int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
     int x = xy.first;
     int y = xy.second;
     
-    mindist = std::min(x, bsize - x);
+    mindist = std::min(x, bsize - x - 1);
     mindist = std::min(mindist, y);
-    mindist = std::min(mindist, bsize - y);
+    mindist = std::min(mindist, bsize - y - 1);
 
     return mindist; 
 }
 
 void Attributes::get_from_move(KoState * state, int vtx) {
-//    m_present.clear();
+    m_present.clear();
 
     int tomove = state->get_to_move();
-#ifdef BLA
+
     // saving size
     // 0, 1, 2, 3, >3
     int ss;
@@ -39,12 +39,12 @@ void Attributes::get_from_move(KoState * state, int vtx) {
         ss = state->board.saving_size(tomove, vtx);
     } else {
         ss = -1;
-    }
-    m_present.push_back(ss == 0);
+    }    
     m_present.push_back(ss == 1);
     m_present.push_back(ss == 2);
     m_present.push_back(ss == 3);
-    m_present.push_back(ss  > 3);    
+    m_present.push_back(ss == 4);
+    m_present.push_back(ss  > 4);    
 
     // capture size
     // 0, 1, 2, 3, >3
@@ -53,12 +53,12 @@ void Attributes::get_from_move(KoState * state, int vtx) {
         cs = state->board.capture_size(tomove, vtx);
     } else {
         cs = -1;
-    }
-    m_present.push_back(cs == 0);
+    }    
     m_present.push_back(cs == 1);
     m_present.push_back(cs == 2);
     m_present.push_back(cs == 3);
-    m_present.push_back(cs  > 3);
+    m_present.push_back(cs == 4);
+    m_present.push_back(cs  > 4);
 
     // self-atari
     bool sa;
@@ -100,7 +100,9 @@ void Attributes::get_from_move(KoState * state, int vtx) {
     m_present.push_back(borddist == 2);
     m_present.push_back(borddist == 3);
     m_present.push_back(borddist == 4);
-    m_present.push_back(borddist == 5);    
+    m_present.push_back(borddist == 5);  
+    m_present.push_back(borddist == 6);
+    m_present.push_back(borddist >  6);  
 
     // prev move distance
     int prevdist;
@@ -110,31 +112,40 @@ void Attributes::get_from_move(KoState * state, int vtx) {
     } else {
         prevdist = 100;
     }
-    m_present.push_back(prevdist == 2);
-    m_present.push_back(prevdist == 3);
-    m_present.push_back(prevdist == 4);
-    m_present.push_back(prevdist == 5);
-    m_present.push_back(prevdist == 6);
-    m_present.push_back(prevdist == 7);
-    m_present.push_back(prevdist == 8);
-    m_present.push_back(prevdist == 9);
-    m_present.push_back(prevdist >  9);
-
+    m_present.push_back(prevdist ==  2);
+    m_present.push_back(prevdist ==  3);
+    m_present.push_back(prevdist ==  4);
+    m_present.push_back(prevdist ==  5);
+    m_present.push_back(prevdist ==  6);
+    m_present.push_back(prevdist ==  7);
+    m_present.push_back(prevdist ==  8);
+    m_present.push_back(prevdist ==  9);
+    m_present.push_back(prevdist == 10);
+    m_present.push_back(prevdist >  10);
     // prev prev move
 
     // mc owner
-#endif    
-    // shape 
+
+    // shape  (border check)            
     int pat;
-    if (vtx != FastBoard::PASS) {
-        pat = state->board.get_pattern(vtx);   
+    if (vtx != FastBoard::PASS) {          
+        if (borddist < 1) {      
+            pat = state->board.get_pattern(vtx);   
+            pat |= (FastBoard::INVAL) << 16;
+            pat |= (FastBoard::INVAL) << 18;
+            pat |= (FastBoard::INVAL) << 20;
+            pat |= (FastBoard::INVAL) << 22;
+        } else {
+            pat = state->board.get_pattern4(vtx);
+        }
     } else {
-        pat = 0;
+        pat = 16777215; // all INVAL
     }
     if (!state->board.black_to_move()) {
         // this is similar as adding vtx in the middle
-        pat |= (1 << 15);
+        pat |= (1 << 25);
     }
+
     m_pattern = pat;
 }
 
@@ -143,5 +154,5 @@ int Attributes::get_pattern(void) {
 }
 
 bool Attributes::attribute_enabled(int idx) {
-    return m_pattern == idx;
+    return m_present[idx];
 }
