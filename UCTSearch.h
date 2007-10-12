@@ -35,6 +35,7 @@ private:
     void dump_thinking();  
     void dump_history(void);
     void dump_order(void);
+    void dump_order2(void);
     int get_best_move(passflag_t passflag);
 
     GameState & m_rootstate;

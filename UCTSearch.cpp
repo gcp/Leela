@@ -222,6 +222,28 @@ void UCTSearch::dump_history(void) {
     myprintf("---------------\n");        
 }
 
+void UCTSearch::dump_order2(void) {            
+    std::vector<int> moves = m_rootstate.generate_moves(m_rootstate.get_to_move());
+
+    std::vector<std::pair<float, std::string> > ord_list;    
+    
+    for (int i = 0; i < moves.size(); i++) {
+        ord_list.push_back(std::make_pair(
+                           m_rootstate.score_move(moves[i]), 
+                           m_rootstate.move_to_text(moves[i])));
+    } 
+    
+    std::sort(ord_list.rbegin(), ord_list.rend());
+    
+    myprintf("\nOrder Table\n");
+    myprintf("--------------------\n");
+    for (unsigned int i = 0; i < min(10, ord_list.size()); i++) {
+        myprintf("%4s -> %10.10f\n", ord_list[i].second.c_str(), 
+                                     ord_list[i].first);                              
+    }
+    myprintf("--------------------\n");        
+}
+
 void UCTSearch::dump_order(void) {            
     
     std::vector<std::pair<float, std::string> > ord_list;
@@ -231,7 +253,7 @@ void UCTSearch::dump_order(void) {
     while (node != NULL) {
         if (node->get_move() != FastBoard::PASS) {
             ord_list.push_back(std::make_pair(
-                               m_rootstate.score_move(m_rootstate.get_to_move(), node->get_move()), 
+                               m_rootstate.score_move(node->get_move()), 
                                m_rootstate.move_to_text(node->get_move())));
         } else {
             ord_list.push_back(std::make_pair(0.0f, "pass"));
@@ -243,9 +265,9 @@ void UCTSearch::dump_order(void) {
     
     myprintf("\nOrder Table\n");
     myprintf("-------------------\n");
-    for (unsigned int i = 0; i < min(10, ord_list.size()); i++) {
-        myprintf("%4s -> %10.2f\n", ord_list[i].second.c_str(), 
-                                    ord_list[i].first);                              
+    for (unsigned int i = 0; i < min(100, ord_list.size()); i++) {
+        myprintf("%4s -> %10.10f\n", ord_list[i].second.c_str(), 
+                                     ord_list[i].first);                              
     }
     myprintf("-------------------\n");        
 }
@@ -261,6 +283,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     m_rootstate.start_clock(color);
+
+    dump_order2();      
     
     HistoryTable::get_HT()->clear();
 
@@ -289,7 +313,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     myprintf("\n");
     dump_stats(m_rootstate, m_root);
     //dump_history();   
-    dump_order();                          
+    // dump_order();                        
         
     if (centiseconds_elapsed > 0) {    
         myprintf("\n%d visits, %d nodes, %d vps\n\n", 

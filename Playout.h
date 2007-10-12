@@ -18,6 +18,7 @@ public:
     float get_score();    
     void set_final_score(float score);
     bool passthrough(int color, int vertex);
+    std::vector<int> mc_owner(FastState & state, int color);
 
 private:        
     bool m_run;    

@@ -58,6 +58,7 @@ public:
     bool match_pattern(int color, int vertex);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
+    int minimum_pl_count(int color, int vertex);
         
     bool self_atari(int color, int vertex);
     int get_dir(int i);

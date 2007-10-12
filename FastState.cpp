@@ -21,6 +21,7 @@ void FastState::init_game(int size, float komi) {
     movenum = 0;                          
     
     lastmove = FastBoard::PASS;
+    onebutlastmove = lastmove;
     m_komi = komi;
     m_passes = 0;
     
@@ -38,6 +39,7 @@ void FastState::reset_game(void) {
     m_passes = 0;                       
     
     lastmove = FastBoard::MAXSQ;
+    onebutlastmove = lastmove;
 }
 
 void FastState::reset_board(void) {
@@ -159,23 +161,35 @@ int FastState::play_random_move(int color) {
 }
 
 
-float FastState::score_move(int color, int vertex) {
+float FastState::score_move(int vertex) {
     float res = 0.0f;
     
-    int pat = board.get_pattern(vertex);    
+    //int pat = board.get_pattern(vertex);    
 
-    if (!board.black_to_move()) {
+    //if (!board.black_to_move()) {
         // this is similar as adding vtx in the middle
-        pat |= (1 << 16);
-    }      
+    //    pat |= (1 << 16);
+    //}      
         
-    res += 100000.0f * board.capture_size(color, vertex);  
-    res +=  10000.0f * board.saving_size(color, vertex);
-    res +=   1000.0f * Matcher::get_Matcher()->matches(color, pat); 
+    //res += 100000.0f * board.capture_size(color, vertex);  
+    //res +=  10000.0f * board.saving_size(color, vertex);
+    //res +=   1000.0f * Matcher::get_Matcher()->matches(color, pat); 
     //res +=    100.0f * ;
     //res +=  HistoryTable::get_HT()->get_score(vertex) 
     //        * AttribScores::get_attribscores()->m_pweight[pat];
-    res += -10000.0f * board.self_atari(color, vertex);    
+    //res += -10000.0f * board.self_atari(color, vertex);        
+
+    if (vertex == FastBoard::PASS) {
+        return 0.0f;
+    }
+    
+    std::auto_ptr<Playout> playout(new Playout);
+    std::vector<int> mcown = playout->mc_owner(*this, this->get_to_move());
+
+    Attributes att;
+    att.get_from_move(this, vertex, mcown);
+
+    res = AttribScores::get_attribscores()->team_strength(att);
     
     return res;
 }
@@ -188,6 +202,7 @@ int FastState::play_move_fast(int vertex) {
         set_passes(0);                                            
     }
     
+    onebutlastmove = lastmove;
     lastmove = vertex;                                              
     board.m_tomove = !board.m_tomove;
     movenum++; 
@@ -198,6 +213,7 @@ int FastState::play_move_fast(int vertex) {
 void FastState::play_pass(void) {
     movenum++;
         
+    onebutlastmove = lastmove;    
     lastmove = FastBoard::PASS;
         
     board.hash  ^= 0xABCDABCDABCDABCDUI64;    
@@ -217,6 +233,7 @@ void FastState::play_move(int color, int vertex) {
         int kosq = board.update_board(color, vertex);
     
         komove = kosq;   
+        onebutlastmove = lastmove;
         lastmove = vertex;
     
         movenum++;
@@ -250,6 +267,10 @@ float FastState::calculate_mc_score(void) {
 
 int FastState::get_last_move(void) {
     return lastmove;
+}
+
+int FastState::get_prevlast_move() {
+    return onebutlastmove;
 }
 
 int FastState::get_passes() {     

@@ -14,7 +14,7 @@ public:
     int play_random_move();
     int play_random_move(int color);    
     int play_move_fast(int vertex);
-    float score_move(int color, int vertex);
+    float score_move(int vertex);
     
     void play_pass(void);    
     void play_move(int vertex); 
@@ -34,7 +34,8 @@ public:
     std::vector<bool> mark_dead();
     
     int get_movenum();
-    int get_last_move();        
+    int get_last_move();  
+    int get_prevlast_move();      
     void display_state();    
     std::string move_to_text(int move);
 
@@ -44,7 +45,8 @@ public:
     int m_passes;  
     int komove;   
     int movenum;              
-    int lastmove;        
+    int lastmove;   
+    int onebutlastmove;     
     
 protected:
     std::vector<int> m_work;   // working area for move generation

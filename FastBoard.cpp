@@ -1490,3 +1490,17 @@ std::pair<int, int> FastBoard::get_xy(int vertex) {
 
     return xy;
 }
+
+int FastBoard::minimum_pl_count(int color, int vertex) {
+    int minpl = 100;
+    
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        if (m_square[ai] == !color) {
+            int pl = m_plibs[m_parent[ai]];
+            minpl = std::min(minpl, pl);
+        }    
+    } 
+    
+    return minpl;
+}

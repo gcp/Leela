@@ -2,9 +2,9 @@
 
 #include "Attributes.h"
 #include "FastBoard.h"
+#include "Playout.h"
 
-Attributes::Attributes() {    
-    m_present.reserve(32);
+Attributes::Attributes() {        
 }
 
 int Attributes::move_distance(std::pair<int, int> xy1, 
@@ -12,7 +12,7 @@ int Attributes::move_distance(std::pair<int, int> xy1,
     int dx = abs(xy1.first  - xy2.first);
     int dy = abs(xy1.second - xy2.second);
 
-    return dx + dy + std::max(dx, dy);
+    return dx + dy + max(dx, dy);
 }
 
 int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
@@ -20,17 +20,18 @@ int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
     int x = xy.first;
     int y = xy.second;
     
-    mindist = std::min(x, bsize - x - 1);
-    mindist = std::min(mindist, y);
-    mindist = std::min(mindist, bsize - y - 1);
+    mindist = min(x, bsize - x - 1);
+    mindist = min(mindist, y);
+    mindist = min(mindist, bsize - y - 1);
 
     return mindist; 
 }
 
-void Attributes::get_from_move(KoState * state, int vtx) {
-    m_present.clear();
+void Attributes::get_from_move(FastState * state, int vtx, std::vector<int> & mcown) {
+    m_present.reset();
 
     int tomove = state->get_to_move();
+    int bitpos = 0;
 
     // saving size
     // 0, 1, 2, 3, >3
@@ -39,12 +40,13 @@ void Attributes::get_from_move(KoState * state, int vtx) {
         ss = state->board.saving_size(tomove, vtx);
     } else {
         ss = -1;
-    }    
-    m_present.push_back(ss == 1);
-    m_present.push_back(ss == 2);
-    m_present.push_back(ss == 3);
-    m_present.push_back(ss == 4);
-    m_present.push_back(ss  > 4);    
+    }        
+    m_present[bitpos++] = (ss == 1);
+    m_present[bitpos++] = (ss == 2);
+    m_present[bitpos++] = (ss == 3);
+    m_present[bitpos++] = (ss == 4);
+    m_present[bitpos++] = (ss == 5);
+    m_present[bitpos++] = (ss  > 5); 
 
     // capture size
     // 0, 1, 2, 3, >3
@@ -54,11 +56,12 @@ void Attributes::get_from_move(KoState * state, int vtx) {
     } else {
         cs = -1;
     }    
-    m_present.push_back(cs == 1);
-    m_present.push_back(cs == 2);
-    m_present.push_back(cs == 3);
-    m_present.push_back(cs == 4);
-    m_present.push_back(cs  > 4);
+    m_present[bitpos++] = (cs == 1);
+    m_present[bitpos++] = (cs == 2);
+    m_present[bitpos++] = (cs == 3);
+    m_present[bitpos++] = (cs == 4);
+    m_present[bitpos++] = (cs == 5);
+    m_present[bitpos++] = (cs  > 5);
 
     // self-atari
     bool sa;
@@ -67,25 +70,31 @@ void Attributes::get_from_move(KoState * state, int vtx) {
     } else {
         sa = false;
     }
-    m_present.push_back(sa);
-
-    // eyefill
-    bool ef;
-    if (vtx != FastBoard::PASS) {
-        ef = !state->board.no_eye_fill(vtx);
-    } else {
-        ef = false;
-    }
-    m_present.push_back(ef);
-
+    m_present[bitpos++] = (sa);
+    
     // atari size
     // semi-atari liberty count
+    int at;
+    if (vtx != FastBoard::PASS) {
+        at = state->board.minimum_pl_count(tomove, vtx);
+    } else {
+        at = 100;
+    }    
+    m_present[bitpos++] = (at == 2);
+    m_present[bitpos++] = (at == 3);
+    m_present[bitpos++] = (at == 4);
+    m_present[bitpos++] = (at == 5);
+    m_present[bitpos++] = (at == 6);
+    m_present[bitpos++] = (at == 7);
+    m_present[bitpos++] = (at == 8);
+    m_present[bitpos++] = (at == 9);    
+    m_present[bitpos++] = (at >  9);
 
     // pass
-    bool ps = (vtx == FastBoard::PASS) && (state->get_last_move() != FastBoard::PASS);
-    bool pp = (vtx == FastBoard::PASS) && (state->get_last_move() == FastBoard::PASS);
-    m_present.push_back(ps);
-    m_present.push_back(pp);
+    bool ps = (vtx == FastBoard::PASS) && (state->get_passes() == 0);
+    bool pp = (vtx == FastBoard::PASS) && (state->get_passes() == 1);
+    m_present[bitpos++] = (ps);
+    m_present[bitpos++] = (pp);
 
     // border    
     int borddist;
@@ -95,14 +104,14 @@ void Attributes::get_from_move(KoState * state, int vtx) {
     } else {
         borddist = 100;
     }
-    m_present.push_back(borddist == 0);
-    m_present.push_back(borddist == 1);
-    m_present.push_back(borddist == 2);
-    m_present.push_back(borddist == 3);
-    m_present.push_back(borddist == 4);
-    m_present.push_back(borddist == 5);  
-    m_present.push_back(borddist == 6);
-    m_present.push_back(borddist >  6);  
+    m_present[bitpos++] = (borddist == 0);
+    m_present[bitpos++] = (borddist == 1);
+    m_present[bitpos++] = (borddist == 2);
+    m_present[bitpos++] = (borddist == 3);
+    m_present[bitpos++] = (borddist == 4);
+    m_present[bitpos++] = (borddist == 5);      
+    m_present[bitpos++] = (borddist == 6);
+    m_present[bitpos++] = (borddist >  6);  
 
     // prev move distance
     int prevdist;
@@ -112,20 +121,66 @@ void Attributes::get_from_move(KoState * state, int vtx) {
     } else {
         prevdist = 100;
     }
-    m_present.push_back(prevdist ==  2);
-    m_present.push_back(prevdist ==  3);
-    m_present.push_back(prevdist ==  4);
-    m_present.push_back(prevdist ==  5);
-    m_present.push_back(prevdist ==  6);
-    m_present.push_back(prevdist ==  7);
-    m_present.push_back(prevdist ==  8);
-    m_present.push_back(prevdist ==  9);
-    m_present.push_back(prevdist == 10);
-    m_present.push_back(prevdist >  10);
+    m_present[bitpos++] = (prevdist ==  2);
+    m_present[bitpos++] = (prevdist ==  3);
+    m_present[bitpos++] = (prevdist ==  4);
+    m_present[bitpos++] = (prevdist ==  5);
+    m_present[bitpos++] = (prevdist ==  6);
+    m_present[bitpos++] = (prevdist ==  7);
+    m_present[bitpos++] = (prevdist ==  8);
+    m_present[bitpos++] = (prevdist ==  9);
+    m_present[bitpos++] = (prevdist == 10);
+    m_present[bitpos++] = (prevdist == 11);
+    m_present[bitpos++] = (prevdist == 12);
+    m_present[bitpos++] = (prevdist == 13);
+    m_present[bitpos++] = (prevdist == 14);
+    m_present[bitpos++] = (prevdist == 15);
+    m_present[bitpos++] = (prevdist == 16);
+    m_present[bitpos++] = (prevdist >  16);
+    
     // prev prev move
-
-    // mc owner
-
+    int prevprevdist;
+    if (state->get_prevlast_move() != FastBoard::PASS && vtx != FastBoard::PASS) {
+        prevprevdist = move_distance(state->board.get_xy(vtx), 
+                                     state->board.get_xy(state->get_prevlast_move()));
+    } else {
+        prevprevdist = 100;
+    }
+    
+    m_present[bitpos++] = (prevprevdist ==  2);
+    m_present[bitpos++] = (prevprevdist ==  3);
+    m_present[bitpos++] = (prevprevdist ==  4);
+    m_present[bitpos++] = (prevprevdist ==  5);
+    m_present[bitpos++] = (prevprevdist ==  6);
+    m_present[bitpos++] = (prevprevdist ==  7);
+    m_present[bitpos++] = (prevprevdist ==  8);
+    m_present[bitpos++] = (prevprevdist ==  9);
+    m_present[bitpos++] = (prevprevdist == 10);
+    m_present[bitpos++] = (prevprevdist == 11);
+    m_present[bitpos++] = (prevprevdist == 12);
+    m_present[bitpos++] = (prevprevdist == 13);
+    m_present[bitpos++] = (prevprevdist == 14);
+    m_present[bitpos++] = (prevprevdist == 15);
+    m_present[bitpos++] = (prevprevdist == 16);
+    m_present[bitpos++] = (prevprevdist >  16);
+    
+    // mc owner   
+    int mc;
+    if (vtx != FastBoard::PASS) {          
+        mc = mcown[vtx];
+    } else {
+        mc = 100;
+    }
+    
+    m_present[bitpos++] = ((mc >=   0) && (mc <=   7));
+    m_present[bitpos++] = ((mc >=   8) && (mc <=  15));
+    m_present[bitpos++] = ((mc >=  16) && (mc <=  23));
+    m_present[bitpos++] = ((mc >=  24) && (mc <=  31));
+    m_present[bitpos++] = ((mc >=  32) && (mc <=  39));
+    m_present[bitpos++] = ((mc >=  40) && (mc <=  47));
+    m_present[bitpos++] = ((mc >=  48) && (mc <=  55));
+    m_present[bitpos++] = ((mc >=  56) && (mc <=  63));        
+    
     // shape  (border check)            
     int pat;
     if (vtx != FastBoard::PASS) {          

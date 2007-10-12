@@ -12,6 +12,7 @@
 #include "SGFParser.h"
 #include "Utils.h"
 #include "FastBoard.h"
+#include "Playout.h"
 
 using namespace Utils;
 
@@ -64,14 +65,16 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             std::vector<int>::iterator it; 
             LrnPos position;                        
             bool moveseen = false;
-            
-            position.second.clear();
+                                                            
             position.second.reserve(moves.size());
+            
+            std::auto_ptr<Playout> playout(new Playout);
+            std::vector<int> mcown = playout->mc_owner(*state, tomove);
 
             for(it = moves.begin(); it != moves.end(); ++it) {
                 Attributes attributes;
                 // gather attribute set of current move
-                attributes.get_from_move(state, *it);
+                attributes.get_from_move(state, *it, mcown);
                 
                 position.second.push_back(attributes);
                 
@@ -102,21 +105,23 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             std::vector<int>::iterator it; 
             LrnPos position;                                    
                         
-            position.second.reserve(moves.size() - 1);
+            position.second.reserve(moves.size());
+            
+            {
+                std::auto_ptr<Playout> playout(new Playout);
+                std::vector<int> mcown = playout->mc_owner(*state, tomove);
 
-            for(it = moves.begin(); it != moves.end(); ++it) {
-                Attributes attributes;
-                // gather attribute set of current move
-                attributes.get_from_move(state, *it);
-                
-                // gather attribute set of current move
-                attributes.get_from_move(state, *it);
+                for(it = moves.begin(); it != moves.end(); ++it) {
+                    Attributes attributes;
+                    // gather attribute set of current move
+                    attributes.get_from_move(state, *it, mcown);                                
 
-                position.second.push_back(attributes);                    
+                    position.second.push_back(attributes);                    
 
-                if (*it == FastBoard::PASS) {
-                    position.first = position.second.size() - 1;
-                }                  
+                    if (*it == FastBoard::PASS) {
+                        position.first = position.second.size() - 1;
+                    }                  
+                }
             }                                      
             
             data.push_back(position);  
@@ -126,17 +131,22 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
 
             position.second.clear();                        
             position.second.reserve(moves.size());
+            
+            {
+                std::auto_ptr<Playout> playout(new Playout);
+                std::vector<int> mcown = playout->mc_owner(*state, tomove);
 
-            for(it = moves.begin(); it != moves.end(); ++it) {
-                Attributes attributes;
-                // gather attribute set of current move
-                attributes.get_from_move(state, *it);
-                
-                position.second.push_back(attributes);                    
-                
-                if (*it == FastBoard::PASS) {
-                    position.first = position.second.size() - 1;
-                }                
+                for(it = moves.begin(); it != moves.end(); ++it) {
+                    Attributes attributes;
+                    // gather attribute set of current move
+                    attributes.get_from_move(state, *it, mcown);
+                    
+                    position.second.push_back(attributes);                    
+                    
+                    if (*it == FastBoard::PASS) {
+                        position.first = position.second.size() - 1;
+                    }                
+                }
             }                                      
 
             allcount += position.second.size();
@@ -208,12 +218,11 @@ void AttribScores::autotune_from_file(std::string filename) {
 
     myprintf("Good patterns: %d (reduced: %d)\n", goodpats.size(), goodpats.size()/16);
 
-    // setup the weights
-    m_pweight.resize((1 << 26));
-    fill(m_pweight.begin(), m_pweight.end(), 1.0f);  
-    
-    m_fweight.resize(32);
+    // setup the weights    
+    m_fweight.resize(72);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
+
+    m_pat.clear();
 
     // now run the tuning:
     // for all convergence passes
@@ -229,7 +238,7 @@ void AttribScores::autotune_from_file(std::string filename) {
                 
                 // prior
                 int  wins = 1;            
-                float sum = 2.0f / (1.0f + m_pweight[meidx]);
+                float sum = 2.0f / (1.0f + get_patweight(meidx));
 
                 // gather all positions/competitions
                 LearnVector::iterator posit;            
@@ -241,32 +250,33 @@ void AttribScores::autotune_from_file(std::string filename) {
 
                     // for each participating team                                                            
                     for (int k = 0; k < posit->second.size(); ++k) {
+                        float teams = team_strength(posit->second[k]);
+                        // total opposition
+                        them += teams;
                         // are we in it? if so update teammates
                         if (posit->second[k].get_pattern() == meidx) {
                             // teammates
-                            float teams = team_strength(posit->second[k]);
+                            float mates = teams;
                             // remove us
-                            teams = teams / m_pweight[meidx];
+                            mates = mates / get_patweight(meidx);
                             // total teammates
-                            us += teams;
+                            us += mates;
                             
                             // did we win?
                             if (posit->first == k) {
                                 wins++;
                             }
-                        }
-                        // total opposition
-                        them += team_strength(posit->second[k]);                                                                        
+                        }                       
                     }
 
                     sum += (us / them);                                  
                 }            
                  // parameter modification
-                float oldp = m_pweight[meidx];            
+                float oldp = get_patweight(meidx);            
                 float newp = (float)wins / (float)sum;
                 myprintf("PParm %d, %5d wins (out of %d), %f prob, %f -> %f\n", 
                           pcount, wins, data.size(), sum/(float)data.size(), oldp, newp); 
-                m_pweight[meidx] = newp;
+                set_patweight(meidx, newp);
             }
         } 
         {                                 
@@ -285,22 +295,23 @@ void AttribScores::autotune_from_file(std::string filename) {
 
                     // for each participating team                                                            
                     for (int k = 0; k < posit->second.size(); ++k) {
+                        float teams = team_strength(posit->second[k]);
+                        // total opposition
+                        them += teams;
                         // are we in it? if so update teammates
                         if (posit->second[k].attribute_enabled(pcount)) {
                             // teammates
-                            float teams = team_strength(posit->second[k]);
+                            float mates = teams;
                             // remove us
-                            teams = teams / m_fweight[pcount];
+                            mates = mates / m_fweight[pcount];
                             // total teammates
-                            us += teams;
+                            us += mates;
 
                             // did we win?
                             if (posit->first == k) {
                                 wins++;
                             }
-                        }
-                        // total opposition
-                        them += team_strength(posit->second[k]);                                                                        
+                        }                        
                     }
 
                     sum += (us / them);                                      
@@ -329,7 +340,7 @@ void AttribScores::autotune_from_file(std::string filename) {
         for (int i = 0; i < goodpats.size(); i++) {
             int idx = goodpats[i];
             
-            fp_out << idx << " " << m_pweight[idx] << std::endl;
+            fp_out << idx << " " << get_patweight(idx) << std::endl;
         }
         
         fp_out.close();
@@ -339,10 +350,11 @@ void AttribScores::autotune_from_file(std::string filename) {
 // product of feature weights
 float AttribScores::team_strength(Attributes & team) {
     int pattern = team.get_pattern();
-
-    float rating = m_pweight[pattern];
     
-    for (int i = 0; i < m_fweight.size(); i++) {
+    float rating = get_patweight(pattern);            
+    
+    int sz = m_fweight.size();
+    for (int i = 0; i < sz; i++) {
         if (team.attribute_enabled(i)) {
             rating *= m_fweight[i];
         }        
@@ -350,7 +362,6 @@ float AttribScores::team_strength(Attributes & team) {
     
     return rating;
 }
-
 
 void AttribScores::load_from_file(std::string filename) {
     try {
@@ -361,18 +372,55 @@ void AttribScores::load_from_file(std::string filename) {
         if (!inf.is_open()) {
             throw std::exception("Error opening file");
         }
+        
+        m_fweight.clear();
+        m_pat.clear();
 
-        m_pweight.clear();
-
-        while (!inf.eof()) {
+        m_fweight.reserve(72);
+        for (int i = 0; i < 72; i++) {
             float wt;
             inf >> wt;
-            m_pweight.push_back(wt);
+            m_fweight.push_back(wt);
         }
 
-        myprintf("%d weights loaded\n", m_pweight.size());
+        while (!inf.eof()) {
+            int pat;
+            float wt;
+            inf >> pat >> wt;
+            m_pat.insert(std::make_pair(pat, wt));
+        }
+
+        myprintf("%d feature weights loaded, %d patterns\n", 
+                 m_fweight.size(), m_pat.size());
     } catch(std::exception & e) {
         myprintf("Error loading weights\n");
         throw e;
     } 
+}
+
+float AttribScores::get_patweight(int idx) {    
+    std::map<int, float>::const_iterator it;
+    float rating;
+
+    it = m_pat.find(idx);
+
+    if (it != m_pat.end()) {
+        rating = it->second;
+    } else {
+        rating = 1.0f;
+    }    
+
+    return rating;
+}
+
+void AttribScores::set_patweight(int idx, float val) {
+    std::map<int, float>::iterator it;
+
+    it = m_pat.find(idx);
+
+    if (it != m_pat.end()) {
+        it->second = val;
+    } else {
+        m_pat.insert(std::make_pair(idx, val));
+    }            
 }

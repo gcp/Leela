@@ -57,7 +57,7 @@ int UCTNode::create_children(FastState &state) {
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {  
                     UCTNode * vtx = new UCTNode(vertex);
-                    float score = state.score_move(board.m_tomove, vertex);
+                    float score = state.score_move(vertex);
                     nodelist.push_back(std::make_pair(score, vtx));                    
                 } 
             }                   
