@@ -68,13 +68,10 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                                                             
             position.second.reserve(moves.size());
             
-            std::auto_ptr<Playout> playout(new Playout);
-            std::vector<int> mcown = playout->mc_owner(*state, tomove);
-
             for(it = moves.begin(); it != moves.end(); ++it) {
                 Attributes attributes;
                 // gather attribute set of current move
-                attributes.get_from_move(state, *it, mcown);
+                attributes.get_from_move(state, *it);
                 
                 position.second.push_back(attributes);
                 
@@ -108,13 +105,10 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             position.second.reserve(moves.size());
             
             {
-                std::auto_ptr<Playout> playout(new Playout);
-                std::vector<int> mcown = playout->mc_owner(*state, tomove);
-
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
-                    attributes.get_from_move(state, *it, mcown);                                
+                    attributes.get_from_move(state, *it);                                
 
                     position.second.push_back(attributes);                    
 
@@ -133,13 +127,10 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             position.second.reserve(moves.size());
             
             {
-                std::auto_ptr<Playout> playout(new Playout);
-                std::vector<int> mcown = playout->mc_owner(*state, tomove);
-
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
-                    attributes.get_from_move(state, *it, mcown);
+                    attributes.get_from_move(state, *it);
                     
                     position.second.push_back(attributes);                    
                     
@@ -205,7 +196,7 @@ void AttribScores::autotune_from_file(std::string filename) {
             int key = itrr->first;
             int val = itrr->second;
 
-            if (key < 2000) {
+            if (key < 1000) {
                 break;
             }
 
@@ -219,7 +210,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     myprintf("Good patterns: %d (reduced: %d)\n", goodpats.size(), goodpats.size()/16);
 
     // setup the weights    
-    m_fweight.resize(62);
+    m_fweight.resize(58);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -394,8 +385,8 @@ void AttribScores::load_from_file(std::string filename) {
         m_fweight.clear();
         m_pat.clear();
 
-        m_fweight.reserve(62);
-        for (int i = 0; i < 62; i++) {
+        m_fweight.reserve(58);
+        for (int i = 0; i < 58; i++) {
             float wt;
             inf >> wt;
             m_fweight.push_back(wt);

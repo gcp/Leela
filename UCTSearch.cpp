@@ -224,15 +224,11 @@ void UCTSearch::dump_history(void) {
 
 void UCTSearch::dump_order2(void) {            
     std::vector<int> moves = m_rootstate.generate_moves(m_rootstate.get_to_move());
-
-    std::auto_ptr<Playout> playout(new Playout);
-    std::vector<int> mcown = playout->mc_owner(m_rootstate, m_rootstate.get_to_move());
-
     std::vector<std::pair<float, std::string> > ord_list;    
     
     for (int i = 0; i < moves.size(); i++) {
         ord_list.push_back(std::make_pair(
-                           m_rootstate.score_move(moves[i], mcown), 
+                           m_rootstate.score_move(moves[i]), 
                            m_rootstate.move_to_text(moves[i])));
     } 
     

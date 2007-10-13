@@ -161,19 +161,11 @@ int FastState::play_random_move(int color) {
 }
 
 
-float FastState::score_move(int vertex, std::vector<int> & mcown) {
-    float res = 0.0f;     
-
-    if (vertex == FastBoard::PASS) {
-        return 0.0f;
-    }        
-
+float FastState::score_move(int vertex) {       
     Attributes att;
-    att.get_from_move(this, vertex, mcown);
+    att.get_from_move(this, vertex);
 
-    res = AttribScores::get_attribscores()->team_strength(att);
-    
-    return res;
+    return AttribScores::get_attribscores()->team_strength(att);        
 }
 
 int FastState::play_move_fast(int vertex) {

@@ -14,7 +14,7 @@
 /* Hard limits */
 
 #define NAME            "Leela"
-#define VERSION         "0.2NW"
+#define VERSION         "0.2FW"
 
 /* Integer types */
 

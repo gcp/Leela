@@ -14,7 +14,11 @@ using namespace Utils;
 const std::tr1::array<int, 2> FastBoard::s_eyemask = {    
     4 * (1 << (NBR_SHIFT * BLACK)),
     4 * (1 << (NBR_SHIFT * WHITE))    
-};  
+};
+
+const std::tr1::array<int, 4> FastBoard::s_cinvert = {    
+    WHITE, BLACK, EMPTY, INVAL        
+};
 
 int FastBoard::get_boardsize(void) {
     return m_boardsize;
@@ -1013,8 +1017,9 @@ bool FastBoard::kill_or_connect(int color, int vertex) {
     return live_connect || !opps_live;    
 }
 
+template <int N> 
 void FastBoard::add_string_liberties(int vertex, 
-                                     std::tr1::array<int, 3> & nbr_libs, 
+                                     std::tr1::array<int, N> & nbr_libs, 
                                      int & nbr_libs_cnt) {
     int pos = vertex;    
     int color = m_square[pos];
@@ -1041,7 +1046,7 @@ void FastBoard::add_string_liberties(int vertex,
                         nbr_libs[nbr_libs_cnt++] = ai; 
                         
                         // more than 2 liberties means we are not critical
-                        if (nbr_libs_cnt > 2) {
+                        if (nbr_libs_cnt >= N) {
                             return;
                         }  
                     }
@@ -1122,34 +1127,60 @@ bool FastBoard::self_atari(int color, int vertex) {
     return true;
 }
 
-int FastBoard::get_pattern(const int sq) {          
+int FastBoard::get_pattern(const int sq, bool invert) {          
     const int size = m_boardsize;
     
-    return (m_square[sq - size - 2 - 1] << 14)
-         | (m_square[sq - size - 2]     << 12)
-         | (m_square[sq - size - 2 + 1] << 10)
-         | (m_square[sq - 1]            <<  8)
-         | (m_square[sq + 1]            <<  6)
-         | (m_square[sq + size + 2 - 1] <<  4)
-         | (m_square[sq + size + 2]     <<  2)
-         | (m_square[sq + size + 2 + 1] <<  0);  
+    if (!invert) {
+        return (m_square[sq - size - 2 - 1] << 14)
+             | (m_square[sq - size - 2]     << 12)
+             | (m_square[sq - size - 2 + 1] << 10)
+             | (m_square[sq - 1]            <<  8)
+             | (m_square[sq + 1]            <<  6)
+             | (m_square[sq + size + 2 - 1] <<  4)
+             | (m_square[sq + size + 2]     <<  2)
+             | (m_square[sq + size + 2 + 1] <<  0);  
+    } else {
+        return (s_cinvert[m_square[sq - size - 2 - 1]] << 14)
+             | (s_cinvert[m_square[sq - size - 2]]     << 12)
+             | (s_cinvert[m_square[sq - size - 2 + 1]] << 10)
+             | (s_cinvert[m_square[sq - 1]]            <<  8)
+             | (s_cinvert[m_square[sq + 1]]            <<  6)
+             | (s_cinvert[m_square[sq + size + 2 - 1]] <<  4)
+             | (s_cinvert[m_square[sq + size + 2]]     <<  2)
+             | (s_cinvert[m_square[sq + size + 2 + 1]] <<  0);  
+    }         
 }
 
-int FastBoard::get_pattern4(const int sq) {          
+int FastBoard::get_pattern4(const int sq, bool invert) {          
     const int size = m_boardsize;
 
-    return (m_square[sq - 2*(size + 2)]      << 22)
-         | (m_square[sq + 2*(size + 2)]      << 20)
-         | (m_square[sq + 2]                 << 18)
-         | (m_square[sq - 2]                 << 16)
-         | (m_square[sq - (size + 2) - 1]    << 14)
-         | (m_square[sq - (size + 2)]        << 12)
-         | (m_square[sq - (size + 2) + 1]    << 10)
-         | (m_square[sq - 1]                 <<  8)
-         | (m_square[sq + 1]                 <<  6)
-         | (m_square[sq + (size + 2) - 1]    <<  4)
-         | (m_square[sq + (size + 2)]        <<  2)
-         | (m_square[sq + (size + 2) + 1]    <<  0);  
+    if (!invert) {
+        return (m_square[sq - 2*(size + 2)]      << 22)
+             | (m_square[sq + 2*(size + 2)]      << 20)
+             | (m_square[sq + 2]                 << 18)
+             | (m_square[sq - 2]                 << 16)
+             | (m_square[sq - (size + 2) - 1]    << 14)
+             | (m_square[sq - (size + 2)]        << 12)
+             | (m_square[sq - (size + 2) + 1]    << 10)
+             | (m_square[sq - 1]                 <<  8)
+             | (m_square[sq + 1]                 <<  6)
+             | (m_square[sq + (size + 2) - 1]    <<  4)
+             | (m_square[sq + (size + 2)]        <<  2)
+             | (m_square[sq + (size + 2) + 1]    <<  0);  
+    } else {
+        return (s_cinvert[m_square[sq - 2*(size + 2)]]      << 22)
+             | (s_cinvert[m_square[sq + 2*(size + 2)]]      << 20)
+             | (s_cinvert[m_square[sq + 2]]                 << 18)
+             | (s_cinvert[m_square[sq - 2]]                 << 16)
+             | (s_cinvert[m_square[sq - (size + 2) - 1]]    << 14)
+             | (s_cinvert[m_square[sq - (size + 2)]]        << 12)
+             | (s_cinvert[m_square[sq - (size + 2) + 1]]    << 10)
+             | (s_cinvert[m_square[sq - 1]]                 <<  8)
+             | (s_cinvert[m_square[sq + 1]]                 <<  6)
+             | (s_cinvert[m_square[sq + (size + 2) - 1]]    <<  4)
+             | (s_cinvert[m_square[sq + (size + 2)]]        <<  2)
+             | (s_cinvert[m_square[sq + (size + 2) + 1]]    <<  0);  
+    }         
 }
 
 void FastBoard::add_pattern_moves(int color, int vertex,
@@ -1160,7 +1191,7 @@ void FastBoard::add_pattern_moves(int color, int vertex,
         int sq = vertex + m_extradirs[i];
         
         if (m_square[sq] == EMPTY) {      
-            int pattern = get_pattern(sq);            
+            int pattern = get_pattern(sq, false);            
             
             if (matcher->matches(color, pattern)) {
                 if (!self_atari(color, sq)) {
@@ -1491,16 +1522,21 @@ std::pair<int, int> FastBoard::get_xy(int vertex) {
     return xy;
 }
 
-int FastBoard::minimum_pl_count(int color, int vertex) {
-    int minpl = 100;
+// returns 1 to 6 real liberties
+int FastBoard::minimum_elib_count(int color, int vertex) {
+    int minlib = 100;
     
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
         if (m_square[ai] == !color) {
-            int pl = m_plibs[m_parent[ai]];
-            minpl = std::min(minpl, pl);
+            int lc = 0;
+            boost::array<int, 6> tmp;
+            add_string_liberties(ai, tmp, lc);    
+            if (lc < minlib) {
+                minlib = lc;
+            }
         }    
     } 
     
-    return minpl;
+    return minlib;
 }

@@ -12,14 +12,14 @@
 class Attributes {
 public:           
     Attributes();
-    void get_from_move(FastState * state, int move,  std::vector<int> & mcow);    
+    void get_from_move(FastState * state, int move);    
     int get_pattern(void);
     bool attribute_enabled(int idx);
 private:
     int border_distance(std::pair<int, int> xy, int bsize);
     int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);
     
-    std::bitset<62> m_present; 
+    std::bitset<58> m_present; 
     int m_pattern;
 };
 

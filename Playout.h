@@ -17,8 +17,7 @@ public:
     void run(FastState & state, bool resigning = true);
     float get_score();    
     void set_final_score(float score);
-    bool passthrough(int color, int vertex);
-    std::vector<int> mc_owner(FastState & state, int color);
+    bool passthrough(int color, int vertex);    
 
 private:        
     bool m_run;    

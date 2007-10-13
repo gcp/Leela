@@ -58,15 +58,15 @@ public:
     bool match_pattern(int color, int vertex);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
-    int minimum_pl_count(int color, int vertex);
+    int minimum_elib_count(int color, int vertex);
         
     bool self_atari(int color, int vertex);
     int get_dir(int i);
     int get_extra_dir(int i);
 
     bool no_eye_fill(const int i);
-    int get_pattern(const int sq);
-    int get_pattern4(const int sq);
+    int get_pattern(const int sq, bool invert);
+    int get_pattern4(const int sq, bool invert);
     
     int estimate_mc_score(float komi = 7.5f);    
     float final_mc_score(float komi = 7.5f);        
@@ -101,6 +101,7 @@ protected:
         bit masks to detect eyes on neighbors
     */        
     static const std::tr1::array<int, 2> s_eyemask; 
+    static const std::tr1::array<int, 4> s_cinvert; /* color inversion */
     
     std::tr1::array<square_t, MAXSQ> m_square;      /* board contents */            
     std::tr1::array<int, MAXSQ+1>    m_next;        /* next stone in string */ 
@@ -127,9 +128,9 @@ protected:
     std::vector<int> run_bouzy(int dilat, int eros);  
     bool kill_or_connect(int color, int vertex);  
     int in_atari(int vertex);
-    void add_string_liberties(int vertex, 
-                              std::tr1::array<int, 3> & nbr_libs, 
-                              int & nbr_libs_cnt);
+    template <int N> void add_string_liberties(int vertex, 
+                                               std::tr1::array<int, N> & nbr_libs, 
+                                               int & nbr_libs_cnt);
     void kill_neighbours(int vertex, std::vector<int> & work);                                  
     void try_capture(int color, int vertex, std::vector<int> & work);
     int string_size(int vertex);
