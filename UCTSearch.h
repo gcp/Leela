@@ -22,7 +22,7 @@ public:
         Don't expand children until at least this many
         visits happened.
     */        
-    static const int MATURE_TRESHOLD = 30;     
+    static const int MATURE_TRESHOLD = 50;     
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
@@ -33,8 +33,7 @@ private:
     void dump_stats(GameState & state, UCTNode & parent);
     void dump_pv(GameState & state, UCTNode & parent);
     void dump_thinking();  
-    void dump_history(void);
-    void dump_order(void);
+    void dump_history(void);    
     void dump_order2(void);
     int get_best_move(passflag_t passflag);
 

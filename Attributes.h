@@ -19,7 +19,7 @@ private:
     int border_distance(std::pair<int, int> xy, int bsize);
     int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);
     
-    std::bitset<72> m_present; 
+    std::bitset<62> m_present; 
     int m_pattern;
 };
 

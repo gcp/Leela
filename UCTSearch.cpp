@@ -225,11 +225,14 @@ void UCTSearch::dump_history(void) {
 void UCTSearch::dump_order2(void) {            
     std::vector<int> moves = m_rootstate.generate_moves(m_rootstate.get_to_move());
 
+    std::auto_ptr<Playout> playout(new Playout);
+    std::vector<int> mcown = playout->mc_owner(m_rootstate, m_rootstate.get_to_move());
+
     std::vector<std::pair<float, std::string> > ord_list;    
     
     for (int i = 0; i < moves.size(); i++) {
         ord_list.push_back(std::make_pair(
-                           m_rootstate.score_move(moves[i]), 
+                           m_rootstate.score_move(moves[i], mcown), 
                            m_rootstate.move_to_text(moves[i])));
     } 
     
@@ -242,34 +245,6 @@ void UCTSearch::dump_order2(void) {
                                      ord_list[i].first);                              
     }
     myprintf("--------------------\n");        
-}
-
-void UCTSearch::dump_order(void) {            
-    
-    std::vector<std::pair<float, std::string> > ord_list;
-    
-    UCTNode* node = m_root.get_first_child();
-    
-    while (node != NULL) {
-        if (node->get_move() != FastBoard::PASS) {
-            ord_list.push_back(std::make_pair(
-                               m_rootstate.score_move(node->get_move()), 
-                               m_rootstate.move_to_text(node->get_move())));
-        } else {
-            ord_list.push_back(std::make_pair(0.0f, "pass"));
-        }
-        node = node->get_sibling();                                                                       
-    }    
-    
-    std::sort(ord_list.rbegin(), ord_list.rend());
-    
-    myprintf("\nOrder Table\n");
-    myprintf("-------------------\n");
-    for (unsigned int i = 0; i < min(100, ord_list.size()); i++) {
-        myprintf("%4s -> %10.10f\n", ord_list[i].second.c_str(), 
-                                     ord_list[i].first);                              
-    }
-    myprintf("-------------------\n");        
 }
 
 int UCTSearch::think(int color, passflag_t passflag) {
@@ -301,7 +276,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;
             dump_thinking();            
         }        
-    } while(/*centiseconds_elapsed < time_for_move*/ m_root.get_visits() < 20000); 
+    } while(centiseconds_elapsed < time_for_move /*m_root.get_visits() < 20000*/); 
     
     if (!m_root.has_children()) {
         return FastBoard::PASS;

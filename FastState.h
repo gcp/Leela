@@ -14,7 +14,7 @@ public:
     int play_random_move();
     int play_random_move(int color);    
     int play_move_fast(int vertex);
-    float score_move(int vertex);
+    float score_move(int vertex, std::vector<int> & mcown);
     
     void play_pass(void);    
     void play_move(int vertex); 

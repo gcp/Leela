@@ -205,7 +205,7 @@ void AttribScores::autotune_from_file(std::string filename) {
             int key = itrr->first;
             int val = itrr->second;
 
-            if (key < 1000) {
+            if (key < 2000) {
                 break;
             }
 
@@ -219,7 +219,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     myprintf("Good patterns: %d (reduced: %d)\n", goodpats.size(), goodpats.size()/16);
 
     // setup the weights    
-    m_fweight.resize(72);
+    m_fweight.resize(62);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -228,10 +228,24 @@ void AttribScores::autotune_from_file(std::string filename) {
     // for all convergence passes
     int pass = 0;
     while (1) {
-        {
+        // pattern learning
+        {                  
+            // get total team strengths first      
+            std::vector<float> allteams;
+            LearnVector::iterator posit; 
+
+            myprintf("Team gathering...");
+            for (posit = data.begin(); posit != data.end(); ++posit) {            
+                for (int k = 0; k < posit->second.size(); ++k) {
+                    float teams = team_strength(posit->second[k]);
+                    allteams.push_back(teams);
+                }
+            }
+            myprintf("%d done\n", allteams.size());
+            
             // for each parameter
             std::vector<int>::iterator it;
-            int pcount = 0;
+            int pcount = 0;            
 
             for (it = goodpats.begin(); it != goodpats.end(); ++it, ++pcount) {            
                 int meidx = (*it);
@@ -239,10 +253,11 @@ void AttribScores::autotune_from_file(std::string filename) {
                 // prior
                 int  wins = 1;            
                 float sum = 2.0f / (1.0f + get_patweight(meidx));
+                // restart team index
+                int tcount = 0;
 
-                // gather all positions/competitions
-                LearnVector::iterator posit;            
-                for (posit = data.begin(); posit != data.end(); ++posit) {                                    
+                // gather all positions/competitions                           
+                for (posit = data.begin(); posit != data.end(); ++posit) {                      
                     // teammates strength
                     float us = 0.0f;                    
                     // all participants strength
@@ -250,7 +265,9 @@ void AttribScores::autotune_from_file(std::string filename) {
 
                     // for each participating team                                                            
                     for (int k = 0; k < posit->second.size(); ++k) {
-                        float teams = team_strength(posit->second[k]);
+                        // index into global team thing                                                             
+                        float teams = allteams[tcount];
+                        tcount++;                     
                         // total opposition
                         them += teams;
                         // are we in it? if so update teammates
@@ -279,6 +296,7 @@ void AttribScores::autotune_from_file(std::string filename) {
                 set_patweight(meidx, newp);
             }
         } 
+        // feature parameter learning
         {                                 
             for (int pcount = 0; pcount < m_fweight.size(); ++pcount) {                            
                 // prior
@@ -376,8 +394,8 @@ void AttribScores::load_from_file(std::string filename) {
         m_fweight.clear();
         m_pat.clear();
 
-        m_fweight.reserve(72);
-        for (int i = 0; i < 72; i++) {
+        m_fweight.reserve(62);
+        for (int i = 0; i < 62; i++) {
             float wt;
             inf >> wt;
             m_fweight.push_back(wt);

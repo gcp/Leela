@@ -46,7 +46,8 @@ void Attributes::get_from_move(FastState * state, int vtx, std::vector<int> & mc
     m_present[bitpos++] = (ss == 3);
     m_present[bitpos++] = (ss == 4);
     m_present[bitpos++] = (ss == 5);
-    m_present[bitpos++] = (ss  > 5); 
+    m_present[bitpos++] = (ss == 6);
+    m_present[bitpos++] = (ss  > 6); 
 
     // capture size
     // 0, 1, 2, 3, >3
@@ -135,8 +136,7 @@ void Attributes::get_from_move(FastState * state, int vtx, std::vector<int> & mc
     m_present[bitpos++] = (prevdist == 13);
     m_present[bitpos++] = (prevdist == 14);
     m_present[bitpos++] = (prevdist == 15);
-    m_present[bitpos++] = (prevdist == 16);
-    m_present[bitpos++] = (prevdist >  16);
+    m_present[bitpos++] = (prevdist >  15);    
     
     // prev prev move
     int prevprevdist;
@@ -152,17 +152,7 @@ void Attributes::get_from_move(FastState * state, int vtx, std::vector<int> & mc
     m_present[bitpos++] = (prevprevdist ==  4);
     m_present[bitpos++] = (prevprevdist ==  5);
     m_present[bitpos++] = (prevprevdist ==  6);
-    m_present[bitpos++] = (prevprevdist ==  7);
-    m_present[bitpos++] = (prevprevdist ==  8);
-    m_present[bitpos++] = (prevprevdist ==  9);
-    m_present[bitpos++] = (prevprevdist == 10);
-    m_present[bitpos++] = (prevprevdist == 11);
-    m_present[bitpos++] = (prevprevdist == 12);
-    m_present[bitpos++] = (prevprevdist == 13);
-    m_present[bitpos++] = (prevprevdist == 14);
-    m_present[bitpos++] = (prevprevdist == 15);
-    m_present[bitpos++] = (prevprevdist == 16);
-    m_present[bitpos++] = (prevprevdist >  16);
+    m_present[bitpos++] = (prevprevdist  >  6);    
     
     // mc owner   
     int mc;
@@ -172,14 +162,14 @@ void Attributes::get_from_move(FastState * state, int vtx, std::vector<int> & mc
         mc = 100;
     }
     
-    m_present[bitpos++] = ((mc >=   0) && (mc <=   7));
-    m_present[bitpos++] = ((mc >=   8) && (mc <=  15));
-    m_present[bitpos++] = ((mc >=  16) && (mc <=  23));
-    m_present[bitpos++] = ((mc >=  24) && (mc <=  31));
-    m_present[bitpos++] = ((mc >=  32) && (mc <=  39));
-    m_present[bitpos++] = ((mc >=  40) && (mc <=  47));
-    m_present[bitpos++] = ((mc >=  48) && (mc <=  55));
-    m_present[bitpos++] = ((mc >=  56) && (mc <=  63));        
+    m_present[bitpos++] = ((mc >=   0) && (mc <=   3));
+    m_present[bitpos++] = ((mc >=   4) && (mc <=   7));
+    m_present[bitpos++] = ((mc >=   8) && (mc <=  11));
+    m_present[bitpos++] = ((mc >=  12) && (mc <=  15));
+    m_present[bitpos++] = ((mc >=  16) && (mc <=  19));
+    m_present[bitpos++] = ((mc >=  20) && (mc <=  23));
+    m_present[bitpos++] = ((mc >=  24) && (mc <=  27));
+    m_present[bitpos++] = ((mc >=  28) && (mc <=  31));        
     
     // shape  (border check)            
     int pat;

@@ -84,7 +84,7 @@ std::vector<int> Playout::mc_owner(FastState & state, int color) {
     const int boardsize = state.board.get_boardsize();    
     const int playoutlen = (boardsize * boardsize) * 2;         
     
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < 32; i++) {
         FastState tmp = state;
         do {                                    
             tmp.play_random_move();    
@@ -93,11 +93,11 @@ std::vector<int> Playout::mc_owner(FastState & state, int color) {
         for (int j = 0; j < tmp.board.m_maxsq; j++) {
             int vc = tmp.board.get_square(j); 
             if (vc == color) {
-                res[j]++;
+                res[j]++;                
             } else if (vc == FastBoard::EMPTY) {
                 // eyes count too
                 if (!tmp.board.no_eye_fill(j)) {
-                    res[j]++;
+                    res[j]++;                    
                 }
             }
         }                 
