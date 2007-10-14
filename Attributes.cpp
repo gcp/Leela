@@ -36,7 +36,7 @@ int Attributes::corner_distance(std::pair<int, int> xy, int bsize) {
     distx = min(x, bsize - x - 1);
     disty = min(y, bsize - y - 1);
     
-    maxdist = max(distx, disty);    
+    maxdist = distx + disty;    
 
     return maxdist; 
 }
@@ -129,13 +129,13 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     } else {
         corndist = -1;
     }
-    m_present[bitpos++] = (corndist == 0);
-    m_present[bitpos++] = (corndist == 1);
-    m_present[bitpos++] = (corndist == 2);
-    m_present[bitpos++] = (corndist == 3);
-    m_present[bitpos++] = (corndist == 4);
-    m_present[bitpos++] = (corndist == 5);          
-    m_present[bitpos++] = (corndist >  5);  
+    m_present[bitpos++] = (corndist <   2);
+    m_present[bitpos++] = (corndist >=  2 && corndist <= 3);
+    m_present[bitpos++] = (corndist >=  4 && corndist <= 5);
+    m_present[bitpos++] = (corndist >=  6 && corndist <= 7);
+    m_present[bitpos++] = (corndist >=  8 && corndist <= 9);
+    m_present[bitpos++] = (corndist >= 10 && corndist <= 11);    
+    m_present[bitpos++] = (corndist >= 12);  
 
     // prev move distance
     int prevdist;

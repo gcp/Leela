@@ -205,9 +205,9 @@ void AttribScores::autotune_from_file(std::string filename) {
             // add to good patterns list
             goodpats.push_back(val);            
         }
-    }    
-
-    myprintf("Good patterns: %d (reduced: %d)\n", goodpats.size(), goodpats.size()/16);
+        
+        myprintf("Good patterns: %d (original: %d)\n", goodpats.size(), patlist.size());
+    }        
 
     // setup the weights    
     m_fweight.resize(64);
