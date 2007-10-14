@@ -213,10 +213,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\HistoryTable.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\KoState.cpp"
 				>
 			</File>
@@ -312,10 +308,6 @@
 			</File>
 			<File
 				RelativePath="..\GTP.h"
-				>
-			</File>
-			<File
-				RelativePath="..\HistoryTable.h"
 				>
 			</File>
 			<File

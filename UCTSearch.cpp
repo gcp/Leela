@@ -11,7 +11,6 @@
 #include "Random.h"
 #include "Utils.h"
 #include "TTable.h"
-#include "HistoryTable.h"
 
 using namespace Utils;
 
@@ -197,31 +196,6 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     return bestmove;
 }
 
-void UCTSearch::dump_history(void) {        
-    HistoryTable * ht = HistoryTable::get_HT();
-    
-    std::vector<std::pair<std::pair<float, int>, std::string> > ht_list;
-    
-    for (int i = 0; i < FastBoard::MAXSQ; i++) {                
-        if (ht->get_visits(i) > 5) {            
-            ht_list.push_back(std::make_pair(std::make_pair(ht->get_score(i) * 100.0f, 
-                                                            ht->get_visits(i)),
-                              m_rootstate.move_to_text(i)));
-        }
-    }
-    
-    std::sort(ht_list.rbegin(), ht_list.rend());
-    
-    myprintf("\nHistory Table\n");
-    myprintf("---------------\n");
-    for (unsigned int i = 0; i < min(6, ht_list.size()); i++) {
-        myprintf("%4s -> %5.2f%% (%7d)\n", ht_list[i].second.c_str(), 
-                                           ht_list[i].first.first, 
-                                           ht_list[i].first.second);
-    }
-    myprintf("---------------\n");        
-}
-
 void UCTSearch::dump_order2(void) {            
     std::vector<int> moves = m_rootstate.generate_moves(m_rootstate.get_to_move());
     std::vector<std::pair<float, std::string> > ord_list;    
@@ -255,9 +229,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     m_rootstate.start_clock(color);
 
-    dump_order2();      
-    
-    HistoryTable::get_HT()->clear();
+    dump_order2();              
 
     do {
         m_currstate = m_rootstate;

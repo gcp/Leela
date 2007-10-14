@@ -196,7 +196,7 @@ void AttribScores::autotune_from_file(std::string filename) {
             int key = itrr->first;
             int val = itrr->second;
 
-            if (key < 1000) {
+            if (key < 5000) {
                 break;
             }
 
@@ -210,7 +210,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     myprintf("Good patterns: %d (reduced: %d)\n", goodpats.size(), goodpats.size()/16);
 
     // setup the weights    
-    m_fweight.resize(58);
+    m_fweight.resize(64);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -385,8 +385,8 @@ void AttribScores::load_from_file(std::string filename) {
         m_fweight.clear();
         m_pat.clear();
 
-        m_fweight.reserve(58);
-        for (int i = 0; i < 58; i++) {
+        m_fweight.reserve(64);
+        for (int i = 0; i < 64; i++) {
             float wt;
             inf >> wt;
             m_fweight.push_back(wt);

@@ -65,8 +65,8 @@ public:
     int get_extra_dir(int i);
 
     bool no_eye_fill(const int i);
-    int get_pattern(const int sq, bool invert);
-    int get_pattern4(const int sq, bool invert);
+    int get_pattern_fast(const int sq);    
+    int get_pattern4(const int sq, bool invert, bool extend);
     
     int estimate_mc_score(float komi = 7.5f);    
     float final_mc_score(float komi = 7.5f);        

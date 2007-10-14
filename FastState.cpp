@@ -9,7 +9,6 @@
 #include "Playout.h"
 #include "Zobrist.h"
 #include "Matcher.h"
-#include "HistoryTable.h"
 #include "AttribScores.h"
 
 using namespace Utils;

@@ -27,6 +27,20 @@ int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
     return mindist; 
 }
 
+int Attributes::corner_distance(std::pair<int, int> xy, int bsize) {
+    int distx, disty;
+    int maxdist;
+    int x = xy.first;
+    int y = xy.second;
+
+    distx = min(x, bsize - x - 1);
+    disty = min(y, bsize - y - 1);
+    
+    maxdist = max(distx, disty);    
+
+    return maxdist; 
+}
+
 void Attributes::get_from_move(FastState * state, int vtx) {
     m_present.reset();
 
@@ -83,7 +97,7 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     m_present[bitpos++] = (at == 3);
     m_present[bitpos++] = (at == 4);
     m_present[bitpos++] = (at == 5);
-    m_present[bitpos++] = (at >= 5);    
+    m_present[bitpos++] = (at >  5);    
 
     // pass
     bool ps = (vtx == FastBoard::PASS) && (state->get_passes() == 0);
@@ -104,9 +118,24 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     m_present[bitpos++] = (borddist == 2);
     m_present[bitpos++] = (borddist == 3);
     m_present[bitpos++] = (borddist == 4);
-    m_present[bitpos++] = (borddist == 5);      
-    m_present[bitpos++] = (borddist == 6);
-    m_present[bitpos++] = (borddist >  6);  
+    m_present[bitpos++] = (borddist == 5);          
+    m_present[bitpos++] = (borddist >  5);  
+    
+    // corner   
+    int corndist;
+    if (vtx != FastBoard::PASS) {
+        corndist = corner_distance(state->board.get_xy(vtx), 
+                                   state->board.get_boardsize());
+    } else {
+        corndist = -1;
+    }
+    m_present[bitpos++] = (corndist == 0);
+    m_present[bitpos++] = (corndist == 1);
+    m_present[bitpos++] = (corndist == 2);
+    m_present[bitpos++] = (corndist == 3);
+    m_present[bitpos++] = (corndist == 4);
+    m_present[bitpos++] = (corndist == 5);          
+    m_present[bitpos++] = (corndist >  5);  
 
     // prev move distance
     int prevdist;
@@ -151,6 +180,7 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     m_present[bitpos++] = (prevprevdist ==  8);
     m_present[bitpos++] = (prevprevdist ==  9);
     m_present[bitpos++] = (prevprevdist == 10);
+
     m_present[bitpos++] = (prevprevdist == 11);
     m_present[bitpos++] = (prevprevdist == 12);
     m_present[bitpos++] = (prevprevdist == 13);
@@ -162,13 +192,9 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     int pat;
     if (vtx != FastBoard::PASS) {          
         if (borddist < 1) {      
-            pat = state->board.get_pattern(vtx, !state->board.black_to_move());   
-            pat |= (FastBoard::INVAL) << 16;
-            pat |= (FastBoard::INVAL) << 18;
-            pat |= (FastBoard::INVAL) << 20;
-            pat |= (FastBoard::INVAL) << 22;
+            pat = state->board.get_pattern4(vtx, !state->board.black_to_move(), true);               
         } else {
-            pat = state->board.get_pattern4(vtx, !state->board.black_to_move());
+            pat = state->board.get_pattern4(vtx, !state->board.black_to_move(), false);
         }                
     } else {
         pat = 16777215; // all INVAL

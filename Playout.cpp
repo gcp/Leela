@@ -3,7 +3,6 @@
 #include "config.h"
 
 #include "Timing.h"
-#include "HistoryTable.h"
 #include "GameState.h"
 #include "Playout.h"
 #include "Utils.h"
@@ -54,25 +53,7 @@ void Playout::run(FastState & state, bool resigning) {
              && (!resigning || abs(state.estimate_mc_score()) < resign));                  
 
     m_run = true;                    
-    m_score = state.calculate_mc_score() / (boardsize * boardsize); 
-    
-    // collect history table stats
-    int wincolor;
-    
-    if (m_score > 0.0f) {
-        wincolor = FastBoard::BLACK;        
-    } else {
-        wincolor = FastBoard::WHITE;        
-    }
-                     
-    for (int i = 0; i < FastBoard::MAXSQ; i++) {
-        // playout results 
-        if (m_sq[wincolor][i]) {
-            HistoryTable::get_HT()->update(i, true);
-        } else if (m_sq[!wincolor][i]) {
-            HistoryTable::get_HT()->update(i, false);
-        }
-    }             
+    m_score = state.calculate_mc_score() / (boardsize * boardsize);       
 }
 
 bool Playout::passthrough(int color, int vertex) {
