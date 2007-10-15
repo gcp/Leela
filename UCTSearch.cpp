@@ -30,7 +30,7 @@ Playout UCTSearch::play_simulation(UCTNode* node) {
         noderesult.run(m_currstate);
     } else {
         if (node->has_children() == false) {
-            m_nodes += node->create_children(m_currstate, &(*m_preprocess));
+            m_nodes += node->create_children(m_currstate);
         }
                 
         if (node->has_children() == true) {                        
@@ -201,9 +201,11 @@ void UCTSearch::dump_order2(void) {
     std::vector<int> moves = m_rootstate.generate_moves(m_rootstate.get_to_move());
     std::vector<std::pair<float, std::string> > ord_list;    
     
+    std::auto_ptr<Preprocess> pp(new Preprocess(&m_rootstate));
+    
     for (int i = 0; i < moves.size(); i++) {
         ord_list.push_back(std::make_pair(
-                           m_rootstate.score_move(moves[i], &(*m_preprocess)), 
+                           m_rootstate.score_move(moves[i], &(*pp)), 
                            m_rootstate.move_to_text(moves[i])));
     } 
     
@@ -229,8 +231,6 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     m_rootstate.start_clock(color);
-
-    m_preprocess.reset(new Preprocess(&m_rootstate));
 
     dump_order2();              
 

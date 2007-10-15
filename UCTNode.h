@@ -14,7 +14,7 @@ public:
     float get_winrate(int tomove) const;
     float get_raverate(int tomove) const;
     float get_blackwins() const;
-    int create_children(FastState & state, Preprocess * pp);
+    int create_children(FastState & state);
     void delete_child(UCTNode * child);        
     int get_move() const;
     int get_visits() const;
