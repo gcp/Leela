@@ -56,6 +56,34 @@ void Playout::run(FastState & state, bool resigning) {
     m_score = state.calculate_mc_score() / (boardsize * boardsize);       
 }
 
+std::vector<int> Playout::mc_owner(FastState & state, int color, int iterations) {
+    std::vector<int> res(state.board.m_maxsq);        
+    
+    const int boardsize = state.board.get_boardsize();    
+    const int playoutlen = (boardsize * boardsize) * 2;         
+    
+    for (int i = 0; i < iterations; i++) {
+        FastState tmp = state;
+        do {                                    
+            tmp.play_random_move();    
+        } while (tmp.get_passes() < 2 && tmp.get_movenum() < playoutlen); 
+        
+        for (int j = 0; j < tmp.board.m_maxsq; j++) {
+            int vc = tmp.board.get_square(j); 
+            if (vc == color) {
+                res[j]++;                
+            } else if (vc == FastBoard::EMPTY) {
+                // eyes count too
+                if (!tmp.board.no_eye_fill(j)) {
+                    res[j]++;                    
+                }
+            }
+        }                 
+    }        
+    
+    return res;
+}
+
 bool Playout::passthrough(int color, int vertex) {
     assert(m_run);
     

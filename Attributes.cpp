@@ -2,7 +2,7 @@
 
 #include "Attributes.h"
 #include "FastBoard.h"
-#include "Playout.h"
+#include "Preprocess.h"
 
 Attributes::Attributes() {        
 }
@@ -12,7 +12,7 @@ int Attributes::move_distance(std::pair<int, int> xy1,
     int dx = abs(xy1.first  - xy2.first);
     int dy = abs(xy1.second - xy2.second);
 
-    return dx + dy + max(dx, dy);
+    return dx + dy + std::max(dx, dy);
 }
 
 int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
@@ -20,28 +20,14 @@ int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
     int x = xy.first;
     int y = xy.second;
     
-    mindist = min(x, bsize - x - 1);
-    mindist = min(mindist, y);
-    mindist = min(mindist, bsize - y - 1);
+    mindist = std::min(x, bsize - x - 1);
+    mindist = std::min(mindist, y);
+    mindist = std::min(mindist, bsize - y - 1);
 
     return mindist; 
 }
 
-int Attributes::corner_distance(std::pair<int, int> xy, int bsize) {
-    int distx, disty;
-    int maxdist;
-    int x = xy.first;
-    int y = xy.second;
-
-    distx = min(x, bsize - x - 1);
-    disty = min(y, bsize - y - 1);
-    
-    maxdist = distx + disty;    
-
-    return maxdist; 
-}
-
-void Attributes::get_from_move(FastState * state, int vtx) {
+void Attributes::get_from_move(FastState * state, Preprocess * pp, int vtx) {
     m_present.reset();
 
     int tomove = state->get_to_move();
@@ -93,17 +79,19 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     }        
     
     m_present[bitpos++] = (at == 2) && (state->komove != -1);  // atari with ko
+    m_present[bitpos++] = (at == 3) && (state->komove != -1);  // semiatari with ko
     m_present[bitpos++] = (at == 2);                           // atari
     m_present[bitpos++] = (at == 3);
     m_present[bitpos++] = (at == 4);
     m_present[bitpos++] = (at == 5);
-    m_present[bitpos++] = (at >  5);    
+    m_present[bitpos++] = (at == 6);
+    m_present[bitpos++] = (at >  6);    
 
     // pass
-    bool ps = (vtx == FastBoard::PASS) && (state->get_passes() == 0);
-    bool pp = (vtx == FastBoard::PASS) && (state->get_passes() == 1);
+    bool ps   = (vtx == FastBoard::PASS) && (state->get_passes() == 0);
+    bool psps = (vtx == FastBoard::PASS) && (state->get_passes() == 1);
     m_present[bitpos++] = (ps);
-    m_present[bitpos++] = (pp);
+    m_present[bitpos++] = (psps);
 
     // border    
     int borddist;
@@ -118,25 +106,46 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     m_present[bitpos++] = (borddist == 2);
     m_present[bitpos++] = (borddist == 3);
     m_present[bitpos++] = (borddist == 4);
-    m_present[bitpos++] = (borddist == 5);          
-    m_present[bitpos++] = (borddist >  5);  
+    m_present[bitpos++] = (borddist >  4);          
     
-    // corner   
-    int corndist;
+    // MC owner   
+    int mcown;
     if (vtx != FastBoard::PASS) {
-        corndist = corner_distance(state->board.get_xy(vtx), 
-                                   state->board.get_boardsize());
+        mcown = pp->get_mc_own(vtx, tomove);
     } else {
-        corndist = -1;
+        mcown = 100;
     }
-    m_present[bitpos++] = (corndist <   2);
-    m_present[bitpos++] = (corndist >=  2 && corndist <= 3);
-    m_present[bitpos++] = (corndist >=  4 && corndist <= 5);
-    m_present[bitpos++] = (corndist >=  6 && corndist <= 7);
-    m_present[bitpos++] = (corndist >=  8 && corndist <= 9);
-    m_present[bitpos++] = (corndist >= 10 && corndist <= 11);    
-    m_present[bitpos++] = (corndist >= 12);  
-
+    m_present[bitpos++] = (mcown >=  0 && mcown <=  7);
+    m_present[bitpos++] = (mcown >=  8 && mcown <= 15);
+    m_present[bitpos++] = (mcown >= 16 && mcown <= 23);
+    m_present[bitpos++] = (mcown >= 24 && mcown <= 31);
+    m_present[bitpos++] = (mcown >= 32 && mcown <= 39);
+    m_present[bitpos++] = (mcown >= 40 && mcown <= 47);
+    m_present[bitpos++] = (mcown >= 48 && mcown <= 55);
+    m_present[bitpos++] = (mcown >= 56 && mcown <= 63);
+    
+    // influence
+    Preprocess::owner_t inf;
+    if (vtx != FastBoard::PASS) {
+        inf = pp->get_influence(vtx, tomove);
+    } else {
+        inf = Preprocess::INVALID;
+    }
+    m_present[bitpos++] = (inf == Preprocess::TOMOVE);
+    m_present[bitpos++] = (inf == Preprocess::NEUTRAL);
+    m_present[bitpos++] = (inf == Preprocess::OPPONENT);        
+    
+    // moyo
+    Preprocess::owner_t moyo;
+    if (vtx != FastBoard::PASS) {
+        moyo = pp->get_moyo(vtx, tomove);
+    } else {
+        moyo = Preprocess::INVALID;
+    }
+    m_present[bitpos++] = (moyo == Preprocess::TOMOVE);
+    m_present[bitpos++] = (moyo == Preprocess::NEUTRAL);
+    m_present[bitpos++] = (moyo == Preprocess::OPPONENT);           
+    
     // prev move distance
     int prevdist;
     if (state->get_last_move() != FastBoard::PASS && vtx != FastBoard::PASS) {
@@ -186,7 +195,7 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     m_present[bitpos++] = (prevprevdist == 13);
     m_present[bitpos++] = (prevprevdist == 14);
     m_present[bitpos++] = (prevprevdist == 15);
-    m_present[bitpos++] = (prevprevdist  > 15);              
+    m_present[bitpos++] = (prevprevdist >  15);      
     
     // shape  (border check)            
     int pat;

@@ -41,7 +41,7 @@ void UCTNode::link_child(UCTNode * newchild) {
     m_firstchild = newchild;            
 }
 
-int UCTNode::create_children(FastState &state) {             
+int UCTNode::create_children(FastState & state, Preprocess * pp) {             
     FastBoard & board = state.board;  
     int children = 0;
     
@@ -57,7 +57,7 @@ int UCTNode::create_children(FastState &state) {
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {  
                     UCTNode * vtx = new UCTNode(vertex);
-                    float score = state.score_move(vertex);
+                    float score = state.score_move(vertex, pp);
                     nodelist.push_back(std::make_pair(score, vtx));                    
                 } 
             }                   
@@ -170,8 +170,8 @@ UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
     
-    int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.1823216f) - 0.5f));
-    //int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.336472f) - 0.5f));
+    //int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.1823216f) - 0.5f));
+    int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.336472f) - 0.5f));
     int childcount = 0;
     
     int rave_parentvisits = 0;

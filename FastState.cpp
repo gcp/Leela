@@ -10,6 +10,7 @@
 #include "Zobrist.h"
 #include "Matcher.h"
 #include "AttribScores.h"
+#include "Preprocess.h"
 
 using namespace Utils;
 
@@ -160,9 +161,9 @@ int FastState::play_random_move(int color) {
 }
 
 
-float FastState::score_move(int vertex) {       
+float FastState::score_move(int vertex, Preprocess * pp) {       
     Attributes att;
-    att.get_from_move(this, vertex);
+    att.get_from_move(this, pp, vertex);
 
     return AttribScores::get_attribscores()->team_strength(att);        
 }
@@ -281,7 +282,7 @@ std::string FastState::move_to_text(int move) {
 }
 
 std::vector<bool> FastState::mark_dead() {
-    static const int MARKING_RUNS = 1000;
+    static const int MARKING_RUNS = 256;
     
     std::vector<int> survive_count(FastBoard::MAXSQ);    
     std::vector<bool> dead_group(FastBoard::MAXSQ);    

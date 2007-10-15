@@ -11,6 +11,7 @@
 #include "Random.h"
 #include "Utils.h"
 #include "TTable.h"
+#include "Preprocess.h"
 
 using namespace Utils;
 
@@ -29,7 +30,7 @@ Playout UCTSearch::play_simulation(UCTNode* node) {
         noderesult.run(m_currstate);
     } else {
         if (node->has_children() == false) {
-            m_nodes += node->create_children(m_currstate);                                             
+            m_nodes += node->create_children(m_currstate, &(*m_preprocess));
         }
                 
         if (node->has_children() == true) {                        
@@ -202,7 +203,7 @@ void UCTSearch::dump_order2(void) {
     
     for (int i = 0; i < moves.size(); i++) {
         ord_list.push_back(std::make_pair(
-                           m_rootstate.score_move(moves[i]), 
+                           m_rootstate.score_move(moves[i], &(*m_preprocess)), 
                            m_rootstate.move_to_text(moves[i])));
     } 
     
@@ -229,6 +230,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     m_rootstate.start_clock(color);
 
+    m_preprocess.reset(new Preprocess(&m_rootstate));
+
     dump_order2();              
 
     do {
@@ -254,9 +257,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         
     // display search info        
     myprintf("\n");
-    dump_stats(m_rootstate, m_root);
-    //dump_history();   
-    // dump_order();                        
+    dump_stats(m_rootstate, m_root);                  
         
     if (centiseconds_elapsed > 0) {    
         myprintf("\n%d visits, %d nodes, %d vps\n\n", 

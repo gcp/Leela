@@ -12,7 +12,7 @@
 #include "SGFParser.h"
 #include "Utils.h"
 #include "FastBoard.h"
-#include "Playout.h"
+#include "Preprocess.h"
 
 using namespace Utils;
 
@@ -21,7 +21,7 @@ AttribScores* AttribScores::s_attribscores = 0;
 AttribScores* AttribScores::get_attribscores(void) {
     if (s_attribscores == 0) {
         s_attribscores = new AttribScores;
-        s_attribscores->load_from_file("param.dat");
+        s_attribscores->load_from_file("param2.dat");
     }
     
     return s_attribscores;
@@ -55,7 +55,9 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 assert(move != 0);
             } else {
                 break;
-            }
+            }            
+            
+            Preprocess pp(state);
             
             // sitting at a state, with the move actually played in move
             // gather feature sets of all moves
@@ -71,7 +73,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             for(it = moves.begin(); it != moves.end(); ++it) {
                 Attributes attributes;
                 // gather attribute set of current move
-                attributes.get_from_move(state, *it);
+                attributes.get_from_move(state, &pp, *it);
                 
                 position.second.push_back(attributes);
                 
@@ -96,6 +98,9 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
         if (treewalk->get_state()->get_passes() == 0) {             
             KoState * state = treewalk->get_state();
             int tomove = state->get_to_move();
+            
+            Preprocess pp(state);
+            
             std::vector<int> moves = state->generate_moves(tomove);            
 
             // make list of move - attributes pairs                       
@@ -108,7 +113,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
-                    attributes.get_from_move(state, *it);                                
+                    attributes.get_from_move(state, &pp, *it);                                
 
                     position.second.push_back(attributes);                    
 
@@ -130,7 +135,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
-                    attributes.get_from_move(state, *it);
+                    attributes.get_from_move(state, &pp, *it);
                     
                     position.second.push_back(attributes);                    
                     
@@ -210,7 +215,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(64);
+    m_fweight.resize(72);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -385,8 +390,8 @@ void AttribScores::load_from_file(std::string filename) {
         m_fweight.clear();
         m_pat.clear();
 
-        m_fweight.reserve(64);
-        for (int i = 0; i < 64; i++) {
+        m_fweight.reserve(72);
+        for (int i = 0; i < 72; i++) {
             float wt;
             inf >> wt;
             m_fweight.push_back(wt);

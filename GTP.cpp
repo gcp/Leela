@@ -391,7 +391,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (command.find("influence") == 0) {
         gtp_printf(id, "");
-        game.board.display_influence();        
+        game.board.display_map(game.board.influence());        
         return true;
     } else if (command.find("fixed_handicap") == 0) {
         std::istringstream cmdstream(command);

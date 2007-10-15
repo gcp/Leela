@@ -362,12 +362,24 @@ float FastBoard::final_mc_score(float komi) {
     return (float)(bsc)-((float)(wsc)+komi);
 }
 
+std::vector<int> FastBoard::influence(void) {
+    return run_bouzy(5, 21);
+}
+
+std::vector<int> FastBoard::moyo(void) {
+    return run_bouzy(5, 10);
+}
+
+std::vector<int> FastBoard::area(void) {
+    return run_bouzy(4, 0);
+}
+
 std::vector<int> FastBoard::run_bouzy(int dilat, int eros) {
     int i;
     int d, e;
     int goodsec, badsec;
-    std::vector<int> tmp(MAXSQ);
-    std::vector<int> influence(MAXSQ);
+    std::vector<int> tmp(m_maxsq);
+    std::vector<int> influence(m_maxsq);
     
     /* init stones */
     for (i = 0; i < m_maxsq; i++) {
@@ -444,10 +456,8 @@ std::vector<int> FastBoard::run_bouzy(int dilat, int eros) {
     return influence;        
 }
 
-void FastBoard::display_influence(void) {
-    int i, j;    
-    /* 4/13 alternate 5/10 moyo 4/0 area */
-    std::vector<int> influence = run_bouzy(5, 21);
+void FastBoard::display_map(std::vector<int> influence) {
+    int i, j;            
     
     for (j = m_boardsize-1; j >= 0; j--) {
         for (i = 0; i < m_boardsize; i++) {
@@ -456,13 +466,13 @@ void FastBoard::display_influence(void) {
                 if (get_square(i, j) ==  BLACK) {
                     myprintf("X ");
                 } else if (get_square(i, j) == WHITE) {
-                    myprintf("o ");
+                    myprintf("w ");
                 } else {
                     myprintf("x ");
                 }                               
             } else if (infl < 0) {
                 if (get_square(i, j) ==  BLACK) {
-                    myprintf("x ");
+                    myprintf("b ");
                 } else if (get_square(i, j) == WHITE) {
                     myprintf("O ");
                 } else {
@@ -1578,7 +1588,7 @@ std::pair<int, int> FastBoard::get_xy(int vertex) {
     return xy;
 }
 
-// returns 1 to 6 real liberties
+// returns 1 to 7 real liberties
 int FastBoard::minimum_elib_count(int color, int vertex) {
     int minlib = 100;
     
@@ -1586,7 +1596,7 @@ int FastBoard::minimum_elib_count(int color, int vertex) {
         int ai = vertex + m_dirs[k];
         if (m_square[ai] == !color) {
             int lc = 0;
-            boost::array<int, 6> tmp;
+            boost::array<int, 7> tmp;
             add_string_liberties(ai, tmp, lc);    
             if (lc < minlib) {
                 minlib = lc;

@@ -72,6 +72,9 @@ public:
     float final_mc_score(float komi = 7.5f);        
     float area_score(float komi = 7.5f);
     float percentual_area_score(float komi = 7.5f);
+    std::vector<int> influence(void);
+    std::vector<int> moyo(void);
+    std::vector<int> area(void);
     
     int eval(float komi); 
     int get_prisoners(int side);
@@ -82,7 +85,7 @@ public:
     std::string get_stone_list(); 
     
     void reset_board(int size);                    
-    void display_influence(void);            
+    void display_map(std::vector<int> influence);            
     void display_liberties(int lastmove = -1);
     void display_board(int lastmove = -1);    
 
