@@ -20,7 +20,7 @@ public:
     static AttribScores* get_attribscores(void);
       
     std::vector<float> m_fweight;
-    std::map<int, float> m_pat;
+    std::map<uint64, float> m_pat;
 
 private:        
     typedef std::vector<Attributes> AttrList;
@@ -28,8 +28,8 @@ private:
     typedef std::list<LrnPos> LearnVector;
 
     void gather_attributes(std::string filename, LearnVector & data);
-    float get_patweight(int idx);
-    void set_patweight(int idx, float val);
+    float get_patweight(uint64 idx);
+    void set_patweight(uint64 idx, float val);
                 
     static AttribScores* s_attribscores;       
 };

@@ -161,9 +161,9 @@ int FastState::play_random_move(int color) {
 }
 
 
-float FastState::score_move(int vertex, Preprocess * pp) {       
+float FastState::score_move(int vertex) {       
     Attributes att;
-    att.get_from_move(this, pp, vertex);
+    att.get_from_move(this, vertex);
 
     return AttribScores::get_attribscores()->team_strength(att);        
 }

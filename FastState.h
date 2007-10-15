@@ -5,8 +5,6 @@
 
 #include "FullBoard.h"
 
-class Preprocess;
-
 class FastState {
 public:        
     void init_game(int size = 19, float komi = 7.5f);
@@ -16,7 +14,7 @@ public:
     int play_random_move();
     int play_random_move(int color);    
     int play_move_fast(int vertex);
-    float score_move(int vertex, Preprocess * pp);
+    float score_move(int vertex);
     
     void play_pass(void);    
     void play_move(int vertex); 

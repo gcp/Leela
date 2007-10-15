@@ -229,10 +229,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\Preprocess.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\Random.cpp"
 				>
 			</File>
@@ -324,10 +320,6 @@
 			</File>
 			<File
 				RelativePath="..\Playout.h"
-				>
-			</File>
-			<File
-				RelativePath="..\Preprocess.h"
 				>
 			</File>
 			<File

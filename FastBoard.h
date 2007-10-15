@@ -1,6 +1,8 @@
 #ifndef FASTBOARD_H_INCLUDED
 #define FASTBOARD_H_INCLUDED
 
+#include "config.h"
+
 #include <string>
 #include <vector>
 #include <queue>
@@ -66,7 +68,8 @@ public:
 
     bool no_eye_fill(const int i);
     int get_pattern_fast(const int sq);    
-    int get_pattern4(const int sq, bool invert, bool extend);
+    uint64 get_pattern4(const int sq, bool invert, bool extend);
+    uint64 get_pattern5(const int sq, bool invert, bool extend);
     
     int estimate_mc_score(float komi = 7.5f);    
     float final_mc_score(float komi = 7.5f);        

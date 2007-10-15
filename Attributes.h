@@ -8,22 +8,20 @@
 #include <bitset>
 
 #include "KoState.h"
-#include "Preprocess.h"
 
 // Move attributes
 class Attributes {
 public:           
     Attributes();
-    void get_from_move(FastState * state, Preprocess * pp, int move);    
-    int get_pattern(void);
+    void get_from_move(FastState * state, int move);    
+    uint64 get_pattern(void);
     bool attribute_enabled(int idx);
 private:
     int border_distance(std::pair<int, int> xy, int bsize);
-    int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);
-    int corner_distance(std::pair<int, int> xy, int bsize);
+    int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);    
     
-    std::bitset<72> m_present; 
-    int m_pattern;
+    std::bitset<58> m_present; 
+    uint64 m_pattern;
 };
 
 #endif

@@ -48,9 +48,7 @@ int UCTNode::create_children(FastState & state) {
     typedef std::pair<float, UCTNode*> scored_node; 
     std::vector<scored_node> nodelist;        
 
-    if (state.get_passes() < 2) {     
-        std::auto_ptr<Preprocess> pp(new Preprocess(&state)); 
-        
+    if (state.get_passes() < 2) {             
         for (int i = 0; i < board.m_empty_cnt; i++) {  
             int vertex = board.m_empty[i];  
             
@@ -59,7 +57,7 @@ int UCTNode::create_children(FastState & state) {
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {  
                     UCTNode * vtx = new UCTNode(vertex);
-                    float score = state.score_move(vertex, &(*pp));
+                    float score = state.score_move(vertex);
                     nodelist.push_back(std::make_pair(score, vtx));                    
                 } 
             }                   

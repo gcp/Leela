@@ -2,7 +2,6 @@
 
 #include "Attributes.h"
 #include "FastBoard.h"
-#include "Preprocess.h"
 
 Attributes::Attributes() {        
 }
@@ -27,7 +26,7 @@ int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
     return mindist; 
 }
 
-void Attributes::get_from_move(FastState * state, Preprocess * pp, int vtx) {
+void Attributes::get_from_move(FastState * state, int vtx) {
     m_present.reset();
 
     int tomove = state->get_to_move();
@@ -106,45 +105,7 @@ void Attributes::get_from_move(FastState * state, Preprocess * pp, int vtx) {
     m_present[bitpos++] = (borddist == 2);
     m_present[bitpos++] = (borddist == 3);
     m_present[bitpos++] = (borddist == 4);
-    m_present[bitpos++] = (borddist >  4);          
-    
-    // MC owner   
-    int mcown;
-    if (vtx != FastBoard::PASS) {
-        mcown = pp->get_mc_own(vtx, tomove);
-    } else {
-        mcown = 100;
-    }
-    m_present[bitpos++] = (mcown >=  0 && mcown <=  7);
-    m_present[bitpos++] = (mcown >=  8 && mcown <= 15);
-    m_present[bitpos++] = (mcown >= 16 && mcown <= 23);
-    m_present[bitpos++] = (mcown >= 24 && mcown <= 31);
-    m_present[bitpos++] = (mcown >= 32 && mcown <= 39);
-    m_present[bitpos++] = (mcown >= 40 && mcown <= 47);
-    m_present[bitpos++] = (mcown >= 48 && mcown <= 55);
-    m_present[bitpos++] = (mcown >= 56 && mcown <= 63);
-    
-    // influence
-    Preprocess::owner_t inf;
-    if (vtx != FastBoard::PASS) {
-        inf = pp->get_influence(vtx, tomove);
-    } else {
-        inf = Preprocess::INVALID;
-    }
-    m_present[bitpos++] = (inf == Preprocess::TOMOVE);
-    m_present[bitpos++] = (inf == Preprocess::NEUTRAL);
-    m_present[bitpos++] = (inf == Preprocess::OPPONENT);        
-    
-    // moyo
-    Preprocess::owner_t moyo;
-    if (vtx != FastBoard::PASS) {
-        moyo = pp->get_moyo(vtx, tomove);
-    } else {
-        moyo = Preprocess::INVALID;
-    }
-    m_present[bitpos++] = (moyo == Preprocess::TOMOVE);
-    m_present[bitpos++] = (moyo == Preprocess::NEUTRAL);
-    m_present[bitpos++] = (moyo == Preprocess::OPPONENT);           
+    m_present[bitpos++] = (borddist >  4);                 
     
     // prev move distance
     int prevdist;
@@ -198,21 +159,21 @@ void Attributes::get_from_move(FastState * state, Preprocess * pp, int vtx) {
     m_present[bitpos++] = (prevprevdist >  15);      
     
     // shape  (border check)            
-    int pat;
+    uint64 pat;
     if (vtx != FastBoard::PASS) {          
         if (borddist < 1) {      
-            pat = state->board.get_pattern4(vtx, !state->board.black_to_move(), true);               
+            pat = state->board.get_pattern5(vtx, !state->board.black_to_move(), true);               
         } else {
-            pat = state->board.get_pattern4(vtx, !state->board.black_to_move(), false);
-        }                
+            pat = state->board.get_pattern5(vtx, !state->board.black_to_move(), false);
+        }                        
     } else {
-        pat = 16777215; // all INVAL
+        pat = 0xFFFFFFFFFF ; // all INVAL
     }       
 
     m_pattern = pat;
 }
 
-int Attributes::get_pattern(void) {
+uint64 Attributes::get_pattern(void) {
     return m_pattern;
 }
 

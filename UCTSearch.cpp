@@ -11,7 +11,6 @@
 #include "Random.h"
 #include "Utils.h"
 #include "TTable.h"
-#include "Preprocess.h"
 
 using namespace Utils;
 
@@ -199,13 +198,11 @@ int UCTSearch::get_best_move(passflag_t passflag) {
 
 void UCTSearch::dump_order2(void) {            
     std::vector<int> moves = m_rootstate.generate_moves(m_rootstate.get_to_move());
-    std::vector<std::pair<float, std::string> > ord_list;    
-    
-    std::auto_ptr<Preprocess> pp(new Preprocess(&m_rootstate));
+    std::vector<std::pair<float, std::string> > ord_list;            
     
     for (int i = 0; i < moves.size(); i++) {
         ord_list.push_back(std::make_pair(
-                           m_rootstate.score_move(moves[i], &(*pp)), 
+                           m_rootstate.score_move(moves[i]), 
                            m_rootstate.move_to_text(moves[i])));
     } 
     
@@ -232,7 +229,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     m_rootstate.start_clock(color);
 
-    dump_order2();              
+    dump_order2();                  
 
     do {
         m_currstate = m_rootstate;

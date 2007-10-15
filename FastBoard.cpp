@@ -1153,9 +1153,9 @@ int FastBoard::get_pattern_fast(const int sq) {
 
 // invert = invert colors because white is to move
 // extend = fill in 4 most extended squares with inval
-int FastBoard::get_pattern4(const int sq, bool invert, bool extend) {          
+uint64 FastBoard::get_pattern4(const int sq, bool invert, bool extend) {          
     const int size = m_boardsize;
-    std::tr1::array<int, 12> sqs;
+    std::tr1::array<int, 20> sqs;
     
     if (extend) {
         sqs[0]  = INVAL;
@@ -1235,6 +1235,149 @@ int FastBoard::get_pattern4(const int sq, bool invert, bool extend) {
     idx8 =  (sqs[11] << 22) | (sqs[ 8] << 20) | (sqs[ 9] << 18) | (sqs[10] << 16)
           | (sqs[ 4] << 14) | (sqs[ 5] << 12) | (sqs[ 6] << 10) | (sqs[ 7] <<  8)
           | (sqs[ 1] <<  6) | (sqs[ 2] <<  4) | (sqs[ 3] <<  2) | (sqs[ 0] <<  0);    
+          
+    idx1 = std::min(idx1, idx2);
+    idx3 = std::min(idx3, idx4);
+    idx5 = std::min(idx5, idx6);
+    idx7 = std::min(idx7, idx8);
+    
+    idx1 = std::min(idx1, idx3);
+    idx5 = std::min(idx5, idx7);
+    
+    idx1 = std::min(idx1, idx5);                  
+          
+    return idx1;          
+}
+
+// invert = invert colors because white is to move
+// extend = fill in most extended squares with inval
+uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {          
+    const int size = m_boardsize;
+    std::tr1::array<uint64, 20> sqs;
+    
+    /*
+     XXX        012
+    XXXXX      34567
+    XX XX      89 ab
+    XXXXX      cdefg
+     XXX        hij
+    */
+    
+    if (extend) {
+        sqs[ 0] = INVAL;
+        sqs[ 1] = INVAL;
+        sqs[ 2] = INVAL;        
+        sqs[ 3] = INVAL;
+        sqs[ 7] = INVAL;
+        sqs[ 8] = INVAL;
+        sqs[11] = INVAL;
+        sqs[12] = INVAL;
+        sqs[16] = INVAL;
+        sqs[17] = INVAL;
+        sqs[18] = INVAL;
+        sqs[19] = INVAL;        
+    } else {
+        sqs[ 0] = m_square[sq - 2*(size + 2) - 1];
+        sqs[ 1] = m_square[sq - 2*(size + 2)];
+        sqs[ 2] = m_square[sq - 2*(size + 2) + 1];
+        
+        sqs[ 3] = m_square[sq - (size + 2) - 2];
+        sqs[ 7] = m_square[sq - (size + 2) + 2];
+        
+        sqs[ 8] = m_square[sq - 2];
+        sqs[11] = m_square[sq + 2];
+        
+        sqs[12] = m_square[sq + (size + 2) - 2];
+        sqs[16] = m_square[sq + (size + 2) + 2];
+        
+        sqs[17] = m_square[sq + 2*(size + 2) - 1];
+        sqs[18] = m_square[sq + 2*(size + 2)];
+        sqs[19] = m_square[sq + 2*(size + 2) + 1];
+    }
+        
+    sqs[ 4] = m_square[sq - (size + 2) - 1];
+    sqs[ 5] = m_square[sq - (size + 2)];
+    sqs[ 6] = m_square[sq - (size + 2) + 1];
+    
+    sqs[ 9] = m_square[sq - 1];
+    sqs[10] = m_square[sq + 1];
+    
+    sqs[13] = m_square[sq + (size + 2) - 1];
+    sqs[14] = m_square[sq + (size + 2)];
+    sqs[15] = m_square[sq + (size + 2) + 1];
+    
+    
+    /* color symmetry */
+    if (invert) {
+        for (int i = 0; i < sqs.size(); i++) {
+            sqs[i] = s_cinvert[sqs[i]];
+        }
+    }
+  
+    /*  
+        012     a = 10  b = 11 c = 12 d = 13 e = 14 f = 15 g = 16
+       34567    h = 17  i = 18 j = 19
+       89 ab    
+       cdefg    
+        hij      
+    */    
+    uint64 idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8;
+                                            
+    idx1 =  (sqs[ 0] << 38) | (sqs[ 1] << 36) | (sqs[ 2] << 34) | (sqs[ 3] << 32)
+          | (sqs[ 4] << 30) | (sqs[ 5] << 28) | (sqs[ 6] << 26) | (sqs[ 7] << 24)
+          | (sqs[ 8] << 22) | (sqs[ 9] << 20) | (sqs[10] << 18) | (sqs[11] << 16) 
+          | (sqs[12] << 14) | (sqs[13] << 12) | (sqs[14] << 10) | (sqs[15] <<  8) 
+          | (sqs[16] <<  6) | (sqs[17] <<  4) | (sqs[18] <<  2) | (sqs[19] <<  0); 
+                                                   
+    idx2 =  (sqs[12] << 38) | (sqs[ 8] << 36) | (sqs[ 3] << 34) | (sqs[17] << 32)
+          | (sqs[13] << 30) | (sqs[ 9] << 28) | (sqs[ 4] << 26) | (sqs[ 0] << 24)
+          | (sqs[18] << 22) | (sqs[14] << 20) | (sqs[ 5] << 18) | (sqs[ 1] << 16) 
+          | (sqs[19] << 14) | (sqs[15] << 12) | (sqs[10] << 10) | (sqs[ 6] <<  8) 
+          | (sqs[ 2] <<  6) | (sqs[16] <<  4) | (sqs[11] <<  2) | (sqs[ 7] <<  0); 
+
+    idx3 =  (sqs[19] << 38) | (sqs[18] << 36) | (sqs[17] << 34) | (sqs[16] << 32)
+          | (sqs[15] << 30) | (sqs[14] << 28) | (sqs[13] << 26) | (sqs[12] << 24)
+          | (sqs[11] << 22) | (sqs[10] << 20) | (sqs[ 9] << 18) | (sqs[ 8] << 16) 
+          | (sqs[ 7] << 14) | (sqs[ 6] << 12) | (sqs[ 5] << 10) | (sqs[ 4] <<  8) 
+          | (sqs[ 3] <<  6) | (sqs[ 2] <<  4) | (sqs[ 1] <<  2) | (sqs[ 0] <<  0); 
+          
+    idx4 =  (sqs[ 7] << 38) | (sqs[11] << 36) | (sqs[16] << 34) | (sqs[ 2] << 32)
+          | (sqs[ 6] << 30) | (sqs[10] << 28) | (sqs[15] << 26) | (sqs[19] << 24)
+          | (sqs[ 1] << 22) | (sqs[ 5] << 20) | (sqs[14] << 18) | (sqs[18] << 16) 
+          | (sqs[ 0] << 14) | (sqs[ 4] << 12) | (sqs[ 9] << 10) | (sqs[13] <<  8) 
+          | (sqs[17] <<  6) | (sqs[ 3] <<  4) | (sqs[ 8] <<  2) | (sqs[12] <<  0);           
+          
+    /*  
+        210     a = 10  b = 11 c = 12 d = 13 e = 14 f = 15 g = 16
+       76543    h = 17  i = 18 j = 19
+       ba 98
+       gfedc    
+        jih      
+    */   
+    
+    idx5 =  (sqs[ 2] << 38) | (sqs[ 1] << 36) | (sqs[ 0] << 34) | (sqs[ 7] << 32)
+          | (sqs[ 6] << 30) | (sqs[ 5] << 28) | (sqs[ 4] << 26) | (sqs[ 3] << 24)
+          | (sqs[11] << 22) | (sqs[10] << 20) | (sqs[ 9] << 18) | (sqs[ 8] << 16) 
+          | (sqs[16] << 14) | (sqs[15] << 12) | (sqs[14] << 10) | (sqs[13] <<  8) 
+          | (sqs[12] <<  6) | (sqs[19] <<  4) | (sqs[18] <<  2) | (sqs[17] <<  0); 
+                                                   
+    idx6 =  (sqs[16] << 38) | (sqs[11] << 36) | (sqs[ 7] << 34) | (sqs[19] << 32)
+          | (sqs[15] << 30) | (sqs[10] << 28) | (sqs[ 6] << 26) | (sqs[ 2] << 24)
+          | (sqs[18] << 22) | (sqs[14] << 20) | (sqs[ 5] << 18) | (sqs[ 1] << 16) 
+          | (sqs[17] << 14) | (sqs[13] << 12) | (sqs[ 9] << 10) | (sqs[ 4] <<  8) 
+          | (sqs[ 0] <<  6) | (sqs[12] <<  4) | (sqs[ 8] <<  2) | (sqs[ 3] <<  0); 
+
+    idx7 =  (sqs[17] << 38) | (sqs[18] << 36) | (sqs[19] << 34) | (sqs[12] << 32)
+          | (sqs[13] << 30) | (sqs[14] << 28) | (sqs[15] << 26) | (sqs[16] << 24)
+          | (sqs[ 8] << 22) | (sqs[ 9] << 20) | (sqs[10] << 18) | (sqs[11] << 16) 
+          | (sqs[ 3] << 14) | (sqs[ 4] << 12) | (sqs[ 5] << 10) | (sqs[ 6] <<  8) 
+          | (sqs[ 7] <<  6) | (sqs[ 0] <<  4) | (sqs[ 1] <<  2) | (sqs[ 2] <<  0); 
+          
+    idx8 =  (sqs[ 3] << 38) | (sqs[ 8] << 36) | (sqs[12] << 34) | (sqs[ 0] << 32)
+          | (sqs[ 4] << 30) | (sqs[ 9] << 28) | (sqs[13] << 26) | (sqs[17] << 24)
+          | (sqs[ 1] << 22) | (sqs[ 5] << 20) | (sqs[14] << 18) | (sqs[18] << 16) 
+          | (sqs[ 2] << 14) | (sqs[ 6] << 12) | (sqs[10] << 10) | (sqs[15] <<  8) 
+          | (sqs[19] <<  6) | (sqs[ 7] <<  4) | (sqs[11] <<  2) | (sqs[16] <<  0);             
           
     idx1 = std::min(idx1, idx2);
     idx3 = std::min(idx3, idx4);

@@ -12,7 +12,6 @@
 #include "SGFParser.h"
 #include "Utils.h"
 #include "FastBoard.h"
-#include "Preprocess.h"
 
 using namespace Utils;
 
@@ -21,7 +20,7 @@ AttribScores* AttribScores::s_attribscores = 0;
 AttribScores* AttribScores::get_attribscores(void) {
     if (s_attribscores == 0) {
         s_attribscores = new AttribScores;
-        s_attribscores->load_from_file("param2.dat");
+        s_attribscores->load_from_file("param3.dat");
     }
     
     return s_attribscores;
@@ -55,9 +54,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 assert(move != 0);
             } else {
                 break;
-            }            
-            
-            Preprocess pp(state);
+            }                                    
             
             // sitting at a state, with the move actually played in move
             // gather feature sets of all moves
@@ -73,7 +70,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             for(it = moves.begin(); it != moves.end(); ++it) {
                 Attributes attributes;
                 // gather attribute set of current move
-                attributes.get_from_move(state, &pp, *it);
+                attributes.get_from_move(state, *it);
                 
                 position.second.push_back(attributes);
                 
@@ -97,9 +94,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
         // Add 2 passes to game end 
         if (treewalk->get_state()->get_passes() == 0) {             
             KoState * state = treewalk->get_state();
-            int tomove = state->get_to_move();
-            
-            Preprocess pp(state);
+            int tomove = state->get_to_move();                        
             
             std::vector<int> moves = state->generate_moves(tomove);            
 
@@ -113,7 +108,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
-                    attributes.get_from_move(state, &pp, *it);                                
+                    attributes.get_from_move(state, *it);                                
 
                     position.second.push_back(attributes);                    
 
@@ -135,7 +130,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
-                    attributes.get_from_move(state, &pp, *it);
+                    attributes.get_from_move(state, *it);
                     
                     position.second.push_back(attributes);                    
                     
@@ -165,30 +160,30 @@ void AttribScores::autotune_from_file(std::string filename) {
     gather_attributes(filename, data);
     
     // patterns worth learning
-    std::vector<int> goodpats;
+    std::vector<uint64> goodpats;
         
     // start a new block for memory alloc reasons
     {
         // initialize the pattern list with a sparse map     
-        std::map<int, int> patlist; 
+        std::map<uint64, int> patlist; 
         LearnVector::iterator it;
 
         for (it = data.begin(); it != data.end(); ++it) {            
             AttrList::iterator ita;        
 
             for (ita = it->second.begin(); ita != it->second.end(); ++ita) {
-                int pata = ita->get_pattern();
+                uint64 pata = ita->get_pattern();
 
                 patlist[pata]++;
             }
         }
 
         // reverse the map to a multimap
-        std::multimap<int, int, std::greater<int> > revpatlist;
-        std::map<int, int>::iterator itr;
+        std::multimap<int, uint64, std::greater<int> > revpatlist;
+        std::map<uint64, int>::iterator itr;
 
         for (itr = patlist.begin(); itr != patlist.end(); ++itr) {
-            int key = itr->first;
+            uint64 key = itr->first;
             int val = itr->second;
 
             revpatlist.insert(std::make_pair(val, key));
@@ -196,10 +191,10 @@ void AttribScores::autotune_from_file(std::string filename) {
 
         // print the multimap and make it a set of 
         // useful patterns
-        std::multimap<int, int, std::greater<int> >::iterator itrr;        
+        std::multimap<int, uint64, std::greater<int> >::iterator itrr;        
         for (itrr = revpatlist.begin();itrr != revpatlist.end();++itrr) {
             int key = itrr->first;
-            int val = itrr->second;
+            uint64 val = itrr->second;
 
             if (key < 5000) {
                 break;
@@ -215,7 +210,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(72);
+    m_fweight.resize(58);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -240,11 +235,11 @@ void AttribScores::autotune_from_file(std::string filename) {
             myprintf("%d done\n", allteams.size());
             
             // for each parameter
-            std::vector<int>::iterator it;
+            std::vector<uint64>::iterator it;
             int pcount = 0;            
 
             for (it = goodpats.begin(); it != goodpats.end(); ++it, ++pcount) {            
-                int meidx = (*it);
+                uint64 meidx = (*it);
                 
                 // prior
                 int  wins = 1;            
@@ -352,7 +347,7 @@ void AttribScores::autotune_from_file(std::string filename) {
         }
         
         for (int i = 0; i < goodpats.size(); i++) {
-            int idx = goodpats[i];
+            uint64 idx = goodpats[i];
             
             fp_out << idx << " " << get_patweight(idx) << std::endl;
         }
@@ -363,7 +358,7 @@ void AttribScores::autotune_from_file(std::string filename) {
 
 // product of feature weights
 float AttribScores::team_strength(Attributes & team) {
-    int pattern = team.get_pattern();
+    uint64 pattern = team.get_pattern();
     
     float rating = get_patweight(pattern);            
     
@@ -390,15 +385,15 @@ void AttribScores::load_from_file(std::string filename) {
         m_fweight.clear();
         m_pat.clear();
 
-        m_fweight.reserve(72);
-        for (int i = 0; i < 72; i++) {
+        m_fweight.reserve(58);
+        for (int i = 0; i < 58; i++) {
             float wt;
             inf >> wt;
             m_fweight.push_back(wt);
         }
 
         while (!inf.eof()) {
-            int pat;
+            uint64 pat;
             float wt;
             inf >> pat >> wt;
             m_pat.insert(std::make_pair(pat, wt));
@@ -412,8 +407,8 @@ void AttribScores::load_from_file(std::string filename) {
     } 
 }
 
-float AttribScores::get_patweight(int idx) {    
-    std::map<int, float>::const_iterator it;
+float AttribScores::get_patweight(uint64 idx) {    
+    std::map<uint64, float>::const_iterator it;
     float rating;
 
     it = m_pat.find(idx);
@@ -427,8 +422,8 @@ float AttribScores::get_patweight(int idx) {
     return rating;
 }
 
-void AttribScores::set_patweight(int idx, float val) {
-    std::map<int, float>::iterator it;
+void AttribScores::set_patweight(uint64 idx, float val) {
+    std::map<uint64, float>::iterator it;
 
     it = m_pat.find(idx);
 
