@@ -61,11 +61,13 @@ public:
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
+    int count_liberties(const int i);
         
     bool self_atari(int color, int vertex);
     int get_dir(int i);
     int get_extra_dir(int i);
 
+    bool is_eye(const int color, const int vtx);
     bool no_eye_fill(const int i);
     int get_pattern_fast(const int sq);    
     uint64 get_pattern4(const int sq, bool invert, bool extend);
@@ -106,8 +108,8 @@ protected:
     /*
         bit masks to detect eyes on neighbors
     */        
-    static const std::tr1::array<int, 2> s_eyemask; 
-    static const std::tr1::array<int, 4> s_cinvert; /* color inversion */
+    static const std::tr1::array<int,      2> s_eyemask; 
+    static const std::tr1::array<square_t, 4> s_cinvert; /* color inversion */
     
     std::tr1::array<square_t, MAXSQ> m_square;      /* board contents */            
     std::tr1::array<int, MAXSQ+1>    m_next;        /* next stone in string */ 
@@ -122,8 +124,7 @@ protected:
     std::queue<int>                  m_critical;    /* queue of critical points */    
 
     int m_boardsize;    
-    
-    int count_liberties(const int i); 
+        
     int count_neighbours(const int color, const int i);   
     void merge_strings(const int ip, const int aip);    
     int remove_string_fast(int i);        

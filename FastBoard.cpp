@@ -17,7 +17,7 @@ const std::tr1::array<int, 2> FastBoard::s_eyemask = {
     4 * (1 << (NBR_SHIFT * WHITE))    
 };
 
-const std::tr1::array<int, 4> FastBoard::s_cinvert = {    
+const std::tr1::array<FastBoard::square_t, 4> FastBoard::s_cinvert = {    
     WHITE, BLACK, EMPTY, INVAL        
 };
 
@@ -748,15 +748,13 @@ int FastBoard::update_board_fast(const int color, const int i) {
     return -1;
 }
 
-bool FastBoard::no_eye_fill(const int i) {     
-    int color = m_tomove;    
-    
+bool FastBoard::is_eye(const int color, const int i) {
     /* check for 4 neighbors of the same color */
     int ownsurrounded = (m_neighbours[i] & s_eyemask[color]);
     
     /* if not, it can't be an eye */
     if (!ownsurrounded) {
-        return true;
+        return false;
     }                                      
 
     int colorcount[4];
@@ -772,15 +770,19 @@ bool FastBoard::no_eye_fill(const int i) {
 
     if (colorcount[INVAL] == 0) {
         if (colorcount[!color] > 1) {
-            return true;
+            return false;
         }
     } else {
         if (colorcount[!color]) {
-            return true;
+            return false;
         }
     }                        
                                
-    return false;    
+    return true;    
+}
+
+bool FastBoard::no_eye_fill(const int i) {             
+    return !is_eye(m_tomove, i);
 }
 
 std::string FastBoard::move_to_text(int move) {    
@@ -1155,7 +1157,7 @@ int FastBoard::get_pattern_fast(const int sq) {
 // extend = fill in 4 most extended squares with inval
 uint64 FastBoard::get_pattern4(const int sq, bool invert, bool extend) {          
     const int size = m_boardsize;
-    std::tr1::array<int, 20> sqs;
+    std::tr1::array<square_t, 12> sqs;
     
     if (extend) {
         sqs[0]  = INVAL;
@@ -1178,8 +1180,7 @@ uint64 FastBoard::get_pattern4(const int sq, bool invert, bool extend) {
     
     sqs[8]  = m_square[sq + (size + 2) - 1];
     sqs[9]  = m_square[sq + (size + 2)];
-    sqs[10] = m_square[sq + (size + 2) + 1];
-    
+    sqs[10] = m_square[sq + (size + 2) + 1];    
     
     /* color symmetry */
     if (invert) {

@@ -225,6 +225,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\MCOTable.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\Playout.cpp"
 				>
 			</File>
@@ -316,6 +320,10 @@
 			</File>
 			<File
 				RelativePath="..\Matcher.h"
+				>
+			</File>
+			<File
+				RelativePath="..\MCOTable.h"
 				>
 			</File>
 			<File

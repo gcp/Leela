@@ -11,6 +11,7 @@
 #include "Random.h"
 #include "Utils.h"
 #include "TTable.h"
+#include "MCOTable.h"
 
 using namespace Utils;
 
@@ -229,7 +230,10 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     m_rootstate.start_clock(color);
 
-    dump_order2();                  
+    MCOwnerTable::clear();  
+    Playout::mc_owner(m_rootstate, 64);
+
+    dump_order2();                          
 
     do {
         m_currstate = m_rootstate;

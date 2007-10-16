@@ -6,6 +6,7 @@
 #include "GameState.h"
 #include "Playout.h"
 #include "Utils.h"
+#include "MCOTable.h"
 
 using namespace Utils;
 
@@ -50,38 +51,27 @@ void Playout::run(FastState & state, bool resigning) {
         counter++;                 
     } while (state.get_passes() < 2 
              && state.get_movenum() < playoutlen
-             && (!resigning || abs(state.estimate_mc_score()) < resign));                  
+             && (!resigning || abs(state.estimate_mc_score()) < resign));  
+             
+    bitboard_t blackowns; 
+    
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            int vtx = state.board.get_vertex(i, j);            
+            if (state.board.get_square(vtx) == FastBoard::BLACK) {
+                blackowns[vtx] = true;
+            } else if (state.board.get_square(vtx) == FastBoard::EMPTY) {
+                if (state.board.is_eye(FastBoard::BLACK, vtx)) {
+                    blackowns[vtx] = true;    
+                }
+            }
+        }
+    }
+
+    MCOwnerTable::get_MCO()->update(blackowns);  
 
     m_run = true;                    
     m_score = state.calculate_mc_score() / (boardsize * boardsize);       
-}
-
-std::vector<int> Playout::mc_owner(FastState & state, int color, int iterations) {
-    std::vector<int> res(state.board.m_maxsq);        
-    
-    const int boardsize = state.board.get_boardsize();    
-    const int playoutlen = (boardsize * boardsize) * 2;         
-    
-    for (int i = 0; i < iterations; i++) {
-        FastState tmp = state;
-        do {                                    
-            tmp.play_random_move();    
-        } while (tmp.get_passes() < 2 && tmp.get_movenum() < playoutlen); 
-        
-        for (int j = 0; j < tmp.board.m_maxsq; j++) {
-            int vc = tmp.board.get_square(j); 
-            if (vc == color) {
-                res[j]++;                
-            } else if (vc == FastBoard::EMPTY) {
-                // eyes count too
-                if (!tmp.board.no_eye_fill(j)) {
-                    res[j]++;                    
-                }
-            }
-        }                 
-    }        
-    
-    return res;
 }
 
 bool Playout::passthrough(int color, int vertex) {
@@ -129,4 +119,17 @@ void Playout::do_playout_benchmark(GameState& game) {
             (float)Time::timediff(start,end)/100.0, 
             (int)((float)AUTOGAMES/((float)Time::timediff(start,end)/100.0)));
     myprintf("Avg Len: %5.2f Score: %f\n", len/(float)AUTOGAMES, score/AUTOGAMES);
+}
+
+void Playout::mc_owner(FastState & state, int iterations) {                
+    const int boardsize = state.board.get_boardsize();    
+    const int playoutlen = (boardsize * boardsize) * 2;         
+    
+    for (int i = 0; i < iterations; i++) {
+        FastState tmp = state;
+        
+        Playout p;
+        
+        p.run(tmp, false);                
+    }                
 }

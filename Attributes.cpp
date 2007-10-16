@@ -2,6 +2,7 @@
 
 #include "Attributes.h"
 #include "FastBoard.h"
+#include "MCOTable.h"
 
 Attributes::Attributes() {        
 }
@@ -11,7 +12,7 @@ int Attributes::move_distance(std::pair<int, int> xy1,
     int dx = abs(xy1.first  - xy2.first);
     int dy = abs(xy1.second - xy2.second);
 
-    return dx + dy + std::max(dx, dy);
+    return dx + dy + max(dx, dy);
 }
 
 int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
@@ -19,9 +20,9 @@ int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
     int x = xy.first;
     int y = xy.second;
     
-    mindist = std::min(x, bsize - x - 1);
-    mindist = std::min(mindist, y);
-    mindist = std::min(mindist, bsize - y - 1);
+    mindist = min(x, bsize - x - 1);
+    mindist = min(mindist, y);
+    mindist = min(mindist, bsize - y - 1);
 
     return mindist; 
 }
@@ -45,6 +46,17 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     m_present[bitpos++] = (ss == 3);
     m_present[bitpos++] = (ss == 4);
     m_present[bitpos++] = (ss  > 4);    
+    
+    // atari-escape (saving-size) adding liberties (only count pseudos)
+    // adding 1 is self-atari so doesn't count    
+    int ae;
+    if (vtx != FastBoard::PASS) {
+        ae = state->board.count_liberties(vtx);
+    } else {
+        ae = -1;
+    }        
+    m_present[bitpos++] = (ss > 0 && ae == 2);
+    m_present[bitpos++] = (ss > 0 && ae == 3);
 
     // capture size
     // 0, 1, 2, 3, >3
@@ -84,7 +96,7 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     m_present[bitpos++] = (at == 4);
     m_present[bitpos++] = (at == 5);
     m_present[bitpos++] = (at == 6);
-    m_present[bitpos++] = (at >  6);    
+    m_present[bitpos++] = (at >  6);            
 
     // pass
     bool ps   = (vtx == FastBoard::PASS) && (state->get_passes() == 0);
@@ -106,6 +118,19 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     m_present[bitpos++] = (borddist == 3);
     m_present[bitpos++] = (borddist == 4);
     m_present[bitpos++] = (borddist >  4);                 
+        
+    // mcowner
+    float mcown;
+    if (vtx != FastBoard::PASS) {
+        mcown = MCOwnerTable::get_MCO()->get_score(tomove, vtx);
+    } else {
+        mcown = -1.0f;
+    }
+    m_present[bitpos++] = (mcown >= -0.01f && mcown <  0.20);
+    m_present[bitpos++] = (mcown >=  0.20f && mcown <  0.40);
+    m_present[bitpos++] = (mcown >=  0.40f && mcown <  0.60);
+    m_present[bitpos++] = (mcown >=  0.60f && mcown <  0.80);
+    m_present[bitpos++] = (mcown >=  0.80f && mcown <  1.01);    
     
     // prev move distance
     int prevdist;
@@ -128,9 +153,8 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     m_present[bitpos++] = (prevdist == 12);
     m_present[bitpos++] = (prevdist == 13);
     m_present[bitpos++] = (prevdist == 14);
-    m_present[bitpos++] = (prevdist == 15);
-    m_present[bitpos++] = (prevdist == 16);
-    m_present[bitpos++] = (prevdist  > 16);    
+    m_present[bitpos++] = (prevdist == 15);    
+    m_present[bitpos++] = (prevdist  > 15);    
     
     // prev prev move
     int prevprevdist;
@@ -161,13 +185,13 @@ void Attributes::get_from_move(FastState * state, int vtx) {
     // shape  (border check)            
     uint64 pat;
     if (vtx != FastBoard::PASS) {          
-        if (borddist < 1) {      
-            pat = state->board.get_pattern5(vtx, !state->board.black_to_move(), true);               
+        if (borddist < 1) {              
+            pat = state->board.get_pattern4(vtx, !state->board.black_to_move(), true);        
         } else {
-            pat = state->board.get_pattern5(vtx, !state->board.black_to_move(), false);
+            pat = state->board.get_pattern4(vtx, !state->board.black_to_move(), false);
         }                        
     } else {
-        pat = 0xFFFFFFFFFF ; // all INVAL
+        pat = 0xFFFFFFFFFF; // all INVAL
     }       
 
     m_pattern = pat;

@@ -12,6 +12,7 @@
 #include "SGFParser.h"
 #include "Utils.h"
 #include "FastBoard.h"
+#include "MCOTable.h"
 
 using namespace Utils;
 
@@ -56,6 +57,9 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 break;
             }                                    
             
+            MCOwnerTable::clear();
+            Playout::mc_owner(*state);
+            
             // sitting at a state, with the move actually played in move
             // gather feature sets of all moves
             std::vector<int> moves = state->generate_moves(tomove);            
@@ -95,6 +99,9 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
         if (treewalk->get_state()->get_passes() == 0) {             
             KoState * state = treewalk->get_state();
             int tomove = state->get_to_move();                        
+            
+            MCOwnerTable::clear();
+            Playout::mc_owner(*state);
             
             std::vector<int> moves = state->generate_moves(tomove);            
 
@@ -167,16 +174,18 @@ void AttribScores::autotune_from_file(std::string filename) {
         // initialize the pattern list with a sparse map     
         std::map<uint64, int> patlist; 
         LearnVector::iterator it;
+        
+        int c = 0;
 
         for (it = data.begin(); it != data.end(); ++it) {            
             AttrList::iterator ita;        
 
-            for (ita = it->second.begin(); ita != it->second.end(); ++ita) {
+            for (ita = it->second.begin(); ita != it->second.end(); ++ita) {                
                 uint64 pata = ita->get_pattern();
 
-                patlist[pata]++;
+                patlist[pata]++;                
             }
-        }
+        }                
 
         // reverse the map to a multimap
         std::multimap<int, uint64, std::greater<int> > revpatlist;
@@ -210,7 +219,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(58);
+    m_fweight.resize(64);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -385,8 +394,8 @@ void AttribScores::load_from_file(std::string filename) {
         m_fweight.clear();
         m_pat.clear();
 
-        m_fweight.reserve(58);
-        for (int i = 0; i < 58; i++) {
+        m_fweight.reserve(64);
+        for (int i = 0; i < 64; i++) {
             float wt;
             inf >> wt;
             m_fweight.push_back(wt);
