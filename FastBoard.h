@@ -84,6 +84,7 @@ public:
     int eval(float komi); 
     int get_prisoners(int side);
     bool black_to_move();
+    int get_to_move();
         
     std::string move_to_text(int move);
     std::string get_string(int vertex);   

@@ -34,7 +34,7 @@ public:
 
 private:                   
     void link_child(UCTNode * newchild);    
-    void apply_prior(UCTNode * newchild, int color); 
+    void apply_prior(FastBoard & board); 
     
     // Tree data
     int m_move;       

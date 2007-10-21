@@ -13,13 +13,13 @@
 #include "UCTNode.h"
 #include "UCTSearch.h"
 #include "Utils.h"
+#include "Matcher.h"
 
 using namespace Utils;
 
 UCTNode::UCTNode(int vertex) 
 : m_firstchild(NULL), m_move(vertex), 
-  m_blackwins(0.0f), m_visits(0),
-  m_ravestmwins(25.0f), m_ravevisits(50) {
+  m_blackwins(0.0f), m_visits(0) {
 }
 
 UCTNode::~UCTNode() {
@@ -41,6 +41,35 @@ void UCTNode::link_child(UCTNode * newchild) {
     m_firstchild = newchild;            
 }
 
+void UCTNode::apply_prior(FastBoard & board) {        
+    // XXX: score >= 1.0  (normal move)
+    int vtx = get_move();
+    
+    if (vtx == FastBoard::PASS) {
+        m_ravestmwins = 0.0f;
+        m_ravevisits  = 20;
+        return;
+    }
+    
+    int color = board.get_to_move();
+                        
+    if (board.self_atari(color, vtx)) {
+        m_ravestmwins = 0.0f;
+    } else {
+        Matcher * matcher = Matcher::get_Matcher();
+        
+        int pattern = board.get_pattern_fast(vtx);
+            
+        if (matcher->matches(color, pattern)) {
+            m_ravestmwins = 20.0f;
+        } else {
+            m_ravestmwins = 10.0f;
+        }        
+    } 
+     
+    m_ravevisits = 20;               
+}
+
 int UCTNode::create_children(FastState & state) {             
     FastBoard & board = state.board;  
     int children = 0;
@@ -57,6 +86,7 @@ int UCTNode::create_children(FastState & state) {
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {  
                     UCTNode * vtx = new UCTNode(vertex);
+                    vtx->apply_prior(board);
                     float score = state.score_move(vertex);
                     nodelist.push_back(std::make_pair(score, vtx));                    
                 } 
@@ -64,6 +94,7 @@ int UCTNode::create_children(FastState & state) {
         }      
         
         UCTNode * vtx = new UCTNode(FastBoard::PASS);
+        vtx->apply_prior(board);
         nodelist.push_back(std::make_pair(0.0f, vtx));        
     }    
     
@@ -73,7 +104,7 @@ int UCTNode::create_children(FastState & state) {
     // link
     std::vector<scored_node>::const_iterator it; 
     
-    for (it = nodelist.begin(); it != nodelist.end(); ++it) {
+    for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
         link_child((*it).second);
         children++;
     }    
@@ -189,7 +220,8 @@ UCTNode* UCTNode::uct_select_child(int color) {
     float lograveparent = logf((float)rave_parentvisits); 
     
     // Mixing
-    float beta = sqrtf(1000.0f / ((3.0f * parentvisits) + 1000.0f));     
+    const float k = 5000.0f;
+    float beta = sqrtf(k / ((3.0f * parentvisits) + k));     
         
     UCTNode * child = m_firstchild;        
     childcount = 0;

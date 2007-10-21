@@ -22,7 +22,7 @@ public:
         Don't expand children until at least this many
         visits happened.
     */        
-    static const int MATURE_TRESHOLD = 80;     
+    static const int MATURE_TRESHOLD = 30;     
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);

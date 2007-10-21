@@ -219,7 +219,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(34);
+    m_fweight.resize(64);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -394,8 +394,8 @@ void AttribScores::load_from_file(std::string filename) {
         m_fweight.clear();
         m_pat.clear();
 
-        m_fweight.reserve(34);
-        for (int i = 0; i < 34; i++) {
+        m_fweight.reserve(64);
+        for (int i = 0; i < 64; i++) {
             float wt;
             inf >> wt;
             m_fweight.push_back(wt);

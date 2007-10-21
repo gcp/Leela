@@ -852,6 +852,10 @@ bool FastBoard::black_to_move() {
     return m_tomove == BLACK;
 }
 
+int FastBoard::get_to_move() {
+    return m_tomove;
+}
+
 std::string FastBoard::get_string(int vertex) {
     std::string result;
     
