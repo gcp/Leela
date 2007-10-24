@@ -19,7 +19,8 @@ using namespace Utils;
 
 UCTNode::UCTNode(int vertex) 
 : m_firstchild(NULL), m_move(vertex), 
-  m_blackwins(0.0f), m_visits(0) {
+  m_blackwins(0.0f), m_visits(0),
+  m_ravevisits(50), m_ravestmwins(25.0f) {
 }
 
 UCTNode::~UCTNode() {
@@ -41,41 +42,15 @@ void UCTNode::link_child(UCTNode * newchild) {
     m_firstchild = newchild;            
 }
 
-void UCTNode::apply_prior(FastBoard & board) {        
-    // XXX: score >= 1.0  (normal move)
-    int vtx = get_move();
-    
-    if (vtx == FastBoard::PASS) {
-        m_ravestmwins = 0.0f;
-        m_ravevisits  = 20;
-        return;
-    }
-    
-    int color = board.get_to_move();
-                        
-    if (board.self_atari(color, vtx)) {
-        m_ravestmwins = 0.0f;
-    } else {
-        Matcher * matcher = Matcher::get_Matcher();
-        
-        int pattern = board.get_pattern_fast(vtx);
-            
-        if (matcher->matches(color, pattern)) {
-            m_ravestmwins = 20.0f;
-        } else {
-            m_ravestmwins = 10.0f;
-        }        
-    } 
-     
-    m_ravevisits = 20;               
-}
-
 int UCTNode::create_children(FastState & state) {             
     FastBoard & board = state.board;  
     int children = 0;
     
     typedef std::pair<float, UCTNode*> scored_node; 
     std::vector<scored_node> nodelist;        
+    
+    std::vector<int> territory = state.board.influence();
+    std::vector<int> moyo = state.board.moyo();
 
     if (state.get_passes() < 2) {             
         for (int i = 0; i < board.m_empty_cnt; i++) {  
@@ -85,16 +60,14 @@ int UCTNode::create_children(FastState & state) {
                     
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {  
-                    UCTNode * vtx = new UCTNode(vertex);
-                    vtx->apply_prior(board);
-                    float score = state.score_move(vertex);
+                    UCTNode * vtx = new UCTNode(vertex);                    
+                    float score = state.score_move(territory, moyo, vertex);
                     nodelist.push_back(std::make_pair(score, vtx));                    
                 } 
             }                   
         }      
         
-        UCTNode * vtx = new UCTNode(FastBoard::PASS);
-        vtx->apply_prior(board);
+        UCTNode * vtx = new UCTNode(FastBoard::PASS);        
         nodelist.push_back(std::make_pair(0.0f, vtx));        
     }    
     
@@ -200,9 +173,9 @@ int UCTNode::get_ravevisits() const {
 UCTNode* UCTNode::uct_select_child(int color) {                                   
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
-    
-    //int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.1823216f) - 0.5f));
-    int childbound = max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.336472f) - 0.5f));
+        
+    //int childbound = std::max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.1823216f) - 0.5f));
+    int childbound = std::max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.336472f) - 0.5f));
     int childcount = 0;
     
     int rave_parentvisits = 0;
@@ -238,7 +211,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
                             
                 float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
 
-                float uncertain = max(0.0f, min(0.25f, var));
+                float uncertain = std::max(0.0f, std::min(0.25f, var));
                 float uct = 0.8f * sqrtf(childrate * uncertain);
                 
                 uctvalue = winrate + uct;
@@ -253,7 +226,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             float ravevar = ravewinrate - (ravewinrate * ravewinrate) 
                             + sqrtf(2.0f * ravechildrate);
                             
-            float raveuncertain = max(0.0f, min(0.25f, ravevar));
+            float raveuncertain = std::max(0.0f, std::min(0.25f, ravevar));
             float rave = 0.8f * sqrtf(ravechildrate * raveuncertain);
             
             float ravevalue = ravewinrate + rave;                                              

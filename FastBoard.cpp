@@ -9,6 +9,7 @@
 #include "FastBoard.h"
 #include "Utils.h"
 #include "Matcher.h"
+#include "MCOTable.h"
 
 using namespace Utils;
 
@@ -362,16 +363,35 @@ float FastBoard::final_mc_score(float komi) {
     return (float)(bsc)-((float)(wsc)+komi);
 }
 
+FastBoard FastBoard::remove_dead() {
+    FastBoard tmp = *this;
+    
+    for (int i = 0; i < m_boardsize; i++) {
+        for (int j = 0; j < m_boardsize;j++) {
+            int vtx = get_vertex(i, j);
+            float mcown = MCOwnerTable::get_MCO()->get_score(BLACK, vtx);
+            
+            if (m_square[vtx] == BLACK && mcown < 0.20f) {
+                tmp.set_square(vtx, EMPTY);
+            } else if (m_square[vtx] == WHITE && mcown > 0.80f) {
+                tmp.set_square(vtx, EMPTY);
+            }
+        }
+    }
+    
+    return tmp;
+}
+
 std::vector<int> FastBoard::influence(void) {
-    return run_bouzy(5, 21);
+    return remove_dead().run_bouzy(5, 21);
 }
 
-std::vector<int> FastBoard::moyo(void) {
-    return run_bouzy(5, 10);
+std::vector<int> FastBoard::moyo(void) {        
+    return remove_dead().run_bouzy(5, 10);
 }
 
-std::vector<int> FastBoard::area(void) {
-    return run_bouzy(4, 0);
+std::vector<int> FastBoard::area(void) {    
+    return remove_dead().run_bouzy(4, 0);
 }
 
 std::vector<int> FastBoard::run_bouzy(int dilat, int eros) {
@@ -1129,7 +1149,7 @@ bool FastBoard::self_atari(int color, int vertex) {
             // number of liberties, and to contribute, he must have
             // more liberties than just the one that is "vertex"
             if (lib > 1) {
-                add_string_liberties(ai, nbr_libs, nbr_libs_cnt);
+                add_string_liberties<3>(ai, nbr_libs, nbr_libs_cnt);
             }            
         }
         
@@ -1159,7 +1179,7 @@ int FastBoard::get_pattern_fast(const int sq) {
 
 // invert = invert colors because white is to move
 // extend = fill in 4 most extended squares with inval
-uint64 FastBoard::get_pattern4(const int sq, bool invert, bool extend) {          
+int FastBoard::get_pattern4(const int sq, bool invert, bool extend) {          
     const int size = m_boardsize;
     std::tr1::array<square_t, 12> sqs;
     
@@ -1745,7 +1765,7 @@ int FastBoard::minimum_elib_count(int color, int vertex) {
         if (m_square[ai] == !color) {
             int lc = 0;
             boost::array<int, 7> tmp;
-            add_string_liberties(ai, tmp, lc);    
+            add_string_liberties<7>(ai, tmp, lc);    
             if (lc < minlib) {
                 minlib = lc;
             }

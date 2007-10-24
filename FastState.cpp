@@ -159,10 +159,9 @@ int FastState::play_random_move(int color) {
     return play_move_fast(vtx);                         
 }
 
-
-float FastState::score_move(int vertex) {       
+float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {       
     Attributes att;
-    att.get_from_move(this, vertex);
+    att.get_from_move(this, territory, moyo, vertex);
 
     return AttribScores::get_attribscores()->team_strength(att);        
 }

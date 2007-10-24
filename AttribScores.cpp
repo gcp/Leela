@@ -21,7 +21,7 @@ AttribScores* AttribScores::s_attribscores = 0;
 AttribScores* AttribScores::get_attribscores(void) {
     if (s_attribscores == 0) {
         s_attribscores = new AttribScores;
-        s_attribscores->load_from_file("param3.dat");
+        s_attribscores->load_from_file("param4.dat");
     }
     
     return s_attribscores;
@@ -60,6 +60,9 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             MCOwnerTable::clear();
             Playout::mc_owner(*state);
             
+            std::vector<int> territory = state->board.influence();
+            std::vector<int> moyo = state->board.moyo();
+            
             // sitting at a state, with the move actually played in move
             // gather feature sets of all moves
             std::vector<int> moves = state->generate_moves(tomove);            
@@ -74,7 +77,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             for(it = moves.begin(); it != moves.end(); ++it) {
                 Attributes attributes;
                 // gather attribute set of current move
-                attributes.get_from_move(state, *it);
+                attributes.get_from_move(state, territory, moyo, *it);
                 
                 position.second.push_back(attributes);
                 
@@ -103,6 +106,9 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             MCOwnerTable::clear();
             Playout::mc_owner(*state);
             
+            std::vector<int> territory = state->board.influence();
+            std::vector<int> moyo = state->board.moyo();
+            
             std::vector<int> moves = state->generate_moves(tomove);            
 
             // make list of move - attributes pairs                       
@@ -115,7 +121,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
-                    attributes.get_from_move(state, *it);                                
+                    attributes.get_from_move(state, territory, moyo, *it);
 
                     position.second.push_back(attributes);                    
 
@@ -137,7 +143,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
-                    attributes.get_from_move(state, *it);
+                    attributes.get_from_move(state, territory, moyo, *it);
                     
                     position.second.push_back(attributes);                    
                     
@@ -219,7 +225,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(64);
+    m_fweight.resize(85);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -240,7 +246,7 @@ void AttribScores::autotune_from_file(std::string filename) {
                     float teams = team_strength(posit->second[k]);
                     allteams.push_back(teams);
                 }
-            }
+            }            
             myprintf("%d done\n", allteams.size());
             
             // for each parameter
@@ -394,8 +400,8 @@ void AttribScores::load_from_file(std::string filename) {
         m_fweight.clear();
         m_pat.clear();
 
-        m_fweight.reserve(64);
-        for (int i = 0; i < 64; i++) {
+        m_fweight.reserve(85);
+        for (int i = 0; i < 85; i++) {
             float wt;
             inf >> wt;
             m_fweight.push_back(wt);

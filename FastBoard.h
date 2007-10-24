@@ -70,7 +70,7 @@ public:
     bool is_eye(const int color, const int vtx);
     bool no_eye_fill(const int i);
     int get_pattern_fast(const int sq);    
-    uint64 get_pattern4(const int sq, bool invert, bool extend);
+    int get_pattern4(const int sq, bool invert, bool extend);
     uint64 get_pattern5(const int sq, bool invert, bool extend);
     
     int estimate_mc_score(float komi = 7.5f);    
@@ -142,6 +142,7 @@ protected:
     void kill_neighbours(int vertex, std::vector<int> & work);                                  
     void try_capture(int color, int vertex, std::vector<int> & work);
     int string_size(int vertex);
+    FastBoard remove_dead();
 };
 
 #endif

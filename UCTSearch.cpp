@@ -201,9 +201,12 @@ void UCTSearch::dump_order2(void) {
     std::vector<int> moves = m_rootstate.generate_moves(m_rootstate.get_to_move());
     std::vector<std::pair<float, std::string> > ord_list;            
     
+    std::vector<int> territory = m_rootstate.board.influence();
+    std::vector<int> moyo = m_rootstate.board.moyo();
+    
     for (int i = 0; i < moves.size(); i++) {
         ord_list.push_back(std::make_pair(
-                           m_rootstate.score_move(moves[i]), 
+                           m_rootstate.score_move(territory, moyo, moves[i]), 
                            m_rootstate.move_to_text(moves[i])));
     } 
     
@@ -211,7 +214,7 @@ void UCTSearch::dump_order2(void) {
     
     myprintf("\nOrder Table\n");
     myprintf("--------------------\n");
-    for (unsigned int i = 0; i < min(10, ord_list.size()); i++) {
+    for (unsigned int i = 0; i < std::min<int>(10, ord_list.size()); i++) {
         myprintf("%4s -> %10.10f\n", ord_list[i].second.c_str(), 
                                      ord_list[i].first);                              
     }
