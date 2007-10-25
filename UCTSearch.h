@@ -2,6 +2,8 @@
 #define UCTSEARCH_H_INCLUDED
 
 #include <memory>
+#include <boost/function.hpp>
+#include <boost/thread.hpp>
 
 #include "GameState.h"
 #include "UCTNode.h"
@@ -26,20 +28,31 @@ public:
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
+    Playout play_simulation(KoState & currstate, UCTNode * node);
+    bool is_running();      
     
-private:     
-    Playout play_simulation(UCTNode* node);    
-    
+private:             
     void dump_stats(GameState & state, UCTNode & parent);
     void dump_pv(GameState & state, UCTNode & parent);
     void dump_thinking();        
     void dump_order2(void);
     int get_best_move(passflag_t passflag);
-    
-    GameState & m_rootstate;
-    KoState m_currstate;
+
+    GameState & m_rootstate;    
     UCTNode m_root;    
-    int m_nodes;       
+    int m_nodes;  
+    bool m_run;        
+};
+
+class UCTWorker {
+public:
+    UCTWorker(GameState & state, UCTSearch * search, UCTNode * root)
+      : m_rootstate(state), m_search(search), m_root(root) {};
+    void operator()();
+private:
+    GameState & m_rootstate; 
+    UCTNode * m_root;
+    UCTSearch * m_search;        
 };
 
 #endif

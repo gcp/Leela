@@ -164,12 +164,13 @@ void Attributes::get_from_move(FastState * state,
     m_present[bitpos++] = (mcown >=  0.70f && mcown <  0.80);
     m_present[bitpos++] = (mcown >=  0.80f && mcown <  0.90);
     m_present[bitpos++] = (mcown >=  0.90f && mcown <  1.01);   
-            
+    
+    int point = vtx;        
     if (vtx == FastBoard::PASS) {
-        vtx = 0;
+        point = 0;
     }
-    m_present[bitpos++] = (territory[vtx] != 0);
-    m_present[bitpos++] = (moyo[vtx] != 0);
+    m_present[bitpos++] = (territory[point] != 0);
+    m_present[bitpos++] = (moyo[point] != 0);
     
     // prev move distance
     int prevdist;

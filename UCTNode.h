@@ -1,12 +1,13 @@
 #ifndef UCTNODE_H_INCLUDED
 #define UCTNODE_H_INCLUDED
 
+#include <boost/thread.hpp>
 #include "GameState.h"
 #include "Playout.h"
 
 class UCTNode {
 public:        
-    UCTNode(int vertex = FastBoard::PASS);
+    UCTNode(int vertex, float score);
     ~UCTNode();    
     bool first_visit() const;
     bool has_children() const;    
@@ -18,6 +19,7 @@ public:
     int get_move() const;
     int get_visits() const;
     int get_ravevisits() const;
+    float get_score();
     void set_best();
     void set_move(int move);
     void set_visits(int visits);
@@ -30,7 +32,8 @@ public:
     UCTNode* get_pass_child();
     UCTNode* get_nopass_child();
     UCTNode* get_sibling();
-    void sort_children(int color);        
+    void sort_children(int color);    
+    boost::mutex & get_mutex();
 
 private:                   
     void link_child(UCTNode * newchild);        
@@ -45,6 +48,10 @@ private:
     // RAVE
     float m_ravestmwins;    
     int m_ravevisits;  
+    // move order
+    float m_score;
+    // mutex
+    boost::mutex m_nodemutex; 
 };
 
 #endif

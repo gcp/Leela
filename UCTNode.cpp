@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <functional>
+#include <boost/thread.hpp>
 
 #include "config.h"
 #include "FastState.h"
@@ -17,20 +18,21 @@
 
 using namespace Utils;
 
-UCTNode::UCTNode(int vertex) 
-: m_firstchild(NULL), m_move(vertex), 
-  m_blackwins(0.0f), m_visits(0),
-  m_ravevisits(50), m_ravestmwins(25.0f) {
+UCTNode::UCTNode(int vertex, float score) 
+ : m_firstchild(NULL), m_move(vertex), m_score(score),
+   m_blackwins(0.0f), m_visits(0),
+   m_ravevisits(50), m_ravestmwins(25.0f) {
 }
 
-UCTNode::~UCTNode() {
+UCTNode::~UCTNode() {    
+    boost::mutex::scoped_lock lock(get_mutex());    
     UCTNode * next = m_firstchild;
-    
+
     while (next != NULL) {
         UCTNode * tmp = next->m_nextsibling;           
         delete next;                    
         next = tmp;
-    }
+    }	
 }
 
 bool UCTNode::first_visit() const {        
@@ -42,9 +44,19 @@ void UCTNode::link_child(UCTNode * newchild) {
     m_firstchild = newchild;            
 }
 
-int UCTNode::create_children(FastState & state) {             
-    FastBoard & board = state.board;  
-    int children = 0;
+boost::mutex & UCTNode::get_mutex() {
+    return m_nodemutex;
+}
+
+int UCTNode::create_children(FastState & state) {   
+    // acquire the lock
+    boost::mutex::scoped_lock lock(get_mutex());
+    // check whether somebody beat us to it
+    if (has_children()) {
+        return 0;
+    }                      
+    
+    FastBoard & board = state.board;      
     
     typedef std::pair<float, UCTNode*> scored_node; 
     std::vector<scored_node> nodelist;        
@@ -57,32 +69,40 @@ int UCTNode::create_children(FastState & state) {
             int vertex = board.m_empty[i];  
             
             assert(board.get_square(vertex) == FastBoard::EMPTY);             
-                    
+            
+            // add and score a node        
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
-                if (!board.is_suicide(vertex, board.m_tomove)) {  
-                    UCTNode * vtx = new UCTNode(vertex);                    
+                if (!board.is_suicide(vertex, board.m_tomove)) {                                          
                     float score = state.score_move(territory, moyo, vertex);
+                    UCTNode * vtx = new UCTNode(vertex, score);
                     nodelist.push_back(std::make_pair(score, vtx));                    
                 } 
-            }                   
+            }                                           
         }      
         
-        UCTNode * vtx = new UCTNode(FastBoard::PASS);        
+        UCTNode * vtx = new UCTNode(FastBoard::PASS, 0.0f);        
         nodelist.push_back(std::make_pair(0.0f, vtx));        
     }    
     
     // sort (this will reverse scores, but linking is backwards too)
-    std::sort(nodelist.begin(), nodelist.end());
+    std::sort(nodelist.begin(), nodelist.end());        
     
-    // link
+    // link the nodes together, we only really link the last few
     std::vector<scored_node>::const_iterator it; 
+    const int maxchilds = 35;   // about 4M visits
+    int childrenseen = 0;
+    int childrenadded = 0;
+    int totalchildren = nodelist.size();
     
     for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
-        link_child((*it).second);
-        children++;
+        if (totalchildren - childrenseen <= maxchilds) {
+            link_child((*it).second);
+            childrenadded++;
+        }
+        childrenseen++;
     }    
 
-    return children;
+    return childrenadded;
 }
 
 int UCTNode::get_move() const {
@@ -93,7 +113,8 @@ void UCTNode::set_move(int move) {
     m_move = move;
 }
 
-void UCTNode::update(Playout & gameresult, int color) {        
+void UCTNode::update(Playout & gameresult, int color) {   
+    boost::mutex::scoped_lock lock(get_mutex());
     m_visits++;    
     m_ravevisits++;
     
@@ -119,6 +140,7 @@ void UCTNode::update(Playout & gameresult, int color) {
 
 // terminal node
 void UCTNode::finalize(float gameresult) {
+    boost::mutex::scoped_lock lock(get_mutex());
     m_visits += 100;
     
     m_blackwins += 5.0f * gameresult;
@@ -136,12 +158,18 @@ float UCTNode::get_blackwins() const {
     return m_blackwins;
 }
 
-void UCTNode::set_visits(int visits) {
+void UCTNode::set_visits(int visits) {    
+    boost::mutex::scoped_lock lock(get_mutex());
     m_visits = visits;
 }
 
 void UCTNode::set_blackwins(float wins) {
+    boost::mutex::scoped_lock lock(get_mutex());
     m_blackwins = wins;
+}
+
+float UCTNode::get_score() {
+    return m_score;
 }
 
 float UCTNode::get_winrate(int tomove) const {    
@@ -176,17 +204,17 @@ UCTNode* UCTNode::uct_select_child(int color) {
         
     //int childbound = std::max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.1823216f) - 0.5f));
     int childbound = std::max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.336472f) - 0.5f));
-    int childcount = 0;
-    
+        
     int rave_parentvisits = 0;
-    int parentvisits      = 0;
+    int parentvisits      = 1;   // avoid logparent being illegal
     
+    int childcount = 0;
     UCTNode * c = m_firstchild;        
-    while (c != NULL && childcount < childbound) {
-       parentvisits      += c->get_visits();
-       rave_parentvisits += c->get_ravevisits();
-       c = c->m_nextsibling;    
-       childcount++;
+    while (c != NULL && childcount < childbound) {        
+        parentvisits      += c->get_visits();
+        rave_parentvisits += c->get_ravevisits();                     
+        c = c->m_nextsibling;           
+        childcount++;
     }
     
     float logparent     = logf((float)parentvisits);    
@@ -196,12 +224,12 @@ UCTNode* UCTNode::uct_select_child(int color) {
     const float k = 5000.0f;
     float beta = sqrtf(k / ((3.0f * parentvisits) + k));     
         
-    UCTNode * child = m_firstchild;        
     childcount = 0;
+    UCTNode * child = m_firstchild;            
     
     while (child != NULL && childcount < childbound) {
         float value;
-        float uctvalue;
+        float uctvalue;                
 
         if (child->get_ravevisits() > 0) {        
             if (!child->first_visit()) {
@@ -243,7 +271,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             best = child;
         }
         
-        child = child->m_nextsibling;
+        child = child->m_nextsibling;     
         childcount++;
     }   
     
@@ -287,6 +315,7 @@ public:
     sorting the vector, and reconstructing to linked list again
 */        
 void UCTNode::sort_children(int color) {
+    boost::mutex::scoped_lock lock(get_mutex());
     std::vector<UCTNode*> tmp;
     
     UCTNode * child = m_firstchild;    
@@ -298,7 +327,7 @@ void UCTNode::sort_children(int color) {
     }        
     
     // reverse sort, because list reconstruction is backwards
-    std::stable_sort(tmp.begin(), tmp.end(), NodeComp(color));        
+    std::sort(tmp.begin(), tmp.end(), NodeComp(color));        
     std::reverse(tmp.begin(), tmp.end());
     
     m_firstchild = NULL;
@@ -348,10 +377,11 @@ UCTNode* UCTNode::get_nopass_child() {
     return NULL;  
 }
 
-void UCTNode::delete_child(UCTNode * del_child) {    
+void UCTNode::delete_child(UCTNode * del_child) {  
+    boost::mutex::scoped_lock lock(get_mutex());  
     assert(del_child != NULL);
     
-    if (del_child == m_firstchild) {        
+    if (del_child == m_firstchild) {                
         m_firstchild = m_firstchild->m_nextsibling;
         return;
     } else {
@@ -359,8 +389,8 @@ void UCTNode::delete_child(UCTNode * del_child) {
         UCTNode * prev  = NULL;
     
         do {
-            prev  = child;
-            child = child->m_nextsibling;                       
+            prev  = child;            
+            child = child->m_nextsibling;
             
             if (child == del_child) {
                 UCTNode * next = child->m_nextsibling;
@@ -375,19 +405,20 @@ void UCTNode::delete_child(UCTNode * del_child) {
 }
 
 // update siblings with matching RAVE info
-void UCTNode::updateRAVE(Playout & playout, int color) {    
+void UCTNode::updateRAVE(Playout & playout, int color) {      
     float score = playout.get_score();            
     
     // siblings
     UCTNode * child = m_firstchild;    
     
-    while (child != NULL) {        
+    while (child != NULL) {                
         int move = child->get_move();                
         
         if (color == FastBoard::BLACK) {
             bool bpass = playout.passthrough(FastBoard::BLACK, move);        
             
             if (bpass) { 
+                boost::mutex::scoped_lock lock(child->get_mutex());
                 child->m_ravevisits++;
                         
                 if (score > 0.0f) {
@@ -398,6 +429,7 @@ void UCTNode::updateRAVE(Playout & playout, int color) {
             bool wpass = playout.passthrough(FastBoard::WHITE, move);        
             
             if (wpass) { 
+                boost::mutex::scoped_lock lock(child->get_mutex());
                 child->m_ravevisits++;
                         
                 if (score < 0.0f) {

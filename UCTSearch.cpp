@@ -2,6 +2,7 @@
 #include <math.h>
 #include <vector>
 #include <utility>
+#include <boost/thread.hpp>
 
 #include "config.h"
 
@@ -16,50 +17,49 @@
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
-: m_rootstate(g), m_nodes(0) {    
+: m_rootstate(g), m_nodes(0), m_root(FastBoard::PASS, 0.0f) {    
 }
 
-Playout UCTSearch::play_simulation(UCTNode* node) {
-    const int color = m_currstate.get_to_move();
-    const uint64 hash = m_currstate.board.get_hash();
+Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
+    const int color = currstate.get_to_move();
+    const uint64 hash = currstate.board.get_hash();
     Playout noderesult;  
-    
-    //TTable::get_TT()->sync(hash, node);      
+        
+    //TTable::get_TT()->sync(hash, node);        
 
-    if (node->get_visits() <= MATURE_TRESHOLD) {
-        noderesult.run(m_currstate);
-    } else {
-        if (node->has_children() == false) {
-            m_nodes += node->create_children(m_currstate);
-        }
+    if (node->get_visits() <= MATURE_TRESHOLD) {           
+        noderesult.run(currstate);                
+    } else {        
+        if (node->has_children() == false) {                
+            m_nodes += node->create_children(currstate);
+        }        
                 
         if (node->has_children() == true) {                        
-            UCTNode* next = node->uct_select_child(color); 
+            UCTNode * next = node->uct_select_child(color); 
 
             int move = next->get_move();            
             
-            if (move != FastBoard::PASS) {
-                m_currstate.play_move(move);
+            if (move != FastBoard::PASS) {                
+                currstate.play_move(move);
                 
-                if (!m_currstate.superko()) {
-                    noderesult = play_simulation(next);                    
-                } else {
-                    node->delete_child(next);   
-                    noderesult.run(m_currstate);     
-                }
-            } else {
-                m_currstate.play_pass();
-                
-                noderesult = play_simulation(next);
+                if (!currstate.superko()) {                    
+                    noderesult = play_simulation(currstate, next);                                        
+                } else {                                            
+                    node->delete_child(next);                       
+                    noderesult.run(currstate);                         
+                }                
+            } else {                
+                currstate.play_pass();                
+                noderesult = play_simulation(currstate, next);                
             }       
-                    
+            
             node->updateRAVE(noderesult, color);                        
         } else {                     
-            noderesult.set_final_score(m_currstate.board.percentual_area_score(m_currstate.m_komi));            
+            noderesult.set_final_score(currstate.board.percentual_area_score(currstate.m_komi));                        
             node->finalize(noderesult.get_score());
         }        
     }             
-    
+      
     node->update(noderesult, !color);    
     //TTable::get_TT()->update(hash, node);    
     
@@ -221,6 +221,17 @@ void UCTSearch::dump_order2(void) {
     myprintf("--------------------\n");        
 }
 
+bool UCTSearch::is_running() {
+    return m_run;
+}
+
+void UCTWorker::operator()() {
+    do {
+        KoState currstate = m_rootstate;
+        m_search->play_simulation(currstate, m_root);                   
+    } while(m_search->is_running()); 
+}
+
 int UCTSearch::think(int color, passflag_t passflag) {
     // set side to move
     m_rootstate.board.m_tomove = color;
@@ -235,24 +246,33 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     MCOwnerTable::clear();  
     Playout::mc_owner(m_rootstate, 64);
-
     dump_order2();                          
+        
+    m_run = true;
+
+    boost::thread_group tg;             
+    //tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
+    //tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
+    //tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
 
     do {
-        m_currstate = m_rootstate;
+        KoState currstate = m_rootstate;
 
-        play_simulation(&m_root);                   
+        play_simulation(currstate, &m_root);                   
 
         Time elapsed;
         centiseconds_elapsed = Time::timediff(start, elapsed);        
 
         // output some stats every 2.5 seconds
         if (centiseconds_elapsed - last_update > 250) {
-            last_update = centiseconds_elapsed;
+            last_update = centiseconds_elapsed;            
             dump_thinking();            
         }        
-    } while(/*centiseconds_elapsed < time_for_move*/ m_root.get_visits() < 20000); 
+    } while(centiseconds_elapsed < time_for_move /* m_root.get_visits() < 20000*/); 
     
+    m_run = false;
+    tg.join_all();
+
     if (!m_root.has_children()) {
         return FastBoard::PASS;
     }
