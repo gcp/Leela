@@ -98,6 +98,8 @@ int UCTNode::create_children(FastState & state) {
         if (totalchildren - childrenseen <= maxchilds) {
             link_child((*it).second);
             childrenadded++;
+        } else {
+            delete it->second;
         }
         childrenseen++;
     }    
