@@ -166,17 +166,19 @@ int UCTSearch::get_best_move(passflag_t passflag) {
 
     // do we want to fiddle with the best move because of the rule set?
     if (passflag == UCTSearch::PREFERPASS) {
-        if (!m_root.get_pass_child()->first_visit()) {
-            float passscore = m_root.get_pass_child()->get_winrate(color);
-            
-            // is passing a winning move?
-            if (passscore > 0.85f) {
+        if (m_root.get_pass_child() != NULL) {
+            if (!m_root.get_pass_child()->first_visit()) {
+                float passscore = m_root.get_pass_child()->get_winrate(color);
                 
-                // is passing within 5% of the best move?            
-                if (bestscore - passscore < 0.05f) {
-                    myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
-                              passscore * 100.0f, bestscore * 100.0f);
-                    bestmove = FastBoard::PASS;                
+                // is passing a winning move?
+                if (passscore > 0.85f) {
+                    
+                    // is passing within 5% of the best move?            
+                    if (bestscore - passscore < 0.05f) {
+                        myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
+                                  passscore * 100.0f, bestscore * 100.0f);
+                        bestmove = FastBoard::PASS;                
+                    }
                 }
             }
         }
@@ -250,11 +252,12 @@ int UCTSearch::think(int color, passflag_t passflag) {
         
     m_run = true;
 
-    boost::thread_group tg;             
-    //tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
-    //tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
-    //tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
-
+    int cpus = Utils::get_num_cpus();
+    boost::thread_group tg;        
+    for (int i = 1; i < cpus; i++) {         
+        tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
+    }        
+    
     do {
         KoState currstate = m_rootstate;
 

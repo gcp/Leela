@@ -1,12 +1,25 @@
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#ifdef WIN32
+#include <windows.h>
+#endif
 
-#include "config.h"
+#include "Utils.h"
 
-namespace Utils {
+int Utils::get_num_cpus() {
+#ifdef WIN32
+    SYSTEM_INFO sysinfo;    
+    GetSystemInfo(&sysinfo);    
+    return sysinfo.dwNumberOfProcessors;    
+#else
+    return 1;
+#endif
+}
 
-void myprintf(const char *fmt, ...) {
+void Utils::myprintf(const char *fmt, ...) {
     va_list ap;      
   
     va_start(ap, fmt);      
@@ -16,7 +29,7 @@ void myprintf(const char *fmt, ...) {
     va_end(ap);
 }
 
-void gtp_printf(int id, const char *fmt, ...) {
+void Utils::gtp_printf(int id, const char *fmt, ...) {
     va_list ap;  
   
     if (id != -1) {
@@ -33,7 +46,7 @@ void gtp_printf(int id, const char *fmt, ...) {
     va_end(ap);
 }
 
-void gtp_fail_printf(int id, const char *fmt, ...) {
+void Utils::gtp_fail_printf(int id, const char *fmt, ...) {
     va_list ap;  
       
     if (id != -1) { 
@@ -49,5 +62,3 @@ void gtp_fail_printf(int id, const char *fmt, ...) {
   
     va_end(ap);
 }
-
-};

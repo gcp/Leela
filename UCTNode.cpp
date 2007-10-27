@@ -358,9 +358,7 @@ UCTNode* UCTNode::get_pass_child() {
         }
                         
         child = child->m_nextsibling;       
-    }      
-    
-    assert(FALSE && "No pass child");
+    }              
     
     return NULL;  
 }
