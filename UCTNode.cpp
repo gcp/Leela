@@ -20,7 +20,7 @@ using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score) 
  : m_firstchild(NULL), m_move(vertex), m_score(score),
-   m_blackwins(0.0f), m_visits(0),
+   m_blackwins(0.0f), m_visits(0), m_valid(true),
    m_ravevisits(50), m_ravestmwins(25.0f) {
 }
 
@@ -58,7 +58,7 @@ int UCTNode::create_children(FastState & state) {
     
     FastBoard & board = state.board;      
     
-    typedef std::pair<float, UCTNode*> scored_node; 
+    typedef std::pair<float, int> scored_node; 
     std::vector<scored_node> nodelist;        
     
     std::vector<int> territory = state.board.influence();
@@ -73,15 +73,13 @@ int UCTNode::create_children(FastState & state) {
             // add and score a node        
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {                                          
-                    float score = state.score_move(territory, moyo, vertex);
-                    UCTNode * vtx = new UCTNode(vertex, score);
-                    nodelist.push_back(std::make_pair(score, vtx));                    
+                    float score = state.score_move(territory, moyo, vertex);        
+                    nodelist.push_back(std::make_pair(score, vertex));                    
                 } 
             }                                           
         }      
-        
-        UCTNode * vtx = new UCTNode(FastBoard::PASS, 0.0f);        
-        nodelist.push_back(std::make_pair(0.0f, vtx));        
+                
+        nodelist.push_back(std::make_pair(0.0f, FastBoard::PASS));        
     }    
     
     // sort (this will reverse scores, but linking is backwards too)
@@ -96,11 +94,10 @@ int UCTNode::create_children(FastState & state) {
     
     for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
         if (totalchildren - childrenseen <= maxchilds) {
-            link_child((*it).second);
+            UCTNode * vtx = new UCTNode(it->second, it->first);
+            link_child(vtx);
             childrenadded++;
-        } else {
-            delete it->second;
-        }
+        } 
         childrenseen++;
     }    
 
@@ -211,11 +208,19 @@ UCTNode* UCTNode::uct_select_child(int color) {
     int parentvisits      = 1;   // avoid logparent being illegal
     
     int childcount = 0;
-    UCTNode * c = m_firstchild;        
-    while (c != NULL && childcount < childbound) {        
+    UCTNode * c = m_firstchild;
+    // make sure we are at a valid successor        
+    while (c != NULL && !c->valid()) {
+        c = c->m_nextsibling;
+    }
+    while (c != NULL && childcount < childbound) {                        
         parentvisits      += c->get_visits();
-        rave_parentvisits += c->get_ravevisits();                     
-        c = c->m_nextsibling;           
+        rave_parentvisits += c->get_ravevisits();                             
+        c = c->m_nextsibling;                   
+        // make sure we are at a valid successor        
+        while (c != NULL && !c->valid()) {
+            c = c->m_nextsibling;
+        }        
         childcount++;
     }
     
@@ -228,7 +233,10 @@ UCTNode* UCTNode::uct_select_child(int color) {
         
     childcount = 0;
     UCTNode * child = m_firstchild;            
-    
+    // make sure we are at a valid successor        
+    while (c != NULL && !c->valid()) {
+        c = c->m_nextsibling;
+    }
     while (child != NULL && childcount < childbound) {
         float value;
         float uctvalue;                
@@ -274,6 +282,10 @@ UCTNode* UCTNode::uct_select_child(int color) {
         }
         
         child = child->m_nextsibling;     
+        // make sure we are at a valid successor        
+        while (c != NULL && !c->valid()) {
+            c = c->m_nextsibling;
+        }
         childcount++;
     }   
     
@@ -377,8 +389,18 @@ UCTNode* UCTNode::get_nopass_child() {
     return NULL;  
 }
 
+void UCTNode::invalidate() {
+    m_valid = false;
+}
+
+bool UCTNode::valid() {
+    return m_valid;
+}
+
+// unsafe, we don't know if people hold pointers to the child
+// which they might dereference
 void UCTNode::delete_child(UCTNode * del_child) {  
-    boost::mutex::scoped_lock lock(get_mutex());  
+    boost::mutex::scoped_lock lock(get_mutex());     
     assert(del_child != NULL);
     
     if (del_child == m_firstchild) {                
@@ -392,8 +414,8 @@ void UCTNode::delete_child(UCTNode * del_child) {
             prev  = child;            
             child = child->m_nextsibling;
             
-            if (child == del_child) {
-                UCTNode * next = child->m_nextsibling;
+            if (child == del_child) {                
+                UCTNode * next = child->m_nextsibling;                             
                 delete child;
                 prev->m_nextsibling = next;
                 return;

@@ -45,7 +45,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
                 if (!currstate.superko()) {                    
                     noderesult = play_simulation(currstate, next);                                        
                 } else {                                            
-                    node->delete_child(next);                       
+                    next->invalidate();                       
                     noderesult.run(currstate);                         
                 }                
             } else {                

@@ -16,6 +16,8 @@ public:
     float get_blackwins() const;
     int create_children(FastState & state);
     void delete_child(UCTNode * child);        
+    void invalidate();
+    bool valid();
     int get_move() const;
     int get_visits() const;
     int get_ravevisits() const;
@@ -50,8 +52,10 @@ private:
     int m_ravevisits;  
     // move order
     float m_score;
-    // mutex
+    // mutex    
     boost::mutex m_nodemutex; 
+    // alive (superko)
+    bool m_valid;
 };
 
 #endif
