@@ -1,10 +1,10 @@
+#include "config.h"
+
 #include <assert.h>
 #include <math.h>
 #include <vector>
 #include <utility>
 #include <boost/thread.hpp>
-
-#include "config.h"
 
 #include "FastBoard.h"
 #include "UCTSearch.h"
@@ -17,7 +17,7 @@
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
-: m_rootstate(g), m_nodes(0), m_root(FastBoard::PASS, 0.0f) {    
+: m_rootstate(g), m_nodes(0) {    
 }
 
 Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
@@ -97,7 +97,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     float bestrate = 0.0f;          
     
     // sort children, put best move on top    
-    m_root.sort_children(color);
+    m_root->sort_children(color);
 
     UCTNode* bestnode = parent.get_first_child();       
     
@@ -150,8 +150,8 @@ void UCTSearch::dump_thinking() {
     GameState tempstate = m_rootstate;   
     int color = tempstate.board.m_tomove;
     myprintf("Nodes: %d, Winrate: %5.2f%%, PV: ", 
-              m_root.get_visits(), m_root.get_winrate(color) * 100.0f);
-    dump_pv(tempstate, m_root);
+              m_root->get_visits(), m_root->get_winrate(color) * 100.0f);
+    dump_pv(tempstate, *m_root);
     myprintf("\n");
 }
 
@@ -159,16 +159,16 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     int color = m_rootstate.board.m_tomove;    
 
     // make sure best is first
-    m_root.sort_children(color);
+    m_root->sort_children(color);
     
-    float bestscore = m_root.get_first_child()->get_winrate(color);       
-    int bestmove = m_root.get_first_child()->get_move();    
+    float bestscore = m_root->get_first_child()->get_winrate(color);       
+    int bestmove = m_root->get_first_child()->get_move();    
 
     // do we want to fiddle with the best move because of the rule set?
     if (passflag == UCTSearch::PREFERPASS) {
-        if (m_root.get_pass_child() != NULL) {
-            if (!m_root.get_pass_child()->first_visit()) {
-                float passscore = m_root.get_pass_child()->get_winrate(color);
+        if (m_root->get_pass_child() != NULL) {
+            if (!m_root->get_pass_child()->first_visit()) {
+                float passscore = m_root->get_pass_child()->get_winrate(color);
                 
                 // is passing a winning move?
                 if (passscore > 0.85f) {
@@ -185,7 +185,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     } else if (passflag == UCTSearch::NOPASS) {
         // were we going to pass?
         if (bestmove == FastBoard::PASS) {
-            UCTNode * nopass = m_root.get_nopass_child();
+            UCTNode * nopass = m_root->get_nopass_child();
             
             if (nopass != NULL) {
                 myprintf("Preferring not to pass.\n");
@@ -248,35 +248,46 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     MCOwnerTable::clear();  
     Playout::mc_owner(m_rootstate, 64);
-    dump_order2();                          
-        
-    m_run = true;
+    dump_order2();                                      
 
     int cpus = Utils::get_num_cpus();
-    boost::thread_group tg;        
-    for (int i = 1; i < cpus; i++) {         
-        tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
-    }        
     
     do {
-        KoState currstate = m_rootstate;
-
-        play_simulation(currstate, &m_root);                   
-
-        Time elapsed;
-        centiseconds_elapsed = Time::timediff(start, elapsed);        
-
-        // output some stats every 2.5 seconds
-        if (centiseconds_elapsed - last_update > 250) {
-            last_update = centiseconds_elapsed;            
-            dump_thinking();            
+        // allocate root node (deletes old tree if needed)
+        m_root.reset(new UCTNode(FastBoard::PASS, 0.0f));
+        m_nodes = 0;
+        // start a search
+        m_run = true;
+        boost::thread_group tg;        
+        for (int i = 1; i < cpus; i++) {         
+            tg.create_thread(UCTWorker(m_rootstate, this, &(*m_root)));
         }        
-    } while(centiseconds_elapsed < time_for_move /* m_root.get_visits() < 20000*/); 
-    
-    m_run = false;
-    tg.join_all();
+        do {
+            KoState currstate = m_rootstate;
 
-    if (!m_root.has_children()) {
+            play_simulation(currstate, &(*m_root));                   
+
+            Time elapsed;
+            centiseconds_elapsed = Time::timediff(start, elapsed);        
+
+            // output some stats every 2.5 seconds
+            if (centiseconds_elapsed - last_update > 250) {
+                last_update = centiseconds_elapsed;            
+                dump_thinking();            
+            }        
+        } while(m_nodes < 3000000 &&
+                centiseconds_elapsed < time_for_move);         
+        // stop the search
+        m_run = false;
+        tg.join_all();                                        
+        // if we used too many nodes rather than ran out of time,
+        // we restart the search
+        if (centiseconds_elapsed < time_for_move) {
+            myprintf("Node limit reached, restarting search...\n");                    
+        }
+    } while (centiseconds_elapsed < time_for_move);                             
+  
+    if (!m_root->has_children()) {
         return FastBoard::PASS;
     }
     
@@ -284,13 +295,13 @@ int UCTSearch::think(int color, passflag_t passflag) {
         
     // display search info        
     myprintf("\n");
-    dump_stats(m_rootstate, m_root);                  
+    dump_stats(m_rootstate, *m_root);                  
         
     if (centiseconds_elapsed > 0) {    
         myprintf("\n%d visits, %d nodes, %d vps\n\n", 
-                 m_root.get_visits(), 
+                 m_root->get_visits(), 
                  m_nodes,
-                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));              
+                 (m_root->get_visits() * 100) / (centiseconds_elapsed+1));              
     }             
             
     // XXX: check for pass but no actual win on final_scoring
@@ -299,29 +310,40 @@ int UCTSearch::think(int color, passflag_t passflag) {
     return bestmove;
 }
 
-void UCTSearch::ponder() {                     
+void UCTSearch::ponder() {                 
+    int cpus = Utils::get_num_cpus();    
+    
     MCOwnerTable::clear();  
     Playout::mc_owner(m_rootstate, 64);                            
         
-    m_run = true;
+    do {    
+        // allocate root node (deletes old tree if needed)
+        m_nodes = 0;
+        m_root.reset(new UCTNode(FastBoard::PASS, 0.0f));
+        // start a search
+        m_run = true;
+        boost::thread_group tg;        
+        for (int i = 1; i < cpus; i++) {         
+            tg.create_thread(UCTWorker(m_rootstate, this, &(*m_root)));
+        }        
+        do {
+            KoState currstate = m_rootstate;
 
-    int cpus = Utils::get_num_cpus();
-    boost::thread_group tg;        
-    for (int i = 1; i < cpus; i++) {         
-        tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
-    }        
-    
-    do {
-        KoState currstate = m_rootstate;
-        play_simulation(currstate, &m_root);                                  
-    } while(!Utils::input_pending()); 
-    
-    m_run = false;
-    tg.join_all();
+            play_simulation(currstate, &(*m_root));                             
+        } while(m_nodes < 3000000 && !Utils::input_pending());         
+        // stop the search
+        m_run = false;
+        tg.join_all();                                        
+        // if we used too many nodes rather than ran out of time,
+        // we restart the search   
+        if (!Utils::input_pending()) { 
+            myprintf("Node limit reached, restarting search...\n");                        
+        }
+    } while (!Utils::input_pending());
                     
     // display search info        
     myprintf("\n");
-    dump_stats(m_rootstate, m_root);                  
+    dump_stats(m_rootstate, *m_root);                  
                
-    myprintf("\n%d visits, %d nodes\n\n", m_root.get_visits(), m_nodes);                                 
+    myprintf("\n%d visits, %d nodes\n\n", m_root->get_visits(), m_nodes);                                 
 }

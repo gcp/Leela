@@ -17,6 +17,10 @@
 #define NAME            "Leela"
 #define VERSION         "0.2.2"
 
+/* Features */
+#define PONDER
+#define SMP
+
 /* Integer types */
 
 typedef int int32;

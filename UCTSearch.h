@@ -40,7 +40,7 @@ private:
     int get_best_move(passflag_t passflag);    
 
     GameState & m_rootstate;    
-    UCTNode m_root;    
+    std::auto_ptr<UCTNode> m_root;    
     int m_nodes;  
     bool m_run;        
 };

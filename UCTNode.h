@@ -1,6 +1,8 @@
 #ifndef UCTNODE_H_INCLUDED
 #define UCTNODE_H_INCLUDED
 
+#include "config.h"
+
 #include <boost/thread.hpp>
 #include "GameState.h"
 #include "Playout.h"
