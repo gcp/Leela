@@ -28,15 +28,16 @@ public:
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
-    Playout play_simulation(KoState & currstate, UCTNode * node);
+    void ponder();    
     bool is_running();      
+    Playout play_simulation(KoState & currstate, UCTNode * node);
     
 private:             
     void dump_stats(GameState & state, UCTNode & parent);
     void dump_pv(GameState & state, UCTNode & parent);
     void dump_thinking();        
     void dump_order2(void);
-    int get_best_move(passflag_t passflag);
+    int get_best_move(passflag_t passflag);    
 
     GameState & m_rootstate;    
     UCTNode m_root;    

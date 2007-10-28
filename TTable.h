@@ -2,6 +2,7 @@
 #define TTABLE_H_INCLUDED
 
 #include <vector>
+#include <boost/thread.hpp>
 
 #include "UCTNode.h"
 
@@ -38,6 +39,7 @@ private:
     TTable(int size = 50000);
 
     std::vector<TTEntry> m_buckets;
+    boost::mutex m_mutex;
 
     static TTable* s_ttable;   
 };

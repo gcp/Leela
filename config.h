@@ -7,6 +7,7 @@
  */
 #ifdef _WIN32
 #define GETTICKCOUNT 
+#undef HAVE_SELECT
 #else
 #define GETTIMEOFDAY
 #endif
@@ -14,7 +15,7 @@
 /* Hard limits */
 
 #define NAME            "Leela"
-#define VERSION         "0.2"
+#define VERSION         "0.2.2"
 
 /* Integer types */
 

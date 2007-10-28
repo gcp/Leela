@@ -15,14 +15,16 @@ TTable* TTable::get_TT(void) {
 }
 
 TTable::TTable(int size) {
+    boost::mutex::scoped_lock lock(m_mutex);
     m_buckets.resize(size);
 }
 
-void TTable::update(uint64 hash, const UCTNode * node) {
+void TTable::update(uint64 hash, const UCTNode * node) {    
+    boost::mutex::scoped_lock lock(m_mutex);
     unsigned int index = (unsigned int)hash;
     
-    index %= m_buckets.size();
-                             
+    index %= m_buckets.size();                             
+    
     /*
         update TT
     */            
@@ -32,9 +34,10 @@ void TTable::update(uint64 hash, const UCTNode * node) {
 }
 
 void TTable::sync(uint64 hash, UCTNode * node) {
-    unsigned int index = (unsigned int)hash;
+    boost::mutex::scoped_lock lock(m_mutex);
+    unsigned int index = (unsigned int)hash;    
     
-    index %= m_buckets.size();
+    index %= m_buckets.size();    
     
     /*
         check for hash fail

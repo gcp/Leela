@@ -25,7 +25,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
     const uint64 hash = currstate.board.get_hash();
     Playout noderesult;  
         
-    //TTable::get_TT()->sync(hash, node);        
+    TTable::get_TT()->sync(hash, node);        
 
     if (node->get_visits() <= MATURE_TRESHOLD) {           
         noderesult.run(currstate);                
@@ -61,7 +61,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
     }             
       
     node->update(noderesult, !color);    
-    //TTable::get_TT()->update(hash, node);    
+    TTable::get_TT()->update(hash, node);    
     
     return noderesult;  
 }
@@ -297,4 +297,31 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int bestmove = get_best_move(passflag);
        
     return bestmove;
+}
+
+void UCTSearch::ponder() {                     
+    MCOwnerTable::clear();  
+    Playout::mc_owner(m_rootstate, 64);                            
+        
+    m_run = true;
+
+    int cpus = Utils::get_num_cpus();
+    boost::thread_group tg;        
+    for (int i = 1; i < cpus; i++) {         
+        tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
+    }        
+    
+    do {
+        KoState currstate = m_rootstate;
+        play_simulation(currstate, &m_root);                                  
+    } while(!Utils::input_pending()); 
+    
+    m_run = false;
+    tg.join_all();
+                    
+    // display search info        
+    myprintf("\n");
+    dump_stats(m_rootstate, m_root);                  
+               
+    myprintf("\n%d visits, %d nodes\n\n", m_root.get_visits(), m_nodes);                                 
 }

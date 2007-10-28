@@ -236,13 +236,22 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 return 1;
             }   
             
-            std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+            // start thinking
+            {
+                std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 
-            int move = search->think(who, UCTSearch::NOPASS);
-            game.play_move(who, move);                    
+                int move = search->think(who, UCTSearch::NOPASS);
+                game.play_move(who, move);                    
 
-            std::string vertex = game.move_to_text(move);            
-            gtp_printf(id, "%s", vertex.c_str());
+                std::string vertex = game.move_to_text(move);            
+                gtp_printf(id, "%s", vertex.c_str());
+            }
+            // now start pondering
+            {
+                std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+                search->ponder();
+            }                
+            
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
