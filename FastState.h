@@ -42,7 +42,7 @@ public:
     FullBoard board;
      
     float m_komi;
-    int m_passes;  
+    int m_passes;
     int komove;   
     int movenum;              
     int lastmove;   

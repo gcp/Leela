@@ -42,10 +42,13 @@ public:
 private:                   
     void link_child(UCTNode * newchild);        
     
+    // mutex    
+    boost::mutex m_nodemutex; 
     // Tree data
-    int m_move;       
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;                  
+    // Move
+    int m_move;           
     // UCT
     float m_blackwins;
     int m_visits;      
@@ -54,8 +57,6 @@ private:
     int m_ravevisits;  
     // move order
     float m_score;
-    // mutex    
-    boost::mutex m_nodemutex; 
     // alive (superko)
     bool m_valid;
 };

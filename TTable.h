@@ -17,7 +17,6 @@ public:
     int m_visits;
 };
 
-
 class TTable {
 public:    
     /*
@@ -36,7 +35,7 @@ public:
     void sync(uint64 hash, UCTNode * node);
     
 private:   
-    TTable(int size = 50000);
+    TTable(int size = 100000);
 
     std::vector<TTEntry> m_buckets;
     boost::mutex m_mutex;

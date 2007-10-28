@@ -24,7 +24,11 @@ public:
         Don't expand children until at least this many
         visits happened.
     */        
-    static const int MATURE_TRESHOLD = 30;     
+    static const int MATURE_TRESHOLD = 30; 
+    /*
+        Maximum size of the tree in memory.
+    */        
+    static const int MAX_TREE_SIZE = 5000000;    
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
@@ -40,7 +44,7 @@ private:
     int get_best_move(passflag_t passflag);    
 
     GameState & m_rootstate;    
-    std::auto_ptr<UCTNode> m_root;    
+    UCTNode m_root;    
     int m_nodes;  
     bool m_run;        
 };

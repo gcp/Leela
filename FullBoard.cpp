@@ -81,7 +81,7 @@ uint64 FullBoard::calc_hash(void) {
         res ^= 0xABCDABCDABCDABCDUI64;
 #else
         res ^= 0xABCDABCDABCDABCDULL;
-#endif    
+#endif        
 
     hash = res;
 
@@ -91,7 +91,6 @@ uint64 FullBoard::calc_hash(void) {
 uint64 FullBoard::get_hash(void) {
     return hash;
 }
-
 
 int FullBoard::update_board(const int color, const int i) {         
     assert(m_square[i] == EMPTY);   
