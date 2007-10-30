@@ -4,10 +4,9 @@
 namespace Utils {
     void myprintf(const char *fmt, ...);
     void gtp_printf(int id, const char *fmt, ...);
-    void gtp_fail_printf(int id, const char *fmt, ...);
-    int get_num_cpus();      
+    void gtp_fail_printf(int id, const char *fmt, ...);       
     bool input_pending();    
-    bool input_causes_stop();
+    bool input_causes_stop();    
 }
 
 #endif

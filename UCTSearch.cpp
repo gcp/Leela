@@ -98,10 +98,14 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     int bestvisits = 0;
     float bestrate = 0.0f;          
     
+    if (!parent.has_children()) {
+        return;
+    }
+
     // sort children, put best move on top    
     m_root.sort_children(color);
 
-    UCTNode* bestnode = parent.get_first_child();       
+    UCTNode * bestnode = parent.get_first_child();       
     
     bestrate = bestnode->get_winrate(color);
     bestvisits = bestnode->get_visits();
@@ -252,8 +256,10 @@ int UCTSearch::think(int color, passflag_t passflag) {
     Playout::mc_owner(m_rootstate, 64);
     dump_order2();                                      
     
+    m_root.create_children(m_rootstate);
+    
     m_run = true;            
-    int cpus = Utils::get_num_cpus();    
+    int cpus = SMP::get_num_cpus();    
     boost::thread_group tg;            
     for (int i = 1; i < cpus; i++) {         
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
@@ -302,10 +308,10 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
 void UCTSearch::ponder() {                          
     MCOwnerTable::clear();  
-    Playout::mc_owner(m_rootstate, 64);                            
-                            
+    Playout::mc_owner(m_rootstate, 64);      
+         
     m_run = true;
-    int cpus = Utils::get_num_cpus();   
+    int cpus = SMP::get_num_cpus();   
     boost::thread_group tg;        
     for (int i = 1; i < cpus; i++) {         
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));

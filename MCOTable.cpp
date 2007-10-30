@@ -19,7 +19,8 @@ MCOwnerTable::MCOwnerTable() {
     m_mcowner.resize(FastBoard::MAXSQ);
 }
 
-void MCOwnerTable::update(Playout::bitboard_t & blacksq) {   
+void MCOwnerTable::update(Playout::bitboard_t & blacksq) {  
+    SMP::Lock lock(m_mutex);
     for (int i = 0; i < blacksq.size(); i++) {
         if (blacksq[i]) {
             m_mcowner[i]++;
@@ -41,7 +42,7 @@ float MCOwnerTable::get_score(int color, int vertex) {
     }
 }
 
-void MCOwnerTable::clear() {       
+void MCOwnerTable::clear() {     
     std::fill(get_MCO()->m_mcowner.begin(), get_MCO()->m_mcowner.end(), 0);    
     get_MCO()->m_mcsimuls = 0;
 }

@@ -2,9 +2,9 @@
 #define TTABLE_H_INCLUDED
 
 #include <vector>
-#include <boost/thread.hpp>
 
 #include "UCTNode.h"
+#include "SMP.h"
 
 class TTEntry {
 public:
@@ -38,7 +38,7 @@ private:
     TTable(int size = 100000);
 
     std::vector<TTEntry> m_buckets;
-    boost::mutex m_mutex;
+    SMP::Mutex m_mutex;
 
     static TTable* s_ttable;   
 };

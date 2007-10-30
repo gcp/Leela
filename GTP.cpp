@@ -246,12 +246,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 std::string vertex = game.move_to_text(move);            
                 gtp_printf(id, "%s", vertex.c_str());
             }
+#ifdef USE_PONDER
             // now start pondering
             {
                 std::auto_ptr<UCTSearch> search(new UCTSearch(game));
                 search->ponder();
             }                
-            
+#endif            
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }

@@ -28,7 +28,7 @@ public:
     /*
         Maximum size of the tree in memory.
     */        
-    static const int MAX_TREE_SIZE = 5000000;    
+    static const int MAX_TREE_SIZE = 2000000;    
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);

@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include <boost/thread.hpp>
+#include "SMP.h"
 #include "GameState.h"
 #include "Playout.h"
 
@@ -37,13 +38,11 @@ public:
     UCTNode* get_nopass_child();
     UCTNode* get_sibling();
     void sort_children(int color);    
-    boost::mutex & get_mutex();
+    SMP::Mutex & get_mutex();
 
 private:                   
     void link_child(UCTNode * newchild);        
-    
-    // mutex    
-    boost::mutex m_nodemutex; 
+        
     // Tree data
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;                  
@@ -59,6 +58,8 @@ private:
     float m_score;
     // alive (superko)
     bool m_valid;
+    // mutex    
+    SMP::Mutex m_nodemutex;
 };
 
 #endif

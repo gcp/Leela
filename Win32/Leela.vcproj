@@ -122,7 +122,6 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				WholeProgramOptimization="true"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SECURE_SCL=0"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
@@ -251,6 +250,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\SMP.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\TimeControl.cpp"
 				>
 			</File>
@@ -346,6 +349,10 @@
 			</File>
 			<File
 				RelativePath="..\SGFTree.h"
+				>
+			</File>
+			<File
+				RelativePath="..\SMP.h"
 				>
 			</File>
 			<File

@@ -10,16 +10,6 @@
 
 #include "Utils.h"
 
-int Utils::get_num_cpus() {
-#ifdef WIN32
-    SYSTEM_INFO sysinfo;    
-    GetSystemInfo(&sysinfo);    
-    return sysinfo.dwNumberOfProcessors;    
-#else
-    return 1;
-#endif
-}
-
 bool Utils::input_causes_stop() {
     char c;
 
@@ -48,9 +38,9 @@ bool Utils::input_pending(void) {
     if (!init) {
         init = 1;
         inh = GetStdHandle(STD_INPUT_HANDLE);
-        pipe = !GetConsoleMode(inh,&dw);
+        pipe = !GetConsoleMode(inh, &dw);
         if (!pipe) {
-            SetConsoleMode(inh,dw &~(ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT));
+            SetConsoleMode(inh, dw & ~(ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT));
             FlushConsoleInputBuffer(inh);
         }
     }

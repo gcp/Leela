@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "Utils.h"
 #include "TTable.h"
 
 TTable* TTable::s_ttable = 0;
@@ -14,35 +15,34 @@ TTable* TTable::get_TT(void) {
     return s_ttable;
 }
 
-TTable::TTable(int size) {
-    boost::mutex::scoped_lock lock(m_mutex);
+TTable::TTable(int size) {    
     m_buckets.resize(size);
 }
 
-void TTable::update(uint64 hash, const UCTNode * node) {    
-    boost::mutex::scoped_lock lock(m_mutex);
+void TTable::update(uint64 hash, const UCTNode * node) {        
     unsigned int index = (unsigned int)hash;
     
     index %= m_buckets.size();                             
     
+    SMP::Lock lock(m_mutex);
     /*
         update TT
     */            
     m_buckets[index].m_hash      = hash;    
     m_buckets[index].m_visits    = node->get_visits();        
-    m_buckets[index].m_blackwins = node->get_blackwins();
+    m_buckets[index].m_blackwins = node->get_blackwins();    
 }
 
-void TTable::sync(uint64 hash, UCTNode * node) {
-    boost::mutex::scoped_lock lock(m_mutex);
+void TTable::sync(uint64 hash, UCTNode * node) {    
     unsigned int index = (unsigned int)hash;    
     
     index %= m_buckets.size();    
     
+    SMP::Lock lock(m_mutex);
     /*
         check for hash fail
     */            
-    if (m_buckets[index].m_hash != hash) {
+    if (m_buckets[index].m_hash != hash) {        
         return;
     }
     
@@ -55,9 +55,9 @@ void TTable::sync(uint64 hash, UCTNode * node) {
         */            
         node->set_visits(m_buckets[index].m_visits);
         node->set_blackwins(m_buckets[index].m_blackwins);
-    } 
+    }     
 }
 
 TTEntry::TTEntry() 
-: m_blackwins(0.0f), m_visits(0), m_hash(0) {
+    : m_blackwins(0.0f), m_visits(0), m_hash(0) {
 };

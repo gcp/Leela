@@ -15,11 +15,11 @@
 /* Hard limits */
 
 #define NAME            "Leela"
-#define VERSION         "0.2.2"
+#define VERSION         "0.2.4"
 
 /* Features */
-#define PONDER
-#define SMP
+#define USE_PONDER
+#define USE_SMP
 
 /* Integer types */
 

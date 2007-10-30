@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "Playout.h"
+#include "SMP.h"
 
 class MCOwnerTable {
 public:        
@@ -23,6 +24,7 @@ private:
 
     std::vector<int> m_mcowner;
     int m_mcsimuls;
+    SMP::Mutex m_mutex;
 
     static MCOwnerTable* s_mcowntable;       
 };
