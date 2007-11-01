@@ -36,22 +36,26 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
                 
         if (node->has_children() == true) {                        
             UCTNode * next = node->uct_select_child(color); 
-
-            int move = next->get_move();            
             
-            if (move != FastBoard::PASS) {                
-                currstate.play_move(move);
+            if (next != NULL) {
+                int move = next->get_move();            
                 
-                if (!currstate.superko()) {                    
-                    noderesult = play_simulation(currstate, next);                                        
-                } else {                                            
-                    next->invalidate();                       
-                    noderesult.run(currstate);                         
-                }                
-            } else {                
-                currstate.play_pass();                
-                noderesult = play_simulation(currstate, next);                
-            }       
+                if (move != FastBoard::PASS) {                
+                    currstate.play_move(move);
+                    
+                    if (!currstate.superko()) {                    
+                        noderesult = play_simulation(currstate, next);                                        
+                    } else {                                            
+                        next->invalidate();                       
+                        noderesult.run(currstate);                         
+                    }                
+                } else {                
+                    currstate.play_pass();                
+                    noderesult = play_simulation(currstate, next);                
+                }       
+            } else {
+                noderesult.run(currstate);
+            }
             
             node->updateRAVE(noderesult, color);                        
         } else if (m_nodes >= MAX_TREE_SIZE) {
@@ -263,7 +267,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_root.kill_superkos(m_rootstate);
     
     m_run = true;            
-    int cpus = SMP::get_num_cpus();    
+    int cpus = SMP::get_num_cpus();        
     boost::thread_group tg;            
     for (int i = 1; i < cpus; i++) {         
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
@@ -281,7 +285,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;            
             dump_thinking();            
         }        
-    } while(centiseconds_elapsed < time_for_move);         
+    } while(centiseconds_elapsed < time_for_move /*m_root.get_visits() < 20000*/);
     
     // stop the search
     m_run = false;
@@ -315,7 +319,7 @@ void UCTSearch::ponder() {
     Playout::mc_owner(m_rootstate, 64);      
          
     m_run = true;
-    int cpus = SMP::get_num_cpus();   
+    int cpus = SMP::get_num_cpus();       
     boost::thread_group tg;        
     for (int i = 1; i < cpus; i++) {         
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));

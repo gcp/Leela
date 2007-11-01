@@ -411,6 +411,7 @@ UCTNode* UCTNode::get_nopass_child() {
 }
 
 void UCTNode::invalidate() {
+    SMP::Lock lock(get_mutex());
     m_valid = false;
 }
 
