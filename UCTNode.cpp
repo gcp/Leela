@@ -104,6 +104,27 @@ int UCTNode::create_children(FastState & state) {
     return childrenadded;
 }
 
+void UCTNode::kill_superkos(KoState & state) {        
+    UCTNode * child = m_firstchild;
+    
+    while (child != NULL) {
+        int move = child->get_move();                
+        
+        if (move != FastBoard::PASS) {
+            KoState mystate = state;
+            mystate.play_move(move);
+            
+            if (mystate.superko()) {                                    
+                UCTNode * tmp = child->m_nextsibling;
+                delete_child(child);                
+                child = tmp;
+                continue;                               
+            }    
+        }                   
+        child = child->m_nextsibling;
+    }                 
+}
+
 int UCTNode::get_move() const {
     return m_move;
 }
@@ -208,18 +229,18 @@ UCTNode* UCTNode::uct_select_child(int color) {
     int parentvisits      = 1;   // avoid logparent being illegal
     
     int childcount = 0;
-    UCTNode * c = m_firstchild;
+    UCTNode * child = m_firstchild;
     // make sure we are at a valid successor        
-    while (c != NULL && !c->valid()) {
-        c = c->m_nextsibling;
+    while (child != NULL && !child->valid()) {
+        child = child->m_nextsibling;
     }
-    while (c != NULL && childcount < childbound) {                        
-        parentvisits      += c->get_visits();
-        rave_parentvisits += c->get_ravevisits();                             
-        c = c->m_nextsibling;                   
+    while (child != NULL && childcount < childbound) {                        
+        parentvisits      += child->get_visits();
+        rave_parentvisits += child->get_ravevisits();                             
+        child = child->m_nextsibling;                   
         // make sure we are at a valid successor        
-        while (c != NULL && !c->valid()) {
-            c = c->m_nextsibling;
+        while (child != NULL && !child->valid()) {
+            child = child->m_nextsibling;
         }        
         childcount++;
     }
@@ -232,10 +253,10 @@ UCTNode* UCTNode::uct_select_child(int color) {
     float beta = sqrtf(k / ((3.0f * parentvisits) + k));     
         
     childcount = 0;
-    UCTNode * child = m_firstchild;            
+    child = m_firstchild;            
     // make sure we are at a valid successor        
-    while (c != NULL && !c->valid()) {
-        c = c->m_nextsibling;
+    while (child != NULL && !child->valid()) {
+        child = child->m_nextsibling;
     }
     while (child != NULL && childcount < childbound) {
         float value;
@@ -283,8 +304,8 @@ UCTNode* UCTNode::uct_select_child(int color) {
         
         child = child->m_nextsibling;     
         // make sure we are at a valid successor        
-        while (c != NULL && !c->valid()) {
-            c = c->m_nextsibling;
+        while (child != NULL && !child->valid()) {
+            child = child->m_nextsibling;
         }
         childcount++;
     }   
@@ -397,14 +418,15 @@ bool UCTNode::valid() {
     return m_valid;
 }
 
-// unsafe, we don't know if people hold pointers to the child
-// which they might dereference
+// unsafe in SMP, we don't know if people hold pointers to the 
+// child which they might dereference
 void UCTNode::delete_child(UCTNode * del_child) {  
     SMP::Lock lock(get_mutex());     
     assert(del_child != NULL);
     
-    if (del_child == m_firstchild) {                
-        m_firstchild = m_firstchild->m_nextsibling;        
+    if (del_child == m_firstchild) {           
+        m_firstchild = m_firstchild->m_nextsibling; 
+        delete del_child;       
         return;
     } else {
         UCTNode * child = m_firstchild;    
@@ -415,9 +437,8 @@ void UCTNode::delete_child(UCTNode * del_child) {
             child = child->m_nextsibling;
             
             if (child == del_child) {                
-                UCTNode * next = child->m_nextsibling;                             
-                delete child;
-                prev->m_nextsibling = next;
+                prev->m_nextsibling = child->m_nextsibling;
+                delete del_child;
                 return;
             }                                    
         } while (child != NULL);     

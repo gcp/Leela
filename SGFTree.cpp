@@ -39,9 +39,11 @@ GameState SGFTree::get_mainline(unsigned int movenum) {
     for (unsigned int i = 0; i <= movenum && link != NULL; i++) {
         // root position has no associated move
         if (i != 0) {    
-            int move = link->get_move(tomove);        
-            result.play_move(move);
-            tomove = !tomove;
+            int move = link->get_move(tomove);
+            if (move != SGFTree::EOT) {        
+                result.play_move(move);
+                tomove = !tomove;
+            }
         }
                 
         link = link->get_child(0);

@@ -252,11 +252,15 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     m_rootstate.start_clock(color);
 
+    // do some preprocessing for move ordering
     MCOwnerTable::clear();  
     Playout::mc_owner(m_rootstate, 64);
     dump_order2();                                      
     
-    m_root.create_children(m_rootstate);
+    // create a sorted list off legal moves (make sure we
+    // play something legal and decent even in time trouble)
+    m_nodes += m_root.create_children(m_rootstate);
+    m_root.kill_superkos(m_rootstate);
     
     m_run = true;            
     int cpus = SMP::get_num_cpus();    
