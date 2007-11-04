@@ -10,7 +10,9 @@ class KoState : public FastState {
 public:                    
     void init_game(int size = 19, float komi = 7.5f);
     bool superko(void);
-    void reset_game();                
+    void reset_game();
+    
+    bool legal_move(int vertex);      
         
     void play_pass(void);
     void play_move(int color, int vertex);

@@ -381,6 +381,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\Weights.h"
+				>
+			</File>
+			<File
 				RelativePath="..\Zobrist.h"
 				>
 			</File>

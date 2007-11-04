@@ -70,7 +70,7 @@ void GameState::play_move(int color, int vertex) {
     }    
 }
 
-int GameState::play_textmove(std::string color, std::string vertex) {
+bool GameState::play_textmove(std::string color, std::string vertex) {
     int who;
     int column, row;
     int boardsize = board.get_boardsize();
@@ -79,7 +79,7 @@ int GameState::play_textmove(std::string color, std::string vertex) {
         who = FullBoard::WHITE;
     } else if (color == "b" || color == "black") {
         who = FullBoard::BLACK;
-    } else return 0;
+    } else return false;
     
     if (vertex.size() < 2) return 0;    
     if (!std::isalpha(vertex[0])) return 0;
@@ -99,14 +99,14 @@ int GameState::play_textmove(std::string color, std::string vertex) {
     parsestream >> row;
     row--;
     
-    if (row >= boardsize) return 0;
-    if (column >= boardsize) return 0; 
+    if (row >= boardsize) return false;
+    if (column >= boardsize) return false; 
     
     int move = board.get_vertex(column, row);       
         
     play_move(who, move);                           
                    
-    return 1;
+    return true;
 }
 
 void GameState::stop_clock(int color) {

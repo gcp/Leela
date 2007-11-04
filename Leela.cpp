@@ -11,6 +11,7 @@
 
 using namespace Utils;
 
+#ifdef _CONSOLE
 int main (int argc, char *argv[]) {        
     int done = false;
     int gtp_mode;
@@ -57,4 +58,4 @@ int main (int argc, char *argv[]) {
     }    
     return 0;
 }
-
+#endif

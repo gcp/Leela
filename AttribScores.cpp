@@ -2,6 +2,7 @@
 #include <list>
 #include <set>
 #include <fstream>
+#include <boost/tr1/array.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "config.h"
@@ -14,6 +15,8 @@
 #include "FastBoard.h"
 #include "MCOTable.h"
 
+#include "Weights.h"
+
 using namespace Utils;
 
 AttribScores* AttribScores::s_attribscores = 0;
@@ -21,7 +24,12 @@ AttribScores* AttribScores::s_attribscores = 0;
 AttribScores* AttribScores::get_attribscores(void) {
     if (s_attribscores == 0) {
         s_attribscores = new AttribScores;
-        s_attribscores->load_from_file("param4.dat");
+        
+        try {
+            s_attribscores->load_from_file("param4.dat");
+        } catch (std::exception & e) {
+            s_attribscores->load_internal();
+        }            
     }
     
     return s_attribscores;
@@ -417,9 +425,26 @@ void AttribScores::load_from_file(std::string filename) {
         myprintf("%d feature weights loaded, %d patterns\n", 
                  m_fweight.size(), m_pat.size());
     } catch(std::exception & e) {
-        myprintf("Error loading weights\n");
+        myprintf("Error loading external weights file\n");
         throw e;
     } 
+}
+
+void AttribScores::load_internal() {
+    m_fweight.clear();
+    m_pat.clear();
+
+    m_fweight.reserve(85);
+    
+    for (int i = 0; i < 85; i++) {        
+        m_fweight.push_back(internal_weights[i]);
+    }
+
+    for (int i = 0; i < 840; i++) {        
+        m_pat.insert(std::make_pair(internal_patterns[i], internal_patweights[i]));
+    }
+
+    myprintf("%d feature weights loaded, %d patterns\n", m_fweight.size(), m_pat.size());
 }
 
 float AttribScores::get_patweight(uint64 idx) {    

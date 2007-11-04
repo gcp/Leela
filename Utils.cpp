@@ -72,12 +72,20 @@ bool Utils::input_pending(void) {
     return false;
 }
 
+#ifndef _CONSOLE
+#include <wx/wx.h>
+#endif
+
 void Utils::myprintf(const char *fmt, ...) {
     va_list ap;      
   
     va_start(ap, fmt);      
-    
+
+#ifdef _CONSOLE    
     vfprintf(stderr, fmt, ap);
+#else
+    ::wxLogMessage(fmt, ap);
+#endif  
   
     va_end(ap);
 }
