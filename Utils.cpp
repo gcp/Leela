@@ -76,6 +76,22 @@ bool Utils::input_pending(void) {
 #include <wx/wx.h>
 #endif
 
+void Utils::GUIprintf(const char *fmt, ...) {
+#ifndef _CONSOLE
+    va_list ap;      
+
+    va_start(ap, fmt);      
+
+    char buffer[512];
+    vsprintf_s(buffer, 512, fmt, ap);    
+    ::wxMutexGuiEnter();
+    ::wxLogMessage("%s", buffer);
+    ::wxMutexGuiLeave();
+  
+    va_end(ap);
+#endif
+}
+
 void Utils::myprintf(const char *fmt, ...) {
     va_list ap;      
   
@@ -84,7 +100,11 @@ void Utils::myprintf(const char *fmt, ...) {
 #ifdef _CONSOLE    
     vfprintf(stderr, fmt, ap);
 #else
-    ::wxLogMessage(fmt, ap);
+    /*char buffer[512];
+    vsprintf_s(buffer, 512, fmt, ap);    
+    ::wxMutexGuiEnter();
+    ::wxLogMessage("%s", buffer);
+    ::wxMutexGuiLeave();*/
 #endif  
   
     va_end(ap);

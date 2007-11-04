@@ -314,9 +314,9 @@ float FastBoard::area_score(float komi) {
         for (int j = 0; j < m_boardsize; j++) {  
             int vertex = get_vertex(i, j);
             
-            assert(!(white[vertex] && black[vertex]));
-            assert(!(white[vertex] && m_square[vertex] == BLACK));
-            assert(!(black[vertex] && m_square[vertex] == WHITE));
+//            assert(!(white[vertex] && black[vertex]));
+//            assert(!(white[vertex] && m_square[vertex] == BLACK));
+//            assert(!(black[vertex] && m_square[vertex] == WHITE));
             
             if (white[vertex] && !black[vertex]) {
                 score -= 1.0f;

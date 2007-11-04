@@ -109,7 +109,11 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     // sort children, put best move on top    
     m_root.sort_children(color);
 
-    UCTNode * bestnode = parent.get_first_child();       
+    UCTNode * bestnode = parent.get_first_child();   
+    
+    if (bestnode->first_visit()) {
+        return;
+    }    
     
     bestrate = bestnode->get_winrate(color);
     bestvisits = bestnode->get_visits();
@@ -163,6 +167,15 @@ void UCTSearch::dump_thinking() {
               m_root.get_visits(), m_root.get_winrate(color) * 100.0f);
     dump_pv(tempstate, m_root);
     myprintf("\n");
+    
+    std::string bestmove;
+    if (m_root.get_first_child()) {
+        bestmove = m_rootstate.move_to_text(m_root.get_first_child()->get_move());        
+    } else {
+        bestmove = "pass";
+    }        
+    GUIprintf("Nodes: %d, Winrate: %5.2f%%, Best move: %s", 
+              m_root.get_visits(), m_root.get_winrate(color) * 100.0f, bestmove.c_str());
 }
 
 int UCTSearch::get_best_move(passflag_t passflag) { 
@@ -171,8 +184,15 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     // make sure best is first
     m_root.sort_children(color);
     
-    float bestscore = m_root.get_first_child()->get_winrate(color);       
     int bestmove = m_root.get_first_child()->get_move();    
+    
+    if (m_root.get_first_child() != NULL) {
+        if (m_root.get_first_child()->first_visit()) {
+            return bestmove;
+        }
+    }
+    
+    float bestscore = m_root.get_first_child()->get_winrate(color);           
 
     // do we want to fiddle with the best move because of the rule set?
     if (passflag == UCTSearch::PREFERPASS) {
@@ -254,6 +274,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int last_update = 0;
 
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
+    
+    GUIprintf("Thinking for %f seconds", time_for_move/100.0f);
+                 
     m_rootstate.start_clock(color);
 
     // do some preprocessing for move ordering
@@ -283,7 +306,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         // output some stats every 2.5 seconds
         if (centiseconds_elapsed - last_update > 250) {
             last_update = centiseconds_elapsed;            
-            dump_thinking();            
+            dump_thinking();                        
         }        
     } while(centiseconds_elapsed < time_for_move /*m_root.get_visits() < 20000*/);
     
@@ -305,11 +328,17 @@ int UCTSearch::think(int color, passflag_t passflag) {
         myprintf("\n%d visits, %d nodes, %d vps\n\n", 
                  m_root.get_visits(), 
                  m_nodes,
-                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));              
+                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));  
+        GUIprintf("%d visits, %d nodes, %d vps", 
+                 m_root.get_visits(), 
+                 m_nodes,
+                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));                                                     
     }             
             
     // XXX: check for pass but no actual win on final_scoring
     int bestmove = get_best_move(passflag);
+    
+    GUIprintf("Best move: %s", m_rootstate.move_to_text(bestmove).c_str());
        
     return bestmove;
 }
