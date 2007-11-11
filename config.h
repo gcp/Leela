@@ -15,7 +15,7 @@
 /* Hard limits */
 
 #define NAME            "Leela"
-#define VERSION         "0.2.6"
+#define VERSION         "0.2.7"
 
 /* Features */
 #define USE_PONDER

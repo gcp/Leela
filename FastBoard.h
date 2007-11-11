@@ -34,7 +34,11 @@ public:
     /*
         vertex of a pass
     */
-    static const int PASS = -1;
+    static const int PASS   = -1;
+    /*
+        vertex of a "resign move"
+    */        
+    static const int RESIGN = -2;
 
     /*
         possible contents of a square

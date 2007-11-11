@@ -822,8 +822,8 @@ std::string FastBoard::move_to_text(int move) {
         result << (row + 1);        
     } else if (move == FastBoard::PASS) {
         result << "pass";
-    } else if (move == -2) {
-	result << "?";
+    } else if (move == FastBoard::RESIGN) {
+	result << "resign";
     } else {
 	result << "error";
     }

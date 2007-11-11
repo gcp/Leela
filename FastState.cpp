@@ -201,7 +201,7 @@ void FastState::play_move(int vertex) {
 }
 
 void FastState::play_move(int color, int vertex) {
-    if (vertex != FastBoard::PASS) {                   
+    if (vertex != FastBoard::PASS && vertex != FastBoard::RESIGN) {                   
         int kosq = board.update_board(color, vertex);
     
         komove = kosq;   

@@ -79,7 +79,8 @@ int UCTNode::create_children(FastState & state) {
             }                                           
         }      
                 
-        nodelist.push_back(std::make_pair(0.0f, FastBoard::PASS));        
+        float score = state.score_move(territory, moyo, FastBoard::PASS);                
+        nodelist.push_back(std::make_pair(score, FastBoard::PASS));        
     }    
     
     // sort (this will reverse scores, but linking is backwards too)

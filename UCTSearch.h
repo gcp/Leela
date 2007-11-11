@@ -14,11 +14,12 @@ public:
     /*
         Depending on rule set and state of the game, we might
         prefer to pass, or we might prefer not to pass unless
-        it's the last resort.
+        it's the last resort. Same for resigning.
     */        
-    typedef enum { 
-        NORMAL = 0, PREFERPASS = 1, NOPASS = 2
-    } passflag_t;    
+    typedef int passflag_t;
+    static const passflag_t NORMAL   = 0;
+    static const passflag_t NOPASS   = 1 << 0;
+    static const passflag_t NORESIGN = 1 << 1;
     
     /*
         Don't expand children until at least this many

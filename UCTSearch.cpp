@@ -186,33 +186,18 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     
     int bestmove = m_root.get_first_child()->get_move();    
     
+    // do we have statistics on the moves?
     if (m_root.get_first_child() != NULL) {
         if (m_root.get_first_child()->first_visit()) {
             return bestmove;
         }
     }
     
-    float bestscore = m_root.get_first_child()->get_winrate(color);           
+    float bestscore = m_root.get_first_child()->get_winrate(color);   
+    int visits = m_root.get_first_child()->get_visits();        
 
     // do we want to fiddle with the best move because of the rule set?
-    if (passflag == UCTSearch::PREFERPASS) {
-        if (m_root.get_pass_child() != NULL) {
-            if (!m_root.get_pass_child()->first_visit()) {
-                float passscore = m_root.get_pass_child()->get_winrate(color);
-                
-                // is passing a winning move?
-                if (passscore > 0.85f) {
-                    
-                    // is passing within 5% of the best move?            
-                    if (bestscore - passscore < 0.05f) {
-                        myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
-                                  passscore * 100.0f, bestscore * 100.0f);
-                        bestmove = FastBoard::PASS;                
-                    }
-                }
-            }
-        }
-    } else if (passflag == UCTSearch::NOPASS) {
+     if (passflag & UCTSearch::NOPASS) {
         // were we going to pass?
         if (bestmove == FastBoard::PASS) {
             UCTNode * nopass = m_root.get_nopass_child();
@@ -224,8 +209,59 @@ int UCTSearch::get_best_move(passflag_t passflag) {
                 myprintf("Pass is the only acceptable move.\n");
             }
         }
+    } else {    
+        if (m_root.get_pass_child() != NULL) {
+            if (!m_root.get_pass_child()->first_visit()) {
+                float passscore = m_root.get_pass_child()->get_winrate(color);
+                
+                // is passing a winning move?
+                if (passscore > 0.85f) {                    
+                    // is passing within 5% of the best move?            
+                    if (bestscore - passscore < 0.05f) {
+                        myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
+                                  passscore * 100.0f, bestscore * 100.0f);
+                        bestmove = FastBoard::PASS;                
+                    }
+                }
+            }
+        }
+        // either by forcing or coincidence passing is
+        // on top...check whether passing loses instantly        
+        if (bestmove == FastBoard::PASS) {
+            // do full count including dead stones
+            float score = m_rootstate.final_score();
+            // do we lose by passing?
+            if ((score > 0.0f && color == FastBoard::WHITE)
+                ||
+                (score < 0.0f && color == FastBoard::BLACK)) {
+                myprintf("Passing loses :-(\n");
+                // find a valid non-pass move
+                UCTNode * nopass = m_root.get_nopass_child();
+            
+                if (nopass != NULL) {
+                    myprintf("Avoiding pass because it loses.\n");
+                    bestmove = nopass->get_move();
+                } else {
+                    myprintf("No alternative to passing.\n");
+                }
+            } else {
+                myprintf("Passing wins :-)\n");
+            }
+        }    
+    } 
+    
+    // if we aren't passing, should we consider resigning?
+    if (bestmove != FastBoard::PASS) {
+        // resigning allowed
+        if ((passflag & UCTSearch::NORESIGN) == 0) {
+            // bad score and visited enough
+            if (bestscore < 0.10f && visits > 200) {
+                myprintf("Score looks bad. Resigning.\n");
+                bestmove = FastBoard::RESIGN;    
+            }
+        }
     }
-
+       
     return bestmove;
 }
 
@@ -334,8 +370,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
                  m_nodes,
                  (m_root.get_visits() * 100) / (centiseconds_elapsed+1));                                                     
     }             
-            
-    // XXX: check for pass but no actual win on final_scoring
+                
     int bestmove = get_best_move(passflag);
     
     GUIprintf("Best move: %s", m_rootstate.move_to_text(bestmove).c_str());

@@ -71,7 +71,7 @@ void KoState::play_move(int vertex) {
 }
 
 void KoState::play_move(int color, int vertex) {
-    if (vertex != FastBoard::PASS) {                   
+    if (vertex != FastBoard::PASS && vertex != FastBoard::RESIGN) {                   
         FastState::play_move(color, vertex);        
             
         ko_hash_history.push_back(board.ko_hash);                 
