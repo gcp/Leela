@@ -12,8 +12,8 @@
 
 bool Utils::input_causes_stop() {
     char c;
-
-    c = std::cin.get();
+    
+    c = std::cin.get();    
     std::cin.unget();
     
     return true;          

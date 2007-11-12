@@ -255,7 +255,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         // resigning allowed
         if ((passflag & UCTSearch::NORESIGN) == 0) {
             // bad score and visited enough
-            if (bestscore < 0.10f && visits > 200) {
+            if (bestscore < 0.10f && visits > 100) {
                 myprintf("Score looks bad. Resigning.\n");
                 bestmove = FastBoard::RESIGN;    
             }

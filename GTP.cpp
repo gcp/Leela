@@ -241,7 +241,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             {
                 std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 
-                int move = search->think(who, UCTSearch::NOPASS);
+                int move = search->think(who, UCTSearch::NORMAL);
                 game.play_move(who, move);                    
 
                 std::string vertex = game.move_to_text(move);            
@@ -373,6 +373,15 @@ bool GTP::execute(GameState & game, std::string xinput) {
             game.adjust_time(icolor, time * 100, stones);
             
             gtp_printf(id, "");    
+            
+#ifdef USE_PONDER
+            // KGS sends this after our move
+            // now start pondering
+            {
+                std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+                search->ponder();
+            }                
+#endif            
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }    
