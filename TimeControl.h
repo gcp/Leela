@@ -26,7 +26,7 @@ private:
     int m_maintime;        
     int m_byotime;
     int m_byostones;    
-    int m_moves_expected;
+    int m_moves_expected;    
     
     std::tr1::array<int,  2> m_remaining_time;    /* main time per player */
     std::tr1::array<int,  2> m_stones_left;       /* stones to play in byo period */

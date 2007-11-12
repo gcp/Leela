@@ -33,6 +33,7 @@ public:
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
+    void set_visit_limit(int visits);
     void ponder();    
     bool is_running();      
     Playout play_simulation(KoState & currstate, UCTNode * node);
@@ -47,6 +48,7 @@ private:
     GameState & m_rootstate;    
     UCTNode m_root;    
     int m_nodes;  
+    int m_maxvisits;
     bool m_run;        
 };
 

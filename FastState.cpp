@@ -67,10 +67,10 @@ std::vector<int> FastState::generate_moves(int color) {
     return result;
 }
 
-bool FastState::try_move(int color, int vertex) {    
+bool FastState::try_move(int color, int vertex, bool allow_sa) {    
     if (vertex != komove && board.no_eye_fill(vertex)) {
         if (!board.fast_ss_suicide(color, vertex)) {
-            if (!board.self_atari(color, vertex)) {
+            if ((allow_sa) || (!board.self_atari(color, vertex))) {
                 return true;
             }
         } 
@@ -79,21 +79,21 @@ bool FastState::try_move(int color, int vertex) {
     return false;
 }
 
-int FastState::walk_empty_list(int color, int vidx) {
+int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
     int dir = Random::get_Rng()->randint(2);    
 
     if (dir == 0) {        
         for (int i = vidx; i < board.m_empty_cnt; i++) {
             int e = board.m_empty[i];
             
-            if (try_move(color, e)) {
+            if (try_move(color, e, allow_sa)) {
                 return e;
             }                        
         }
         for (int i = 0; i < vidx; i++) {
             int e = board.m_empty[i];
             
-            if (try_move(color, e)) {
+            if (try_move(color, e, allow_sa)) {
                 return e;
             }    
         }
@@ -101,14 +101,14 @@ int FastState::walk_empty_list(int color, int vidx) {
         for (int i = vidx; i >= 0; i--) {
             int e = board.m_empty[i];
             
-            if (try_move(color, e)) {
+            if (try_move(color, e, allow_sa)) {
                 return e;
             }    
         }
         for (int i = board.m_empty_cnt - 1; i > vidx; i--) {
             int e = board.m_empty[i];
             
-            if (try_move(color, e)) {
+            if (try_move(color, e, allow_sa)) {
                 return e;
             }    
         }
@@ -155,6 +155,16 @@ int FastState::play_random_move(int color) {
             vtx = m_work[0];
         }
     }            
+              
+    return play_move_fast(vtx);                         
+}
+
+// we do things a bit simpler here
+int FastState::play_random_move_sa(int color) {                            
+    board.m_tomove = color;                                                         
+                               
+    int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
+    int vtx  = walk_empty_list(color, vidx, true);     
               
     return play_move_fast(vtx);                         
 }

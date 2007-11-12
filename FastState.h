@@ -10,7 +10,8 @@ public:
     void init_game(int size = 19, float komi = 7.5f);
     void reset_game();
     void reset_board();  
-    
+        
+    int play_random_move_sa(int color);    
     int play_random_move();
     int play_random_move(int color);    
     int play_move_fast(int vertex);
@@ -51,8 +52,8 @@ public:
 protected:
     std::vector<int> m_work;   // working area for move generation
 
-    int walk_empty_list(int color, int vidx);
-    bool try_move(int color, int vertex);
+    int walk_empty_list(int color, int vidx, bool allow_sa = false);
+    bool try_move(int color, int vertex, bool allow_sa = false);
     void play_move(int color, int vertex);     
 };
 

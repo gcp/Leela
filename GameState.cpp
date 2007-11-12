@@ -36,17 +36,31 @@ void GameState::reset_game() {
     m_timecontrol = tmp;
 }
 
-int GameState::undo_move(void) {
-    if (movenum > 0) {
-        // This also restores hashes as they're part of state
-        movenum--;                     
-        game_history.pop_back(); 
+bool GameState::forward_move(void) {
+    if (game_history.size() > movenum + 1) { 
+        FastState & f = *this; 
+        movenum++;
+        f = game_history[movenum];        
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool GameState::undo_move(void) {
+    if (movenum > 0) {        
+        movenum--;                
+        
+        // don't actually delete it!     
+        //game_history.pop_back(); 
+        
         // this is not so nice, but it should work
         FastState & f = *this; 
-        f = game_history.back();
-        return 1;
+        f = game_history[movenum];
+        // This also restores hashes as they're part of state
+        return true;
     } else {
-        return 0;
+        return false;
     }
 }
 
@@ -64,6 +78,8 @@ void GameState::play_move(int color, int vertex) {
     if (vertex != FastBoard::PASS && vertex != FastBoard::RESIGN) {                   
         KoState::play_move(color, vertex);        
 
+        // cut off any leftover moves from navigating
+        game_history.resize(movenum);
         game_history.push_back(*this);        
     } else {
         play_pass();

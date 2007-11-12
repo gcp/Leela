@@ -17,7 +17,8 @@
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
-: m_rootstate(g), m_nodes(0), m_root(FastBoard::PASS, 0.0f) {    
+: m_rootstate(g), m_nodes(0), m_root(FastBoard::PASS, 0.0f),
+  m_maxvisits(UCTSearch::MAX_TREE_SIZE * 100) {    
 }
 
 Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
@@ -344,7 +345,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;            
             dump_thinking();                        
         }        
-    } while(centiseconds_elapsed < time_for_move /*m_root.get_visits() < 20000*/);
+    } while(centiseconds_elapsed < time_for_move && m_root.get_visits() < m_maxvisits);
     
     // stop the search
     m_run = false;
@@ -403,4 +404,12 @@ void UCTSearch::ponder() {
     dump_stats(m_rootstate, m_root);                  
                
     myprintf("\n%d visits, %d nodes\n\n", m_root.get_visits(), m_nodes);                                 
+}
+
+void UCTSearch::set_visit_limit(int visits) {
+    if (visits == 0) {
+        m_maxvisits = UCTSearch::MAX_TREE_SIZE * 100;
+    } else {
+        m_maxvisits = visits;
+    }
 }

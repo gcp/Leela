@@ -36,7 +36,8 @@ void Playout::run(FastState & state, bool resigning) {
     const int playoutlen = (boardsize * boardsize) * 2;                            
     
     int counter = 0; 
-        
+    
+    // do the first and main loop        
     do {                                    
         int vtx = state.play_random_move();
 
@@ -51,8 +52,24 @@ void Playout::run(FastState & state, bool resigning) {
         counter++;                 
     } while (state.get_passes() < 2 
              && state.get_movenum() < playoutlen
-             && (!resigning || abs(state.estimate_mc_score()) < resign));  
+             && (!resigning || abs(state.estimate_mc_score()) < resign));     
              
+    float score = state.calculate_mc_score();                                  
+
+    // now resolve difficult life-and-death problems which need self-atari
+    do {        
+        int color = state.get_to_move();
+        // only the losing player can try the self-ataris
+        if ((color == FastBoard::BLACK && score < 0.0f)
+            || (color == FastBoard::WHITE && score > 0.0f)) {
+            state.play_random_move_sa(color);
+        } else {
+            // play smart random move, not self-atari
+            state.play_random_move(color);
+        }
+    } while (state.get_passes() < 4 && state.get_movenum() < playoutlen);                       
+             
+    // get ownership info             
     bitboard_t blackowns; 
     
     for (int i = 0; i < boardsize; i++) {
