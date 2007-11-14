@@ -64,6 +64,11 @@ bool GameState::undo_move(void) {
     }
 }
 
+void GameState::rewind(void) {
+    FastState & f = *this; 
+    f = game_history[0];
+}
+
 void GameState::play_pass(void) {
     KoState::play_pass();
                

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cctype>
 #include <sstream>
+#include <boost/lexical_cast.hpp>
 
 #include "SGFTree.h"
 #include "KoState.h"
@@ -32,7 +33,11 @@ GameState SGFTree::get_mainline(unsigned int movenum) {
     SGFTree * link = this;
         
     KoState & helper = result;
-    helper = *(get_state());    
+    helper = *(get_state());   
+    
+    // game history is not correctly initialized by above
+    // so reanchor
+    result.anchor_game_history(); 
     
     int tomove = result.get_to_move();
     
@@ -169,6 +174,10 @@ void SGFTree::add_property(std::string property, std::string value) {
 }
 
 SGFTree * SGFTree::add_child(SGFTree child) {
+    // first allocation is better small
+    if (m_children.size() == 0) {
+        m_children.reserve(1);
+    }    
     m_children.push_back(child);
     return &(m_children.back());
 }
@@ -215,4 +224,81 @@ int SGFTree::get_move(int tomove) {
     }
     
     return SGFTree::EOT;
+}
+
+std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {            
+    std::auto_ptr<GameState> state(new GameState);
+    
+    // make a working copy
+    *state = *pstate;
+    
+    std::string res;
+    
+    float komi = state->get_komi();
+    int timecontrol = state->get_timecontrol()->get_maintime();
+    int size = state->board.get_boardsize();
+    
+    res.append("(;GM[1]FF[4]RU[Chinese]");
+    res.append("SZ[" + boost::lexical_cast<std::string>(size) + "]");
+    res.append("KM[" + boost::lexical_cast<std::string>(komi) + "]");
+    if (compcolor == FastBoard::WHITE) {
+        res.append("PW[Leela " + std::string(VERSION) + "]");
+        res.append("PB[Human]");
+    } else {
+        res.append("PB[Leela " + std::string(VERSION) + "]");
+        res.append("PW[Human]");
+    }
+    
+    float score = state->final_score();
+    
+    if (score > 0.0f) {
+        res.append("RE[B+" + boost::lexical_cast<std::string>(score) + "]");
+    } else {
+        res.append("RE[W+" + boost::lexical_cast<std::string>(-score) + "]");
+    }
+    
+    state->rewind();
+    
+    // check handicap here (anchor point)
+    int handicap = 0;
+    std::string handicapstr;
+    
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            int vertex = state->board.get_vertex(i, j);
+            int square = state->board.get_square(vertex);
+            
+            if (square == FastBoard::BLACK) {
+                handicap++;
+                handicapstr.append("[" + state->board.move_to_text_sgf(vertex) + "]");
+            }
+        }
+    }
+    
+    if (handicap > 0) {
+        res.append("HA[" + boost::lexical_cast<std::string>(handicap) + "]");
+        res.append("AB" + handicapstr);
+    }    
+    
+    res.append("\n");
+    
+    state->forward_move();
+    
+    int counter = 0;
+    do {
+        int move = state->get_last_move();
+        std::string movestr = state->board.move_to_text_sgf(move);
+        if (state->get_to_move() == FastBoard::BLACK) {
+            res.append(";W[" + movestr + "]");
+        } else {
+            res.append(";B[" + movestr + "]");
+        }                
+        if (++counter % 10 == 0) {
+            res.append("\n");
+        }
+    } while (state->forward_move());
+    
+    res.append(")");
+    
+    return res;
 }

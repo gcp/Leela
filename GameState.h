@@ -17,6 +17,7 @@ public:
     void place_free_handicap(int stones);
     void anchor_game_history(void);        
     
+    void rewind(void); /* undo infinite */
     bool undo_move(void);
     bool forward_move(void);
     

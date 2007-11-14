@@ -128,3 +128,7 @@ void TimeControl::adjust_time(int color, int time, int stones) {
 void TimeControl::set_boardsize(int boardsize) {
     m_moves_expected = (boardsize * boardsize) / 4;
 }
+
+int TimeControl::get_maintime() {
+    return m_maintime / 100;
+}

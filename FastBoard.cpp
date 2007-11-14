@@ -814,8 +814,8 @@ std::string FastBoard::move_to_text(int move) {
     column--;
     row--;
     
-    assert(move == FastBoard::PASS || (row >= 0 && row < m_boardsize));
-    assert(move == FastBoard::PASS || (column >= 0 && column < m_boardsize));
+    assert(move == FastBoard::PASS || move == FastBoard::RESIGN || (row >= 0 && row < m_boardsize));
+    assert(move == FastBoard::PASS || move == FastBoard::RESIGN || (column >= 0 && column < m_boardsize));
     
     if (move >= 0 && move <= m_maxsq) {
         result << static_cast<char>(column < 8 ? 'A' + column : 'A' + column + 1);
@@ -830,6 +830,37 @@ std::string FastBoard::move_to_text(int move) {
     	
     return result.str();
 }
+
+
+std::string FastBoard::move_to_text_sgf(int move) {    
+    std::ostringstream result;
+    
+    int column = move % (m_boardsize + 2);
+    int row = move / (m_boardsize + 2);
+    
+    column--;
+    row--;
+    
+    assert(move == FastBoard::PASS || move == FastBoard::RESIGN || (row >= 0 && row < m_boardsize));
+    assert(move == FastBoard::PASS || move == FastBoard::RESIGN || (column >= 0 && column < m_boardsize));
+
+    // SGF inverts rows
+    row = m_boardsize - row - 1;
+    
+    if (move >= 0 && move <= m_maxsq) {
+        result << static_cast<char>('a' + column);
+        result << static_cast<char>('a' + row);        
+    } else if (move == FastBoard::PASS) {
+        result << "tt";
+    } else if (move == FastBoard::RESIGN) {
+	result << "tt";
+    } else {
+	result << "error";
+    }
+    	
+    return result.str();
+}
+
 
 bool FastBoard::starpoint(int size, int point) {
     int stars[3];

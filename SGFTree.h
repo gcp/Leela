@@ -24,6 +24,8 @@ public:
     SGFTree * add_child(SGFTree child);                      
     SGFTree * get_child(unsigned int count);
     int get_move(int tomove);
+    
+    static std::string state_to_string(GameState * state, int compcolor);
 
 private:     
     static const int EOT = 0;               // End-Of-Tree marker
