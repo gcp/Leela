@@ -37,7 +37,7 @@ public:
 private:
     bool valid_handicap(int stones);        
     
-    std::vector<FastState> game_history;                          
+    std::vector<KoState> game_history;                          
     
     TimeControl m_timecontrol;               
 };

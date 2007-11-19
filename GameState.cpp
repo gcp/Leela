@@ -38,7 +38,7 @@ void GameState::reset_game() {
 
 bool GameState::forward_move(void) {
     if (game_history.size() > movenum + 1) { 
-        FastState & f = *this; 
+        KoState & f = *this; 
         movenum++;
         f = game_history[movenum];        
         return true;
@@ -55,8 +55,9 @@ bool GameState::undo_move(void) {
         //game_history.pop_back(); 
         
         // this is not so nice, but it should work
-        FastState & f = *this; 
+        KoState & f = *this; 
         f = game_history[movenum];
+                
         // This also restores hashes as they're part of state
         return true;
     } else {
@@ -65,7 +66,7 @@ bool GameState::undo_move(void) {
 }
 
 void GameState::rewind(void) {
-    FastState & f = *this; 
+    KoState & f = *this; 
     f = game_history[0];
 }
 
