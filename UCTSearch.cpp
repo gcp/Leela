@@ -242,6 +242,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
                 if (nopass != NULL) {
                     myprintf("Avoiding pass because it loses.\n");
                     bestmove = nopass->get_move();
+                    bestscore = nopass->get_winrate(color);
                 } else {
                     myprintf("No alternative to passing.\n");
                 }
@@ -256,7 +257,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         // resigning allowed
         if ((passflag & UCTSearch::NORESIGN) == 0) {
             // bad score and visited enough
-            if (bestscore < 0.10f && visits > 90) {
+            if (bestscore < 0.05f && visits > 90) {
                 myprintf("Score looks bad. Resigning.\n");
                 bestmove = FastBoard::RESIGN;    
             }

@@ -20,8 +20,7 @@ public:
     void rewind(void); /* undo infinite */
     bool undo_move(void);
     bool forward_move(void);
-    
-    void play_pass(void);
+        
     void play_move(int color, int vertex);      
     void play_move(int vertex); 
     bool play_textmove(std::string color, std::string vertex);                            

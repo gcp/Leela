@@ -70,26 +70,23 @@ void GameState::rewind(void) {
     f = game_history[0];
 }
 
-void GameState::play_pass(void) {
-    KoState::play_pass();
-               
-    game_history.push_back(*this);
-}
-
 void GameState::play_move(int vertex) {
     play_move(board.m_tomove, vertex);
 }
 
 void GameState::play_move(int color, int vertex) {
     if (vertex != FastBoard::PASS && vertex != FastBoard::RESIGN) {                   
-        KoState::play_move(color, vertex);        
-
-        // cut off any leftover moves from navigating
-        game_history.resize(movenum);
-        game_history.push_back(*this);        
-    } else {
-        play_pass();
+        KoState::play_move(color, vertex);                
+    } else {        
+        KoState::play_pass();
+        if (vertex == FastBoard::RESIGN) {
+            lastmove = vertex;
+        }
     }    
+    
+    // cut off any leftover moves from navigating
+    game_history.resize(movenum);
+    game_history.push_back(*this);        
 }
 
 bool GameState::play_textmove(std::string color, std::string vertex) {

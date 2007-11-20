@@ -19,7 +19,7 @@ void FastState::init_game(int size, float komi) {
     
     movenum = 0;                          
     
-    lastmove = FastBoard::PASS;
+    lastmove = 0;
     onebutlastmove = lastmove;
     m_komi = komi;
     m_passes = 0;
