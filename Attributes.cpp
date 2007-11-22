@@ -174,7 +174,7 @@ void Attributes::get_from_move(FastState * state,
     
     // prev move distance
     int prevdist;
-    if (state->get_last_move() != FastBoard::PASS && vtx != FastBoard::PASS) {
+    if (state->get_last_move() > 0 && vtx > 0) {
         prevdist = move_distance(state->board.get_xy(state->get_last_move()), 
                                  state->board.get_xy(vtx));
     } else {
@@ -199,7 +199,7 @@ void Attributes::get_from_move(FastState * state,
     
     // prev prev move
     int prevprevdist;
-    if (state->get_prevlast_move() != FastBoard::PASS && vtx != FastBoard::PASS) {
+    if (state->get_prevlast_move() > 0 && vtx > 0) {
         prevprevdist = move_distance(state->board.get_xy(vtx), 
                                      state->board.get_xy(state->get_prevlast_move()));
     } else {

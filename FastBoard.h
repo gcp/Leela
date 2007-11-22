@@ -81,6 +81,7 @@ public:
     float final_mc_score(float komi = 7.5f);        
     float area_score(float komi = 7.5f);
     float percentual_area_score(float komi = 7.5f);
+    std::vector<bool> calc_reach_color(int col);        
     std::vector<int> influence(void);
     std::vector<int> moyo(void);
     std::vector<int> area(void);
@@ -136,8 +137,7 @@ protected:
     int remove_string_fast(int i);        
     void add_neighbour(const int i, const int color);
     void remove_neighbour(const int i, const int color);        
-    int update_board_eye(const int color, const int i);
-    std::vector<bool> calc_reach_color(int col);    
+    int update_board_eye(const int color, const int i);    
     std::vector<int> run_bouzy(int dilat, int eros);  
     bool kill_or_connect(int color, int vertex);  
     int in_atari(int vertex);

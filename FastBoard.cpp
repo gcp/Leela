@@ -263,8 +263,7 @@ int FastBoard::remove_string_fast(int i) {
     return removed;
 }
 
-std::vector<bool> FastBoard::calc_reach_color(int col) {    
-    
+std::vector<bool> FastBoard::calc_reach_color(int col) {        
     std::vector<bool> bd(m_maxsq);
     std::vector<bool> last(m_maxsq);
         
@@ -299,10 +298,12 @@ std::vector<bool> FastBoard::calc_reach_color(int col) {
     return bd;
 }
 
+/// XXX can go
 float FastBoard::percentual_area_score(float komi) {    
     return area_score(komi) / (float)(m_boardsize * m_boardsize);
 }
 
+/// XXX can go
 float FastBoard::area_score(float komi) {
     
     std::vector<bool> white = calc_reach_color(WHITE);
