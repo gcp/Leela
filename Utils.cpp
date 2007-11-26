@@ -73,23 +73,29 @@ bool Utils::input_pending(void) {
 }
 
 #ifndef _CONSOLE
-#include <wx/wx.h>
+static wxEvtHandler * GUIQ = NULL;
+static int GUIQ_T = 0;
+
+void Utils::setGUIQueue(wxEvtHandler * evt, int evt_type) {   
+    GUIQ = evt;    
+    GUIQ_T = evt_type;
+}
 #endif
 
 void Utils::GUIprintf(const char *fmt, ...) {
-#ifndef _CONSOLE
     va_list ap;      
 
     va_start(ap, fmt);      
-
-    char buffer[512];
-    vsprintf_s(buffer, 512, fmt, ap);    
-    ::wxMutexGuiEnter();
-    ::wxLogMessage("%s", buffer);
-    ::wxMutexGuiLeave();
-  
+#ifndef _CONSOLE
+    if (GUIQ != NULL) { 
+        char buffer[512];
+        vsprintf_s(buffer, 512, fmt, ap); 
+        wxCommandEvent myevent(GUIQ_T);
+        myevent.SetString(wxString(buffer));                       
+        ::wxPostEvent(GUIQ, myevent);                   
+    }
+#endif    
     va_end(ap);
-#endif
 }
 
 void Utils::myprintf(const char *fmt, ...) {

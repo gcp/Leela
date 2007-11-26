@@ -175,8 +175,8 @@ void UCTSearch::dump_thinking() {
     } else {
         bestmove = "pass";
     }        
-    GUIprintf("Nodes: %d, Winrate: %5.2f%%, Best move: %s", 
-              m_root.get_visits(), m_root.get_winrate(color) * 100.0f, bestmove.c_str());
+    GUIprintf("Nodes: %d, Best move: %s", 
+              m_root.get_visits(), bestmove.c_str());
 }
 
 int UCTSearch::get_best_move(passflag_t passflag) { 
@@ -242,7 +242,11 @@ int UCTSearch::get_best_move(passflag_t passflag) {
                 if (nopass != NULL) {
                     myprintf("Avoiding pass because it loses.\n");
                     bestmove = nopass->get_move();
-                    bestscore = nopass->get_winrate(color);
+                    if (nopass->first_visit()) {
+                        bestscore = 1.0f;
+                    } else {
+                        bestscore = nopass->get_winrate(color);
+                    }
                 } else {
                     myprintf("No alternative to passing.\n");
                 }
@@ -317,7 +321,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     
-    GUIprintf("Thinking for %f seconds", time_for_move/100.0f);
+    GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
                  
     m_rootstate.start_clock(color);
 
