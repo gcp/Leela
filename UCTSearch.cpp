@@ -349,8 +349,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
         Time elapsed;
         centiseconds_elapsed = Time::timediff(start, elapsed);        
 
-        // output some stats every 2.5 seconds
-        if (centiseconds_elapsed - last_update > 250) {
+        // output some stats every second
+        if (centiseconds_elapsed - last_update > 100) {
             last_update = centiseconds_elapsed;            
             dump_thinking();                        
         }        

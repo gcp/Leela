@@ -7,7 +7,7 @@
 
 class FastState {
 public:        
-    void init_game(int size = 19, float komi = 7.5f);
+    void init_game(int size = FastBoard::MAXBOARDSIZE, float komi = 7.5f);
     void reset_game();
     void reset_board();  
         

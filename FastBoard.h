@@ -19,7 +19,7 @@ public:
     /*
         largest board supported 
     */
-    static const int MAXBOARDSIZE = 19;
+    static const int MAXBOARDSIZE = 13;
 
     /*
         highest existing square        

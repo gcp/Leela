@@ -121,8 +121,12 @@ void SGFTree::populate_states(void) {
         std::istringstream strm(size);
         int bsize;
         strm >> bsize;
-        m_state.init_game(bsize);
-    }
+        if (bsize <= FastBoard::MAXBOARDSIZE) {
+            m_state.init_game(bsize);
+        } else {
+            throw std::exception("Board size not supported.");
+        }
+    } 
     
     // komi
     it = m_properties.find("KM");
@@ -200,6 +204,12 @@ int SGFTree::string_to_vertex(std::string movestring) {
     
     int cc1 = c1 - 'a';
     int cc2 = bsize - (c2 - 'a') - 1;
+    
+    // catch illegal SGF
+    if (cc1 < 0 || cc1 >= bsize
+        || cc2 < 0 || cc2 >= bsize) {
+        throw std::exception("Illegal SGF move");
+    }
     
     int vtx = m_state.board.get_vertex(cc1, cc2);
     

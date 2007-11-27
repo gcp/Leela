@@ -9,8 +9,9 @@
 #include "FullBoard.h"
 #include "KoState.h"
 
-void KoState::init_game(int size, float komi) {        
-    
+void KoState::init_game(int size, float komi) { 
+    assert(size <= FastBoard::MAXBOARDSIZE);
+                       
     FastState::init_game(size, komi);
         
     ko_hash_history.clear();

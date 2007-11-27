@@ -105,12 +105,6 @@ void Utils::myprintf(const char *fmt, ...) {
 
 #ifdef _CONSOLE    
     vfprintf(stderr, fmt, ap);
-#else
-    /*char buffer[512];
-    vsprintf_s(buffer, 512, fmt, ap);    
-    ::wxMutexGuiEnter();
-    ::wxLogMessage("%s", buffer);
-    ::wxMutexGuiLeave();*/
 #endif  
   
     va_end(ap);

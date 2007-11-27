@@ -8,7 +8,7 @@
 
 class KoState : public FastState {
 public:                    
-    void init_game(int size = 19, float komi = 7.5f);
+    void init_game(int size = FastBoard::MAXBOARDSIZE, float komi = 7.5f);
     bool superko(void);
     void reset_game();
     
