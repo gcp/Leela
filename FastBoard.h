@@ -19,7 +19,11 @@ public:
     /*
         largest board supported 
     */
+#ifdef LITEVERSION    
     static const int MAXBOARDSIZE = 13;
+#else
+    static const int MAXBOARDSIZE = 19;
+#endif    
 
     /*
         highest existing square        
