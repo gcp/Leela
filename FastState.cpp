@@ -130,7 +130,7 @@ int FastState::play_random_move(int color) {
             }            
             if (m_work.empty()) {                
                 board.add_pattern_moves(color, lastmove, m_work);            
-            }            
+            }                       
             // remove ko captures     
             m_work.erase(std::remove(m_work.begin(), m_work.end(), komove), m_work.end());                                           
         }        
@@ -141,7 +141,12 @@ int FastState::play_random_move(int color) {
                 
     if (m_work.empty()) {         
         vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
-        vtx  = walk_empty_list(color, vidx); 
+        vtx  = walk_empty_list(color, vidx, true); 
+        
+        // all moves used up, allow SA's
+        //if (vtx == FastBoard::PASS) {                                                       
+        //    vtx = walk_empty_list(color, vidx, true);                           
+        //}    
     } else {        
         if (m_work.size() > 1) {            
             // remove multiple moves    
@@ -154,20 +159,11 @@ int FastState::play_random_move(int color) {
         } else {            
             vtx = m_work[0];
         }
-    }            
+    }                
               
     return play_move_fast(vtx);                         
 }
 
-// we do things a bit simpler here
-int FastState::play_random_move_sa(int color) {                            
-    board.m_tomove = color;                                                         
-                               
-    int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
-    int vtx  = walk_empty_list(color, vidx, true);     
-              
-    return play_move_fast(vtx);                         
-}
 
 float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {       
     Attributes att;

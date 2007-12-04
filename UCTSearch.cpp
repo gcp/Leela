@@ -322,6 +322,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     
     GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
+    
+    //XXX: testing
+    m_maxvisits = 10000;
                  
     m_rootstate.start_clock(color);
 
@@ -337,10 +340,12 @@ int UCTSearch::think(int color, passflag_t passflag) {
     
     m_run = true;            
     int cpus = SMP::get_num_cpus();        
-    boost::thread_group tg;            
+    boost::thread_group tg;         
+#ifdef USE_SMP       
     for (int i = 1; i < cpus; i++) {         
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
     }        
+#endif    
     do {
         KoState currstate = m_rootstate;
 
@@ -350,7 +355,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         centiseconds_elapsed = Time::timediff(start, elapsed);        
 
         // output some stats every second
-        if (centiseconds_elapsed - last_update > 100) {
+        if (centiseconds_elapsed - last_update > 250) {
             last_update = centiseconds_elapsed;            
             dump_thinking();                        
         }        
@@ -395,9 +400,11 @@ void UCTSearch::ponder() {
     m_run = true;
     int cpus = SMP::get_num_cpus();       
     boost::thread_group tg;        
+#ifdef USE_SMP        
     for (int i = 1; i < cpus; i++) {         
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
     }        
+#endif    
     do {
         KoState currstate = m_rootstate;
 
@@ -405,7 +412,7 @@ void UCTSearch::ponder() {
     } while(!Utils::input_pending());  
            
     // stop the search
-    m_run = false;
+    m_run = false;    
     tg.join_all();                                            
                         
     // display search info        
