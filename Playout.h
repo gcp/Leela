@@ -13,22 +13,19 @@ public:
     typedef std::bitset<FastBoard::MAXSQ> bitboard_t;
     typedef std::tr1::array<bitboard_t, 2> color_bitboard_t;
     
-    static const int AUTOGAMES = 100000;
+    static const int AUTOGAMES = 100000;    
     static void do_playout_benchmark(GameState & game);            
+    static void mc_owner(FastState & state, int iterations = 32);
 
     Playout();
-    void run(FastState & state, bool resigning = true);
+    void run(FastState & state, std::vector<float> & move_ratings, bool resigning = true);
     float get_score();    
     void set_final_score(float score);
-    bool passthrough(int color, int vertex); 
-    
-    static void mc_owner(FastState & state, int iterations = 32);
-        
-private:                
+    bool passthrough(int color, int vertex);         
+private:                         
     bool m_run;    
-    float m_score; 
-            
-    color_bitboard_t m_sq;
+    float m_score;             
+    color_bitboard_t m_sq;                
 };
 
 #endif

@@ -11,10 +11,11 @@ public:
     void reset_game();
     void reset_board();  
             
-    int play_random_move();
-    int play_random_move(int color);    
+    int play_random_move(std::vector<float> & ratings);
+    int play_random_move(std::vector<float> & ratings, int color);    
     int play_move_fast(int vertex);
     float score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex);
+    std::vector<float> score_moves();
     
     void play_pass(void);    
     void play_move(int vertex); 

@@ -21,15 +21,15 @@ UCTSearch::UCTSearch(GameState & g)
   m_maxvisits(UCTSearch::MAX_TREE_SIZE * 100) {    
 }
 
-Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
+Playout UCTSearch::play_simulation(KoState & currstate, std::vector<float> & ratings, UCTNode* node) {
     const int color = currstate.get_to_move();
     const uint64 hash = currstate.board.get_hash();
     Playout noderesult;  
         
-    TTable::get_TT()->sync(hash, node);        
+    //TTable::get_TT()->sync(hash, node);        
 
     if (node->get_visits() <= MATURE_TRESHOLD) {           
-        noderesult.run(currstate);                
+        noderesult.run(currstate, ratings);                
     } else {                
         if (node->has_children() == false && m_nodes < MAX_TREE_SIZE) {                
             m_nodes += node->create_children(currstate);
@@ -45,22 +45,22 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
                     currstate.play_move(move);
                     
                     if (!currstate.superko()) {                    
-                        noderesult = play_simulation(currstate, next);                                        
+                        noderesult = play_simulation(currstate, ratings, next);                                        
                     } else {                                            
                         next->invalidate();                       
-                        noderesult.run(currstate);                         
+                        noderesult.run(currstate, ratings);                         
                     }                
                 } else {                
                     currstate.play_pass();                
-                    noderesult = play_simulation(currstate, next);                
+                    noderesult = play_simulation(currstate, ratings, next);                
                 }       
             } else {
-                noderesult.run(currstate);
+                noderesult.run(currstate, ratings);
             }
             
             node->updateRAVE(noderesult, color);                        
         } else if (m_nodes >= MAX_TREE_SIZE) {
-            noderesult.run(currstate);
+            noderesult.run(currstate, ratings);
         } else {                     
             noderesult.set_final_score(currstate.board.percentual_area_score(currstate.m_komi));                        
             node->finalize(noderesult.get_score());
@@ -68,7 +68,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
     }             
       
     node->update(noderesult, !color);    
-    TTable::get_TT()->update(hash, node);    
+    //TTable::get_TT()->update(hash, node);    
     
     return noderesult;  
 }
@@ -304,9 +304,10 @@ bool UCTSearch::is_running() {
 }
 
 void UCTWorker::operator()() {
+    std::vector<float> ratings = m_rootstate.score_moves();
     do {
         KoState currstate = m_rootstate;
-        m_search->play_simulation(currstate, m_root);                   
+        m_search->play_simulation(currstate, ratings, m_root);                   
     } while(m_search->is_running()); 
 }
 
@@ -331,6 +332,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
     // do some preprocessing for move ordering
     MCOwnerTable::clear();  
     Playout::mc_owner(m_rootstate, 64);
+    m_move_ratings = m_rootstate.score_moves();
+    
     dump_order2();                                      
     
     // create a sorted list off legal moves (make sure we
@@ -349,7 +352,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     do {
         KoState currstate = m_rootstate;
 
-        play_simulation(currstate, &m_root);                   
+        play_simulation(currstate, m_move_ratings, &m_root);                   
 
         Time elapsed;
         centiseconds_elapsed = Time::timediff(start, elapsed);        
@@ -395,7 +398,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
 void UCTSearch::ponder() {                          
     MCOwnerTable::clear();  
-    Playout::mc_owner(m_rootstate, 64);      
+    Playout::mc_owner(m_rootstate, 64);     
+    
+    m_move_ratings = m_rootstate.score_moves(); 
          
     m_run = true;
     int cpus = SMP::get_num_cpus();       
@@ -408,7 +413,7 @@ void UCTSearch::ponder() {
     do {
         KoState currstate = m_rootstate;
 
-        play_simulation(currstate, &m_root);                             
+        play_simulation(currstate, m_move_ratings, &m_root);                             
     } while(!Utils::input_pending());  
            
     // stop the search
