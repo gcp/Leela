@@ -36,7 +36,7 @@ public:
     void set_visit_limit(int visits);
     void ponder();    
     bool is_running();      
-    Playout play_simulation(KoState & currstate, std::vector<float> & ratings, UCTNode * node);
+    Playout play_simulation(KoState & currstate, UCTNode * node);
     
 private:             
     void dump_stats(GameState & state, UCTNode & parent);
@@ -49,8 +49,7 @@ private:
     UCTNode m_root;    
     int m_nodes;  
     int m_maxvisits;
-    bool m_run;        
-    std::vector<float> m_move_ratings;
+    bool m_run;            
 };
 
 class UCTWorker {

@@ -8,7 +8,10 @@ class Matcher {
 public:    
     Matcher();
 
-    int matches(int color, int pattern);
+    // fixed point math
+    static const int UNITY = 5;
+
+    unsigned char matches(int color, int pattern);
 
     /*
         return the "global" matcher
@@ -18,7 +21,7 @@ public:
 private:            
     static Matcher* s_matcher;   
 
-    std::tr1::array<std::vector<char>, 2> m_patterns;
+    std::tr1::array<std::vector<unsigned char>, 2> m_patterns;
 };
 
 #endif

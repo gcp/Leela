@@ -45,8 +45,8 @@ void FastState::reset_board(void) {
     board.reset_board(board.get_boardsize());
 }
 
-int FastState::play_random_move(std::vector<float> & ratings) {
-    return play_random_move(ratings, board.m_tomove);
+int FastState::play_random_move() {
+    return play_random_move(board.m_tomove);
 }
 
 std::vector<int> FastState::generate_moves(int color) {
@@ -117,7 +117,7 @@ int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
     return FastBoard::PASS;        
 }
 
-int FastState::play_random_move(std::vector<float> & ratings, int color) {                            
+int FastState::play_random_move(int color) {                            
     board.m_tomove = color;                                         
     
     m_work.clear();    
@@ -139,24 +139,9 @@ int FastState::play_random_move(std::vector<float> & ratings, int color) {
     int vidx;     
     int vtx;
                 
-    if (m_work.empty()) {   
-        float bestscore = -1.0f;
-        int bestvtx = FastBoard::PASS;
-        int count = 0;
-        
-        do {
-            vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
-            vtx  = walk_empty_list(color, vidx, true);  
-            
-            if (vtx != FastBoard::PASS) {                    
-                if (ratings[vtx] > bestscore) {
-                    bestscore = ratings[vtx];
-                    bestvtx = vtx;
-                }    
-            }
-        } while(++count < 5 && vtx != FastBoard::PASS);
-        
-        vtx = bestvtx;
+    if (m_work.empty()) {                          
+        vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
+        vtx  = walk_empty_list(color, vidx, true);  
     } else {        
         if (m_work.size() > 1) {            
             // remove multiple moves    
@@ -173,7 +158,6 @@ int FastState::play_random_move(std::vector<float> & ratings, int color) {
               
     return play_move_fast(vtx);                         
 }
-
 
 float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {       
     Attributes att;
@@ -302,15 +286,13 @@ std::vector<bool> FastState::mark_dead() {
     std::vector<bool> dead_group(FastBoard::MAXSQ);    
     
     fill(survive_count.begin(), survive_count.end(), 0);    
-    fill(dead_group.begin(), dead_group.end(), false);
-    
-    std::vector<float> move_ratings = score_moves();
+    fill(dead_group.begin(), dead_group.end(), false);        
     
     for (int i = 0; i < MARKING_RUNS; i++) {
         FastState workstate(*this);
         Playout p;
         
-        p.run(workstate, move_ratings, false);
+        p.run(workstate, false);
         
         for (int i = 0; i < board.get_boardsize(); i++) {
             for (int j = 0; j < board.get_boardsize(); j++) {
@@ -399,31 +381,3 @@ float FastState::get_komi() {
     return m_komi;
 }
 
-
-std::vector<float> FastState::score_moves() {                         
-    std::vector<int> territory = board.influence();
-    std::vector<int> moyo = board.moyo();    
-    
-    std::vector<float> ratingmap;     
-    ratingmap.resize(board.m_maxsq);
-    
-    std::fill(ratingmap.begin(), ratingmap.end(), 0.0f);
-
-    for (int i = 0; i < board.m_empty_cnt; i++) {  
-        int vertex = board.m_empty[i];                  
-                
-        if (vertex != komove && board.no_eye_fill(vertex)) { 
-            int old_to_move = board.m_tomove;            
-            board.m_tomove = FastBoard::WHITE;
-            float wscore = score_move(territory, moyo, vertex);
-            board.m_tomove = FastBoard::BLACK;
-            float bscore = score_move(territory, moyo, vertex);
-            board.m_tomove = old_to_move;
-            
-            float score = (wscore + bscore) / 2.0f;
-            ratingmap[vertex] = score;
-        }
-    }
-    
-    return ratingmap;
-}

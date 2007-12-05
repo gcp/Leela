@@ -18,7 +18,7 @@ public:
     static void mc_owner(FastState & state, int iterations = 32);
 
     Playout();
-    void run(FastState & state, std::vector<float> & move_ratings, bool resigning = true);
+    void run(FastState & state, bool resigning = true);
     float get_score();    
     void set_final_score(float score);
     bool passthrough(int color, int vertex);         

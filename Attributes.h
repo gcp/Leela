@@ -9,22 +9,31 @@
 
 #include "KoState.h"
 
-// Move attributes
+// Move attributes for full move ordering
 class Attributes {
-public:           
-    Attributes();
+public:               
     void get_from_move(FastState * state, 
                        std::vector<int> & territory,
                        std::vector<int> & moyo, 
                        int move);    
     uint64 get_pattern(void);    
     bool attribute_enabled(int idx);
-private:
-    int border_distance(std::pair<int, int> xy, int bsize);
-    int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);    
-    
+    static int border_distance(std::pair<int, int> xy, int bsize);
+    static int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);    
+private:        
     int m_pattern;
     std::bitset<85> m_present;     
+};
+
+// Move attributes for quick move ordering
+class FastAttributes {
+public:               
+    void get_from_move(FastState * state, int move);    
+    uint64 get_pattern(void);    
+    bool attribute_enabled(int idx);
+private:         
+    int m_pattern;
+    std::bitset<6> m_present; 
 };
 
 #endif

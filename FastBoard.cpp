@@ -1032,8 +1032,8 @@ void FastBoard::save_critical_neighbours(int color, int vertex,
                     //    i.e. it is not self-atari 
                     // 2) capturing an opponent, which means that he should
                     //    also be in atari                                                        
-                    if (!self_atari(color, atari)) {
-                        work.push_back(atari);        
+                    if (!self_atari(color, atari)) {                        
+                        work.push_back(atari);                                
                     } 
                     
                     kill_neighbours(ai, work);     
@@ -1459,7 +1459,7 @@ void FastBoard::add_pattern_moves(int color, int vertex,
         if (m_square[sq] == EMPTY) {      
             int pattern = get_pattern_fast(sq);
             
-            if (matcher->matches(color, pattern)) {
+            if (matcher->matches(color, pattern) >= Matcher::UNITY) {
                 if (!self_atari(color, sq)) {
                     work.push_back(sq);
                 }

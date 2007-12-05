@@ -1,5 +1,7 @@
 #include "Matcher.h"
 #include "FastBoard.h"
+#include "WeightsMatcher.h"
+#include "Utils.h"
 
 Matcher* Matcher::s_matcher = 0;
 
@@ -16,28 +18,41 @@ Matcher::Matcher() {
     const int max = 1 << (8 * 2);
 
     m_patterns[FastBoard::BLACK].resize(max);    
-    m_patterns[FastBoard::WHITE].resize(max);    
-   
-    // minimal board we need is 3x3
-    FastBoard board;
-    board.reset_board(3);
+    m_patterns[FastBoard::WHITE].resize(max); 
 
-    // center square
-    int startvtx = board.get_vertex(1, 1);
+    std::fill(m_patterns[FastBoard::BLACK].begin(), 
+              m_patterns[FastBoard::BLACK].end(),
+              (unsigned char)UNITY);    
+    std::fill(m_patterns[FastBoard::WHITE].begin(), 
+              m_patterns[FastBoard::WHITE].end(),
+              (unsigned char)UNITY);            
+ 
+    int loadmax = internal_weights_fast.size();      
+    int wpats = 0;
+    int bpats = 0;
 
-    for (int i = 0; i < max; i++) {
-        int w = i;
-        // fill board
-        for (int k = 0; k < 8; k++) {
-            board.set_square(startvtx + board.get_extra_dir(k), 
-                             static_cast<FastBoard::square_t>(w & 3));
-            w = w >> 2;
-        }                
-        m_patterns[FastBoard::BLACK][i] = board.match_pattern(FastBoard::BLACK, startvtx);
-        m_patterns[FastBoard::WHITE][i] = board.match_pattern(FastBoard::WHITE, startvtx);        
+    for (int i = 0; i < loadmax; i++) {                        
+        int pat = internal_patterns_fast[i];
+        double wt = internal_weights_fast[i];
+        
+        // close moves have a multiplier of 13.0 and 9.2
+        // need to add that one
+        double scalefac = 12.75f;
+        unsigned char w = (unsigned char)(wt * ((double)UNITY) * scalefac);        
+        
+        if (pat & (1 << 16)) {
+            pat &= ~(1 << 16);
+            m_patterns[FastBoard::WHITE][pat] = w;
+            wpats++;
+        } else {
+            m_patterns[FastBoard::BLACK][pat] = w; 
+            bpats++;
+        }                        
     }
+    
+    Utils::myprintf("Loaded %d black and %d white fast patterns\n", wpats, bpats);
 }
 
-int Matcher::matches(int color, int pattern) {
+unsigned char Matcher::matches(int color, int pattern) {
     return m_patterns[color][pattern];
 }

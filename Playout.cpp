@@ -28,7 +28,7 @@ void Playout::set_final_score(float score) {
     m_score = score;
 }
 
-void Playout::run(FastState & state, std::vector<float> & move_ratings, bool resigning) {
+void Playout::run(FastState & state, bool resigning) {
     assert(!m_run);        
 
     const int boardsize = state.board.get_boardsize();
@@ -39,7 +39,7 @@ void Playout::run(FastState & state, std::vector<float> & move_ratings, bool res
     
     // do the first and main loop        
     do {                                    
-        int vtx = state.play_random_move(move_ratings);
+        int vtx = state.play_random_move();
 
         if (counter < 60 && vtx != FastBoard::PASS) {
             int color = !state.get_to_move();
@@ -95,9 +95,7 @@ void Playout::do_playout_benchmark(GameState& game) {
     float score;
     const int boardsize = game.board.get_boardsize();
     const int resign = (boardsize * boardsize) / 3;
-    const int playoutlen = (boardsize * boardsize) * 2;
-    
-    std::vector<float> move_ratings = game.score_moves();
+    const int playoutlen = (boardsize * boardsize) * 2;    
     
     len = 0.0;
     score = 0;
@@ -105,7 +103,7 @@ void Playout::do_playout_benchmark(GameState& game) {
     
     for (loop = 0; loop < AUTOGAMES; loop++) {
         do {                                    
-            int move = game.play_random_move(move_ratings);                                                       
+            int move = game.play_random_move();                                                       
             
         } while (game.get_passes() < 2 
                  && game.get_movenum() < playoutlen
@@ -129,15 +127,13 @@ void Playout::do_playout_benchmark(GameState& game) {
 
 void Playout::mc_owner(FastState & state, int iterations) {                
     const int boardsize = state.board.get_boardsize();    
-    const int playoutlen = (boardsize * boardsize) * 2;         
-    
-    std::vector<float> ratings = state.score_moves();
+    const int playoutlen = (boardsize * boardsize) * 2;                 
     
     for (int i = 0; i < iterations; i++) {
         FastState tmp = state;
         
         Playout p;
         
-        p.run(tmp, ratings, false);                
+        p.run(tmp, false);                
     }                
 }
