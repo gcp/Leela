@@ -9,7 +9,8 @@ public:
     Matcher();
 
     // fixed point math
-    static const int UNITY = 5;
+    static const int UNITY = 52;
+    static const int THRESHOLD = 8;
 
     unsigned char matches(int color, int pattern);
 

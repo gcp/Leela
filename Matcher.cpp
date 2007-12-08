@@ -33,12 +33,8 @@ Matcher::Matcher() {
 
     for (int i = 0; i < loadmax; i++) {                        
         int pat = internal_patterns_fast[i];
-        double wt = internal_weights_fast[i];
-        
-        // close moves have a multiplier of 13.0 and 9.2
-        // need to add that one
-        double scalefac = 12.75f;
-        unsigned char w = (unsigned char)(wt * ((double)UNITY) * scalefac);        
+        double wt = internal_weights_fast[i];        
+        unsigned char w = (unsigned char)(wt * ((double)UNITY));        
         
         if (pat & (1 << 16)) {
             pat &= ~(1 << 16);
