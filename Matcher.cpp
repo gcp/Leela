@@ -36,6 +36,8 @@ Matcher::Matcher() {
         double wt = internal_weights_fast[i];        
         unsigned char w = (unsigned char)(wt * ((double)UNITY));        
         
+        w = std::max(w, (unsigned char)1);
+        
         if (pat & (1 << 16)) {
             pat &= ~(1 << 16);
             m_patterns[FastBoard::WHITE][pat] = w;

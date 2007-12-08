@@ -1485,7 +1485,7 @@ void FastBoard::add_pattern_moves(int color, int vertex,
             work.push_back(moves[i].first);
             return;
         }
-    }                      
+    }                         
 }        
 
 // check for fixed patterns around vertex for color to move
