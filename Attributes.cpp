@@ -69,10 +69,7 @@ void FastAttributes::get_from_move(FastState * state, int vtx) {
     // shape  (border check)            
     int pat;
     if (vtx != FastBoard::PASS) {                              
-        pat = state->board.get_pattern_fast(vtx);                
-        if (tomove == FastBoard::WHITE) {
-            pat |= 1 << 16;
-        }
+        pat = state->board.get_pattern3(vtx, tomove);                        
     } else {
         pat = 0x1FFFF; // all INVAL
     }       

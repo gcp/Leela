@@ -1197,17 +1197,70 @@ bool FastBoard::self_atari(int color, int vertex) {
     return true;
 }
 
-int FastBoard::get_pattern_fast(const int sq) {
+int FastBoard::get_pattern3(const int sq, bool invert) {
+    std::tr1::array<square_t, 8> sqs;
     const int size = m_boardsize;
     
-    return (m_square[sq - size - 2 - 1] << 14)
-         | (m_square[sq - size - 2]     << 12)
-         | (m_square[sq - size - 2 + 1] << 10)
-         | (m_square[sq - 1]            <<  8)
-         | (m_square[sq + 1]            <<  6)
-         | (m_square[sq + size + 2 - 1] <<  4)
-         | (m_square[sq + size + 2]     <<  2)
-         | (m_square[sq + size + 2 + 1] <<  0);  
+    sqs[0] = m_square[sq - size - 2 - 1];
+    sqs[1] = m_square[sq - size - 2];
+    sqs[2] = m_square[sq - size - 2 + 1];
+    sqs[3] = m_square[sq - 1];
+    sqs[4] = m_square[sq + 1];
+    sqs[5] = m_square[sq + size + 2 - 1];
+    sqs[6] = m_square[sq + size + 2];
+    sqs[7] = m_square[sq + size + 2 + 1];
+    
+    /* color symmetry */
+    if (invert) {
+        for (int i = 0; i < sqs.size(); i++) {
+            sqs[i] = s_cinvert[sqs[i]];
+        }
+    }
+    
+    /*
+        012
+        3 4
+        567
+    */            
+    int idx1 = (sqs[0] << 14) | (sqs[1] << 12) | (sqs[2] << 10) | (sqs[3] <<  8)
+             | (sqs[4] <<  6) | (sqs[5] <<  4) | (sqs[6] <<  2) | (sqs[7] <<  0);
+
+    int idx2 = (sqs[5] << 14) | (sqs[3] << 12) | (sqs[0] << 10) | (sqs[6] <<  8)
+             | (sqs[1] <<  6) | (sqs[7] <<  4) | (sqs[4] <<  2) | (sqs[2] <<  0);
+             
+    int idx3 = (sqs[7] << 14) | (sqs[6] << 12) | (sqs[5] << 10) | (sqs[4] <<  8)
+             | (sqs[3] <<  6) | (sqs[2] <<  4) | (sqs[1] <<  2) | (sqs[0] <<  0);
+             
+    int idx4 = (sqs[2] << 14) | (sqs[4] << 12) | (sqs[7] << 10) | (sqs[1] <<  8)
+             | (sqs[6] <<  6) | (sqs[0] <<  4) | (sqs[3] <<  2) | (sqs[5] <<  0);
+    /*
+        035
+        1 6
+        247
+    */                  
+    int idx5 = (sqs[0] << 14) | (sqs[3] << 12) | (sqs[5] << 10) | (sqs[1] <<  8)
+             | (sqs[6] <<  6) | (sqs[2] <<  4) | (sqs[4] <<  2) | (sqs[7] <<  0);
+             
+    int idx6 = (sqs[2] << 14) | (sqs[1] << 12) | (sqs[0] << 10) | (sqs[4] <<  8)
+             | (sqs[3] <<  6) | (sqs[7] <<  4) | (sqs[6] <<  2) | (sqs[5] <<  0);
+
+    int idx7 = (sqs[7] << 14) | (sqs[4] << 12) | (sqs[2] << 10) | (sqs[6] <<  8)
+             | (sqs[1] <<  6) | (sqs[5] <<  4) | (sqs[3] <<  2) | (sqs[0] <<  0);
+             
+    int idx8 = (sqs[5] << 14) | (sqs[6] << 12) | (sqs[7] << 10) | (sqs[3] <<  8)
+             | (sqs[4] <<  6) | (sqs[0] <<  4) | (sqs[1] <<  2) | (sqs[2] <<  0);
+             
+    idx1 = std::min(idx1, idx2);
+    idx3 = std::min(idx3, idx4);
+    idx5 = std::min(idx5, idx6);
+    idx7 = std::min(idx7, idx8);
+    
+    idx1 = std::min(idx1, idx3);
+    idx5 = std::min(idx5, idx7);
+    
+    idx1 = std::min(idx1, idx5);                  
+          
+    return idx1;                   
 }
 
 // invert = invert colors because white is to move
@@ -1464,19 +1517,21 @@ void FastBoard::add_pattern_moves(int color, int vertex,
         int sq = vertex + m_extradirs[i];
         
         if (m_square[sq] == EMPTY) {      
-            int pattern = get_pattern_fast(sq);
-            int score = matcher->matches(color, pattern);
+            int pattern = get_pattern3(sq, color);
+            int score = matcher->matches(pattern);            
             
-            if (score >= Matcher::THRESHOLD) {                
+            if (score) {                
                 if (!self_atari(color, sq)) {
-                    cumul += score;
+                    work.push_back(sq);
+                    /*cumul += score;
                     moves[count] = std::make_pair<int, int>(sq, cumul);
-                    count++;
+                    count++;*/
                 }
             }
         }                                        
     }                       
-    
+
+    /*
     int index = Random::get_Rng()->randint(cumul);
     
     for (int i = 0; i < count; i++) {
@@ -1485,7 +1540,7 @@ void FastBoard::add_pattern_moves(int color, int vertex,
             work.push_back(moves[i].first);
             return;
         }
-    }                         
+    }*/
 }        
 
 // check for fixed patterns around vertex for color to move

@@ -13,23 +13,37 @@ Matcher* Matcher::get_Matcher(void) {
     return s_matcher;
 }
 
+void Matcher::set_Matcher(Matcher * m) {
+    if (s_matcher) {
+        delete s_matcher;
+    }
+    
+    s_matcher = m;
+}
+
+Matcher::Matcher(std::bitset<1<<16> & pats) {
+    const int max = 1 << (8 * 2);
+
+    m_patterns.resize(max);        
+
+    for (int i = 0; i < max; i++) {
+        m_patterns[i] = pats[i];        
+    }
+}
+
+
 // initialize matcher data
 Matcher::Matcher() { 
     const int max = 1 << (8 * 2);
 
-    m_patterns[FastBoard::BLACK].resize(max);    
-    m_patterns[FastBoard::WHITE].resize(max); 
+    m_patterns.resize(max);        
 
-    std::fill(m_patterns[FastBoard::BLACK].begin(), 
-              m_patterns[FastBoard::BLACK].end(),
+    std::fill(m_patterns.begin(), 
+              m_patterns.end(),
               (unsigned char)UNITY);    
-    std::fill(m_patterns[FastBoard::WHITE].begin(), 
-              m_patterns[FastBoard::WHITE].end(),
-              (unsigned char)UNITY);            
- 
+    
     int loadmax = internal_weights_fast.size();      
-    int wpats = 0;
-    int bpats = 0;
+    int pats = 0;    
 
     for (int i = 0; i < loadmax; i++) {                        
         int pat = internal_patterns_fast[i];
@@ -38,19 +52,15 @@ Matcher::Matcher() {
         
         w = std::max(w, (unsigned char)1);
         
-        if (pat & (1 << 16)) {
-            pat &= ~(1 << 16);
-            m_patterns[FastBoard::WHITE][pat] = w;
-            wpats++;
-        } else {
-            m_patterns[FastBoard::BLACK][pat] = w; 
-            bpats++;
-        }                        
+        pat &= ~(1 << 16);
+            
+        m_patterns[pat] = w; 
+        pats++;        
     }
     
-    Utils::myprintf("Loaded %d black and %d white fast patterns\n", wpats, bpats);
+    Utils::myprintf("Loaded %d fast patterns\n", pats);
 }
 
-unsigned char Matcher::matches(int color, int pattern) {
-    return m_patterns[color][pattern];
+unsigned char Matcher::matches(int pattern) {
+    return m_patterns[pattern];
 }

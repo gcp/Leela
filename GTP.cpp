@@ -13,6 +13,7 @@
 #include "UCTSearch.h"
 #include "SGFTree.h"
 #include "AttribScores.h"
+#include "Genetic.h"
 
 using namespace Utils;
 
@@ -496,6 +497,11 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::auto_ptr<AttribScores> scores(new AttribScores);
         
         scores->autotune_from_file(filename);
+        
+        gtp_printf(id, "");
+        return true;
+    } else if (command.find("genetune") == 0) {        
+        genetic_tune();
         
         gtp_printf(id, "");
         return true;

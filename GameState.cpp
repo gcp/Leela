@@ -143,7 +143,7 @@ void GameState::start_clock(int color) {
 void GameState::display_state() {
     FastState::display_state();
 
-    m_timecontrol.display_times();
+    m_timecontrol.display_times();        
 }
 
 TimeControl * GameState::get_timecontrol() {

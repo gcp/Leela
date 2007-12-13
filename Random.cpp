@@ -21,6 +21,8 @@ Random::Random(int seed) {
     }        
 }
 
+// n must be between 1 .. (1<<16) + 1
+// 0 .. n-1
 uint32 Random::randint(const uint16 max) {
     return ((random() >> 16) * max) >> 16;
 }

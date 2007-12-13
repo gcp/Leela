@@ -58,10 +58,16 @@ GameState SGFTree::get_mainline(unsigned int movenum) {
 }
 
 KoState * SGFTree::get_state_from_mainline(unsigned int movenum) {     
-    SGFTree * link = this;             
+    SGFTree * link = this;   
+    SGFTree * last = this;          
 
     for (unsigned int i = 0; i <= movenum && link != NULL; i++) {        
         link = link->get_child(0);
+        if (link == NULL) {
+            return last->get_state();
+        } else {
+            last = link;
+        }
     }
 
     return link->get_state();
