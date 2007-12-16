@@ -37,6 +37,7 @@ public:
     void ponder();    
     bool is_running();      
     Playout play_simulation(KoState & currstate, UCTNode * node);
+    float get_score();
     
 private:             
     void dump_stats(GameState & state, UCTNode & parent);
@@ -49,6 +50,7 @@ private:
     UCTNode m_root;    
     int m_nodes;  
     int m_maxvisits;
+    float m_score;
     bool m_run;            
 };
 

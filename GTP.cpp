@@ -505,6 +505,17 @@ bool GTP::execute(GameState & game, std::string xinput) {
         
         gtp_printf(id, "");
         return true;
+    } else if (command.find("genesplit") == 0) {    
+        std::istringstream cmdstream(command);
+        std::string tmp, filename;
+
+        cmdstream >> tmp;   // eat tune 
+        cmdstream >> filename;          
+          
+        genetic_split(filename);
+        
+        gtp_printf(id, "");
+        return true;
     }
     
     /* unknown command, if GTP give GTP error else let main decide */

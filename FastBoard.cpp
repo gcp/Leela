@@ -1507,11 +1507,11 @@ void FastBoard::add_pattern_moves(int color, int vertex,
                                   std::vector<int> & work) {                                      
     Matcher * matcher = Matcher::get_Matcher();
     
-    typedef std::pair<int, int> movescore;
-    std::tr1::array<movescore, 8> moves;
+    //typedef std::pair<int, int> movescore;
+    //std::tr1::array<movescore, 8> moves;
     
-    int count = 0;
-    int cumul = 0;
+   // int count = 0;
+    //int cumul = 0;
 
     for (int i = 0; i < 8; i++) {        
         int sq = vertex + m_extradirs[i];
@@ -1519,13 +1519,14 @@ void FastBoard::add_pattern_moves(int color, int vertex,
         if (m_square[sq] == EMPTY) {      
             int pattern = get_pattern3(sq, color);
             int score = matcher->matches(pattern);            
+            //int score = match_pattern(color, sq);
             
             if (score) {                
                 if (!self_atari(color, sq)) {
                     work.push_back(sq);
-                    /*cumul += score;
-                    moves[count] = std::make_pair<int, int>(sq, cumul);
-                    count++;*/
+                    //cumul += score;
+                    //moves[count] = std::make_pair<int, int>(sq, cumul);
+                    //count++;
                 }
             }
         }                                        

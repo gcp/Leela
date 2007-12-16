@@ -17,7 +17,7 @@
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
-: m_rootstate(g), m_nodes(0), m_root(FastBoard::PASS, 0.0f),
+: m_rootstate(g), m_nodes(0), m_score(0.0f), m_root(FastBoard::PASS, 0.0f),
   m_maxvisits(UCTSearch::MAX_TREE_SIZE * 100) {    
 }
 
@@ -195,7 +195,9 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     }
     
     float bestscore = m_root.get_first_child()->get_winrate(color);   
-    int visits = m_root.get_first_child()->get_visits();        
+    int visits = m_root.get_first_child()->get_visits();
+    
+    m_score = bestscore;        
 
     // do we want to fiddle with the best move because of the rule set?
      if (passflag & UCTSearch::NOPASS) {
@@ -310,6 +312,10 @@ void UCTWorker::operator()() {
     } while(m_search->is_running()); 
 }
 
+float UCTSearch::get_score() {
+    return m_score;
+}
+
 int UCTSearch::think(int color, passflag_t passflag) {
     // set side to move
     m_rootstate.board.m_tomove = color;
@@ -324,7 +330,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
     
     //XXX: testing
-    //m_maxvisits = 10000;
+    m_maxvisits = 20000;
                  
     m_rootstate.start_clock(color);
 

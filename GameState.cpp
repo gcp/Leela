@@ -167,6 +167,11 @@ void GameState::anchor_game_history(void) {
     game_history.push_back(*this); 
 }
 
+void GameState::trim_game_history(int lastmove) {
+    movenum = lastmove - 1;
+    game_history.resize(lastmove);
+}
+
 bool GameState::set_fixed_handicap(int handicap) {
     if (!valid_handicap(handicap)) {
         return false;

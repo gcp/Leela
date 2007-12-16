@@ -12,6 +12,8 @@
 #include "Playout.h"
 #include "Random.h"
 #include "Matcher.h"
+#include "SGFParser.h"
+#include "UCTSearch.h"
 
 using namespace Utils;
 
@@ -19,7 +21,7 @@ float run_simulations(FastState & state, float res) {
     int wins = 0;
     int runs = 0;
     
-    for (int i = 0; i < 250; i++) {    
+    for (int i = 0; i < 100; i++) {    
         FastState tmp = state;
         int start_to_move = tmp.get_to_move();
         
@@ -53,7 +55,7 @@ float run_testsets() {
     int positions = 0;
     
     for (int j = 0; j < 3; j++) {
-        for (int i = 1; i <= 100; i++) {        
+        for (int i = 1; i <= 400; i++) {        
             std::string file = prefix[j];
             file += boost::lexical_cast<std::string>(i);
             file += std::string(".sgf");
@@ -73,17 +75,18 @@ float run_testsets() {
         }
     }
     
-    float mse = se/(float)positions;        
+    float mse = se/(float)positions;    
+    //myprintf("MSE: %f\n", mse);    
     
     return mse;
 }
 
 void genetic_tune() {
-    float bestmse = 1.0f;    
+    float bestmse = 1.0f;      
     
     typedef std::bitset<1 << 16> matchset;    
     
-    std::vector<matchset> pool(300);
+    std::vector<matchset> pool(200);
     std::vector<float> poolmse;
     poolmse.resize(pool.size());
     
@@ -117,13 +120,13 @@ void genetic_tune() {
 
     do {
         for (element = 0; element < pool.size(); element++) {                               
-            // pick 2 random ancestors with s = 2
+            // pick 2 random ancestors with s = 4
             float bestfather = 1.0f;
             float bestmother = 1.0f;
             int father;
             int mother;            
             
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 4; i++) {
                 int select = Random::get_Rng()->randint(pool.size());
                 if (poolmse[select] < bestfather) {
                     bestfather = poolmse[select];
@@ -131,7 +134,7 @@ void genetic_tune() {
                 }    
             }
             
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 4; i++) {
                 int select = Random::get_Rng()->randint(pool.size());
                 if (poolmse[select] < bestmother) {
                     bestmother = poolmse[select];
@@ -188,7 +191,7 @@ void genetic_tune() {
                 pool[element] = newrank;
                 poolmse[element] = err;            
             } else {
-                myprintf("E: %3d OMSE: %f NMSE: %f BMSE: %f father %3d mother %3d ELITE\n", 
+                myprintf("E: %3d OMSE: %f NMSE: %f BMSE: %f father %3d mother %3d BAD\n", 
                          element, poolmse[element], err, bestmse, father, mother);
             }  
         }
@@ -197,4 +200,74 @@ void genetic_tune() {
     } while (bestmse > 0.0f);
     
     return;
+}
+
+void genetic_split(std::string filename) {
+    int gametotal = SGFParser::count_games_in_file(filename);    
+    myprintf("Total games in file: %d\n", gametotal);    
+    int gamecount = 0;    
+    
+    while (gamecount < gametotal) {        
+        std::auto_ptr<SGFTree> sgftree(new SGFTree);        
+        sgftree->load_from_file(filename, gamecount);                    
+        
+        int movecount = sgftree->count_mainline_moves();                                
+        int counter = movecount - 5 - 1;
+        bool written = false;
+        
+        GameState game = sgftree->get_mainline();
+        
+        while (counter > 5 && !written) {                        
+            for (int i = 0; i < 5; i++) {
+                game.undo_move();
+            }
+            counter -= 5;  
+            game.trim_game_history(counter);
+            
+            int tomove = game.get_to_move();            
+            
+            std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+            int move = search->think(tomove, UCTSearch::NOPASS);
+            
+            float score = search->get_score();    
+            
+            myprintf("Score: %f\n", score);                           
+            
+            if (score > 0.66f && score < 0.85f) {            
+                std::string gamestr = SGFTree::state_to_string(&game, FastBoard::BLACK);
+                
+                std::ofstream fp_out;
+                std::string fname = "win\\" + boost::lexical_cast<std::string>(gamecount+1) + ".sgf";
+                fp_out.open(fname.c_str()); 
+                fp_out << gamestr;               
+                fp_out.close();     
+                
+                myprintf("Dumping WIN\n");
+                
+                written = true;           
+            } else if (score < 0.33f && score > 0.15f) {
+                std::string gamestr = SGFTree::state_to_string(&game, FastBoard::BLACK);
+                
+                std::ofstream fp_out;
+                std::string fname = "loss\\" + boost::lexical_cast<std::string>(gamecount+1) + ".sgf";
+                fp_out.open(fname.c_str()); 
+                fp_out << gamestr;               
+                fp_out.close();     
+                
+                myprintf("Dumping LOSS\n");
+                
+                written = true;
+            } else if ((score > 0.5f && score < 0.66f)
+                       || (score < 0.5f && score > 0.33f)) {
+                       
+                myprintf("Skipping\n");
+                                       
+                written = true;                       
+            }                        
+        }   
+        
+        myprintf("GENETIC moving to next game\n");
+        
+        gamecount++;
+    }                                                      
 }
