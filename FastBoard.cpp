@@ -1197,6 +1197,19 @@ bool FastBoard::self_atari(int color, int vertex) {
     return true;
 }
 
+int FastBoard::get_pattern_fast(const int sq) {
+    const int size = m_boardsize;
+    
+    return (m_square[sq - size - 2 - 1] << 14)
+         | (m_square[sq - size - 2]     << 12)
+         | (m_square[sq - size - 2 + 1] << 10)
+         | (m_square[sq - 1]            <<  8)
+         | (m_square[sq + 1]            <<  6)
+         | (m_square[sq + size + 2 - 1] <<  4)
+         | (m_square[sq + size + 2]     <<  2)
+         | (m_square[sq + size + 2 + 1] <<  0);   
+}
+
 int FastBoard::get_pattern3(const int sq, bool invert) {
     std::tr1::array<square_t, 8> sqs;
     const int size = m_boardsize;
@@ -1215,7 +1228,7 @@ int FastBoard::get_pattern3(const int sq, bool invert) {
         for (int i = 0; i < sqs.size(); i++) {
             sqs[i] = s_cinvert[sqs[i]];
         }
-    }
+    }  
     
     /*
         012
@@ -1517,8 +1530,8 @@ void FastBoard::add_pattern_moves(int color, int vertex,
         int sq = vertex + m_extradirs[i];
         
         if (m_square[sq] == EMPTY) {      
-            int pattern = get_pattern3(sq, color);
-            int score = matcher->matches(pattern);            
+            int pattern = get_pattern_fast(sq);
+            int score = matcher->matches(color, pattern);            
             //int score = match_pattern(color, sq);
             
             if (score) {                

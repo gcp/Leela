@@ -14,7 +14,7 @@ public:
     static const int UNITY = 52;
     static const int THRESHOLD = 8;
 
-    unsigned char matches(int pattern);
+    unsigned char matches(int color, int pattern);
 
     /*
         return the "global" matcher
@@ -25,7 +25,7 @@ public:
 private:            
     static Matcher* s_matcher;   
 
-    std::vector<unsigned char> m_patterns;
+    std::tr1::array<std::vector<unsigned char>, 2> m_patterns;
 };
 
 #endif

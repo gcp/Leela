@@ -330,7 +330,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
     
     //XXX: testing
-    m_maxvisits = 20000;
+    m_maxvisits = 10000;
                  
     m_rootstate.start_clock(color);
 

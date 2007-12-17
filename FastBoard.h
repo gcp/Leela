@@ -77,6 +77,7 @@ public:
 
     bool is_eye(const int color, const int vtx);
     bool no_eye_fill(const int i);
+    int get_pattern_fast(const int sq);    
     int get_pattern3(const int sq, bool invert);    
     int get_pattern4(const int sq, bool invert, bool extend);
     uint64 get_pattern5(const int sq, bool invert, bool extend);
