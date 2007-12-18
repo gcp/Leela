@@ -21,14 +21,33 @@ void Matcher::set_Matcher(Matcher * m) {
     s_matcher = m;
 }
 
-Matcher::Matcher(std::bitset<1<<16> & pats) {
-    //const int max = 1 << (8 * 2);
+Matcher::Matcher(std::tr1::array<unsigned char, 65536> & pats) {
+    const int max = 1 << (8 * 2);
 
-    //m_patterns.resize(max);        
+    m_patterns[FastBoard::BLACK].resize(max);    
+    m_patterns[FastBoard::WHITE].resize(max);    
+   
+     // minimal board we need is 3x3
+    FastBoard board;
+    board.reset_board(3);        
+     
+    // center square
+    int startvtx = board.get_vertex(1, 1);
+    
+    for (int i = 0; i < max; i++) {
+        int w = i;
+        // fill board
+        for (int k = 0; k < 8; k++) {
+            board.set_square(startvtx + board.get_extra_dir(k), 
+                             static_cast<FastBoard::square_t>(w & 3));
+            w = w >> 2;
+        }     
+        int reducpat1 = board.get_pattern3(startvtx, false);
+        int reducpat2 = board.get_pattern3(startvtx, true);
 
-    //for (int i = 0; i < max; i++) {
-    //    m_patterns[i] = pats[i];        
-    //}
+        m_patterns[FastBoard::BLACK][i] = pats[reducpat1];
+        m_patterns[FastBoard::WHITE][i] = pats[reducpat2];
+    }           
 }
 
 
@@ -36,12 +55,12 @@ Matcher::Matcher(std::bitset<1<<16> & pats) {
 Matcher::Matcher() { 
     const int max = 1 << (8 * 2);
 
-     m_patterns[FastBoard::BLACK].resize(max);    
-     m_patterns[FastBoard::WHITE].resize(max);    
+    m_patterns[FastBoard::BLACK].resize(max);    
+    m_patterns[FastBoard::WHITE].resize(max);    
    
-     // minimal board we need is 3x3
-     FastBoard board;
-     board.reset_board(3);        
+    // minimal board we need is 3x3
+    FastBoard board;
+    board.reset_board(3);        
      
     // center square
     int startvtx = board.get_vertex(1, 1);

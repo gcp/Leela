@@ -8,11 +8,9 @@
 class Matcher {
 public:    
     Matcher();
-    Matcher(std::bitset<1<<16> & pats);
-
-    // fixed point math
-    static const int UNITY = 52;
-    static const int THRESHOLD = 8;
+    Matcher(std::tr1::array<unsigned char, 65536> & pats);
+        
+    static const int THRESHOLD = 16;
 
     unsigned char matches(int color, int pattern);
 
@@ -21,7 +19,7 @@ public:
     */            
     static Matcher* get_Matcher(void);
     static void set_Matcher(Matcher * m);
-    
+
 private:            
     static Matcher* s_matcher;   
 

@@ -83,21 +83,20 @@ float run_testsets() {
 
 void genetic_tune() {
     float bestmse = 1.0f;      
+        
+    typedef std::tr1::array<unsigned char, 65536> matchset;    
     
-    typedef std::bitset<1 << 16> matchset;    
-    
-    std::vector<matchset> pool(200);
+    std::vector<matchset> pool(300);
     std::vector<float> poolmse;
     poolmse.resize(pool.size());
     
     myprintf("Filling pool of %d entries...", pool.size());
     
     for (int i = 0; i < pool.size(); i++) {
-        for (int j = 0; j < pool[i].size(); j++) {
-            int bit1 = Random::get_Rng()->randint(2);            
-            pool[i][j] = (bool)bit1;            
+        for (int j = 0; j < pool[i].size(); j++) {            
+            pool[i][j] = Random::get_Rng()->randint(256);         
         }                
-    }    
+    } 
     
     myprintf("done\n");
     
@@ -154,9 +153,8 @@ void genetic_tune() {
                     } else {
                         newrank[i] = pool[mother][i];                    
                     }        
-                } else {
-                    int bit1 = Random::get_Rng()->randint(2);                
-                    newrank[i] = bit1;                
+                } else {                    
+                    newrank[i] = Random::get_Rng()->randint(256);
                 }            
             }       
             
@@ -174,7 +172,7 @@ void genetic_tune() {
                 fp_out.open(fname.c_str());
             
                 for (int i = 0; i < pool[element].size(); i++) {
-                    fp_out << pool[element][i] << std::endl;
+                    fp_out << (int)pool[element][i] << std::endl;
                 }                  
                     
                 fp_out.close();
