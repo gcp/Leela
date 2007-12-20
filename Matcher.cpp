@@ -73,11 +73,13 @@ Matcher::Matcher() {
                              static_cast<FastBoard::square_t>(w & 3));
             w = w >> 2;
         }     
-        int reducpat1 = board.get_pattern3(startvtx, false);
-        int reducpat2 = board.get_pattern3(startvtx, true);
+        //int reducpat1 = board.get_pattern3(startvtx, false);
+        //int reducpat2 = board.get_pattern3(startvtx, true);
                    
-        m_patterns[FastBoard::BLACK][i] = internal_weights_fast[reducpat1];
-        m_patterns[FastBoard::WHITE][i] = internal_weights_fast[reducpat2];
+        //m_patterns[FastBoard::BLACK][i] = internal_weights_fast[reducpat1];
+        //m_patterns[FastBoard::WHITE][i] = internal_weights_fast[reducpat2];
+        m_patterns[FastBoard::BLACK][i] = board.match_pattern(FastBoard::BLACK, startvtx);
+        m_patterns[FastBoard::WHITE][i] = board.match_pattern(FastBoard::WHITE, startvtx);        
     }           
 }
 

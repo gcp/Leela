@@ -86,7 +86,7 @@ void genetic_tune() {
         
     typedef std::tr1::array<unsigned char, 65536> matchset;    
     
-    std::vector<matchset> pool(300);
+    std::vector<matchset> pool(200);
     std::vector<float> poolmse;
     poolmse.resize(pool.size());
     
@@ -94,7 +94,7 @@ void genetic_tune() {
     
     for (int i = 0; i < pool.size(); i++) {
         for (int j = 0; j < pool[i].size(); j++) {            
-            pool[i][j] = Random::get_Rng()->randint(256);         
+            pool[i][j] = Random::get_Rng()->randint(2);         
         }                
     } 
     
@@ -154,7 +154,7 @@ void genetic_tune() {
                         newrank[i] = pool[mother][i];                    
                     }        
                 } else {                    
-                    newrank[i] = Random::get_Rng()->randint(256);
+                    newrank[i] = Random::get_Rng()->randint(2);
                 }            
             }       
             
@@ -210,16 +210,16 @@ void genetic_split(std::string filename) {
         sgftree->load_from_file(filename, gamecount);                    
         
         int movecount = sgftree->count_mainline_moves();                                
-        int counter = movecount - 5 - 1;
+        int counter = movecount - 7 - 1;
         bool written = false;
         
         GameState game = sgftree->get_mainline();
         
-        while (counter > 5 && !written) {                        
-            for (int i = 0; i < 5; i++) {
+        while (counter > 7 && !written) {                        
+            for (int i = 0; i < 7; i++) {
                 game.undo_move();
             }
-            counter -= 5;  
+            counter -= 7;  
             game.trim_game_history(counter);
             
             int tomove = game.get_to_move();            
@@ -231,7 +231,7 @@ void genetic_split(std::string filename) {
             
             myprintf("Score: %f\n", score);                           
             
-            if (score > 0.66f && score < 0.85f) {            
+            if (score > 0.66f && score < 0.90f) {            
                 std::string gamestr = SGFTree::state_to_string(&game, FastBoard::BLACK);
                 
                 std::ofstream fp_out;
@@ -243,7 +243,7 @@ void genetic_split(std::string filename) {
                 myprintf("Dumping WIN\n");
                 
                 written = true;           
-            } else if (score < 0.33f && score > 0.15f) {
+            } else if (score < 0.34f && score > 0.10f) {
                 std::string gamestr = SGFTree::state_to_string(&game, FastBoard::BLACK);
                 
                 std::ofstream fp_out;
@@ -256,7 +256,7 @@ void genetic_split(std::string filename) {
                 
                 written = true;
             } else if ((score > 0.5f && score < 0.66f)
-                       || (score < 0.5f && score > 0.33f)) {
+                       || (score < 0.5f && score > 0.34f)) {
                        
                 myprintf("Skipping\n");
                                        

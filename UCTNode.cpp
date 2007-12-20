@@ -93,11 +93,20 @@ int UCTNode::create_children(FastState & state) {
     int childrenadded = 0;
     int totalchildren = nodelist.size();
     
+    float bestscore;
+    // compare to second best move
+    // best move can be too extreme
+    if (totalchildren > 1) {
+        bestscore = nodelist[totalchildren-2].first;
+    }
+    
     for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
         if (totalchildren - childrenseen <= maxchilds) {
-            UCTNode * vtx = new UCTNode(it->second, it->first);
-            link_child(vtx);
-            childrenadded++;
+            if (it->first > bestscore * 0.05f) {
+                UCTNode * vtx = new UCTNode(it->second, it->first);
+                link_child(vtx);
+                childrenadded++;
+            }
         } 
         childrenseen++;
     }          
