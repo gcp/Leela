@@ -21,7 +21,7 @@ float run_simulations(FastState & state, float res) {
     int wins = 0;
     int runs = 0;
     
-    for (int i = 0; i < 100; i++) {    
+    for (int i = 0; i < 10; i++) {    
         FastState tmp = state;
         int start_to_move = tmp.get_to_move();
         
@@ -55,7 +55,7 @@ float run_testsets() {
     int positions = 0;
     
     for (int j = 0; j < 3; j++) {
-        for (int i = 1; i <= 400; i++) {        
+        for (int i = 1; i <= 2800; i++) {        
             std::string file = prefix[j];
             file += boost::lexical_cast<std::string>(i);
             file += std::string(".sgf");
