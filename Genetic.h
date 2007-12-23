@@ -3,8 +3,20 @@
 
 #include "config.h"
 #include <string>
+#include <vector>
 
-void genetic_tune();
-void genetic_split(std::string filename);
+#include "FastState.h"
+
+class Genetic {
+public:
+    void genetic_tune();
+    void genetic_split(std::string filename);
+    float run_simulations(FastState & state, float res);
+    float run_testsets();
+    void load_testsets();
+private:    
+    std::vector<FastState> m_winpool;
+    std::vector<FastState> m_losepool;
+};
 
 #endif

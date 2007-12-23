@@ -17,7 +17,7 @@
 
 using namespace Utils;
 
-float run_simulations(FastState & state, float res) {            
+float Genetic::run_simulations(FastState & state, float res) {            
     int wins = 0;
     int runs = 0;
     
@@ -47,15 +47,15 @@ float run_simulations(FastState & state, float res) {
     return sqerr;
 }
 
-float run_testsets() {
-    static const std::string prefix[] = { "win\\", "draw\\", "loss\\" };
-    static const float values[] = { 1.0f, 0.5f, 0.0f };
+void Genetic::load_testsets() {
+    static const std::string prefix[] = { "win\\", "loss\\" };
+    static const float values[] = { 1.0f, 0.0f };
 
     float se = 0.0f;
     int positions = 0;
     
-    for (int j = 0; j < 3; j++) {
-        for (int i = 1; i <= 2800; i++) {        
+    for (int j = 0; j < 2; j++) {
+        for (int i = 1; i <= 20000; i++) {        
             std::string file = prefix[j];
             file += boost::lexical_cast<std::string>(i);
             file += std::string(".sgf");
@@ -66,13 +66,41 @@ float run_testsets() {
                 int moves = sgftree->count_mainline_moves();
                 if (moves > 0) {
                     FastState state = (*sgftree->get_state_from_mainline());   
-                    //myprintf("Running %s\t", file.c_str());
-                    se += run_simulations(state, values[j]);
-                    positions++;
+                    if (values[j] > 0.5f) {
+                        m_winpool.push_back(state);
+                    } else {
+                        m_losepool.push_back(state);
+                    }                                                                                
                 }
             } catch (...) {
             }            
         }
+    }
+    
+    std::vector<FastState>(m_winpool).swap(m_winpool);
+    std::vector<FastState>(m_losepool).swap(m_losepool);    
+    
+    myprintf("Loaded %d winning, %d losing positions\n", m_winpool.size(), m_losepool.size());
+    
+    return;
+}
+
+float Genetic::run_testsets() {    
+    float se = 0.0f;
+    int positions = 0;
+    
+    for (int i = 0; i < m_winpool.size(); i++) {
+        FastState state = m_winpool[i];   
+        //myprintf("Running %s\t", file.c_str());
+        se += run_simulations(state, 1.0f);
+        positions++;
+    }
+    
+    for (int i = 0; i < m_losepool.size(); i++) {
+        FastState state = m_losepool[i];   
+        //myprintf("Running %s\t", file.c_str());
+        se += run_simulations(state, 0.0f);
+        positions++;
     }
     
     float mse = se/(float)positions;    
@@ -81,12 +109,16 @@ float run_testsets() {
     return mse;
 }
 
-void genetic_tune() {
+void Genetic::genetic_tune() {
+    // load the sets
+    load_testsets();
+
+    // run the optimization
     float bestmse = 1.0f;      
         
     typedef std::tr1::array<unsigned char, 65536> matchset;    
     
-    std::vector<matchset> pool(200);
+    std::vector<matchset> pool(500);
     std::vector<float> poolmse;
     poolmse.resize(pool.size());
     
@@ -125,7 +157,7 @@ void genetic_tune() {
             int father;
             int mother;            
             
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 2; i++) {
                 int select = Random::get_Rng()->randint(pool.size());
                 if (poolmse[select] < bestfather) {
                     bestfather = poolmse[select];
@@ -133,7 +165,7 @@ void genetic_tune() {
                 }    
             }
             
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 2; i++) {
                 int select = Random::get_Rng()->randint(pool.size());
                 if (poolmse[select] < bestmother) {
                     bestmother = poolmse[select];
@@ -164,8 +196,11 @@ void genetic_tune() {
         
             float err = run_testsets();                                                                                       
             
-            if (err < bestmse) {
+            if (err < bestmse) {            
                 bestmse = err;
+                
+                pool[element] = newrank;
+                poolmse[element] = err;            
                 
                 std::ofstream fp_out;
                 std::string fname = "matcher_" + boost::lexical_cast<std::string>(err) + "_.txt";
@@ -178,18 +213,19 @@ void genetic_tune() {
                 fp_out.close();
             }                
             
-            if (/*poolmse[element] - 0.00001f > bestmse*/ err < poolmse[element]) {
+            if (/*poolmse[element] - 0.00001f > bestmse*/1) {
                 if (err < poolmse[element]) {
                     myprintf("E: %3d OMSE: %f NMSE: %f BMSE: %f father %3d mother %3d Good\n", 
                              element, poolmse[element], err, bestmse, father, mother);
+                             
+                    pool[element] = newrank;
+                    poolmse[element] = err;                                         
                 } else {
                     myprintf("E: %3d OMSE: %f NMSE: %f BMSE: %f father %3d mother %3d Bad\n", 
                              element, poolmse[element], err, bestmse, father, mother);
-                }
-                pool[element] = newrank;
-                poolmse[element] = err;            
+                }                
             } else {
-                myprintf("E: %3d OMSE: %f NMSE: %f BMSE: %f father %3d mother %3d BAD\n", 
+                myprintf("E: %3d OMSE: %f NMSE: %f BMSE: %f father %3d mother %3d ELITE\n", 
                          element, poolmse[element], err, bestmse, father, mother);
             }  
         }
@@ -200,7 +236,7 @@ void genetic_tune() {
     return;
 }
 
-void genetic_split(std::string filename) {
+void Genetic::genetic_split(std::string filename) {
     int gametotal = SGFParser::count_games_in_file(filename);    
     myprintf("Total games in file: %d\n", gametotal);    
     int gamecount = 0;    

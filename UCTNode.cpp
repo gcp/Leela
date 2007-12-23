@@ -277,11 +277,11 @@ UCTNode* UCTNode::uct_select_child(int color) {
                 
                 uctvalue = winrate + uct;
                 
-                patternbonus = child->get_score() * 0.05f / child->get_visits();
+                patternbonus = (child->get_score() * 0.01f) / child->get_visits();
             } else {
                 uctvalue = 1.1f;
                 
-                patternbonus = child->get_score() * 0.05f;
+                patternbonus = (child->get_score() * 0.01f);
             }                                                    
             
             // RAVE part            
