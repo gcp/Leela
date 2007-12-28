@@ -1,3 +1,7 @@
+#include "config.h"
+
+#include <map>
+
 #include "Matcher.h"
 #include "FastBoard.h"
 #include "WeightsMatcher.h"
@@ -65,6 +69,14 @@ Matcher::Matcher() {
     // center square
     int startvtx = board.get_vertex(1, 1);
     
+    typedef std::map<int, float> patmap;    
+    patmap patweights;
+    
+    for (int i = 0; i < internal_weights_fast.size(); i++) {
+        patweights.insert(std::make_pair(internal_patterns_fast[i],
+                                         internal_weights_fast[i]));
+    }    
+    
     for (int i = 0; i < max; i++) {
         int w = i;
         // fill board
@@ -73,13 +85,29 @@ Matcher::Matcher() {
                              static_cast<FastBoard::square_t>(w & 3));
             w = w >> 2;
         }     
-        //int reducpat1 = board.get_pattern3(startvtx, false);
-        //int reducpat2 = board.get_pattern3(startvtx, true);
-                   
-        //m_patterns[FastBoard::BLACK][i] = internal_weights_fast[reducpat1];
-        //m_patterns[FastBoard::WHITE][i] = internal_weights_fast[reducpat2];
-        m_patterns[FastBoard::BLACK][i] = board.match_pattern(FastBoard::BLACK, startvtx);
-        m_patterns[FastBoard::WHITE][i] = board.match_pattern(FastBoard::WHITE, startvtx);        
+        int reducpat1 = board.get_pattern3(startvtx, false);
+        int reducpat2 = board.get_pattern3(startvtx, true);
+        
+        patmap::iterator it = patweights.find(reducpat1);
+        
+        if (it != patweights.end()) {
+            float weight = it->second * (Matcher::PROXFACTOR * Matcher::UNITY);
+            m_patterns[FastBoard::BLACK][i] = (int)(weight + 0.5f);
+        } else {
+            m_patterns[FastBoard::BLACK][i] = Matcher::UNITY * Matcher::PROXFACTOR;        
+        }
+        
+        it = patweights.find(reducpat2);
+        
+        if (it != patweights.end()) {
+            float weight = it->second * (Matcher::PROXFACTOR * Matcher::UNITY);
+            m_patterns[FastBoard::WHITE][i] = (int)(weight + 0.5f);
+        } else {
+            m_patterns[FastBoard::WHITE][i] = Matcher::UNITY * Matcher::PROXFACTOR;        
+        }
+                           
+        //m_patterns[FastBoard::BLACK][i] = board.match_pattern(FastBoard::BLACK, startvtx);
+        //m_patterns[FastBoard::WHITE][i] = board.match_pattern(FastBoard::WHITE, startvtx);        
     }           
 }
 

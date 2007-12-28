@@ -233,7 +233,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(85);
+    m_fweight.resize(4);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -369,10 +369,20 @@ void AttribScores::autotune_from_file(std::string filename) {
             fp_out << m_fweight[i] << std::endl;
         }
         
+        fp_out << std::endl;
+        
         for (int i = 0; i < goodpats.size(); i++) {
             uint64 idx = goodpats[i];
             
-            fp_out << idx << " " << get_patweight(idx) << std::endl;
+            fp_out << idx << "," << std::endl;
+        }
+        
+        fp_out << std::endl;
+        
+        for (int i = 0; i < goodpats.size(); i++) {
+            uint64 idx = goodpats[i];
+            
+            fp_out << get_patweight(idx) << "," << std::endl;
         }
         
         fp_out.close();

@@ -1534,7 +1534,7 @@ void FastBoard::add_pattern_moves(int color, int vertex,
             int score = matcher->matches(color, pattern);            
             //int score = match_pattern(color, sq);
             
-            if (score) {                
+            if (score >= Matcher::UNITY) {                
                 if (!self_atari(color, sq)) {
                     work.push_back(sq);
                     //cumul += score;
@@ -1775,7 +1775,7 @@ int FastBoard::capture_size(int color, int vertex) {
         }                                                
     }  
     
-    return false;
+    return 0;
 }
 
 void FastBoard::try_capture(int color, int vertex, std::vector<int> & work) {

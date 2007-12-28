@@ -9,8 +9,10 @@ class Matcher {
 public:    
     Matcher();
     Matcher(std::tr1::array<unsigned char, 65536> & pats);
-        
-    static const int THRESHOLD = 16;
+    
+    static const int UNITY = 2;    
+    static const int THRESHOLD = 2;
+    static const int PROXFACTOR = 50;
 
     unsigned char matches(int color, int pattern);
 
