@@ -12,7 +12,7 @@ public:
     
     static const int UNITY = 2;    
     static const int THRESHOLD = 2;
-    static const int PROXFACTOR = 50;
+    static const int PROXFACTOR = 40;
 
     unsigned char matches(int color, int pattern);
 
