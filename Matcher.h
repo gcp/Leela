@@ -10,7 +10,7 @@ public:
     Matcher();
     Matcher(std::tr1::array<unsigned char, 65536> & pats);
     
-    static const int UNITY = 2;    
+    static const int UNITY = 2;
     static const int THRESHOLD = 2;
     static const int PROXFACTOR = 40;
 
@@ -23,6 +23,8 @@ public:
     static void set_Matcher(Matcher * m);
 
 private:            
+    static unsigned char clip(int val);
+
     static Matcher* s_matcher;   
 
     std::tr1::array<std::vector<unsigned char>, 2> m_patterns;

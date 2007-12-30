@@ -1520,11 +1520,11 @@ void FastBoard::add_pattern_moves(int color, int vertex,
                                   std::vector<int> & work) {                                      
     Matcher * matcher = Matcher::get_Matcher();
     
-   /* typedef std::pair<int, int> movescore;
+    typedef std::pair<int, int> movescore;
     std::tr1::array<movescore, 8> moves;
     
     int count = 0;
-    int cumul = 0;*/
+    int cumul = 0;        
 
     for (int i = 0; i < 8; i++) {        
         int sq = vertex + m_extradirs[i];
@@ -1535,16 +1535,15 @@ void FastBoard::add_pattern_moves(int color, int vertex,
             //int score = match_pattern(color, sq);
             
             if (score >= Matcher::UNITY) {                
-                if (!self_atari(color, sq)) {
-                    work.push_back(sq);
-                    //cumul += score;
-                    //moves[count] = std::make_pair<int, int>(sq, cumul);
-                    //count++;
+                if (!self_atari(color, sq)) {                    
+                    cumul += score;
+                    moves[count] = std::make_pair(sq, cumul);
+                    count++;
                 }
             }
         }                                        
     }                       
-    /*
+    
     int index = Random::get_Rng()->randint(cumul);
     
     for (int i = 0; i < count; i++) {
@@ -1553,7 +1552,7 @@ void FastBoard::add_pattern_moves(int color, int vertex,
             work.push_back(moves[i].first);
             return;
         }
-    }*/
+    }
 }        
 
 // check for fixed patterns around vertex for color to move
