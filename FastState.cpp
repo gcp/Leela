@@ -151,26 +151,32 @@ int FastState::play_random_move(int color) {
         }         
         
         return play_move_fast(vtx);
-    } else {          
+    } else {         
         Matcher * matcher = Matcher::get_Matcher();        
         
         int loops = 2;
-        int vtx = FastBoard::PASS;
-        bool goodmove = false;
+        int bestvtx = FastBoard::PASS;
+        int bestscore = -1;
         
         do {
             int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
-            vtx  = walk_empty_list(board.m_tomove, vidx, true);
+            int vtx = walk_empty_list(board.m_tomove, vidx, true);
             
             int pattern = board.get_pattern_fast(vtx);
             int score = matcher->matches(color, pattern);   
-            
-            if (score >= Matcher::THRESHOLD) {
-                goodmove = true;
-            }            
-        } while (--loops > 0 && !goodmove);
+                        
+            if (score > bestscore) {
+                if (board.self_atari(color, vtx)) {
+                    score = score / 40;
+                }
+                if (score > bestscore) {                
+                    bestscore = score;
+                    bestvtx = vtx;
+                }
+            }
+        } while (--loops > 0);
         
-        return play_move_fast(vtx);  
+        return play_move_fast(bestvtx);  
     }                  
 }
 

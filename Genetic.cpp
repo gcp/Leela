@@ -21,7 +21,7 @@ float Genetic::run_simulations(FastState & state, float res) {
     int wins = 0;
     int runs = 0;
     
-    for (int i = 0; i < 10; i++) {    
+    for (int i = 0; i < 30; i++) {    
         FastState tmp = state;
         int start_to_move = tmp.get_to_move();
         
@@ -55,7 +55,7 @@ void Genetic::load_testsets() {
     int positions = 0;
     
     for (int j = 0; j < 2; j++) {
-        for (int i = 1; i <= 20000; i++) {        
+        for (int i = 1; i <= 15000; i++) {        
             std::string file = prefix[j];
             file += boost::lexical_cast<std::string>(i);
             file += std::string(".sgf");
@@ -104,7 +104,7 @@ float Genetic::run_testsets() {
     }
     
     float mse = se/(float)positions;    
-    //myprintf("MSE: %f\n", mse);    
+    myprintf("MSE: %f\n", mse);    
     
     return mse;
 }
@@ -112,6 +112,10 @@ float Genetic::run_testsets() {
 void Genetic::genetic_tune() {
     // load the sets
     load_testsets();
+    
+    float err = run_testsets();     
+                
+    return;                
 
     // run the optimization
     float bestmse = 1.0f;      
