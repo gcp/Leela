@@ -1961,7 +1961,7 @@ void FastBoard::add_global_captures(int color, std::vector<int> & work) {
         int sq = m_critical.front();
         m_critical.pop();                
         
-        try_capture(color, sq, work);
+        try_big_capture(color, sq, work);
     }
 }
 
@@ -2007,7 +2007,7 @@ int FastBoard::capture_size(int color, int vertex) {
     return 0;
 }
 
-void FastBoard::try_capture(int color, int vertex, std::vector<int> & work) {
+void FastBoard::try_big_capture(int color, int vertex, std::vector<int> & work) {
     if (m_square[vertex] == EMPTY) {                
         int limitlibs = count_neighbours(!color, vertex);
         
@@ -2043,9 +2043,10 @@ void FastBoard::try_capture(int color, int vertex, std::vector<int> & work) {
                     
                     assert(samenbrs <= lib);    
                     
-                    if (samenbrs >= lib) {                            
-                        work.push_back(vertex);  
-                        return;                                                  
+                    if (samenbrs >= lib) {
+                        if (string_size(ai) > 1) {                            
+                            work.push_back(vertex);                              
+                        }                        
                     }                                        
                 }                        
             }                                                

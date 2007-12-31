@@ -153,7 +153,7 @@ protected:
                                                std::tr1::array<int, N> & nbr_libs, 
                                                int & nbr_libs_cnt);
     void kill_neighbours(int vertex, std::vector<int> & work);                                  
-    void try_capture(int color, int vertex, std::vector<int> & work);
+    void try_big_capture(int color, int vertex, std::vector<int> & work);
     int string_size(int vertex);
     FastBoard remove_dead();
 };
