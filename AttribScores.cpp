@@ -233,7 +233,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(4);
+    m_fweight.resize(2);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -362,7 +362,7 @@ void AttribScores::autotune_from_file(std::string filename) {
         myprintf("Pass %d done\n", pass);
         
         std::ofstream fp_out;
-        std::string fname = "fparam" + boost::lexical_cast<std::string>(pass) + ".txt";
+        std::string fname = "r_fparam" + boost::lexical_cast<std::string>(pass) + ".txt";
         fp_out.open(fname.c_str());
         
         for (int i = 0; i < m_fweight.size(); i++) {

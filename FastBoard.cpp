@@ -1210,6 +1210,56 @@ int FastBoard::get_pattern_fast(const int sq) {
          | (m_square[sq + size + 2 + 1] <<  0);   
 }
 
+int FastBoard::get_pattern_fast_augment(const int sq) {
+    const int size = m_boardsize;
+    std::tr1::array<square_t, 8> sqs;
+    std::tr1::array<int, 4> lib;
+    int res;
+    
+    sqs[0] = m_square[sq - size - 2 - 1];
+    sqs[1] = m_square[sq - size - 2];
+    sqs[2] = m_square[sq - size - 2 + 1];
+    sqs[3] = m_square[sq - 1];
+    sqs[4] = m_square[sq + 1];
+    sqs[5] = m_square[sq + size + 2 - 1];
+    sqs[6] = m_square[sq + size + 2];
+    sqs[7] = m_square[sq + size + 2 + 1];
+    
+    res =  (sqs[0] << 14)
+         | (sqs[1] << 12)
+         | (sqs[2] << 10)
+         | (sqs[3] <<  8)
+         | (sqs[4] <<  6)
+         | (sqs[5] <<  4)
+         | (sqs[6] <<  2)
+         | (sqs[7] <<  0);   
+         
+    if (sqs[1] == WHITE || sqs[1] == BLACK) {
+        lib[0] = in_atari(sq - size - 2) != 0;
+    } else {
+        lib[0] = 0;
+    }
+    if (sqs[3] == WHITE || sqs[3] == BLACK) {
+        lib[1] = in_atari(sq - 1) != 0;
+    } else {
+        lib[1] = 0;
+    }
+    if (sqs[4] == WHITE || sqs[4] == BLACK) {
+        lib[2] = in_atari(sq + 1) != 0;
+    } else {
+        lib[2] = 0;
+    }
+    if (sqs[6] == WHITE || sqs[6] == BLACK) {
+        lib[3] = in_atari(sq + size + 2) != 0;
+    } else {
+        lib[3] = 0;
+    }    
+    
+    res |= (lib[0] << 19 | lib[1] << 18 | lib[2] << 17 | lib[3] << 16);
+    
+    return res;
+}
+
 int FastBoard::get_pattern3(const int sq, bool invert) {
     std::tr1::array<square_t, 8> sqs;
     const int size = m_boardsize;
@@ -1262,6 +1312,186 @@ int FastBoard::get_pattern3(const int sq, bool invert) {
              
     int idx8 = (sqs[5] << 14) | (sqs[6] << 12) | (sqs[7] << 10) | (sqs[3] <<  8)
              | (sqs[4] <<  6) | (sqs[0] <<  4) | (sqs[1] <<  2) | (sqs[2] <<  0);
+             
+    idx1 = std::min(idx1, idx2);
+    idx3 = std::min(idx3, idx4);
+    idx5 = std::min(idx5, idx6);
+    idx7 = std::min(idx7, idx8);
+    
+    idx1 = std::min(idx1, idx3);
+    idx5 = std::min(idx5, idx7);
+    
+    idx1 = std::min(idx1, idx5);                  
+          
+    return idx1;                   
+}
+
+int FastBoard::get_pattern3_augment(const int sq, bool invert) {
+    std::tr1::array<square_t, 8> sqs;
+    std::tr1::array<int, 4> lib;
+    const int size = m_boardsize;        
+    
+    sqs[0] = m_square[sq - size - 2 - 1];
+    sqs[1] = m_square[sq - size - 2];
+    sqs[2] = m_square[sq - size - 2 + 1];
+    sqs[3] = m_square[sq - 1];
+    sqs[4] = m_square[sq + 1];
+    sqs[5] = m_square[sq + size + 2 - 1];
+    sqs[6] = m_square[sq + size + 2];
+    sqs[7] = m_square[sq + size + 2 + 1];
+    if (sqs[1] == WHITE || sqs[1] == BLACK) {
+        lib[0] = in_atari(sq - size - 2) != 0;
+    } else {
+        lib[0] = 0;
+    }
+    if (sqs[3] == WHITE || sqs[3] == BLACK) {
+        lib[1] = in_atari(sq - 1) != 0;
+    } else {
+        lib[1] = 0;
+    }
+    if (sqs[4] == WHITE || sqs[4] == BLACK) {
+        lib[2] = in_atari(sq + 1) != 0;
+    } else {
+        lib[2] = 0;
+    }
+    if (sqs[6] == WHITE || sqs[6] == BLACK) {
+        lib[3] = in_atari(sq + size + 2) != 0;
+    } else {
+        lib[3] = 0;
+    }
+    
+    /* color symmetry */
+    if (invert) {
+        for (int i = 0; i < sqs.size(); i++) {
+            sqs[i] = s_cinvert[sqs[i]];
+        }
+    }  
+    
+    /*
+        012       0
+        3 4      1 2
+        567       3
+    */            
+    int idx1 = (sqs[0] << 14) | (sqs[1] << 12) | (sqs[2] << 10) | (sqs[3] <<  8)
+             | (sqs[4] <<  6) | (sqs[5] <<  4) | (sqs[6] <<  2) | (sqs[7] <<  0);
+    idx1 |= (lib[0] << 19 | lib[1] << 18 | lib[2] << 17 | lib[3] << 16);             
+
+    int idx2 = (sqs[5] << 14) | (sqs[3] << 12) | (sqs[0] << 10) | (sqs[6] <<  8)
+             | (sqs[1] <<  6) | (sqs[7] <<  4) | (sqs[4] <<  2) | (sqs[2] <<  0);
+    idx2 |= (lib[1] << 19 | lib[3] << 18 | lib[0] << 17 | lib[2] << 16);               
+             
+    int idx3 = (sqs[7] << 14) | (sqs[6] << 12) | (sqs[5] << 10) | (sqs[4] <<  8)
+             | (sqs[3] <<  6) | (sqs[2] <<  4) | (sqs[1] <<  2) | (sqs[0] <<  0);
+    idx3 |= (lib[3] << 19 | lib[2] << 18 | lib[1] << 17 | lib[0] << 16);               
+             
+    int idx4 = (sqs[2] << 14) | (sqs[4] << 12) | (sqs[7] << 10) | (sqs[1] <<  8)
+             | (sqs[6] <<  6) | (sqs[0] <<  4) | (sqs[3] <<  2) | (sqs[5] <<  0);
+    idx4 |= (lib[2] << 19 | lib[0] << 18 | lib[3] << 17 | lib[1] << 16);               
+    
+    /*
+        035    1
+        1 6   0 3
+        247    2
+    */                  
+    int idx5 = (sqs[0] << 14) | (sqs[3] << 12) | (sqs[5] << 10) | (sqs[1] <<  8)
+             | (sqs[6] <<  6) | (sqs[2] <<  4) | (sqs[4] <<  2) | (sqs[7] <<  0);
+    idx5 |= (lib[1] << 19 | lib[0] << 18 | lib[3] << 17 | lib[2] << 16);               
+             
+    int idx6 = (sqs[2] << 14) | (sqs[1] << 12) | (sqs[0] << 10) | (sqs[4] <<  8)
+             | (sqs[3] <<  6) | (sqs[7] <<  4) | (sqs[6] <<  2) | (sqs[5] <<  0);
+    idx6 |= (lib[0] << 19 | lib[2] << 18 | lib[1] << 17 | lib[3] << 16);               
+
+    int idx7 = (sqs[7] << 14) | (sqs[4] << 12) | (sqs[2] << 10) | (sqs[6] <<  8)
+             | (sqs[1] <<  6) | (sqs[5] <<  4) | (sqs[3] <<  2) | (sqs[0] <<  0);
+    idx7 |= (lib[2] << 19 | lib[3] << 18 | lib[0] << 17 | lib[1] << 16);               
+             
+    int idx8 = (sqs[5] << 14) | (sqs[6] << 12) | (sqs[7] << 10) | (sqs[3] <<  8)
+             | (sqs[4] <<  6) | (sqs[0] <<  4) | (sqs[1] <<  2) | (sqs[2] <<  0);
+    idx8 |= (lib[3] << 19 | lib[1] << 18 | lib[2] << 17 | lib[0] << 16);               
+             
+    idx1 = std::min(idx1, idx2);
+    idx3 = std::min(idx3, idx4);
+    idx5 = std::min(idx5, idx6);
+    idx7 = std::min(idx7, idx8);
+    
+    idx1 = std::min(idx1, idx3);
+    idx5 = std::min(idx5, idx7);
+    
+    idx1 = std::min(idx1, idx5);                  
+          
+    return idx1;                   
+}
+
+int FastBoard::get_pattern3_augment_spec(const int sq, int libspec, bool invert) {
+    std::tr1::array<square_t, 8> sqs;
+    std::tr1::array<int, 4> lib;
+    const int size = m_boardsize;        
+    
+    sqs[0] = m_square[sq - size - 2 - 1];
+    sqs[1] = m_square[sq - size - 2];
+    sqs[2] = m_square[sq - size - 2 + 1];
+    sqs[3] = m_square[sq - 1];
+    sqs[4] = m_square[sq + 1];
+    sqs[5] = m_square[sq + size + 2 - 1];
+    sqs[6] = m_square[sq + size + 2];
+    sqs[7] = m_square[sq + size + 2 + 1];
+    
+    lib[3] = libspec & 1;
+    libspec >>= 1;
+    lib[2] = libspec & 1;
+    libspec >>= 1;
+    lib[1] = libspec & 1;   
+    libspec >>= 1; 
+    lib[0] = libspec & 1;
+    
+    /* color symmetry */
+    if (invert) {
+        for (int i = 0; i < sqs.size(); i++) {
+            sqs[i] = s_cinvert[sqs[i]];
+        }
+    }  
+    
+    /*
+        012       0
+        3 4      1 2
+        567       3
+    */            
+    int idx1 = (sqs[0] << 14) | (sqs[1] << 12) | (sqs[2] << 10) | (sqs[3] <<  8)
+             | (sqs[4] <<  6) | (sqs[5] <<  4) | (sqs[6] <<  2) | (sqs[7] <<  0);
+    idx1 |= (lib[0] << 19 | lib[1] << 18 | lib[2] << 17 | lib[3] << 16);             
+
+    int idx2 = (sqs[5] << 14) | (sqs[3] << 12) | (sqs[0] << 10) | (sqs[6] <<  8)
+             | (sqs[1] <<  6) | (sqs[7] <<  4) | (sqs[4] <<  2) | (sqs[2] <<  0);
+    idx2 |= (lib[1] << 19 | lib[3] << 18 | lib[0] << 17 | lib[2] << 16);               
+             
+    int idx3 = (sqs[7] << 14) | (sqs[6] << 12) | (sqs[5] << 10) | (sqs[4] <<  8)
+             | (sqs[3] <<  6) | (sqs[2] <<  4) | (sqs[1] <<  2) | (sqs[0] <<  0);
+    idx3 |= (lib[3] << 19 | lib[2] << 18 | lib[1] << 17 | lib[0] << 16);               
+             
+    int idx4 = (sqs[2] << 14) | (sqs[4] << 12) | (sqs[7] << 10) | (sqs[1] <<  8)
+             | (sqs[6] <<  6) | (sqs[0] <<  4) | (sqs[3] <<  2) | (sqs[5] <<  0);
+    idx4 |= (lib[2] << 19 | lib[0] << 18 | lib[3] << 17 | lib[1] << 16);               
+    
+    /*
+        035    1
+        1 6   0 3
+        247    2
+    */                  
+    int idx5 = (sqs[0] << 14) | (sqs[3] << 12) | (sqs[5] << 10) | (sqs[1] <<  8)
+             | (sqs[6] <<  6) | (sqs[2] <<  4) | (sqs[4] <<  2) | (sqs[7] <<  0);
+    idx5 |= (lib[1] << 19 | lib[0] << 18 | lib[3] << 17 | lib[2] << 16);               
+             
+    int idx6 = (sqs[2] << 14) | (sqs[1] << 12) | (sqs[0] << 10) | (sqs[4] <<  8)
+             | (sqs[3] <<  6) | (sqs[7] <<  4) | (sqs[6] <<  2) | (sqs[5] <<  0);
+    idx6 |= (lib[0] << 19 | lib[2] << 18 | lib[1] << 17 | lib[3] << 16);               
+
+    int idx7 = (sqs[7] << 14) | (sqs[4] << 12) | (sqs[2] << 10) | (sqs[6] <<  8)
+             | (sqs[1] <<  6) | (sqs[5] <<  4) | (sqs[3] <<  2) | (sqs[0] <<  0);
+    idx7 |= (lib[2] << 19 | lib[3] << 18 | lib[0] << 17 | lib[1] << 16);               
+             
+    int idx8 = (sqs[5] << 14) | (sqs[6] << 12) | (sqs[7] << 10) | (sqs[3] <<  8)
+             | (sqs[4] <<  6) | (sqs[0] <<  4) | (sqs[1] <<  2) | (sqs[2] <<  0);
+    idx8 |= (lib[3] << 19 | lib[1] << 18 | lib[2] << 17 | lib[0] << 16);               
              
     idx1 = std::min(idx1, idx2);
     idx3 = std::min(idx3, idx4);
@@ -1530,7 +1760,7 @@ void FastBoard::add_pattern_moves(int color, int vertex,
         int sq = vertex + m_extradirs[i];
         
         if (m_square[sq] == EMPTY) {      
-            int pattern = get_pattern_fast(sq);
+            int pattern = get_pattern_fast_augment(sq);
             int score = matcher->matches(color, pattern);            
             //int score = match_pattern(color, sq);
             

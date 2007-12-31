@@ -162,7 +162,11 @@ int FastState::play_random_move(int color) {
             int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
             int vtx = walk_empty_list(board.m_tomove, vidx, true);
             
-            int pattern = board.get_pattern_fast(vtx);
+            if (vtx == FastBoard::PASS) {
+                return play_move_fast(vtx);
+            }
+            
+            int pattern = board.get_pattern_fast_augment(vtx);
             int score = matcher->matches(color, pattern);   
                         
             if (score > bestscore) {

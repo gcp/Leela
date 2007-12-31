@@ -57,7 +57,7 @@ Matcher::Matcher(std::tr1::array<unsigned char, 65536> & pats) {
 
 // initialize matcher data
 Matcher::Matcher() { 
-    const int max = 1 << (8 * 2);
+    const int max = 1 << ((8 * 2) + 4);
 
     m_patterns[FastBoard::BLACK].resize(max);    
     m_patterns[FastBoard::WHITE].resize(max);    
@@ -78,15 +78,16 @@ Matcher::Matcher() {
     }    
     
     for (int i = 0; i < max; i++) {
-        int w = i;
+        int w = i;        
         // fill board
-        for (int k = 0; k < 8; k++) {
+        for (int k = 7; k >= 0; k--) {
             board.set_square(startvtx + board.get_extra_dir(k), 
                              static_cast<FastBoard::square_t>(w & 3));
             w = w >> 2;
         }     
-        int reducpat1 = board.get_pattern3(startvtx, false);
-        int reducpat2 = board.get_pattern3(startvtx, true);
+        
+        int reducpat1 = board.get_pattern3_augment_spec(startvtx, w, false);
+        int reducpat2 = board.get_pattern3_augment_spec(startvtx, w, true);
         
         patmap::iterator it = patweights.find(reducpat1);
         

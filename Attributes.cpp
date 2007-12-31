@@ -43,7 +43,7 @@ void FastAttributes::get_from_move(FastState * state, int vtx) {
           
     // atari-escape (saving-size) adding liberties (only count pseudos)
     // adding 1 is self-atari so doesn't count    
-    int ae;
+   /* int ae;
     int ss;
     if (vtx != FastBoard::PASS) {
         ss = state->board.saving_size(tomove, vtx);
@@ -53,15 +53,14 @@ void FastAttributes::get_from_move(FastState * state, int vtx) {
         ae = -1;
     }            
     m_present[bitpos++] = (ss > 0);    
-    
-    // capture size    
+        
     int cs;
     if (vtx != FastBoard::PASS) {
         cs = state->board.capture_size(tomove, vtx);
     } else {
         cs = -1;
     }    
-    m_present[bitpos++] = (cs > 0);
+    m_present[bitpos++] = (cs > 0);*/
     
     // sa
     bool sa;
@@ -75,7 +74,7 @@ void FastAttributes::get_from_move(FastState * state, int vtx) {
     // shape  (border check)            
     int pat;
     if (vtx != FastBoard::PASS) {                              
-        pat = state->board.get_pattern3(vtx, tomove);                        
+        pat = state->board.get_pattern3_augment(vtx, tomove);      
     } else {
         pat = 0xFFFF; // all INVAL
     }       
