@@ -1750,11 +1750,11 @@ void FastBoard::add_pattern_moves(int color, int vertex,
                                   std::vector<int> & work) {                                      
     Matcher * matcher = Matcher::get_Matcher();
     
-    typedef std::pair<int, int> movescore;
-    std::tr1::array<movescore, 8> moves;
+    //typedef std::pair<int, int> movescore;
+    //std::tr1::array<movescore, 8> moves;
     
-    int count = 0;
-    int cumul = 0;        
+    //int count = 0;
+    //int cumul = 0;        
 
     for (int i = 0; i < 8; i++) {        
         int sq = vertex + m_extradirs[i];
@@ -1766,15 +1766,16 @@ void FastBoard::add_pattern_moves(int color, int vertex,
             
             if (score >= Matcher::UNITY) {                
                 if (!self_atari(color, sq)) {                    
-                    cumul += score;
+                    work.push_back(sq);
+                    /*cumul += score;
                     moves[count] = std::make_pair(sq, cumul);
-                    count++;
+                    count++;*/
                 }
             }
         }                                        
     }                       
     
-    int index = Random::get_Rng()->randint(cumul);
+    /*int index = Random::get_Rng()->randint(cumul);
     
     for (int i = 0; i < count; i++) {
         int point = moves[i].second;
@@ -1782,7 +1783,9 @@ void FastBoard::add_pattern_moves(int color, int vertex,
             work.push_back(moves[i].first);
             return;
         }
-    }
+    }*/
+    
+    return;
 }        
 
 // check for fixed patterns around vertex for color to move
@@ -1961,7 +1964,7 @@ void FastBoard::add_global_captures(int color, std::vector<int> & work) {
         int sq = m_critical.front();
         m_critical.pop();                
         
-        try_big_capture(color, sq, work);
+        try_capture(color, sq, work);
     }
 }
 
@@ -2007,7 +2010,7 @@ int FastBoard::capture_size(int color, int vertex) {
     return 0;
 }
 
-void FastBoard::try_big_capture(int color, int vertex, std::vector<int> & work) {
+void FastBoard::try_capture(int color, int vertex, std::vector<int> & work) {
     if (m_square[vertex] == EMPTY) {                
         int limitlibs = count_neighbours(!color, vertex);
         
@@ -2043,10 +2046,9 @@ void FastBoard::try_big_capture(int color, int vertex, std::vector<int> & work) 
                     
                     assert(samenbrs <= lib);    
                     
-                    if (samenbrs >= lib) {
-                        if (string_size(ai) > 1) {                            
-                            work.push_back(vertex);                              
-                        }                        
+                    if (samenbrs >= lib) {                            
+                        work.push_back(vertex);  
+                        return;                                                  
                     }                                        
                 }                        
             }                                                
