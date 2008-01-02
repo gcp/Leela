@@ -136,79 +136,72 @@ int FastState::play_random_move(int color) {
         }        
     }        
                 
-    if (!m_work.empty()) {                              
-        int vtx = FastBoard::PASS;
-        if (m_work.size() > 1) {            
-            // remove multiple moves    
-            std::sort(m_work.begin(), m_work.end());    
-            m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end()); 
+    if (!m_work.empty()) {                                             
+        // remove multiple moves    
+        std::sort(m_work.begin(), m_work.end());    
+        m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end()); 
+        
+        Matcher * matcher = Matcher::get_Matcher();
+        
+        int cumul = 0;
+
+        typedef std::pair<int, int> movescore;
+        std::vector<movescore> moves;
+        
+        moves.reserve(m_work.size());
+        
+        for (int i = 0; i < m_work.size(); i++) {
+            int sq = m_work[i];
             
-            Matcher * matcher = Matcher::get_Matcher();
-            
-            int cumul = 0;
+            int pattern = board.get_pattern_fast_augment(sq);
+            int score = matcher->matches(color, pattern);                            
+        
+            if (score >= Matcher::UNITY) {                                                     
+                cumul += score;
+                moves.push_back(std::make_pair(sq, cumul));                      
+            }
+        }
+                   
+        int index = Random::get_Rng()->randint(cumul);
+
+        for (int i = 0; i < moves.size(); i++) {
+            int point = moves[i].second;
+            if (index < point) {
+                return play_move_fast(moves[i].first);                    
+            }
+        }                                
+    } 
     
-            typedef std::pair<int, int> movescore;
-            std::vector<movescore> moves;
-            
-            moves.reserve(m_work.size());
-            
-            for (int i = 0; i < m_work.size(); i++) {
-                int sq = m_work[i];
-                
-                int pattern = board.get_pattern_fast_augment(sq);
-                int score = matcher->matches(color, pattern);            
-                //int score = match_pattern(color, sq);
-            
-                if (score >= Matcher::UNITY) {                                                     
-                    cumul += score;
-                    moves.push_back(std::make_pair(sq, cumul));                      
-                }
-            }
-                       
-            int index = Random::get_Rng()->randint(cumul);
+    // fallback global moves  
+    Matcher * matcher = Matcher::get_Matcher();        
     
-            for (int i = 0; i < moves.size(); i++) {
-                int point = moves[i].second;
-                if (index < point) {
-                    return play_move_fast(moves[i].first);                    
-                }
-            }                                    
-        } else {            
-            vtx = m_work[0];
-        }         
+    int loops = 2;
+    int bestvtx = FastBoard::PASS;
+    int bestscore = -1;
+    
+    do {
+        int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
+        int vtx = walk_empty_list(board.m_tomove, vidx, true);
         
-        return play_move_fast(vtx);
-    } else {         
-        Matcher * matcher = Matcher::get_Matcher();        
+        if (vtx == FastBoard::PASS) {
+            return play_move_fast(vtx);
+        }
         
-        int loops = 2;
-        int bestvtx = FastBoard::PASS;
-        int bestscore = -1;
-        
-        do {
-            int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
-            int vtx = walk_empty_list(board.m_tomove, vidx, true);
-            
-            if (vtx == FastBoard::PASS) {
-                return play_move_fast(vtx);
+        int pattern = board.get_pattern_fast_augment(vtx);
+        int score = matcher->matches(color, pattern);   
+                    
+        if (score > bestscore) {
+            if (board.self_atari(color, vtx)) {
+                score = score / 40;
             }
-            
-            int pattern = board.get_pattern_fast_augment(vtx);
-            int score = matcher->matches(color, pattern);   
-                        
-            if (score > bestscore) {
-                if (board.self_atari(color, vtx)) {
-                    score = score / 40;
-                }
-                if (score > bestscore) {                
-                    bestscore = score;
-                    bestvtx = vtx;
-                }
+            if (score > bestscore) {                
+                bestscore = score;
+                bestvtx = vtx;
             }
-        } while (--loops > 0);
-        
-        return play_move_fast(bestvtx);  
-    }                  
+        }
+    } while (--loops > 0);
+    
+    return play_move_fast(bestvtx);      
 }
 
 float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {       

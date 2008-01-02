@@ -149,6 +149,7 @@ protected:
     std::vector<int> run_bouzy(int dilat, int eros);  
     bool kill_or_connect(int color, int vertex);  
     int in_atari(int vertex);
+    bool fast_in_atari(int vertex);
     template <int N> void add_string_liberties(int vertex, 
                                                std::tr1::array<int, N> & nbr_libs, 
                                                int & nbr_libs_cnt);

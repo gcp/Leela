@@ -926,6 +926,47 @@ std::string FastBoard::get_string(int vertex) {
     return result;
 }
 
+bool FastBoard::fast_in_atari(int vertex) {        
+    assert(m_square[vertex] < EMPTY);
+    
+    int par = m_parent[vertex];
+    int lib = m_plibs[par];
+    
+    if (lib > 4) {
+        return false;
+    } else if (lib <= 1) {
+        return true;
+    }
+
+    int pos = vertex;        
+    int liberty = 0;    
+  
+    do {             
+        int nlib = count_liberties(pos);                 
+        
+        if (nlib > 1) {
+            return false;
+        }
+        
+        if (nlib == 1) {                    
+            for (int k = 0; k < 4; k++) {
+                int ai = pos + m_dirs[k];                                
+                
+                if (m_square[ai] == EMPTY) { 
+                    if (liberty == 0) {                               
+                        liberty = ai;
+                    } else if (ai != liberty) {
+                        return false;
+                    }
+                }
+            }                    
+        }        
+        pos = m_next[pos];
+    } while (pos != vertex);    
+    
+    return true; 
+}
+
 // check if string is in atari, returns 0 if not,
 // single liberty if it is
 int FastBoard::in_atari(int vertex) {        
@@ -1235,22 +1276,22 @@ int FastBoard::get_pattern_fast_augment(const int sq) {
          | (sqs[7] <<  0);   
          
     if (sqs[1] == WHITE || sqs[1] == BLACK) {
-        lib[0] = in_atari(sq - size - 2) != 0;
+        lib[0] = fast_in_atari(sq - size - 2);
     } else {
         lib[0] = 0;
     }
     if (sqs[3] == WHITE || sqs[3] == BLACK) {
-        lib[1] = in_atari(sq - 1) != 0;
+        lib[1] = fast_in_atari(sq - 1);
     } else {
         lib[1] = 0;
     }
     if (sqs[4] == WHITE || sqs[4] == BLACK) {
-        lib[2] = in_atari(sq + 1) != 0;
+        lib[2] = fast_in_atari(sq + 1);
     } else {
         lib[2] = 0;
     }
     if (sqs[6] == WHITE || sqs[6] == BLACK) {
-        lib[3] = in_atari(sq + size + 2) != 0;
+        lib[3] = fast_in_atari(sq + size + 2);
     } else {
         lib[3] = 0;
     }    
@@ -1748,7 +1789,7 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
 
 void FastBoard::add_pattern_moves(int color, int vertex,
                                   std::vector<int> & work) {                                      
-    Matcher * matcher = Matcher::get_Matcher();
+    //Matcher * matcher = Matcher::get_Matcher();
     
     //typedef std::pair<int, int> movescore;
     //std::tr1::array<movescore, 8> moves;
@@ -1760,18 +1801,18 @@ void FastBoard::add_pattern_moves(int color, int vertex,
         int sq = vertex + m_extradirs[i];
         
         if (m_square[sq] == EMPTY) {      
-            int pattern = get_pattern_fast_augment(sq);
-            int score = matcher->matches(color, pattern);            
+            //int pattern = get_pattern_fast_augment(sq);
+            //int score = matcher->matches(color, pattern);            
             //int score = match_pattern(color, sq);
             
-            if (score >= Matcher::UNITY) {                
+            //if (score >= Matcher::UNITY) {                
                 if (!self_atari(color, sq)) {                    
                     work.push_back(sq);
                     /*cumul += score;
                     moves[count] = std::make_pair(sq, cumul);
                     count++;*/
                 }
-            }
+            //}
         }                                        
     }                       
     
