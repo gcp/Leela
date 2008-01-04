@@ -1275,22 +1275,22 @@ int FastBoard::get_pattern_fast_augment(const int sq) {
          | (sqs[6] <<  2)
          | (sqs[7] <<  0);   
          
-    if (sqs[1] == WHITE || sqs[1] == BLACK) {
+    if (sqs[1] < EMPTY) {
         lib[0] = fast_in_atari(sq - size - 2);
     } else {
         lib[0] = 0;
     }
-    if (sqs[3] == WHITE || sqs[3] == BLACK) {
+    if (sqs[3] < EMPTY) {
         lib[1] = fast_in_atari(sq - 1);
     } else {
         lib[1] = 0;
     }
-    if (sqs[4] == WHITE || sqs[4] == BLACK) {
+    if (sqs[4] < EMPTY) {
         lib[2] = fast_in_atari(sq + 1);
     } else {
         lib[2] = 0;
     }
-    if (sqs[6] == WHITE || sqs[6] == BLACK) {
+    if (sqs[6] < EMPTY) {
         lib[3] = fast_in_atari(sq + size + 2);
     } else {
         lib[3] = 0;

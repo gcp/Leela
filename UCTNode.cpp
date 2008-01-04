@@ -60,7 +60,6 @@ int UCTNode::create_children(FastState & state) {
     
     typedef std::pair<float, int> scored_node; 
     std::vector<scored_node> nodelist;        
-    
     std::vector<int> territory = state.board.influence();
     std::vector<int> moyo = state.board.moyo();
 

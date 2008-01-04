@@ -138,17 +138,14 @@ int FastState::play_random_move(int color) {
                 
     if (!m_work.empty()) {                                             
         // remove multiple moves    
-        std::sort(m_work.begin(), m_work.end());    
-        m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end()); 
+        //std::sort(m_work.begin(), m_work.end());    
+        //m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end()); 
+        
+        m_moves.clear();
         
         Matcher * matcher = Matcher::get_Matcher();
         
-        int cumul = 0;
-
-        typedef std::pair<int, int> movescore;
-        std::vector<movescore> moves;
-        
-        moves.reserve(m_work.size());
+        int cumul = 0;                
         
         for (int i = 0; i < m_work.size(); i++) {
             int sq = m_work[i];
@@ -158,21 +155,21 @@ int FastState::play_random_move(int color) {
         
             if (score >= Matcher::UNITY) {                                                     
                 cumul += score;
-                moves.push_back(std::make_pair(sq, cumul));                      
+                m_moves.push_back(std::make_pair(sq, cumul));                      
             }
         }
                    
         int index = Random::get_Rng()->randint(cumul);
 
-        for (int i = 0; i < moves.size(); i++) {
-            int point = moves[i].second;
+        for (int i = 0; i < m_moves.size(); i++) {
+            int point = m_moves[i].second;
             if (index < point) {
-                return play_move_fast(moves[i].first);                    
+                return play_move_fast(m_moves[i].first);                    
             }
         }                                
     } 
     
-    // fallback global moves  
+    // fall back global moves  
     Matcher * matcher = Matcher::get_Matcher();        
     
     int loops = 2;

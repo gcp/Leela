@@ -51,6 +51,9 @@ public:
     
 protected:
     std::vector<int> m_work;   // working area for move generation
+    
+    typedef std::pair<int, int> movescore;
+    std::vector<movescore> m_moves;
 
     int walk_empty_list(int color, int vidx, bool allow_sa = false);
     bool try_move(int color, int vertex, bool allow_sa = false);

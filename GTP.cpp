@@ -242,7 +242,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             {
                 std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 
-                int move = search->think(who, UCTSearch::NOPASS | UCTSearch::NORESIGN);
+                int move = search->think(who, UCTSearch::NOPASS);
                 game.play_move(who, move);                    
 
                 std::string vertex = game.move_to_text(move);            

@@ -26,7 +26,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
     const uint64 hash = currstate.board.get_hash();
     Playout noderesult;  
         
-    //TTable::get_TT()->sync(hash, node);        
+    TTable::get_TT()->sync(hash, node);        
 
     if (node->get_visits() <= MATURE_TRESHOLD) {           
         noderesult.run(currstate);                
@@ -68,7 +68,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
     }             
       
     node->update(noderesult, !color);    
-    //TTable::get_TT()->update(hash, node);    
+    TTable::get_TT()->update(hash, node);    
     
     return noderesult;  
 }
@@ -280,10 +280,9 @@ int UCTSearch::get_best_move(passflag_t passflag) {
 void UCTSearch::dump_order2(void) {            
     std::vector<int> moves = m_rootstate.generate_moves(m_rootstate.get_to_move());
     std::vector<std::pair<float, std::string> > ord_list;            
-    
+        
     std::vector<int> territory = m_rootstate.board.influence();
     std::vector<int> moyo = m_rootstate.board.moyo();
-    
     for (int i = 0; i < moves.size(); i++) {
         ord_list.push_back(std::make_pair(
                            m_rootstate.score_move(territory, moyo, moves[i]), 
@@ -330,7 +329,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
     
     //XXX: testing
-    m_maxvisits = 10000;
+    //m_maxvisits = 10000;
                  
     m_rootstate.start_clock(color);
 
