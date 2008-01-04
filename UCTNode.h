@@ -31,8 +31,7 @@ public:
     void set_visits(int visits);
     void set_blackwins(float wins);
     void update(Playout & gameresult, int color); 
-    void updateRAVE(Playout & playout, int color);
-    void finalize(float gameresult);
+    void updateRAVE(Playout & playout, int color);    
     UCTNode* uct_select_child(int color);    
     UCTNode* get_first_child();
     UCTNode* get_pass_child();

@@ -62,8 +62,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
         } else if (m_nodes >= MAX_TREE_SIZE) {
             noderesult.run(currstate);
         } else {                     
-            noderesult.set_final_score(currstate.board.percentual_area_score(currstate.m_komi));                        
-            node->finalize(noderesult.get_score());
+            noderesult.set_final_score(currstate.board.percentual_area_score(currstate.m_komi));            
         }        
     }             
       
@@ -208,6 +207,11 @@ int UCTSearch::get_best_move(passflag_t passflag) {
             if (nopass != NULL) {
                 myprintf("Preferring not to pass.\n");
                 bestmove = nopass->get_move();
+                if (nopass->first_visit()) {
+                    bestscore = 1.0f;
+                } else {
+                    bestscore = nopass->get_winrate(color);
+                }
             } else {
                 myprintf("Pass is the only acceptable move.\n");
             }

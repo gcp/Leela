@@ -158,18 +158,6 @@ void UCTNode::update(Playout & gameresult, int color) {
     }    
 }
 
-// terminal node
-void UCTNode::finalize(float gameresult) {
-    SMP::Lock lock(get_mutex());   
-    m_visits += 100;
-    
-    m_blackwins += 5.0f * gameresult;
-    
-    if (gameresult > 0.0f) {
-        m_blackwins += 100.0f;
-    }     
-}
-
 bool UCTNode::has_children() const {    
     return m_firstchild != NULL;
 }
