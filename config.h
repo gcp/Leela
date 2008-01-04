@@ -19,7 +19,7 @@
 #define VERSION         "0.3.0"
 
 /* Features */
-#define USE_PONDER
+//#define USE_PONDER
 //#define USE_SMP
 
 /* Integer types */
