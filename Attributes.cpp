@@ -109,7 +109,7 @@ void Attributes::get_from_move(FastState * state,
     // adding 1 is self-atari so doesn't count    
     int ae;
     if (vtx != FastBoard::PASS) {
-        ae = state->board.count_liberties(vtx);
+        ae = state->board.count_pliberties(vtx);
     } else {
         ae = -1;
     }        
@@ -168,6 +168,10 @@ void Attributes::get_from_move(FastState * state,
     int at;
     if (vtx != FastBoard::PASS) {
         at = state->board.minimum_elib_count(tomove, vtx);
+        // isolated stone
+        //if (at == 100) {
+        //    at = 0;
+        //}
     } else {
         at = -1;
     }        
@@ -277,7 +281,14 @@ void Attributes::get_from_move(FastState * state,
     m_present[bitpos++] = (prevprevdist == 14);
     m_present[bitpos++] = (prevprevdist == 15);
     m_present[bitpos++] = (prevprevdist == 16);
-    m_present[bitpos++] = (prevprevdist >  16);      
+    m_present[bitpos++] = (prevprevdist >  16);
+    
+    // losing ladder
+    int ll = 0;
+    if (ss > 0 && ae == 2) {        
+        ll = state->board.check_losing_ladder(tomove, vtx);
+    }
+    m_present[bitpos++] = ll; 
     
     // shape  (border check)            
     int pat;

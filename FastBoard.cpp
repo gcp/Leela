@@ -181,7 +181,7 @@ bool FastBoard::is_suicide(int i, int color) {
     }           
 }
 
-int FastBoard::count_liberties(const int i) {          
+int FastBoard::count_pliberties(const int i) {          
     return count_neighbours(EMPTY, i);
 }
 
@@ -718,7 +718,7 @@ int FastBoard::update_board_fast(const int color, const int i) {
     m_square[i]  = (square_t)color;    
     m_next[i]    = i;     
     m_parent[i]  = i;
-    m_plibs[i]   = count_liberties(i);            
+    m_plibs[i]   = count_pliberties(i);            
     m_stones[color]++;                        
         
     assert(m_plibs[i] >= 0 && m_plibs[i] <= 4);        
@@ -942,7 +942,7 @@ bool FastBoard::fast_in_atari(int vertex) {
     int liberty = 0;    
   
     do {             
-        int nlib = count_liberties(pos);                 
+        int nlib = count_pliberties(pos);                 
         
         if (nlib > 1) {
             return false;
@@ -976,7 +976,7 @@ int FastBoard::in_atari(int vertex) {
     assert(m_square[vertex] < EMPTY);
   
     do {                               
-        if (count_liberties(pos)) {                    
+        if (count_pliberties(pos)) {                    
             for (int k = 0; k < 4; k++) {
                 int ai = pos + m_dirs[k];                                
                 
@@ -1138,7 +1138,7 @@ void FastBoard::add_string_liberties(int vertex,
     do {               
         assert(m_square[pos] == color);
         
-        if (count_liberties(pos)) {        
+        if (count_pliberties(pos)) {        
             // look for empties near this stone
             for (int k = 0; k < 4; k++) {
                 int ai = pos + m_dirs[k];                                
@@ -1175,7 +1175,7 @@ bool FastBoard::self_atari(int color, int vertex) {
     
     // 1) count new liberties, if we add 2 or more we're safe    
     
-    int newlibs = count_liberties(vertex);
+    int newlibs = count_pliberties(vertex);
     
     if (newlibs >= 2) {        
         return false;                
@@ -2151,7 +2151,7 @@ std::pair<int, int> FastBoard::get_xy(int vertex) {
 
 // returns 1 to 7 real liberties
 int FastBoard::minimum_elib_count(int color, int vertex) {
-    int minlib = 100;
+    int minlib = 100; // XXX hardcoded in some places
     
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
@@ -2166,4 +2166,121 @@ int FastBoard::minimum_elib_count(int color, int vertex) {
     } 
     
     return minlib;
+}
+
+int FastBoard::count_rliberties(int vertex) {
+    std::vector<bool> marker(m_maxsq, false);
+    
+    int pos = vertex;
+    int liberties = 0;
+    int color = m_square[vertex];
+
+    assert(color == WHITE || color == BLACK);    
+  
+    do {       
+        assert(m_square[pos] == color);
+        
+        for (int k = 0; k < 4; k++) {
+            int ai = pos + m_dirs[k];
+            if (m_square[ai] == EMPTY) {
+                if (!marker[ai]) {
+                    liberties++;
+                    marker[ai] = true;
+                }
+            }
+        }                
+        pos = m_next[pos];
+    } while (pos != vertex);            
+    
+    return liberties;
+}
+
+bool FastBoard::check_losing_ladder(const int color, const int vtx, int branching) {
+    FastBoard tmp = *this;
+    
+    if (branching > 5) {
+        return false;
+    }
+    
+    // killing opponents?
+    int elib = tmp.minimum_elib_count(color, vtx);
+    if (elib == 0 || elib == 1) {
+        return false;
+    }
+        
+    int atari = vtx;        
+                
+    tmp.update_board_fast(tmp.m_tomove, vtx);  
+    
+    while (1) {   
+        // suicide
+        if (tmp.get_square(atari) == EMPTY) {
+            return true;
+        }
+                                                                  
+        int newlibs = tmp.count_rliberties(atari);
+        
+        // self-atari
+        if (newlibs == 1) {
+            return true;
+        }
+        
+        // escaped ladder
+        if (newlibs >= 3) {
+            return false;
+        }
+        
+        // atari on opponent
+        int newelib = tmp.minimum_elib_count(color, atari);
+        if (newelib == 1) {
+            return false;
+        }
+        
+        int lc = 0;
+        boost::array<int, 2> libarr;
+        tmp.add_string_liberties<2>(atari, libarr, lc);
+        
+        assert(lc == 2);                
+        
+        // 2 good options => always lives
+        if (tmp.count_pliberties(libarr[0]) == 3 && tmp.count_pliberties(libarr[1]) == 3) {
+            return false;
+        }
+        
+        // 2 equal but questionable moves => branch
+        if (tmp.count_pliberties(libarr[0]) == tmp.count_pliberties(libarr[1])) {
+            FastBoard tmp2 = tmp;
+            
+            // play atari in liberty 1, escape in liberty 2
+            tmp2.update_board_fast(!tmp.m_tomove, libarr[0]);
+            bool ladder1 = tmp2.check_losing_ladder(color, libarr[1], branching + 1);
+            
+            tmp2 = tmp;
+            
+            // play atari in liberty 2, escape in liberty 1
+            tmp2.update_board_fast(!tmp.m_tomove, libarr[1]);
+            bool ladder2 = tmp2.check_losing_ladder(color, libarr[0], branching + 1);
+            
+            // if both escapes lose, we're dead
+            if (ladder1 && ladder2) {
+                return true;
+            } else {
+                return false;
+            }            
+        } else {    
+            // non branching, play atari that causes most unpleasant escape move
+            if (tmp.count_pliberties(libarr[0]) > tmp.count_pliberties(libarr[1])) {
+                tmp.update_board_fast(!tmp.m_tomove, libarr[0]);
+            } else if (tmp.count_pliberties(libarr[0]) < tmp.count_pliberties(libarr[1])) {
+                tmp.update_board_fast(!tmp.m_tomove, libarr[1]);
+            }     
+        }
+        
+        // find and play new saving move
+        atari = tmp.in_atari(atari);
+        tmp.update_board_fast(tmp.m_tomove, atari);   
+    };
+    
+    return false;
+    
 }

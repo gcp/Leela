@@ -24,14 +24,9 @@ AttribScores* AttribScores::s_attribscores = 0;
 AttribScores* AttribScores::get_attribscores(void) {
     if (s_attribscores == 0) {
         s_attribscores = new AttribScores;
-        
-        try {
-            s_attribscores->load_from_file("param4.dat");
-        } catch (std::exception & e) {
-            s_attribscores->load_internal();
-        }            
-    }
-    
+                
+        s_attribscores->load_internal();     
+    }    
     return s_attribscores;
 }
 
@@ -233,7 +228,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(2);
+    m_fweight.resize(86);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
@@ -405,52 +400,17 @@ float AttribScores::team_strength(Attributes & team) {
     return rating;
 }
 
-void AttribScores::load_from_file(std::string filename) {
-    try {
-        std::ifstream inf;
-
-        inf.open(filename.c_str(), std::ifstream::in);
-
-        if (!inf.is_open()) {
-            throw std::exception("Error opening file");
-        }
-        
-        m_fweight.clear();
-        m_pat.clear();
-
-        m_fweight.reserve(85);
-        for (int i = 0; i < 85; i++) {
-            float wt;
-            inf >> wt;
-            m_fweight.push_back(wt);
-        }
-
-        while (!inf.eof()) {
-            uint64 pat;
-            float wt;
-            inf >> pat >> wt;
-            m_pat.insert(std::make_pair(pat, wt));
-        }
-
-        myprintf("%d feature weights loaded, %d patterns\n", 
-                 m_fweight.size(), m_pat.size());
-    } catch(std::exception & e) {
-        myprintf("Error loading external weights file\n");
-        throw e;
-    } 
-}
-
 void AttribScores::load_internal() {
     m_fweight.clear();
     m_pat.clear();
 
-    m_fweight.reserve(85);
+    m_fweight.reserve(internal_weights.size());
     
-    for (int i = 0; i < 85; i++) {        
+    for (int i = 0; i < internal_weights.size(); i++) {        
         m_fweight.push_back(internal_weights[i]);
     }
 
-    for (int i = 0; i < 840; i++) {        
+    for (int i = 0; i < internal_patterns.size(); i++) {        
         m_pat.insert(std::make_pair(internal_patterns[i], internal_patweights[i]));
     }
 

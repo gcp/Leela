@@ -13,8 +13,7 @@
 // Move attributes
 class AttribScores {
 public:          
-    void autotune_from_file(std::string filename);    
-    void load_from_file(std::string filename);    
+    void autotune_from_file(std::string filename);        
     float team_strength(Attributes & team);
     
     static AttribScores* get_attribscores(void);

@@ -69,7 +69,9 @@ public:
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
-    int count_liberties(const int i);
+    int count_pliberties(const int i);
+    int count_rliberties(const int i);
+    bool check_losing_ladder(const int color, const int vtx, int branching = 0);
         
     bool self_atari(int color, int vertex);
     int get_dir(int i);
