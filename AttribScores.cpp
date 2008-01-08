@@ -39,72 +39,78 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
     
     while (gamecount < gametotal) {        
         std::auto_ptr<SGFTree> sgftree(new SGFTree);        
-        sgftree->load_from_file(filename, gamecount);                    
+        sgftree->load_from_file(filename, gamecount);                                    
         
-        int movecount = sgftree->count_mainline_moves();                
+        int movecount = sgftree->count_mainline_moves();                                
         
         SGFTree * treewalk = &(*sgftree); 
         int counter = 0;
         
         while (counter < movecount) {
             assert(treewalk != NULL);
+            assert(treewalk->get_state() != NULL);
             
-            KoState * state = treewalk->get_state();
-            int tomove = state->get_to_move();
-            int move;
-            
-            if (treewalk->get_child(0) != NULL) {
-                move = treewalk->get_child(0)->get_move(tomove);
-                assert(move != 0);
-            } else {
-                break;
-            }                                    
-            
-            MCOwnerTable::clear();
-            Playout::mc_owner(*state);
-            
-            std::vector<int> territory = state->board.influence();
-            std::vector<int> moyo = state->board.moyo();
-            
-            // sitting at a state, with the move actually played in move
-            // gather feature sets of all moves
-            std::vector<int> moves = state->generate_moves(tomove);            
+            // check every 3rd move
+            if (counter % 3 == 0) {               
+                KoState * state = treewalk->get_state();
+                int tomove = state->get_to_move();
+                int move;
+                
+                if (treewalk->get_child(0) != NULL) {
+                    move = treewalk->get_child(0)->get_move(tomove);
+                    if (move == SGFTree::EOT) {
+                        break;
+                    }                    
+                } else {
+                    break;
+                }     
+                                                    
+                MCOwnerTable::clear();
+                Playout::mc_owner(*state);
+                
+                std::vector<int> territory = state->board.influence();
+                std::vector<int> moyo = state->board.moyo();
+                
+                // sitting at a state, with the move actually played in move
+                // gather feature sets of all moves
+                std::vector<int> moves = state->generate_moves(tomove);            
 
-            // make list of move - attributes pairs                       
-            std::vector<int>::iterator it; 
-            LrnPos position;                        
-            bool moveseen = false;
-                                                            
-            position.second.reserve(moves.size());
-            
-            for(it = moves.begin(); it != moves.end(); ++it) {
-                Attributes attributes;
-                // gather attribute set of current move
-                attributes.get_from_move(state, territory, moyo, *it);
+                // make list of move - attributes pairs                       
+                std::vector<int>::iterator it; 
+                LrnPos position;                        
+                bool moveseen = false;
+                                                                
+                position.second.reserve(moves.size());
                 
-                position.second.push_back(attributes);
+                for(it = moves.begin(); it != moves.end(); ++it) {
+                    Attributes attributes;
+                    // gather attribute set of current move
+                    attributes.get_from_move(state, territory, moyo, *it);
+                    
+                    position.second.push_back(attributes);
+                    
+                    if (*it == move) {
+                        position.first = position.second.size() - 1;
+                        moveseen = true;
+                    }                
+                }                          
                 
-                if (*it == move) {
-                    position.first = position.second.size() - 1;
-                    moveseen = true;
+                if (moveseen) {
+                    allcount += position.second.size();
+                    data.push_back(position);         
+                } else {
+                    myprintf("Mainline move not found: %d\n", move);
                 }                
-            }                          
-            
-            if (moveseen) {
-                allcount += position.second.size();
-                data.push_back(position);         
-            } else {
-                myprintf("Mainline move not found: %d\n", move);
-            }                
+            }
             
             counter++;
-            treewalk = treewalk->get_child(0);            
+            treewalk = treewalk->get_child(0);                                                          
         }    
 
         // Add 2 passes to game end 
-        if (treewalk->get_state()->get_passes() == 0) {             
+        if (treewalk->get_state()->get_passes() == 0) {              
             KoState * state = treewalk->get_state();
-            int tomove = state->get_to_move();                        
+            int tomove = state->get_to_move();                                                
             
             MCOwnerTable::clear();
             Playout::mc_owner(*state);
@@ -228,7 +234,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(86);
+    m_fweight.resize(89);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();

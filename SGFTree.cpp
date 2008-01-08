@@ -150,8 +150,8 @@ void SGFTree::populate_states(void) {
     for (it = range.first; it != range.second; ++it) {
         std::string move = it->second;      
         int vtx = string_to_vertex(move);
-        m_state.play_move(FastBoard::BLACK, vtx);        
-    }    
+        m_state.play_move(FastBoard::BLACK, vtx);                
+    }            
     
     // now for all children play out the moves
     std::vector<SGFTree>::iterator stateit;
@@ -165,9 +165,9 @@ void SGFTree::populate_states(void) {
         int move = stateit->get_move(m_state.get_to_move());  
         
         if (move != EOT) {            
-            stateit->apply_move(move);            
-            stateit->populate_states();
-        }                                  
+            stateit->apply_move(move);                        
+        }                                     
+        stateit->populate_states();
     }        
 }
 

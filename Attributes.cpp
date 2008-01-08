@@ -102,8 +102,7 @@ void Attributes::get_from_move(FastState * state,
     m_present[bitpos++] = (ss == 1);
     m_present[bitpos++] = (ss == 2);
     m_present[bitpos++] = (ss == 3);
-    m_present[bitpos++] = (ss == 4);
-    m_present[bitpos++] = (ss  > 4);    
+    m_present[bitpos++] = (ss >= 4);    
     
     // atari-escape (saving-size) adding liberties (only count pseudos)
     // adding 1 is self-atari so doesn't count    
@@ -113,6 +112,7 @@ void Attributes::get_from_move(FastState * state,
     } else {
         ae = -1;
     }        
+    
     m_present[bitpos++] = (ss > 0 && ae == 2);
     m_present[bitpos++] = (ss > 0 && ae == 3);
     
@@ -152,8 +152,7 @@ void Attributes::get_from_move(FastState * state,
     m_present[bitpos++] = (cs == 1);
     m_present[bitpos++] = (cs == 2);
     m_present[bitpos++] = (cs == 3);
-    m_present[bitpos++] = (cs == 4);
-    m_present[bitpos++] = (cs  > 4);    
+    m_present[bitpos++] = (cs >= 4);    
 
     // self-atari
     bool sa;
@@ -169,9 +168,9 @@ void Attributes::get_from_move(FastState * state,
     if (vtx != FastBoard::PASS) {
         at = state->board.minimum_elib_count(tomove, vtx);
         // isolated stone
-        //if (at == 100) {
-        //    at = 0;
-        //}
+        if (at == 100) {
+            at = 0;
+        }
     } else {
         at = -1;
     }        
@@ -183,8 +182,23 @@ void Attributes::get_from_move(FastState * state,
     m_present[bitpos++] = (at == 4);
     m_present[bitpos++] = (at == 5);
     m_present[bitpos++] = (at == 6);
-    m_present[bitpos++] = (at >  6);               
-                     
+    m_present[bitpos++] = (at >  6); 
+    
+    // semeai    
+    if (vtx != FastBoard::PASS && at > 0 && al > 0 && (al < 7 || at < 7)) {
+        m_present[bitpos++] = (at    > al+1);
+        m_present[bitpos++] = (at   == al+1);
+        m_present[bitpos++] = (at   == al);
+        m_present[bitpos++] = (at+1 == al);
+        m_present[bitpos++] = (at+1  < al); 
+    } else {
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0; 
+    }       
+                                       
     // pass
     bool ps   = (vtx == FastBoard::PASS) && (state->get_passes() == 0);
     bool psps = (vtx == FastBoard::PASS) && (state->get_passes() == 1);
@@ -288,7 +302,8 @@ void Attributes::get_from_move(FastState * state,
     if (ss > 0 && ae == 2) {        
         ll = state->board.check_losing_ladder(tomove, vtx);
     }
-    m_present[bitpos++] = ll; 
+    m_present[bitpos++] = ll;         
+    
     
     // shape  (border check)            
     int pat;

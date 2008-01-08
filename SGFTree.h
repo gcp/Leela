@@ -10,6 +10,8 @@
 
 class SGFTree {
 public:
+    static const int EOT = 0;               // End-Of-Tree marker
+    
     SGFTree();
 
     KoState * get_state();
@@ -28,8 +30,6 @@ public:
     static std::string state_to_string(GameState * state, int compcolor);
 
 private:     
-    static const int EOT = 0;               // End-Of-Tree marker
-
     void populate_states(void);    
     void apply_move(int move);
     void set_state(KoState & state); 

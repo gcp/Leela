@@ -72,6 +72,8 @@ public:
     int count_pliberties(const int i);
     int count_rliberties(const int i);
     bool check_losing_ladder(const int color, const int vtx, int branching = 0);
+    bool is_connecting(const int color, const int vertex);
+    int nbr_weight(const int color, const int vertex);
         
     bool self_atari(int color, int vertex);
     int get_dir(int i);
