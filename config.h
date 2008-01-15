@@ -16,7 +16,7 @@
 
 #define NAME            "Leela"
 //#define VERSION         "0.2.9. I will resign when I am lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I am won. You can download a free version at http://www.sjeng.org/leela"
-#define VERSION         "0.3.3"
+#define VERSION         "0.3.4"
 
 /* Features */
 //#define USE_PONDER

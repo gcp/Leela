@@ -90,6 +90,24 @@ void Attributes::get_from_move(FastState * state,
 
     int tomove = state->get_to_move();
     int bitpos = 0;
+    
+    // mcowner
+    float mcown;
+    if (vtx != FastBoard::PASS) {
+        mcown = MCOwnerTable::get_MCO()->get_score(tomove, vtx);
+    } else {
+        mcown = -1.0f;
+    }
+    m_present[bitpos++] = (mcown >= -0.01f && mcown <  0.10);
+    m_present[bitpos++] = (mcown >=  0.10f && mcown <  0.20);
+    m_present[bitpos++] = (mcown >=  0.20f && mcown <  0.30);
+    m_present[bitpos++] = (mcown >=  0.30f && mcown <  0.40);
+    m_present[bitpos++] = (mcown >=  0.40f && mcown <  0.50);
+    m_present[bitpos++] = (mcown >=  0.50f && mcown <  0.60);
+    m_present[bitpos++] = (mcown >=  0.60f && mcown <  0.70);
+    m_present[bitpos++] = (mcown >=  0.70f && mcown <  0.80);
+    m_present[bitpos++] = (mcown >=  0.80f && mcown <  0.90);
+    m_present[bitpos++] = (mcown >=  0.90f && mcown <  1.01);   
 
     // saving size
     // 0, 1, 2, 3, >3
@@ -106,6 +124,7 @@ void Attributes::get_from_move(FastState * state,
     
     // atari-escape (saving-size) adding liberties (only count pseudos)
     // adding 1 is self-atari so doesn't count    
+    // 0 is kill or connect
     int ae;
     if (vtx != FastBoard::PASS) {
         ae = state->board.count_pliberties(vtx);
@@ -113,9 +132,21 @@ void Attributes::get_from_move(FastState * state,
         ae = -1;
     }        
     
+    m_present[bitpos++] = (ss > 0 && ae == 0);
+    m_present[bitpos++] = (ss > 0 && ae == 1);
     m_present[bitpos++] = (ss > 0 && ae == 2);
     m_present[bitpos++] = (ss > 0 && ae == 3);
     
+    if (vtx == FastBoard::PASS) {
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+    } else {
+        m_present[bitpos++] = (ss > 0 && mcown >= 0.60f);
+        m_present[bitpos++] = (ss > 0 && mcown > 0.40f && mcown < 0.60f); 
+        m_present[bitpos++] = (ss > 0 && mcown <= 0.40f);
+    }    
+                
     // liberty increase
     int al;
     if (vtx != FastBoard::PASS) {
@@ -140,6 +171,12 @@ void Attributes::get_from_move(FastState * state,
     m_present[bitpos++] = (al ==  5 && ae == 3);
     m_present[bitpos++] = (al ==  6 && ae == 3);
     m_present[bitpos++] = (al >   6 && ae == 3);
+    
+    if (vtx == FastBoard::PASS) {
+        m_present[bitpos++] = 0;        
+    } else {        
+        m_present[bitpos++] = (al > 0 && al < 7 && mcown <= 0.40f);
+    }    
 
     // capture size
     // 0, 1, 2, 3, >3
@@ -152,7 +189,17 @@ void Attributes::get_from_move(FastState * state,
     m_present[bitpos++] = (cs == 1);
     m_present[bitpos++] = (cs == 2);
     m_present[bitpos++] = (cs == 3);
-    m_present[bitpos++] = (cs >= 4);    
+    m_present[bitpos++] = (cs >= 4); 
+    
+    if (vtx == FastBoard::PASS) {
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+    } else {
+        m_present[bitpos++] = (cs > 0 && mcown >= 0.60f);
+        m_present[bitpos++] = (cs > 0 && mcown > 0.40f && mcown < 0.60f); 
+        m_present[bitpos++] = (cs > 0 && mcown <= 0.40f);
+    }     
 
     // self-atari
     bool sa;
@@ -182,7 +229,7 @@ void Attributes::get_from_move(FastState * state,
     m_present[bitpos++] = (at == 4);
     m_present[bitpos++] = (at == 5);
     m_present[bitpos++] = (at == 6);
-    m_present[bitpos++] = (at >  6); 
+    m_present[bitpos++] = (at >  6);         
     
     // semeai    
     if (vtx != FastBoard::PASS && at > 0 && al > 0 && (al < 7 || at < 7)) {
@@ -197,7 +244,17 @@ void Attributes::get_from_move(FastState * state,
         m_present[bitpos++] = 0;
         m_present[bitpos++] = 0;
         m_present[bitpos++] = 0; 
-    }       
+    }
+    
+    if (vtx != FastBoard::PASS && at > 0) {
+        m_present[bitpos++] = (mcown >= 0.60f);        
+        m_present[bitpos++] = (mcown > 0.40f && mcown < 0.60f);        
+        m_present[bitpos++] = (mcown <= 0.40f);        
+    } else {
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+    }          
                                        
     // pass
     bool ps   = (vtx == FastBoard::PASS) && (state->get_passes() == 0);
@@ -213,37 +270,20 @@ void Attributes::get_from_move(FastState * state,
     } else {
         borddist = -1;
     }
+    
     m_present[bitpos++] = (borddist == 0);
     m_present[bitpos++] = (borddist == 1);
     m_present[bitpos++] = (borddist == 2);
     m_present[bitpos++] = (borddist == 3);
     m_present[bitpos++] = (borddist == 4);
-    m_present[bitpos++] = (borddist >  4);                 
-        
-    // mcowner
-    float mcown;
-    if (vtx != FastBoard::PASS) {
-        mcown = MCOwnerTable::get_MCO()->get_score(tomove, vtx);
-    } else {
-        mcown = -1.0f;
-    }
-    m_present[bitpos++] = (mcown >= -0.01f && mcown <  0.10);
-    m_present[bitpos++] = (mcown >=  0.10f && mcown <  0.20);
-    m_present[bitpos++] = (mcown >=  0.20f && mcown <  0.30);
-    m_present[bitpos++] = (mcown >=  0.30f && mcown <  0.40);
-    m_present[bitpos++] = (mcown >=  0.40f && mcown <  0.50);
-    m_present[bitpos++] = (mcown >=  0.50f && mcown <  0.60);
-    m_present[bitpos++] = (mcown >=  0.60f && mcown <  0.70);
-    m_present[bitpos++] = (mcown >=  0.70f && mcown <  0.80);
-    m_present[bitpos++] = (mcown >=  0.80f && mcown <  0.90);
-    m_present[bitpos++] = (mcown >=  0.90f && mcown <  1.01);   
+    m_present[bitpos++] = (borddist >  4);                            
     
     int point = vtx;        
     if (vtx == FastBoard::PASS) {
         point = 0;
     }
     m_present[bitpos++] = (territory[point] != 0);
-    m_present[bitpos++] = (moyo[point] != 0);
+    m_present[bitpos++] = (moyo[point] != 0);       
     
     // prev move distance
     int prevdist;
