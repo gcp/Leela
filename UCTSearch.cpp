@@ -26,7 +26,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
     const uint64 hash = currstate.board.get_hash();
     Playout noderesult;  
         
-    TTable::get_TT()->sync(hash, node);        
+    //TTable::get_TT()->sync(hash, node);        
 
     if (node->get_visits() <= MATURE_TRESHOLD) {           
         noderesult.run(currstate);                
@@ -67,7 +67,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
     }             
       
     node->update(noderesult, !color);    
-    TTable::get_TT()->update(hash, node);    
+    //TTable::get_TT()->update(hash, node);    
     
     return noderesult;  
 }
@@ -333,7 +333,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
     
     //XXX: testing
-    //m_maxvisits = 10000;
+    m_maxvisits = 10000;
                  
     m_rootstate.start_clock(color);
 
@@ -341,11 +341,11 @@ int UCTSearch::think(int color, passflag_t passflag) {
     MCOwnerTable::clear();  
     Playout::mc_owner(m_rootstate, 64);    
     
-    dump_order2();                                      
+    //dump_order2();                                      
     
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)
-    m_nodes += m_root.create_children(m_rootstate);
+    m_nodes += m_root.create_children(m_rootstate, true);
     m_root.kill_superkos(m_rootstate);
     
     m_run = true;            

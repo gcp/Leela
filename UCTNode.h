@@ -17,7 +17,7 @@ public:
     float get_winrate(int tomove) const;
     float get_raverate(int tomove) const;
     float get_blackwins() const;
-    int create_children(FastState & state);
+    int create_children(FastState & state, bool scorepass = FALSE);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);        
     void invalidate();

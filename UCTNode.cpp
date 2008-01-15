@@ -48,7 +48,7 @@ SMP::Mutex & UCTNode::get_mutex() {
     return m_nodemutex;
 }
 
-int UCTNode::create_children(FastState & state) {   
+int UCTNode::create_children(FastState & state, bool scorepass) {   
     // acquire the lock
     SMP::Lock lock(get_mutex());    
     // check whether somebody beat us to it
@@ -77,9 +77,14 @@ int UCTNode::create_children(FastState & state) {
                 } 
             }                                           
         }      
-                
-        float score = state.score_move(territory, moyo, FastBoard::PASS);                
-        nodelist.push_back(std::make_pair(score, FastBoard::PASS));        
+            
+        float passscore;    
+        if (scorepass) {                
+            passscore = state.score_move(territory, moyo, FastBoard::PASS);                
+        } else {
+            passscore = 0;
+        }
+        nodelist.push_back(std::make_pair(passscore, FastBoard::PASS));        
     }    
     
     // sort (this will reverse scores, but linking is backwards too)
