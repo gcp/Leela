@@ -82,11 +82,14 @@ public:
     bool is_eye(const int color, const int vtx);
     bool no_eye_fill(const int i);
     int get_pattern_fast(const int sq);    
-    int get_pattern_fast_augment(const int sq); 
+    int get_pattern_fast_augment(const int sq);     
     int get_pattern3(const int sq, bool invert);   
     int get_pattern3_augment(const int sq, bool invert);
     int get_pattern3_augment_spec(const int sq, int libspec, bool invert);
     int get_pattern4(const int sq, bool invert, bool extend);
+    int get_pattern4_augment(const int sq, bool invert);
+    int get_pattern4_augment_fast(const int sq, bool invert);
+    static int get_pattern4_augment_symm(int pat);
     uint64 get_pattern5(const int sq, bool invert, bool extend);
     
     int estimate_mc_score(float komi = 7.5f);    
@@ -96,7 +99,7 @@ public:
     std::vector<bool> calc_reach_color(int col);        
     std::vector<int> influence(void);
     std::vector<int> moyo(void);
-    std::vector<int> area(void);
+    std::vector<int> area(void);    
     
     int eval(float komi); 
     int get_prisoners(int side);
@@ -114,7 +117,7 @@ public:
     void display_board(int lastmove = -1);    
 
     static bool starpoint(int size, int point);
-    static bool starpoint(int size, int x, int y);                           
+    static bool starpoint(int size, int x, int y);                               
             
     std::tr1::array<int, MAXSQ> m_empty;       /* empty squares */
     std::tr1::array<int, MAXSQ> m_empty_idx;   /* indexes of square */

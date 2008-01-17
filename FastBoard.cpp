@@ -1551,7 +1551,7 @@ int FastBoard::get_pattern3_augment_spec(const int sq, int libspec, bool invert)
 // extend = fill in 4 most extended squares with inval
 int FastBoard::get_pattern4(const int sq, bool invert, bool extend) {          
     const int size = m_boardsize;
-    std::tr1::array<square_t, 12> sqs;
+    std::tr1::array<square_t, 12> sqs;  
     
     if (extend) {
         sqs[0]  = INVAL;
@@ -1574,7 +1574,7 @@ int FastBoard::get_pattern4(const int sq, bool invert, bool extend) {
     
     sqs[8]  = m_square[sq + (size + 2) - 1];
     sqs[9]  = m_square[sq + (size + 2)];
-    sqs[10] = m_square[sq + (size + 2) + 1];    
+    sqs[10] = m_square[sq + (size + 2) + 1];   
     
     /* color symmetry */
     if (invert) {
@@ -1631,6 +1631,321 @@ int FastBoard::get_pattern4(const int sq, bool invert, bool extend) {
           | (sqs[ 4] << 14) | (sqs[ 5] << 12) | (sqs[ 6] << 10) | (sqs[ 7] <<  8)
           | (sqs[ 1] <<  6) | (sqs[ 2] <<  4) | (sqs[ 3] <<  2) | (sqs[ 0] <<  0);    
           
+    idx1 = std::min(idx1, idx2);
+    idx3 = std::min(idx3, idx4);
+    idx5 = std::min(idx5, idx6);
+    idx7 = std::min(idx7, idx8);
+    
+    idx1 = std::min(idx1, idx3);
+    idx5 = std::min(idx5, idx7);
+    
+    idx1 = std::min(idx1, idx5);                  
+          
+    return idx1;          
+}
+
+int FastBoard::get_pattern4_augment(const int sq, bool invert) {          
+    const int size = m_boardsize;
+    std::tr1::array<square_t, 12> sqs;
+    std::tr1::array<int, 4> lib;        
+        
+    sqs[1]  = m_square[sq - (size + 2) - 1];
+    sqs[2]  = m_square[sq - (size + 2)];
+    sqs[3]  = m_square[sq - (size + 2) + 1];
+    
+    sqs[5]  = m_square[sq - 1];
+    sqs[6]  = m_square[sq + 1];
+    
+    sqs[8]  = m_square[sq + (size + 2) - 1];
+    sqs[9]  = m_square[sq + (size + 2)];
+    sqs[10] = m_square[sq + (size + 2) + 1];
+    
+    if (sqs[2] == INVAL) {
+        sqs[0] = INVAL;
+    } else {
+        sqs[0] = m_square[sq - 2*(size + 2)];
+    }
+    
+    if (sqs[5] == INVAL) {
+        sqs[4] = INVAL;
+    } else {
+        sqs[4] = m_square[sq - 2];
+    }       
+    
+    if (sqs[6] == INVAL) {
+        sqs[7] = INVAL;
+    } else {
+        sqs[7] = m_square[sq + 2];
+    }
+    
+    if (sqs[9] == INVAL) {
+        sqs[11] = INVAL;
+    } else {
+        sqs[11] = m_square[sq + 2*(size + 2)];
+    }    
+
+    if (sqs[2] == WHITE || sqs[2] == BLACK) {
+        lib[0] = fast_in_atari(sq - (size + 2));
+    } else if (sqs[2] == EMPTY && (sqs[0] == WHITE || sqs[0] == BLACK)) {
+        lib[0] = fast_in_atari(sq - 2*(size + 2));
+    } else {
+        lib[0] = 0;
+    }
+
+    if (sqs[5] == WHITE || sqs[5] == BLACK) {
+        lib[1] = fast_in_atari(sq - 1);
+    } else if (sqs[5] == EMPTY && (sqs[4] == WHITE || sqs[4] == BLACK)) {
+        lib[1] = fast_in_atari(sq - 2);
+    } else {
+        lib[1] = 0;
+    }
+
+    if (sqs[6] == WHITE || sqs[6] == BLACK) {
+        lib[2] = fast_in_atari(sq + 1);
+    } else if (sqs[6] == EMPTY && (sqs[7] == WHITE || sqs[7] == BLACK)) {
+        lib[2] = fast_in_atari(sq + 2);
+    } else {
+        lib[2] = 0;
+    }
+
+    if (sqs[9] == WHITE || sqs[9] == BLACK) {
+        lib[3] = fast_in_atari(sq + (size + 2));
+    } else if (sqs[9] == EMPTY && (sqs[11] == WHITE || sqs[11] == BLACK)) {
+        lib[3] = fast_in_atari(sq + 2*(size + 2));
+    } else {
+        lib[3] = 0;
+    }
+    
+    /* color symmetry */
+    if (invert) {
+        for (int i = 0; i < sqs.size(); i++) {
+            sqs[i] = s_cinvert[sqs[i]];
+        }
+    }
+  
+    /*  
+          0        4        b   
+         123      851      a98         0
+        45 67    b9 20    76 54       1 2
+         89a      a63      321         3
+          b        7        0   
+    */    
+    int idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8;
+                                            
+    idx1 =  (sqs[ 0] << 22) | (sqs[ 1] << 20) | (sqs[ 2] << 18) | (sqs[ 3] << 16)
+          | (sqs[ 4] << 14) | (sqs[ 5] << 12) | (sqs[ 6] << 10) | (sqs[ 7] <<  8)
+          | (sqs[ 8] <<  6) | (sqs[ 9] <<  4) | (sqs[10] <<  2) | (sqs[11] <<  0); 
+    idx1 |= (lib[0] << 27 | lib[1] << 26 | lib[2] << 25 | lib[3] << 24);             
+
+    idx2 =  (sqs[ 4] << 22) | (sqs[ 8] << 20) | (sqs[ 5] << 18) | (sqs[ 1] << 16)
+          | (sqs[11] << 14) | (sqs[ 9] << 12) | (sqs[ 2] << 10) | (sqs[ 0] <<  8)
+          | (sqs[10] <<  6) | (sqs[ 6] <<  4) | (sqs[ 3] <<  2) | (sqs[ 7] <<  0);
+    idx2 |= (lib[1] << 27 | lib[3] << 26 | lib[0] << 25 | lib[2] << 24);
+
+    idx3 =  (sqs[11] << 22) | (sqs[10] << 20) | (sqs[ 9] << 18) | (sqs[ 8] << 16)
+          | (sqs[ 7] << 14) | (sqs[ 6] << 12) | (sqs[ 5] << 10) | (sqs[ 4] <<  8)
+          | (sqs[ 3] <<  6) | (sqs[ 2] <<  4) | (sqs[ 1] <<  2) | (sqs[ 0] <<  0);         
+    idx3 |= (lib[3] << 27 | lib[2] << 26 | lib[1] << 25 | lib[0] << 24);     
+
+    idx4 =  (sqs[ 7] << 22) | (sqs[ 3] << 20) | (sqs[ 6] << 18) | (sqs[10] << 16)
+          | (sqs[ 0] << 14) | (sqs[ 2] << 12) | (sqs[ 9] << 10) | (sqs[11] <<  8)
+          | (sqs[ 1] <<  6) | (sqs[ 5] <<  4) | (sqs[ 8] <<  2) | (sqs[ 4] <<  0);            
+    idx4 |= (lib[2] << 27 | lib[0] << 26 | lib[3] << 25 | lib[1] << 24); 
+
+    /*          
+          4
+         158      1
+        02 9b    0 3
+         36a      2
+          7
+    */          
+    idx5 =  (sqs[ 4] << 22) | (sqs[ 1] << 20) | (sqs[ 5] << 18) | (sqs[ 8] << 16)
+          | (sqs[ 0] << 14) | (sqs[ 2] << 12) | (sqs[ 9] << 10) | (sqs[11] <<  8)
+          | (sqs[ 3] <<  6) | (sqs[ 6] <<  4) | (sqs[10] <<  2) | (sqs[ 7] <<  0);            
+    idx5 |= (lib[1] << 27 | lib[0] << 26 | lib[3] << 25 | lib[2] << 24);       
+
+    idx6 =  (sqs[ 0] << 22) | (sqs[ 3] << 20) | (sqs[ 2] << 18) | (sqs[ 1] << 16)
+          | (sqs[ 7] << 14) | (sqs[ 6] << 12) | (sqs[ 5] << 10) | (sqs[ 4] <<  8)
+          | (sqs[10] <<  6) | (sqs[ 9] <<  4) | (sqs[ 8] <<  2) | (sqs[11] <<  0);            
+    idx6 |= (lib[0] << 27 | lib[2] << 26 | lib[1] << 25 | lib[3] << 24);  
+
+    idx7 =  (sqs[ 7] << 22) | (sqs[10] << 20) | (sqs[ 6] << 18) | (sqs[ 3] << 16)
+          | (sqs[11] << 14) | (sqs[ 9] << 12) | (sqs[ 2] << 10) | (sqs[ 0] <<  8)
+          | (sqs[ 8] <<  6) | (sqs[ 5] <<  4) | (sqs[ 1] <<  2) | (sqs[ 4] <<  0);            
+    idx7 |= (lib[2] << 27 | lib[3] << 26 | lib[0] << 25 | lib[1] << 24);     
+
+    idx8 =  (sqs[11] << 22) | (sqs[ 8] << 20) | (sqs[ 9] << 18) | (sqs[10] << 16)
+          | (sqs[ 4] << 14) | (sqs[ 5] << 12) | (sqs[ 6] << 10) | (sqs[ 7] <<  8)
+          | (sqs[ 1] <<  6) | (sqs[ 2] <<  4) | (sqs[ 3] <<  2) | (sqs[ 0] <<  0);    
+    idx8 |= (lib[3] << 27 | lib[1] << 26 | lib[2] << 25 | lib[0] << 24);  
+
+    idx1 = std::min(idx1, idx2);
+    idx3 = std::min(idx3, idx4);
+    idx5 = std::min(idx5, idx6);
+    idx7 = std::min(idx7, idx8);
+    
+    idx1 = std::min(idx1, idx3);
+    idx5 = std::min(idx5, idx7);
+    
+    idx1 = std::min(idx1, idx5);                  
+          
+    return idx1;          
+}
+
+int FastBoard::get_pattern4_augment_fast(const int sq, bool invert) {
+    const int size = m_boardsize;
+    std::tr1::array<square_t, 12> sqs;
+    std::tr1::array<int, 4> lib;        
+        
+    sqs[1]  = m_square[sq - (size + 2) - 1];
+    sqs[2]  = m_square[sq - (size + 2)];
+    sqs[3]  = m_square[sq - (size + 2) + 1];
+    
+    sqs[5]  = m_square[sq - 1];
+    sqs[6]  = m_square[sq + 1];
+    
+    sqs[8]  = m_square[sq + (size + 2) - 1];
+    sqs[9]  = m_square[sq + (size + 2)];
+    sqs[10] = m_square[sq + (size + 2) + 1];
+    
+    if (sqs[2] == INVAL) {
+        sqs[0] = INVAL;
+    } else {
+        sqs[0] = m_square[sq - 2*(size + 2)];
+    }
+    
+    if (sqs[5] == INVAL) {
+        sqs[4] = INVAL;
+    } else {
+        sqs[4] = m_square[sq - 2];
+    }       
+    
+    if (sqs[6] == INVAL) {
+        sqs[7] = INVAL;
+    } else {
+        sqs[7] = m_square[sq + 2];
+    }
+    
+    if (sqs[9] == INVAL) {
+        sqs[11] = INVAL;
+    } else {
+        sqs[11] = m_square[sq + 2*(size + 2)];
+    }    
+
+    if (sqs[2] == WHITE || sqs[2] == BLACK) {
+        lib[0] = fast_in_atari(sq - (size + 2));
+    } else if (sqs[2] == EMPTY && (sqs[0] == WHITE || sqs[0] == BLACK)) {
+        lib[0] = fast_in_atari(sq - 2*(size + 2));
+    } else {
+        lib[0] = 0;
+    }
+
+    if (sqs[5] == WHITE || sqs[5] == BLACK) {
+        lib[1] = fast_in_atari(sq - 1);
+    } else if (sqs[5] == EMPTY && (sqs[4] == WHITE || sqs[4] == BLACK)) {
+        lib[1] = fast_in_atari(sq - 2);
+    } else {
+        lib[1] = 0;
+    }
+
+    if (sqs[6] == WHITE || sqs[6] == BLACK) {
+        lib[2] = fast_in_atari(sq + 1);
+    } else if (sqs[6] == EMPTY && (sqs[7] == WHITE || sqs[7] == BLACK)) {
+        lib[2] = fast_in_atari(sq + 2);
+    } else {
+        lib[2] = 0;
+    }
+
+    if (sqs[9] == WHITE || sqs[9] == BLACK) {
+        lib[3] = fast_in_atari(sq + (size + 2));
+    } else if (sqs[9] == EMPTY && (sqs[11] == WHITE || sqs[11] == BLACK)) {
+        lib[3] = fast_in_atari(sq + 2*(size + 2));
+    } else {
+        lib[3] = 0;
+    }
+    
+    /* color symmetry */
+    if (invert) {
+        for (int i = 0; i < sqs.size(); i++) {
+            sqs[i] = s_cinvert[sqs[i]];
+        }
+    }
+                                                
+    int idx1 =  (sqs[ 0] << 22) | (sqs[ 1] << 20) | (sqs[ 2] << 18) | (sqs[ 3] << 16)
+              | (sqs[ 4] << 14) | (sqs[ 5] << 12) | (sqs[ 6] << 10) | (sqs[ 7] <<  8)
+              | (sqs[ 8] <<  6) | (sqs[ 9] <<  4) | (sqs[10] <<  2) | (sqs[11] <<  0); 
+    idx1 |= (lib[0] << 27 | lib[1] << 26 | lib[2] << 25 | lib[3] << 24);   
+    
+    return idx1;          
+}
+
+int FastBoard::get_pattern4_augment_symm(int pat) {
+    std::tr1::array<int, 12> sqs;
+    std::tr1::array<int, 4> lib;  
+
+    int idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8;
+
+    idx1 = pat;
+    
+    sqs[11] = pat & 3; pat >>= 2;              
+    sqs[10] = pat & 3; pat >>= 2;
+    sqs[ 9] = pat & 3; pat >>= 2;
+    sqs[ 8] = pat & 3; pat >>= 2;
+    sqs[ 7] = pat & 3; pat >>= 2;
+    sqs[ 6] = pat & 3; pat >>= 2;
+    sqs[ 5] = pat & 3; pat >>= 2;
+    sqs[ 4] = pat & 3; pat >>= 2;
+    sqs[ 3] = pat & 3; pat >>= 2;
+    sqs[ 2] = pat & 3; pat >>= 2;
+    sqs[ 1] = pat & 3; pat >>= 2;
+    sqs[ 0] = pat & 3; pat >>= 2;
+    lib[ 3] = pat & 1; pat >>= 1;
+    lib[ 2] = pat & 1; pat >>= 1;
+    lib[ 1] = pat & 1; pat >>= 1;
+    lib[ 0] = pat & 1;                                                     
+
+    idx2 =  (sqs[ 4] << 22) | (sqs[ 8] << 20) | (sqs[ 5] << 18) | (sqs[ 1] << 16)
+          | (sqs[11] << 14) | (sqs[ 9] << 12) | (sqs[ 2] << 10) | (sqs[ 0] <<  8)
+          | (sqs[10] <<  6) | (sqs[ 6] <<  4) | (sqs[ 3] <<  2) | (sqs[ 7] <<  0);
+    idx2 |= (lib[1] << 27 | lib[3] << 26 | lib[0] << 25 | lib[2] << 24);
+
+    idx3 =  (sqs[11] << 22) | (sqs[10] << 20) | (sqs[ 9] << 18) | (sqs[ 8] << 16)
+          | (sqs[ 7] << 14) | (sqs[ 6] << 12) | (sqs[ 5] << 10) | (sqs[ 4] <<  8)
+          | (sqs[ 3] <<  6) | (sqs[ 2] <<  4) | (sqs[ 1] <<  2) | (sqs[ 0] <<  0);         
+    idx3 |= (lib[3] << 27 | lib[2] << 26 | lib[1] << 25 | lib[0] << 24);     
+
+    idx4 =  (sqs[ 7] << 22) | (sqs[ 3] << 20) | (sqs[ 6] << 18) | (sqs[10] << 16)
+          | (sqs[ 0] << 14) | (sqs[ 2] << 12) | (sqs[ 9] << 10) | (sqs[11] <<  8)
+          | (sqs[ 1] <<  6) | (sqs[ 5] <<  4) | (sqs[ 8] <<  2) | (sqs[ 4] <<  0);            
+    idx4 |= (lib[2] << 27 | lib[0] << 26 | lib[3] << 25 | lib[1] << 24); 
+
+    /*          
+          4
+         158      1
+        02 9b    0 3
+         36a      2
+          7
+    */          
+    idx5 =  (sqs[ 4] << 22) | (sqs[ 1] << 20) | (sqs[ 5] << 18) | (sqs[ 8] << 16)
+          | (sqs[ 0] << 14) | (sqs[ 2] << 12) | (sqs[ 9] << 10) | (sqs[11] <<  8)
+          | (sqs[ 3] <<  6) | (sqs[ 6] <<  4) | (sqs[10] <<  2) | (sqs[ 7] <<  0);            
+    idx5 |= (lib[1] << 27 | lib[0] << 26 | lib[3] << 25 | lib[2] << 24);       
+
+    idx6 =  (sqs[ 0] << 22) | (sqs[ 3] << 20) | (sqs[ 2] << 18) | (sqs[ 1] << 16)
+          | (sqs[ 7] << 14) | (sqs[ 6] << 12) | (sqs[ 5] << 10) | (sqs[ 4] <<  8)
+          | (sqs[10] <<  6) | (sqs[ 9] <<  4) | (sqs[ 8] <<  2) | (sqs[11] <<  0);            
+    idx6 |= (lib[0] << 27 | lib[2] << 26 | lib[1] << 25 | lib[3] << 24);  
+
+    idx7 =  (sqs[ 7] << 22) | (sqs[10] << 20) | (sqs[ 6] << 18) | (sqs[ 3] << 16)
+          | (sqs[11] << 14) | (sqs[ 9] << 12) | (sqs[ 2] << 10) | (sqs[ 0] <<  8)
+          | (sqs[ 8] <<  6) | (sqs[ 5] <<  4) | (sqs[ 1] <<  2) | (sqs[ 4] <<  0);            
+    idx7 |= (lib[2] << 27 | lib[3] << 26 | lib[0] << 25 | lib[1] << 24);     
+
+    idx8 =  (sqs[11] << 22) | (sqs[ 8] << 20) | (sqs[ 9] << 18) | (sqs[10] << 16)
+          | (sqs[ 4] << 14) | (sqs[ 5] << 12) | (sqs[ 6] << 10) | (sqs[ 7] <<  8)
+          | (sqs[ 1] <<  6) | (sqs[ 2] <<  4) | (sqs[ 3] <<  2) | (sqs[ 0] <<  0);    
+    idx8 |= (lib[3] << 27 | lib[1] << 26 | lib[2] << 25 | lib[0] << 24);  
+
     idx1 = std::min(idx1, idx2);
     idx3 = std::min(idx3, idx4);
     idx5 = std::min(idx5, idx6);
@@ -1788,46 +2103,19 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
 }
 
 void FastBoard::add_pattern_moves(int color, int vertex,
-                                  std::vector<int> & work) {                                      
-    //Matcher * matcher = Matcher::get_Matcher();
-    
-    //typedef std::pair<int, int> movescore;
-    //std::tr1::array<movescore, 8> moves;
-    
-    //int count = 0;
-    //int cumul = 0;        
-
+                                  std::vector<int> & work) {                                         
     for (int i = 0; i < 8; i++) {        
         int sq = vertex + m_extradirs[i];
         
-        if (m_square[sq] == EMPTY) {      
-            //int pattern = get_pattern_fast_augment(sq);
-            //int score = matcher->matches(color, pattern);            
-            //int score = match_pattern(color, sq);
-            
-            //if (score >= Matcher::UNITY) {                
-                if (!self_atari(color, sq)) {                    
-                    work.push_back(sq);
-                    /*cumul += score;
-                    moves[count] = std::make_pair(sq, cumul);
-                    count++;*/
-                }
-            //}
+        if (m_square[sq] == EMPTY) {                              
+            if (!self_atari(color, sq)) {                    
+                work.push_back(sq);                 
+            }            
         }                                        
-    }                       
-    
-    /*int index = Random::get_Rng()->randint(cumul);
-    
-    for (int i = 0; i < count; i++) {
-        int point = moves[i].second;
-        if (index < point) {
-            work.push_back(moves[i].first);
-            return;
-        }
-    }*/
+    }                        
     
     return;
-}        
+}
 
 // check for fixed patterns around vertex for color to move
 // include rotations

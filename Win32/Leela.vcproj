@@ -211,10 +211,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\Genetic.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\GTP.cpp"
 				>
 			</File>
@@ -318,10 +314,6 @@
 			</File>
 			<File
 				RelativePath="..\GameState.h"
-				>
-			</File>
-			<File
-				RelativePath="..\Genetic.h"
 				>
 			</File>
 			<File

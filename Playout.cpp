@@ -39,7 +39,7 @@ void Playout::run(FastState & state, bool resigning) {
     
     // do the first and main loop        
     do {                                    
-        int vtx = state.play_random_move();
+        int vtx = state.play_random_move(counter);
 
         if (counter < 60 && vtx != FastBoard::PASS) {
             int color = !state.get_to_move();
@@ -99,12 +99,12 @@ void Playout::do_playout_benchmark(GameState& game) {
     
     len = 0.0;
     score = 0;
-    Time start;
+    Time start;    
     
     for (loop = 0; loop < AUTOGAMES; loop++) {
+        int counter = 0;
         do {                                    
-            int move = game.play_random_move();                                                       
-            
+            int move = game.play_random_move(counter++);             
         } while (game.get_passes() < 2 
                  && game.get_movenum() < playoutlen
                  && abs(game.estimate_mc_score()) < resign); 

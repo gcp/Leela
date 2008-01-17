@@ -63,14 +63,16 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                     }                    
                 } else {
                     break;
-                }     
-                                                    
+                }  
+
+#ifdef FULLFEATURES                                                    
                 MCOwnerTable::clear();
                 Playout::mc_owner(*state);
                 
                 std::vector<int> territory = state->board.influence();
                 std::vector<int> moyo = state->board.moyo();
-                
+#endif
+
                 // sitting at a state, with the move actually played in move
                 // gather feature sets of all moves
                 std::vector<int> moves = state->generate_moves(tomove);            
@@ -85,7 +87,11 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
+#ifdef FULLFEATURES
                     attributes.get_from_move(state, territory, moyo, *it);
+#else
+                    attributes.get_from_move(state, *it);
+#endif
                     
                     position.second.push_back(attributes);
                     
@@ -111,13 +117,14 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
         if (treewalk->get_state()->get_passes() == 0) {              
             KoState * state = treewalk->get_state();
             int tomove = state->get_to_move();                                                
-            
+			
+#ifdef FULLFEATURES            
             MCOwnerTable::clear();
             Playout::mc_owner(*state);
-            
+
             std::vector<int> territory = state->board.influence();
             std::vector<int> moyo = state->board.moyo();
-            
+#endif            
             std::vector<int> moves = state->generate_moves(tomove);            
 
             // make list of move - attributes pairs                       
@@ -130,8 +137,11 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
+#ifdef FULLFEATURES
                     attributes.get_from_move(state, territory, moyo, *it);
-
+#else
+                    attributes.get_from_move(state, *it);
+#endif                    
                     position.second.push_back(attributes);                    
 
                     if (*it == FastBoard::PASS) {
@@ -152,8 +162,12 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 for(it = moves.begin(); it != moves.end(); ++it) {
                     Attributes attributes;
                     // gather attribute set of current move
+#ifdef FULLFEATURES
                     attributes.get_from_move(state, territory, moyo, *it);
-                    
+#else
+                    attributes.get_from_move(state, *it);
+#endif
+
                     position.second.push_back(attributes);                    
                     
                     if (*it == FastBoard::PASS) {
@@ -234,7 +248,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(101);
+    m_fweight.resize(2);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
