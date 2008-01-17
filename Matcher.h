@@ -11,9 +11,7 @@ public:
     
     static const int UNITY = 2;
     static const int THRESHOLD = 2;
-    static const int PROXFACTOR = 40;
-    
-    static const int HASHMAX = 1 << 20;
+    static const int PROXFACTOR = 40;        
 
     unsigned char matches(int pattern);
 

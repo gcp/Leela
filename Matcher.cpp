@@ -27,9 +27,9 @@ void Matcher::set_Matcher(Matcher * m) {
 
 // initialize matcher data
 Matcher::Matcher() { 
-    const int max = 1 << ((12 * 2) + 4);    
+    const int max = 65536;    
 
-    m_patterns.resize(HASHMAX);                     
+    m_patterns.resize(max);                     
     std::fill(m_patterns.begin(), m_patterns.end(), 
               clip(Matcher::UNITY * Matcher::PROXFACTOR));        
 
@@ -41,23 +41,18 @@ Matcher::Matcher() {
                                          internal_weights_fast[i]));
     }    
     
-    for (int i = 0; i < max; i++) {    
-        int rpat = FastBoard::get_pattern4_augment_symm(i);
-        int rpathash = ((rpat * 1597334677) >> 16) & 0xFFFF;        
-        
-        int hashidx = ((i * 1597334677) >> 12) & (HASHMAX - 1); 
-           
-        patmap::iterator it = patweights.find(rpathash);                       
+    for (int i = 0; i < max; i++) {                               
+        patmap::iterator it = patweights.find(i);                       
         
         if (it != patweights.end()) {
             float weight = it->second * (Matcher::PROXFACTOR * Matcher::UNITY);
-            m_patterns[hashidx] = clip((int)(weight + 0.5f));
+            m_patterns[i] = clip((int)(weight + 0.5f));
         }     
     }           
 }
 
 unsigned char Matcher::matches(int pattern) {
-    int pat = ((pattern * 1597334677) >> 12) & (HASHMAX - 1); 
+    int pat = ((pattern * 1597334677) >> 16) & 0xFFFF; 
     return m_patterns[pat];
 }
 

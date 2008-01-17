@@ -142,7 +142,7 @@ int FastState::play_random_move(int color, int counter) {
         for (int i = 0; i < m_work.size(); i++) {
             int sq = m_work[i];
             
-            int pattern = board.get_pattern4_augment_fast(sq, color);
+            int pattern = board.get_pattern4_augment(sq, color);
             int score = matcher->matches(pattern);    
                                   
             if (score >= Matcher::UNITY) {                                                     
@@ -176,7 +176,7 @@ int FastState::play_random_move(int color, int counter) {
             return play_move_fast(vtx);
         }
         
-        int pattern = board.get_pattern4_augment_fast(vtx, color);
+        int pattern = board.get_pattern4_augment(vtx, color);
         int score = matcher->matches(pattern);                 
                     
         if (score > bestscore) {
