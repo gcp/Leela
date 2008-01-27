@@ -32,8 +32,8 @@ public:
     uint64 get_pattern(void);    
     bool attribute_enabled(int idx);
 private:         
-    uint16 m_pattern;
-    std::tr1::array<char, 2> m_present; 
+    int m_pattern;
+    std::bitset<2> m_present; 
 };
 
 #endif

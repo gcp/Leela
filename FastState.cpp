@@ -10,7 +10,6 @@
 #include "Zobrist.h"
 #include "Matcher.h"
 #include "AttribScores.h"
-#include "MCOTable.h"
 
 using namespace Utils;
 
@@ -23,6 +22,7 @@ void FastState::init_game(int size, float komi) {
     lastmove = 0;
     onebutlastmove = lastmove;
     m_komi = komi;
+    m_handicap = 0;
     m_passes = 0;
     
     return;
@@ -36,7 +36,8 @@ void FastState::reset_game(void) {
     reset_board();
 
     movenum = 0;   
-    m_passes = 0;                       
+    m_passes = 0;     
+    m_handicap = 0;                  
     
     lastmove = FastBoard::MAXSQ;
     onebutlastmove = lastmove;
@@ -46,8 +47,8 @@ void FastState::reset_board(void) {
     board.reset_board(board.get_boardsize());
 }
 
-int FastState::play_random_move(int counter) {
-    return play_random_move(board.m_tomove, counter);
+int FastState::play_random_move() {
+    return play_random_move(board.m_tomove);
 }
 
 std::vector<int> FastState::generate_moves(int color) {
@@ -118,33 +119,42 @@ int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
     return FastBoard::PASS;        
 }
 
-int FastState::play_random_move(int color, int counter) {                            
-    board.m_tomove = color;   
-  
+int FastState::play_random_move(int color) {                            
+    board.m_tomove = color;        
+   
     m_work.clear();    
     
     if (lastmove > 0 && lastmove < board.m_maxsq) {
         if (board.get_square(lastmove) == !color) {            
-            board.add_global_captures(color, m_work);                                        
-            board.save_critical_neighbours(color, lastmove, m_work);            
-            board.add_pattern_moves(color, lastmove, m_work);                        
+            board.add_global_captures(color, m_work);            
+            //if (m_work.empty()) {                
+            board.save_critical_neighbours(color, lastmove, m_work);
+            //}
+            //if (m_work.empty()) {                
+            board.add_pattern_moves(color, lastmove, m_work);            
+            //}
+            // remove ko captures     
             m_work.erase(std::remove(m_work.begin(), m_work.end(), komove), m_work.end());                                           
         }        
     }        
                 
-    if (!m_work.empty()) {                                                     
+    if (!m_work.empty()) {                                             
+        // remove multiple moves    
+        //std::sort(m_work.begin(), m_work.end());    
+        //m_work.erase(std::unique(m_work.begin(), m_work.end()), m_work.end()); 
+        
         m_moves.clear();
         
-        Matcher * matcher = Matcher::get_Matcher();                
+        Matcher * matcher = Matcher::get_Matcher();
         
         int cumul = 0;                
         
         for (int i = 0; i < m_work.size(); i++) {
             int sq = m_work[i];
             
-            int pattern = board.get_pattern4_augment(sq, color);
-            int score = matcher->matches(pattern);    
-                                  
+            int pattern = board.get_pattern_fast_augment(sq);
+            int score = matcher->matches(color, pattern);                            
+        
             if (score >= Matcher::UNITY) {                                                     
                 cumul += score;
                 m_moves.push_back(std::make_pair(sq, cumul));                      
@@ -162,7 +172,7 @@ int FastState::play_random_move(int color, int counter) {
     } 
     
     // fall back global moves  
-    Matcher * matcher = Matcher::get_Matcher();    
+    Matcher * matcher = Matcher::get_Matcher();        
     
     int loops = 2;
     int bestvtx = FastBoard::PASS;
@@ -176,8 +186,8 @@ int FastState::play_random_move(int color, int counter) {
             return play_move_fast(vtx);
         }
         
-        int pattern = board.get_pattern4_augment(vtx, color);
-        int score = matcher->matches(pattern);                 
+        int pattern = board.get_pattern_fast_augment(vtx);
+        int score = matcher->matches(color, pattern);   
                     
         if (score > bestscore) {
             if (board.self_atari(color, vtx)) {
@@ -190,16 +200,12 @@ int FastState::play_random_move(int color, int counter) {
         }
     } while (--loops > 0);
     
-    return play_move_fast(bestvtx);    
+    return play_move_fast(bestvtx);      
 }
 
 float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {       
     Attributes att;
-#ifdef FULLFEATURES
     att.get_from_move(this, territory, moyo, vertex);
-#else
-    att.get_from_move(this, vertex);
-#endif
 
     return AttribScores::get_attribscores()->team_strength(att);        
 }
@@ -268,11 +274,15 @@ int FastState::get_movenum() {
 }
 
 int FastState::estimate_mc_score(void) {
-    return board.estimate_mc_score(m_komi);
+    return board.estimate_mc_score(m_komi + m_handicap);
 }
 
 float FastState::calculate_mc_score(void) {
-    return board.final_mc_score(m_komi);
+    return board.final_mc_score(m_komi + m_handicap);
+}
+
+float FastState::percentual_area_score() {
+    return board.percentual_area_score(m_komi + m_handicap);
 }
 
 int FastState::get_last_move(void) {
@@ -412,10 +422,17 @@ float FastState::final_score() {
         }
     }        
     
-    return workstate.board.area_score(get_komi());
+    return workstate.board.area_score(get_komi() + get_handicap());
 }
 
 float FastState::get_komi() {
     return m_komi;
 }
 
+void FastState::set_handicap(int hcap) {
+    m_handicap = hcap;
+}
+      
+int FastState::get_handicap() {
+    return m_handicap;
+}

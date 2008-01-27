@@ -26,7 +26,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
     const uint64 hash = currstate.board.get_hash();
     Playout noderesult;  
         
-    //TTable::get_TT()->sync(hash, node);        
+    TTable::get_TT()->sync(hash, node);        
 
     if (node->get_visits() <= MATURE_TRESHOLD) {           
         noderesult.run(currstate);                
@@ -62,12 +62,12 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
         } else if (m_nodes >= MAX_TREE_SIZE) {
             noderesult.run(currstate);
         } else {                     
-            noderesult.set_final_score(currstate.board.percentual_area_score(currstate.m_komi));            
+            noderesult.set_final_score(currstate.percentual_area_score()); 
         }        
     }             
       
     node->update(noderesult, !color);    
-    //TTable::get_TT()->update(hash, node);    
+    TTable::get_TT()->update(hash, node);    
     
     return noderesult;  
 }
@@ -333,7 +333,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
     
     //XXX: testing
-    m_maxvisits = 10000;
+    //m_maxvisits = 10000;
                  
     m_rootstate.start_clock(color);
 

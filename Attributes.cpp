@@ -25,11 +25,11 @@ int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
 }
 
 void FastAttributes::get_from_move(FastState * state, int vtx) {
-    //m_present.reset();    
+    m_present.reset();
 
     int tomove = state->get_to_move();
     int bitpos = 0;                                                           
-
+    
     // prev move distance
     int prevdist;
     if (state->get_last_move() > 0 && vtx > 0) {
@@ -39,7 +39,28 @@ void FastAttributes::get_from_move(FastState * state, int vtx) {
         prevdist = 100;
     }
     
-    m_present[bitpos++] = (prevdist <=  3);                      
+    m_present[bitpos++] = (prevdist <=  3);        
+          
+    // atari-escape (saving-size) adding liberties (only count pseudos)
+    // adding 1 is self-atari so doesn't count    
+   /* int ae;
+    int ss;
+    if (vtx != FastBoard::PASS) {
+        ss = state->board.saving_size(tomove, vtx);
+        ae = state->board.count_liberties(vtx);
+    } else {
+        ss = -1;
+        ae = -1;
+    }            
+    m_present[bitpos++] = (ss > 0);    
+        
+    int cs;
+    if (vtx != FastBoard::PASS) {
+        cs = state->board.capture_size(tomove, vtx);
+    } else {
+        cs = -1;
+    }    
+    m_present[bitpos++] = (cs > 0);*/
     
     // sa
     bool sa;
@@ -49,19 +70,14 @@ void FastAttributes::get_from_move(FastState * state, int vtx) {
         sa = false;
     }    
     m_present[bitpos++] = sa;
-     
-
+    
     // shape  (border check)            
     int pat;
-    if (vtx != FastBoard::PASS) {           
-        pat = state->board.get_pattern4_augment(vtx, tomove);              
+    if (vtx != FastBoard::PASS) {                              
+        pat = state->board.get_pattern3_augment(vtx, tomove);      
     } else {
-        pat = 0xFFFFFFF; // all INVAL
-    }
-
-    //pat = (pat * 69069) % 7919;
-    //pat = (pat * 69069) % 65521;  569
-    pat = ((pat * 1597334677) >> 16) & 0xFFFF;
+        pat = 0xFFFF; // all INVAL
+    }       
 
     m_pattern = pat;
 }
@@ -327,7 +343,8 @@ void Attributes::get_from_move(FastState * state,
         ll = state->board.check_losing_ladder(tomove, vtx);
     }
     m_present[bitpos++] = ll;         
-        
+    
+    
     // shape  (border check)            
     int pat;
     if (vtx != FastBoard::PASS) {          
@@ -344,18 +361,18 @@ void Attributes::get_from_move(FastState * state,
 }
 
 
-uint64 FastAttributes::get_pattern(void) {
-    return m_pattern;
-}
-
 uint64 Attributes::get_pattern(void) {
     return m_pattern;
 }
 
-bool FastAttributes::attribute_enabled(int idx) {
-    return m_present[idx];
+uint64 FastAttributes::get_pattern(void) {
+    return m_pattern;
 }
 
 bool Attributes::attribute_enabled(int idx) {
+    return m_present[idx];
+}
+
+bool FastAttributes::attribute_enabled(int idx) {
     return m_present[idx];
 }

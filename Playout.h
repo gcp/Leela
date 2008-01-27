@@ -13,7 +13,7 @@ public:
     typedef std::bitset<FastBoard::MAXSQ> bitboard_t;
     typedef std::tr1::array<bitboard_t, 2> color_bitboard_t;
     
-    static const int AUTOGAMES = 50000;    
+    static const int AUTOGAMES = 100000;    
     static void do_playout_benchmark(GameState & game);            
     static void mc_owner(FastState & state, int iterations = 32);
 

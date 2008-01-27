@@ -213,6 +213,8 @@ bool GameState::set_fixed_handicap(int handicap) {
     
     anchor_game_history();
     
+    set_handicap(handicap);
+    
     return true;
 }
 
@@ -241,14 +243,23 @@ void GameState::place_free_handicap(int stones) {
         stones = limit / 2;
     }
     
+    int orgstones = stones;        
+    
+    int fixplace = std::min(9, stones);
+        
+    set_fixed_handicap(fixplace);
+    stones -= fixplace;    
+    
     for (int i = 0; i < stones; i++) {
         std::auto_ptr<UCTSearch> search(new UCTSearch(*this));
 
-        int move = search->think(FastBoard::BLACK);
+        int move = search->think(FastBoard::BLACK, UCTSearch::NOPASS);
         play_move(FastBoard::BLACK, move);     
     }    
     
     board.m_tomove = FastBoard::WHITE;
     
-    anchor_game_history();
+    anchor_game_history(); 
+    
+    set_handicap(orgstones);       
 }

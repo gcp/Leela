@@ -7,13 +7,14 @@
 
 class Matcher {
 public:    
-    Matcher();    
+    Matcher();
+    Matcher(std::tr1::array<unsigned char, 65536> & pats);
     
     static const int UNITY = 2;
     static const int THRESHOLD = 2;
-    static const int PROXFACTOR = 40;        
+    static const int PROXFACTOR = 40;
 
-    unsigned char matches(int pattern);
+    unsigned char matches(int color, int pattern);
 
     /*
         return the "global" matcher
@@ -26,7 +27,7 @@ private:
 
     static Matcher* s_matcher;   
 
-    std::vector<unsigned char> m_patterns;
+    std::tr1::array<std::vector<unsigned char>, 2> m_patterns;
 };
 
 #endif
