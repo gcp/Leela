@@ -129,30 +129,29 @@ void FastBoard::reset_board(int size) {
     m_next[MAXSQ]   = MAXSQ;                        
 }
 
-bool FastBoard::is_suicide(int i, int color) {    
-    int k;     
-    int connecting = false;
+bool FastBoard::is_suicide(int i, int color) {        
+    if (count_pliberties(i)) {
+        return false;
+    }
+          
+    bool connecting = false;
         
-    for (k = 0; k < 4; k++) {
+    for (int k = 0; k < 4; k++) {
         int ai = i + m_dirs[k];
-                      
-        if (get_square(ai) == EMPTY) {
-            return false;
+                             
+        int libs = m_plibs[m_parent[ai]];
+        if (get_square(ai) == color) {
+            if (libs > 4) {
+                // connecting to live group = never suicide                    
+                return false;
+            }            
+            connecting = true;
         } else {
-            int libs = m_plibs[m_parent[ai]];
-            if (get_square(ai) == color) {
-                if (libs > 4) {
-                    // connecting to live group = never suicide                    
-                    return false;
-                }            
-                connecting = true;
-            } else {
-                if (libs <= 1) {
-                    // killing neighbor = never suicide
-                    return false;
-                }
-            }                    
-        }        
+            if (libs <= 1) {
+                // killing neighbor = never suicide
+                return false;
+            }
+        }                            
     }
     
     add_neighbour(i, color);
@@ -160,7 +159,7 @@ bool FastBoard::is_suicide(int i, int color) {
     bool opps_live = true;
     bool ours_die = true;
     
-    for (k = 0; k < 4; k++) {
+    for (int k = 0; k < 4; k++) {
         int ai = i + m_dirs[k];
                  
         int libs = m_plibs[m_parent[ai]];

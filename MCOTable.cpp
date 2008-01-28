@@ -46,3 +46,7 @@ void MCOwnerTable::clear() {
     std::fill(get_MCO()->m_mcowner.begin(), get_MCO()->m_mcowner.end(), 0);    
     get_MCO()->m_mcsimuls = 0;
 }
+
+bool MCOwnerTable::is_primed() {
+    return (get_MCO()->m_mcsimuls >= 64);
+}

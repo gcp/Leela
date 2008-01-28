@@ -32,12 +32,13 @@ void Playout::run(FastState & state, bool resigning) {
     assert(!m_run);        
 
     const int boardsize = state.board.get_boardsize();
+        
     const int resign = (boardsize * boardsize) / 3;
     const int playoutlen = (boardsize * boardsize) * 2;        
     
     int counter = 0; 
     
-    // do the first and main loop        
+    // do the main loop        
     do {                                    
         int vtx = state.play_random_move();
 

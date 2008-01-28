@@ -72,8 +72,8 @@ std::vector<int> FastState::generate_moves(int color) {
 bool FastState::try_move(int color, int vertex, bool allow_sa) {    
     if (vertex != komove && board.no_eye_fill(vertex)) {
         if (!board.fast_ss_suicide(color, vertex)) {
-            if ((allow_sa) || (!board.self_atari(color, vertex))) {
-                return true;
+            if ((allow_sa) || (!board.self_atari(color, vertex))) {               
+                return true;               
             }
         } 
     }                       
@@ -155,9 +155,9 @@ int FastState::play_random_move(int color) {
             int pattern = board.get_pattern_fast_augment(sq);
             int score = matcher->matches(color, pattern);                            
         
-            if (score >= Matcher::UNITY) {                                                     
+            if (score >= Matcher::UNITY) {                                                               
                 cumul += score;
-                m_moves.push_back(std::make_pair(sq, cumul));                      
+                m_moves.push_back(std::make_pair(sq, cumul));                                      
             }
         }
                    
@@ -308,6 +308,10 @@ void FastState::increment_passes() {
 
 int FastState::get_to_move() {
     return board.m_tomove;
+}
+
+void FastState::set_to_move(int tom) {
+    board.m_tomove = tom;
 }
 
 void FastState::display_state() {        

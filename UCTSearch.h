@@ -25,7 +25,8 @@ public:
         Don't expand children until at least this many
         visits happened.
     */        
-    static const int MATURE_TRESHOLD = 30; 
+    static const int MATURE_TRESHOLD = 30;
+     
     /*
         Maximum size of the tree in memory.
     */        
@@ -36,7 +37,7 @@ public:
     void set_visit_limit(int visits);
     void ponder();    
     bool is_running();      
-    Playout play_simulation(KoState & currstate, UCTNode * node);
+    Playout play_simulation(KoState & currstate, UCTNode * node);    
     float get_score();
     
 private:             
@@ -46,7 +47,7 @@ private:
     void dump_order2(void);
     int get_best_move(passflag_t passflag);    
 
-    GameState & m_rootstate;    
+    GameState & m_rootstate;        
     UCTNode m_root;    
     int m_nodes;  
     int m_maxvisits;

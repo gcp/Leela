@@ -27,6 +27,7 @@ public:
     int get_handicap();
     int get_passes();
     int get_to_move();
+    void set_to_move(int tomove);
     void set_passes(int val);
     void increment_passes();            
     

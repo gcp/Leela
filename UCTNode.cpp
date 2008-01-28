@@ -260,12 +260,8 @@ UCTNode* UCTNode::uct_select_child(int color) {
             if (!child->first_visit()) {
                 // UCT part
                 float winrate   = child->get_winrate(color);     
-                float childrate = logparent / child->get_visits();            
-                            
-                float var = winrate - (winrate * winrate) + sqrtf(2.0f * childrate);            
-
-                float uncertain = std::max(0.0f, std::min(0.25f, var));
-                float uct = 0.8f * sqrtf(childrate * uncertain);
+                float childrate = logparent / child->get_visits();                                        
+                float uct = 0.32f * sqrtf(childrate);
                 
                 uctvalue = winrate + uct;
                 
@@ -278,13 +274,8 @@ UCTNode* UCTNode::uct_select_child(int color) {
             
             // RAVE part            
             float ravewinrate = child->get_raverate(color);
-            float ravechildrate = lograveparent / child->get_ravevisits();
-            
-            float ravevar = ravewinrate - (ravewinrate * ravewinrate) 
-                            + sqrtf(2.0f * ravechildrate);
-                            
-            float raveuncertain = std::max(0.0f, std::min(0.25f, ravevar));
-            float rave = 0.8f * sqrtf(ravechildrate * raveuncertain);
+            float ravechildrate = lograveparent / child->get_ravevisits();                        
+            float rave = 0.32f * sqrtf(ravechildrate);
             
             float ravevalue = ravewinrate + rave + patternbonus; 
                                    

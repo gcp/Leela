@@ -17,7 +17,10 @@ public:
         update corresponding entry
     */            
     void update(Playout::bitboard_t & blacksq);    
-    float get_score(int color, int vertex);        
+    
+    float get_score(int color, int vertex);
+    bool is_primed();
+    void show_stats();
     
 private:   
     MCOwnerTable();
