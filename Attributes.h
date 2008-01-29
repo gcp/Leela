@@ -22,7 +22,7 @@ public:
     static int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);    
 private:        
     int m_pattern;
-    std::bitset<101> m_present;     
+    std::bitset<105> m_present;     
 };
 
 // Move attributes for quick move ordering

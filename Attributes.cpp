@@ -3,6 +3,7 @@
 #include "Attributes.h"
 #include "FastBoard.h"
 #include "MCOTable.h"
+#include "AMAFTable.h"
 
 int Attributes::move_distance(std::pair<int, int> xy1, 
                               std::pair<int, int> xy2) {
@@ -90,6 +91,33 @@ void Attributes::get_from_move(FastState * state,
 
     int tomove = state->get_to_move();
     int bitpos = 0;
+    
+    float mcavg = AMAFTable::get_AMAFT()->get_average(tomove);
+    if (vtx != FastBoard::PASS) {
+        float mcscore = AMAFTable::get_AMAFT()->get_score(tomove, vtx);    
+        
+        int slevel;
+        
+        if (mcscore * 0.75f > mcavg) {
+            slevel = 0;
+        } else if (mcscore * 1.25f < mcavg) {
+            slevel = 3;
+        } else if (mcscore > mcavg) {
+            slevel = 1;
+        } else {
+            slevel = 2;
+        }        
+            
+        m_present[bitpos++] = (slevel == 0);
+        m_present[bitpos++] = (slevel == 1);
+        m_present[bitpos++] = (slevel == 2);
+        m_present[bitpos++] = (slevel == 3);        
+    } else {
+        m_present[bitpos++] = 0;        
+        m_present[bitpos++] = 0;        
+        m_present[bitpos++] = 0;        
+        m_present[bitpos++] = 0;                
+    }    
     
     // mcowner
     float mcown;
@@ -342,8 +370,7 @@ void Attributes::get_from_move(FastState * state,
     if (ss > 0 && ae == 2) {        
         ll = state->board.check_losing_ladder(tomove, vtx);
     }
-    m_present[bitpos++] = ll;         
-    
+    m_present[bitpos++] = ll;             
     
     // shape  (border check)            
     int pat;
@@ -351,7 +378,7 @@ void Attributes::get_from_move(FastState * state,
         pat = state->board.get_pattern4(vtx, !state->board.black_to_move());                
     } else {
         pat = 0xFFFFFF; // all INVAL
-    }       
+    }           
 
     m_pattern = pat;
 }

@@ -13,6 +13,7 @@
 #include "Utils.h"
 #include "TTable.h"
 #include "MCOTable.h"
+#include "AMAFTable.h"
 
 using namespace Utils;
 
@@ -288,9 +289,12 @@ void UCTSearch::dump_order2(void) {
     std::vector<int> territory = m_rootstate.board.influence();
     std::vector<int> moyo = m_rootstate.board.moyo();
     for (int i = 0; i < moves.size(); i++) {
-        ord_list.push_back(std::make_pair(
-                           m_rootstate.score_move(territory, moyo, moves[i]), 
-                           m_rootstate.move_to_text(moves[i])));
+        if (moves[i] > 0) {
+            ord_list.push_back(std::make_pair(
+                               //AMAFTable::get_AMAFT()->get_score(m_rootstate.get_to_move(), moves[i]),
+                               m_rootstate.score_move(territory, moyo, moves[i]), 
+                               m_rootstate.move_to_text(moves[i])));
+        }
     } 
     
     std::sort(ord_list.rbegin(), ord_list.rend());
@@ -299,7 +303,7 @@ void UCTSearch::dump_order2(void) {
     myprintf("--------------------\n");
     for (unsigned int i = 0; i < std::min<int>(10, ord_list.size()); i++) {
         myprintf("%4s -> %10.10f\n", ord_list[i].second.c_str(), 
-                                     ord_list[i].first);                              
+                                     ord_list[i].first); 
     }
     myprintf("--------------------\n");        
 }
@@ -339,6 +343,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();  
+    AMAFTable::clear();
     Playout::mc_owner(m_rootstate, 64);    
     
     //dump_order2();                  
@@ -405,6 +410,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
 void UCTSearch::ponder() {                          
     MCOwnerTable::clear();  
+    AMAFTable::clear();
     Playout::mc_owner(m_rootstate, 64);             
          
     m_run = true;

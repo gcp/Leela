@@ -14,6 +14,7 @@
 #include "Utils.h"
 #include "FastBoard.h"
 #include "MCOTable.h"
+#include "AMAFTable.h"
 
 #include "Weights.h"
 
@@ -66,6 +67,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 }     
                                                     
                 MCOwnerTable::clear();
+                AMAFTable::clear();
                 Playout::mc_owner(*state);
                 
                 std::vector<int> territory = state->board.influence();
@@ -113,6 +115,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             int tomove = state->get_to_move();                                                
             
             MCOwnerTable::clear();
+            AMAFTable::clear();
             Playout::mc_owner(*state);
             
             std::vector<int> territory = state->board.influence();
@@ -234,7 +237,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(101);
+    m_fweight.resize(105);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();

@@ -176,7 +176,7 @@ int FastState::play_random_move(int color) {
     Matcher * matcher = Matcher::get_Matcher();    
     MCOwnerTable * mctab = MCOwnerTable::get_MCO();    
     
-    int loops = 2;
+    int loops = 4;
     int bestvtx = FastBoard::PASS;
     int bestscore = -1;
     

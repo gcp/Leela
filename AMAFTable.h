@@ -16,6 +16,7 @@ public:
     void visit(int color, int vertex, bool win);    
     
     float get_score(int color, int vertex);
+    float get_average(int color);
     bool is_primed();    
     
 private:   

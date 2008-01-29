@@ -60,3 +60,9 @@ void AMAFTable::clear() {
 bool AMAFTable::is_primed() {
     return (get_AMAFT()->m_totalvisits[0] > 32);
 }
+
+float AMAFTable::get_average(int color) {
+    float score = (float)m_totalwins[color] / (float)m_totalvisits[color];
+    
+    return score;    
+}
