@@ -1548,21 +1548,9 @@ int FastBoard::get_pattern3_augment_spec(const int sq, int libspec, bool invert)
 
 // invert = invert colors because white is to move
 // extend = fill in 4 most extended squares with inval
-int FastBoard::get_pattern4(const int sq, bool invert, bool extend) {          
+int FastBoard::get_pattern4(const int sq, bool invert) {          
     const int size = m_boardsize;
-    std::tr1::array<square_t, 12> sqs;
-    
-    if (extend) {
-        sqs[0]  = INVAL;
-        sqs[4]  = INVAL;
-        sqs[7]  = INVAL;
-        sqs[11] = INVAL;
-    } else {
-        sqs[0]  = m_square[sq - 2*(size + 2)];
-        sqs[4]  = m_square[sq - 2];
-        sqs[7]  = m_square[sq + 2];
-        sqs[11] = m_square[sq + 2*(size + 2)];
-    }
+    std::tr1::array<square_t, 12> sqs;        
         
     sqs[1]  = m_square[sq - (size + 2) - 1];
     sqs[2]  = m_square[sq - (size + 2)];
@@ -1574,6 +1562,30 @@ int FastBoard::get_pattern4(const int sq, bool invert, bool extend) {
     sqs[8]  = m_square[sq + (size + 2) - 1];
     sqs[9]  = m_square[sq + (size + 2)];
     sqs[10] = m_square[sq + (size + 2) + 1];    
+    
+    if (sqs[2] == INVAL) {
+        sqs[0] = INVAL;
+    } else {
+        sqs[0] = m_square[sq - 2*(size + 2)];
+    }
+    
+    if (sqs[5] == INVAL) {
+        sqs[4] = INVAL;
+    } else {
+        sqs[4] = m_square[sq - 2];
+    }       
+    
+    if (sqs[6] == INVAL) {
+        sqs[7] = INVAL;
+    } else {
+        sqs[7] = m_square[sq + 2];
+    }
+    
+    if (sqs[9] == INVAL) {
+        sqs[11] = INVAL;
+    } else {
+        sqs[11] = m_square[sq + 2*(size + 2)];
+    } 
     
     /* color symmetry */
     if (invert) {

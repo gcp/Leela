@@ -86,7 +86,7 @@ public:
     int get_pattern3(const int sq, bool invert);   
     int get_pattern3_augment(const int sq, bool invert);
     int get_pattern3_augment_spec(const int sq, int libspec, bool invert);
-    int get_pattern4(const int sq, bool invert, bool extend);
+    int get_pattern4(const int sq, bool invert);
     uint64 get_pattern5(const int sq, bool invert, bool extend);
     
     int estimate_mc_score(float komi = 7.5f);    

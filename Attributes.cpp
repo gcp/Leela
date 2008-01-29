@@ -347,12 +347,8 @@ void Attributes::get_from_move(FastState * state,
     
     // shape  (border check)            
     int pat;
-    if (vtx != FastBoard::PASS) {          
-        if (borddist < 1) {              
-            pat = state->board.get_pattern4(vtx, !state->board.black_to_move(), true);        
-        } else {
-            pat = state->board.get_pattern4(vtx, !state->board.black_to_move(), false);
-        }                        
+    if (vtx != FastBoard::PASS) {                  
+        pat = state->board.get_pattern4(vtx, !state->board.black_to_move());                
     } else {
         pat = 0xFFFFFF; // all INVAL
     }       

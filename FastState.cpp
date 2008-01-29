@@ -10,6 +10,7 @@
 #include "Zobrist.h"
 #include "Matcher.h"
 #include "AttribScores.h"
+#include "MCOTable.h"
 
 using namespace Utils;
 
@@ -145,7 +146,7 @@ int FastState::play_random_move(int color) {
         
         m_moves.clear();
         
-        Matcher * matcher = Matcher::get_Matcher();
+        Matcher * matcher = Matcher::get_Matcher();        
         
         int cumul = 0;                
         
@@ -153,9 +154,9 @@ int FastState::play_random_move(int color) {
             int sq = m_work[i];
             
             int pattern = board.get_pattern_fast_augment(sq);
-            int score = matcher->matches(color, pattern);                            
+            int score = matcher->matches(color, pattern);                                                   
         
-            if (score >= Matcher::UNITY) {                                                               
+            if (score >= Matcher::UNITY) {                                                                       
                 cumul += score;
                 m_moves.push_back(std::make_pair(sq, cumul));                                      
             }
@@ -172,7 +173,8 @@ int FastState::play_random_move(int color) {
     } 
     
     // fall back global moves  
-    Matcher * matcher = Matcher::get_Matcher();        
+    Matcher * matcher = Matcher::get_Matcher();    
+    MCOwnerTable * mctab = MCOwnerTable::get_MCO();    
     
     int loops = 2;
     int bestvtx = FastBoard::PASS;
@@ -187,12 +189,28 @@ int FastState::play_random_move(int color) {
         }
         
         int pattern = board.get_pattern_fast_augment(vtx);
-        int score = matcher->matches(color, pattern);   
+        int score = matcher->matches(color, pattern);         
+        
+        if (mctab->is_primed()) {
+            float mcown = mctab->get_score(color, vtx);
+            if (mcown > 0.40f && mcown < 0.70f) {
+                score = (score * 160) / 128;
+            } else {
+                if (mcown < 0.10f) {
+                    score = (score * 19) / 128;
+                } else if (mcown < 0.20f) {
+                    score = (score * 72) / 128;
+                } else if (mcown > 0.90f) {
+                    score = (score * 64) / 128;
+                }       
+            }     
+        }
                     
         if (score > bestscore) {
             if (board.self_atari(color, vtx)) {
                 score = score / 40;
-            }
+            }                       
+        
             if (score > bestscore) {                
                 bestscore = score;
                 bestvtx = vtx;
