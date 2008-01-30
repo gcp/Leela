@@ -209,6 +209,9 @@ int FastState::play_random_move(int color) {
         if (score > bestscore) {
             if (board.self_atari(color, vtx)) {
                 score = score / 40;
+                //if (board.merged_string_size(color, vtx) > 5) {
+                //    continue;
+                //}
             }                       
         
             if (score > bestscore) {                

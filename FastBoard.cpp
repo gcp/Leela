@@ -2295,3 +2295,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
     return false;
     
 }
+
+int FastBoard::merged_string_size(int color, int vertex) {
+    return 0;
+}

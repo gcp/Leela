@@ -74,6 +74,7 @@ public:
     bool check_losing_ladder(const int color, const int vtx, int branching = 0);
     bool is_connecting(const int color, const int vertex);
     int nbr_weight(const int color, const int vertex);
+    int merged_string_size(int color, int vertex);
         
     bool self_atari(int color, int vertex);
     int get_dir(int i);
