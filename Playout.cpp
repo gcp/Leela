@@ -7,7 +7,6 @@
 #include "Playout.h"
 #include "Utils.h"
 #include "MCOTable.h"
-#include "AMAFTable.h"
 
 using namespace Utils;
 
@@ -59,9 +58,7 @@ void Playout::run(FastState & state, bool resigning) {
     float score = state.calculate_mc_score();                                  
              
     // get ownership info             
-    bitboard_t blackowns; 
-    
-    AMAFTable * amaft = AMAFTable::get_AMAFT();
+    bitboard_t blackowns;     
     
     for (int i = 0; i < boardsize; i++) {
         for (int j = 0; j < boardsize; j++) {
@@ -72,22 +69,7 @@ void Playout::run(FastState & state, bool resigning) {
                 if (state.board.is_eye(FastBoard::BLACK, vtx)) {
                     blackowns[vtx] = true;    
                 }
-            }    
-            if (score > 0.0f) {
-                if (m_sq[FastBoard::BLACK][vtx]) {
-                    amaft->visit(FastBoard::BLACK, vtx, true);
-                }
-                if (m_sq[FastBoard::WHITE][vtx]) {
-                    amaft->visit(FastBoard::WHITE, vtx, false);
-                }
-            } else {
-                if (m_sq[FastBoard::BLACK][vtx]) {
-                    amaft->visit(FastBoard::BLACK, vtx, false);
-                }
-                if (m_sq[FastBoard::WHITE][vtx]) {
-                    amaft->visit(FastBoard::WHITE, vtx, true);
-                }
-            }        
+            }          
         }
     }
 

@@ -1,8 +1,4 @@
-std::tr1::array<double, 105> internal_weights = {
-1.05223,
-1.20859,
-1.07082,
-0.929952,
+std::tr1::array<double, 103> internal_weights = {
 0.355242,
 0.898186,
 1.19601,
@@ -103,7 +99,9 @@ std::tr1::array<double, 105> internal_weights = {
 0.803062,
 0.796717,
 0.729207,
-0.283688
+0.283688,
+1.16,
+2.0
 };
 
 std::tr1::array<int, 1335> internal_patterns = {

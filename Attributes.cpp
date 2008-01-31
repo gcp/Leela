@@ -3,7 +3,6 @@
 #include "Attributes.h"
 #include "FastBoard.h"
 #include "MCOTable.h"
-#include "AMAFTable.h"
 
 int Attributes::move_distance(std::pair<int, int> xy1, 
                               std::pair<int, int> xy2) {
@@ -91,34 +90,7 @@ void Attributes::get_from_move(FastState * state,
 
     int tomove = state->get_to_move();
     int bitpos = 0;
-    
-    float mcavg = AMAFTable::get_AMAFT()->get_average(tomove);
-    if (vtx != FastBoard::PASS) {
-        float mcscore = AMAFTable::get_AMAFT()->get_score(tomove, vtx);    
-        
-        int slevel;
-        
-        if (mcscore * 0.75f > mcavg) {
-            slevel = 0;
-        } else if (mcscore * 1.25f < mcavg) {
-            slevel = 3;
-        } else if (mcscore > mcavg) {
-            slevel = 1;
-        } else {
-            slevel = 2;
-        }        
-            
-        m_present[bitpos++] = (slevel == 0);
-        m_present[bitpos++] = (slevel == 1);
-        m_present[bitpos++] = (slevel == 2);
-        m_present[bitpos++] = (slevel == 3);        
-    } else {
-        m_present[bitpos++] = 0;        
-        m_present[bitpos++] = 0;        
-        m_present[bitpos++] = 0;        
-        m_present[bitpos++] = 0;                
-    }    
-    
+      
     // mcowner
     float mcown;
     if (vtx != FastBoard::PASS) {
@@ -370,7 +342,24 @@ void Attributes::get_from_move(FastState * state,
     if (ss > 0 && ae == 2) {        
         ll = state->board.check_losing_ladder(tomove, vtx);
     }
-    m_present[bitpos++] = ll;             
+    m_present[bitpos++] = ll;   
+    
+    // move to neighbour of string just contacted
+    if (vtx > 0 && state->get_last_move() > 0) {
+        std::vector<int> nbrs1 = state->board.get_neighbour_ids(state->get_last_move());        
+        std::vector<int> nbrs2 = state->board.get_neighbour_ids(vtx); 
+        std::vector<int> shared;
+        std::sort(nbrs1.begin(), nbrs1.end());
+        std::sort(nbrs2.begin(), nbrs2.end());
+        std::set_intersection(nbrs1.begin(), nbrs1.end(), nbrs2.begin(), nbrs2.end(), 
+                              inserter(shared, shared.begin()));
+        
+        m_present[bitpos++] = shared.size() == 1;        
+        m_present[bitpos++] = shared.size() >  1;        
+    } else {
+        m_present[bitpos++] = 0;
+        m_present[bitpos++] = 0;
+    }    
     
     // shape  (border check)            
     int pat;

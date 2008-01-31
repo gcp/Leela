@@ -18,10 +18,12 @@
 
 using namespace Utils;
 
-UCTNode::UCTNode(int vertex, float score) 
+UCTNode::UCTNode(int color, int vertex, float score) 
  : m_firstchild(NULL), m_move(vertex), m_score(score),
-   m_blackwins(0.0f), m_visits(0), m_valid(true),
-   m_ravevisits(50), m_ravestmwins(25.0f) {
+   m_blackwins(0.0f), m_visits(0), m_valid(true) {
+     
+    m_ravevisits = 50;  
+    m_ravestmwins = 25.0f;   
 }
 
 UCTNode::~UCTNode() {    
@@ -99,7 +101,7 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
         
     for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
         if (totalchildren - childrenseen <= maxchilds) {                        
-            UCTNode * vtx = new UCTNode(it->second, it->first);
+            UCTNode * vtx = new UCTNode(state.get_to_move(), it->second, it->first);
             link_child(vtx);
             childrenadded++;                        
         } 
@@ -214,9 +216,12 @@ int UCTNode::get_ravevisits() const {
 UCTNode* UCTNode::uct_select_child(int color) {                                   
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
-        
-    //int childbound = std::max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.1823216f) - 0.5f));
-    int childbound = std::max(1, (int)(((logf((float)get_visits()) - 3.6888f) / 0.336472f) - 0.5f));    
+    
+    int upper_num = (int)(logf(get_visits()/40.0f) / log(1.4f) + 2.0f);	// 19x19. it is also good in 9x9
+    if ( upper_num < 2 ) upper_num = 2;        
+    int cb = std::max(2, (int)(((logf((float)get_visits()) - 3.688879f) / 0.33647223f) + 2.0f));            
+    
+    int childbound = upper_num;
         
     int rave_parentvisits = 1;
     int parentvisits      = 1;   // avoid logparent being illegal

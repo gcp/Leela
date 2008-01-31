@@ -13,12 +13,11 @@
 #include "Utils.h"
 #include "TTable.h"
 #include "MCOTable.h"
-#include "AMAFTable.h"
 
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
-: m_rootstate(g), m_nodes(0), m_score(0.0f), m_root(FastBoard::PASS, 0.0f),
+: m_rootstate(g), m_nodes(0), m_score(0.0f), m_root(g.get_to_move(), FastBoard::PASS, 0.0f),
   m_maxvisits(UCTSearch::MAX_TREE_SIZE * 100) {    
 }
 
@@ -343,7 +342,6 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();  
-    AMAFTable::clear();
     Playout::mc_owner(m_rootstate, 64);    
     
     //dump_order2();                  
@@ -410,7 +408,6 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
 void UCTSearch::ponder() {                          
     MCOwnerTable::clear();  
-    AMAFTable::clear();
     Playout::mc_owner(m_rootstate, 64);             
          
     m_run = true;

@@ -14,7 +14,6 @@
 #include "Utils.h"
 #include "FastBoard.h"
 #include "MCOTable.h"
-#include "AMAFTable.h"
 
 #include "Weights.h"
 
@@ -65,9 +64,8 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 } else {
                     break;
                 }     
-                                                    
-                MCOwnerTable::clear();
-                AMAFTable::clear();
+                
+                MCOwnerTable::clear();                                                    
                 Playout::mc_owner(*state);
                 
                 std::vector<int> territory = state->board.influence();
@@ -114,8 +112,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             KoState * state = treewalk->get_state();
             int tomove = state->get_to_move();                                                
             
-            MCOwnerTable::clear();
-            AMAFTable::clear();
+            MCOwnerTable::clear();            
             Playout::mc_owner(*state);
             
             std::vector<int> territory = state->board.influence();
@@ -237,7 +234,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(105);
+    m_fweight.resize(103);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();

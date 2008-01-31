@@ -2297,5 +2297,57 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 }
 
 int FastBoard::merged_string_size(int color, int vertex) {
-    return 0;
+    int totalsize = 0;
+    std::tr1::array<int, 4> nbrpar;
+    int nbrcnt = 0;        
+
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        
+        if (get_square(ai) == color) {
+            int par = m_parent[ai];
+            
+            bool found = false;
+            for (int i = 0; i < nbrcnt; i++) {
+                if (nbrpar[i] == par) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                totalsize += string_size(ai);
+                nbrpar[nbrcnt++] = par;
+            }
+        }
+        
+    }
+                 
+    return totalsize;
+}
+
+std::vector<int> FastBoard::get_neighbour_ids(int vertex) {
+    std::vector<int> result;
+    
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        
+        if (get_square(ai) < EMPTY) {
+            int par = m_parent[ai];
+            
+            bool found = false;
+            for (int i = 0; i < result.size(); i++) {
+                if (result[i] == par) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {                
+                result.push_back(par);
+            }
+        }        
+    }
+    
+    return result;
 }

@@ -10,7 +10,7 @@
 
 class UCTNode {
 public:        
-    UCTNode(int vertex, float score);
+    UCTNode(int color, int vertex, float score);
     ~UCTNode();    
     bool first_visit() const;
     bool has_children() const;    
