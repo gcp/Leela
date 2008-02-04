@@ -94,7 +94,7 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
     
     // link the nodes together, we only really link the last few
     std::vector<scored_node>::const_iterator it; 
-    const int maxchilds = 35;   // about 4M visits
+    const int maxchilds = 35;   // about 35 -> 4M visits
     int childrenseen = 0;
     int childrenadded = 0;
     int totalchildren = nodelist.size();       
@@ -216,12 +216,8 @@ int UCTNode::get_ravevisits() const {
 UCTNode* UCTNode::uct_select_child(int color) {                                   
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
-    
-    int upper_num = (int)(logf(get_visits()/40.0f) / log(1.4f) + 2.0f);	// 19x19. it is also good in 9x9
-    if ( upper_num < 2 ) upper_num = 2;        
-    int cb = std::max(2, (int)(((logf((float)get_visits()) - 3.688879f) / 0.33647223f) + 2.0f));            
-    
-    int childbound = upper_num;
+        
+    int childbound = std::max(2, (int)(((logf((float)get_visits()) - 3.688879f) / 0.33647223f) + 2.0f)); 
         
     int rave_parentvisits = 1;
     int parentvisits      = 1;   // avoid logparent being illegal
@@ -244,7 +240,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
     }
     
     float logparent     = logf((float)parentvisits);    
-    float lograveparent = logf((float)rave_parentvisits); 
+    float lograveparent = logf((float)rave_parentvisits);        
     
     // Mixing
     const float k = 5000.0f;
@@ -259,20 +255,21 @@ UCTNode* UCTNode::uct_select_child(int color) {
     while (child != NULL && childcount < childbound) {
         float value;
         float uctvalue;                
-        float patternbonus;
+        float patternbonus;        
 
         if (child->get_ravevisits() > 0) {        
             if (!child->first_visit()) {
                 // UCT part
                 float winrate   = child->get_winrate(color);     
-                float childrate = logparent / child->get_visits();                                        
+                float childrate = logparent / child->get_visits();                                                                                                        
                 float uct = 0.32f * sqrtf(childrate);
                 
                 uctvalue = winrate + uct;
                 
-                patternbonus = (child->get_score() * 0.01f) / child->get_visits();
+                patternbonus = (child->get_score() * 0.01f) / child->get_visits();                                
+                               
             } else {
-                uctvalue = 1.1f;
+                uctvalue = 1.1f;                
                 
                 patternbonus = (child->get_score() * 0.01f);
             }                                                    
@@ -282,19 +279,22 @@ UCTNode* UCTNode::uct_select_child(int color) {
             float ravechildrate = lograveparent / child->get_ravevisits();                        
             float rave = 0.32f * sqrtf(ravechildrate);
             
-            float ravevalue = ravewinrate + rave + patternbonus; 
-                                   
+            float ravevalue = ravewinrate + rave + patternbonus;                         
+               
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             
             assert(value > -1000.0f);
         } else {
-            value = 1.1f;
+            /// XXX: can't happen due to priors
+            patternbonus = (child->get_score() * 0.01f);
+            
+            value = 1.1f + patternbonus;  
         }                
         
         if (value > best_value) {
             best_value = value;
             best = child;
-        }
+        }                
         
         child = child->m_nextsibling;     
         // make sure we are at a valid successor        
@@ -302,7 +302,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             child = child->m_nextsibling;
         }
         childcount++;
-    }   
+    }           
     
     assert(best != NULL);         
     
@@ -316,6 +316,8 @@ public:
     NodeComp(const int color) : m_color(color) {}
    
     bool operator()(const UCTNode * a, const UCTNode * b) {  
+    
+        // edge cases, one playout or none
         if (a->first_visit() && !b->first_visit()) {
             return false;
         }  
@@ -324,18 +326,35 @@ public:
         }
         if (a->first_visit() && b->first_visit()) {
             return false;
-        }               
-        //if (a->get_winrate(m_color) == b->get_winrate(m_color)) {
+        }            
+        
+        // first check: are playouts comparable and sufficient?
+        // then winrate counts        
+
+        if (a->get_visits() > UCTSearch::MATURE_TRESHOLD 
+            && b->get_visits() > UCTSearch::MATURE_TRESHOLD
+            && a->get_visits() * 2 > b->get_visits()
+            && b->get_visits() * 2 > a->get_visits()) {
+        
+            if (a->get_winrate(m_color) == b->get_winrate(m_color)) {
+                if (a->get_visits() > b->get_visits()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else if (a->get_winrate(m_color) > b->get_winrate(m_color)) {
+                return true;
+            } else {
+                return false;
+            } 
+        } else {        
+            // playout amount differs greatly, prefer playouts                       
             if (a->get_visits() > b->get_visits()) {
                 return true;
             } else {
                 return false;
-            }
-        //} else if (a->get_winrate(m_color) > b->get_winrate(m_color)) {
-        //    return true;
-        //} else {
-        //    return false;
-        //} 
+            }                     
+        }
     }
 };
 

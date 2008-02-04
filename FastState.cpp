@@ -174,8 +174,7 @@ int FastState::play_random_move(int color) {
     
     // fall back global moves  
     Matcher * matcher = Matcher::get_Matcher();    
-    MCOwnerTable * mctab = MCOwnerTable::get_MCO();  
-    //AMAFTable * amaft = AMAFTable::get_AMAFT();  
+    MCOwnerTable * mctab = MCOwnerTable::get_MCO();      
     
     int loops = 4;
     int bestvtx = FastBoard::PASS;
@@ -205,17 +204,11 @@ int FastState::play_random_move(int color) {
                     score = (score * 64) / 128;
                 }       
             }                 
-            /*if (amaft->get_score(color, vtx) > amaft->get_average(color)) {
-                score = (score * 155) / 128;
-            }*/
         }
                     
         if (score > bestscore) {
             if (board.self_atari(color, vtx)) {
-                score = score / 40;
-                //if (board.merged_string_size(color, vtx) > 3) {
-                //    continue;
-                //}
+                score = score / 40;               
             }                       
         
             if (score > bestscore) {                

@@ -77,7 +77,7 @@ public:
     int merged_string_size(int color, int vertex);
     std::vector<int> get_neighbour_ids(int vertex);
         
-    bool self_atari(int color, int vertex);
+    bool self_atari(int color, int vertex);    
     int get_dir(int i);
     int get_extra_dir(int i);
 
@@ -136,12 +136,14 @@ protected:
     std::tr1::array<int, MAXSQ+1>    m_next;        /* next stone in string */ 
     std::tr1::array<int, MAXSQ+1>    m_parent;      /* parent node of string */        
     std::tr1::array<int, MAXSQ+1>    m_plibs;       /* pseudoliberties per string parent */        
+    std::tr1::array<int, MAXSQ+1>    m_libs;        /* liberties per string parent */        
+    std::tr1::array<int, MAXSQ+1>    m_stones;      /* stones per string parent */        
     std::tr1::array<int, MAXSQ>      m_neighbours;  /* counts of neighboring stones */       
     std::tr1::array<int, 4>          m_dirs;        /* movement directions 4 way */
     std::tr1::array<int, 4>          m_alterdirs;   /* to change movement direction */
     std::tr1::array<int, 8>          m_extradirs;   /* movement directions 8 way */
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
-    std::tr1::array<int, 2>          m_stones;      /* stones per color */                 
+    std::tr1::array<int, 2>          m_totalstones; /* stones per color */                 
     std::queue<int>                  m_critical;    /* queue of critical points */    
 
     int m_boardsize;    
