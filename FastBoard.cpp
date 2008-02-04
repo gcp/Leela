@@ -124,8 +124,7 @@ void FastBoard::reset_board(int size) {
         }
     }         
     
-    m_parent[MAXSQ] = MAXSQ;
-    m_plibs[MAXSQ]  = 999;
+    m_parent[MAXSQ] = MAXSQ;    
     m_libs[MAXSQ]   = 999;
     m_next[MAXSQ]   = MAXSQ;                        
 }
@@ -193,16 +192,14 @@ int FastBoard::count_neighbours(const int c, const int v) {
 int FastBoard::fast_ss_suicide(const int color, const int i)  {    
     int eyeplay = (m_neighbours[i] & s_eyemask[!color]);
     
-    if (!eyeplay) return false;
-    
-    int all_live = true;    
+    if (!eyeplay) return false;         
         
-    if (m_libs[m_parent[i - 1              ]] <= 1) all_live = false;
-    if (m_libs[m_parent[i + 1              ]] <= 1) all_live = false;
-    if (m_libs[m_parent[i + m_boardsize + 2]] <= 1) all_live = false;
-    if (m_libs[m_parent[i - m_boardsize - 2]] <= 1) all_live = false;
-            
-    return all_live;
+    if (m_libs[m_parent[i - 1              ]] <= 1) return false;
+    if (m_libs[m_parent[i + 1              ]] <= 1) return false;
+    if (m_libs[m_parent[i + m_boardsize + 2]] <= 1) return false;
+    if (m_libs[m_parent[i - m_boardsize - 2]] <= 1) return false;
+    
+    return true;
 }
 
 void FastBoard::add_neighbour(const int i, const int color) {       
@@ -214,8 +211,7 @@ void FastBoard::add_neighbour(const int i, const int color) {
     for (int k = 0; k < 4; k++) {
         int ai = i + m_dirs[k];
 
-        m_neighbours[ai] += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));                       
-        m_plibs[m_parent[ai]]--;
+        m_neighbours[ai] += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));                               
 
         bool found = false;
         for (int i = 0; i < nbr_par_cnt; i++) {
@@ -241,9 +237,7 @@ void FastBoard::remove_neighbour(const int i, const int color) {
         int ai = i + m_dirs[k];
                            
         m_neighbours[ai] += (1 << (NBR_SHIFT * EMPTY))  
-                          - (1 << (NBR_SHIFT * color));        
-                            
-        m_plibs[m_parent[ai]]++;           
+                          - (1 << (NBR_SHIFT * color));                                            
 
         bool found = false;
         for (int i = 0; i < nbr_par_cnt; i++) {
@@ -611,11 +605,11 @@ void FastBoard::display_liberties(int lastmove) {
             myprintf(" ");
         for (int i = 0; i < boardsize; i++) {
             if (get_square(i,j) == WHITE) {
-                int libs = m_plibs[m_parent[get_vertex(i,j)]];
+                int libs = m_libs[m_parent[get_vertex(i,j)]];
                 if (libs > 9) { libs = 9; };
                 myprintf("%1d", libs);                
             } else if (get_square(i,j) == BLACK)  {
-                int libs = m_plibs[m_parent[get_vertex(i,j)]];
+                int libs = m_libs[m_parent[get_vertex(i,j)]];
                 if (libs > 9) { libs = 9; };
                 myprintf("%1d", libs);                
             } else if (starpoint(boardsize, i, j)) {
@@ -666,9 +660,7 @@ void FastBoard::display_liberties(int lastmove) {
 void FastBoard::merge_strings(const int ip, const int aip) {            
     assert(ip != MAXSQ && aip != MAXSQ);
 
-    /* merge psuedoliberties */
-    m_plibs[ip]  += m_plibs[aip];    
-
+    /* merge psuedoliberties */    
     m_stones[ip] += m_stones[aip];
     
     /* loop over stones, update parents */       
@@ -714,8 +706,7 @@ void FastBoard::merge_strings(const int ip, const int aip) {
 int FastBoard::update_board_eye(const int color, const int i) {             
     m_square[i]  = (square_t)color;    
     m_next[i]    = i;     
-    m_parent[i]  = i;
-    m_plibs[i]   = 0;      
+    m_parent[i]  = i;    
     m_libs[i]    = 0;
     m_stones[i]  = 1;
     m_totalstones[color]++;           
@@ -730,7 +721,7 @@ int FastBoard::update_board_eye(const int color, const int i) {
 
         assert(ai >= 0 && ai <= m_maxsq);
        
-        if (m_plibs[m_parent[ai]] <= 0) {
+        if (m_libs[m_parent[ai]] <= 0) {
             int this_captured    = remove_string_fast(ai);
             captured_sq          = ai;    
             captured_stones     += this_captured;        
@@ -770,8 +761,7 @@ int FastBoard::update_board_fast(const int color, const int i) {
     m_square[i]  = (square_t)color;    
     m_next[i]    = i;     
     m_parent[i]  = i;
-    m_plibs[i]   = count_pliberties(i);   
-    m_libs[i]    = m_plibs[i];
+    m_libs[i]    = count_pliberties(i);       
     m_stones[i]  = 1;
     m_totalstones[color]++;                        
         

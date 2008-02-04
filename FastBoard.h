@@ -134,8 +134,7 @@ protected:
     
     std::tr1::array<square_t, MAXSQ> m_square;      /* board contents */            
     std::tr1::array<int, MAXSQ+1>    m_next;        /* next stone in string */ 
-    std::tr1::array<int, MAXSQ+1>    m_parent;      /* parent node of string */        
-    std::tr1::array<int, MAXSQ+1>    m_plibs;       /* pseudoliberties per string parent */        
+    std::tr1::array<int, MAXSQ+1>    m_parent;      /* parent node of string */            
     std::tr1::array<int, MAXSQ+1>    m_libs;        /* liberties per string parent */        
     std::tr1::array<int, MAXSQ+1>    m_stones;      /* stones per string parent */        
     std::tr1::array<int, MAXSQ>      m_neighbours;  /* counts of neighboring stones */       

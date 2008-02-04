@@ -101,8 +101,7 @@ int FullBoard::update_board(const int color, const int i) {
     m_square[i]    = (square_t)color;    
     m_next[i]      = i;     
     m_parent[i]    = i;
-    m_plibs[i]     = count_pliberties(i);
-    m_libs[i]      = m_plibs[i];
+    m_libs[i]      = count_pliberties(i);    
     m_stones[i]    = 1;
     m_stones[color]++;
     
@@ -122,7 +121,7 @@ int FullBoard::update_board(const int color, const int i) {
         int ai = i + m_dirs[k];
                 
         if (m_square[ai] == !color) {
-            if (m_plibs[m_parent[ai]] <= 0) {
+            if (m_libs[m_parent[ai]] <= 0) {
                 int this_captured    = remove_string(ai);
                 captured_sq          = ai;
                 captured_stones     += this_captured;                                
@@ -132,7 +131,7 @@ int FullBoard::update_board(const int color, const int i) {
             int aip = m_parent[ai];                    
                                    
             if (ip != aip) {                                                                         
-                if (m_plibs[ip] >= m_plibs[aip]) {                
+                if (m_stones[ip] >= m_stones[aip]) {                
                     merge_strings(ip, aip);                                                        
                 } else {
                     merge_strings(aip, ip);                                                        
@@ -151,7 +150,7 @@ int FullBoard::update_board(const int color, const int i) {
     m_empty[m_empty_idx[i]]  = lastvertex;    
     
     /* check whether we still live (i.e. detect suicide) */    
-    if (m_plibs[m_parent[i]] == 0) {                                
+    if (m_libs[m_parent[i]] == 0) {                                
         assert(captured_stones == 0);        
         remove_string_fast(i);                
     }                                                  
