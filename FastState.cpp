@@ -197,7 +197,7 @@ int FastState::play_random_move(int color) {
                     score = (score * 64) / 128;
                 }       
             }                 
-        }
+        }             
                     
         if (score > bestscore) {
             if (board.self_atari(color, vtx)) {

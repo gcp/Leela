@@ -15,9 +15,9 @@ int FullBoard::remove_string(int i) {
         hash    ^= Zobrist::zobrist[m_square[pos]][pos];
         ko_hash ^= Zobrist::zobrist[m_square[pos]][pos];                                                          
                         
-        m_square[pos] = EMPTY;      
-        m_stones[color]--;        
+        m_square[pos] = EMPTY;                   
         m_parent[pos] = MAXSQ;    
+        m_totalstones[color]--;   
         
         remove_neighbour(pos, color);  
         
