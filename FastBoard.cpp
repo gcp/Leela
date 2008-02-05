@@ -206,13 +206,13 @@ void FastBoard::add_neighbour(const int i, const int color) {
     assert(color == WHITE || color == BLACK || color == EMPTY);                                                          
 
     std::tr1::array<int, 4> nbr_pars;
-    int nbr_par_cnt = 0;
+    int nbr_par_cnt = 0;    
 
     for (int k = 0; k < 4; k++) {
         int ai = i + m_dirs[k];
 
         m_neighbours[ai] += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));                               
-
+        
         bool found = false;
         for (int i = 0; i < nbr_par_cnt; i++) {
             if (nbr_pars[i] == m_parent[ai]) {
@@ -223,7 +223,7 @@ void FastBoard::add_neighbour(const int i, const int color) {
         if (!found) {
             m_libs[m_parent[ai]]--;
             nbr_pars[nbr_par_cnt++] = m_parent[ai];
-        }
+        }        
     }
 }
 
@@ -231,14 +231,14 @@ void FastBoard::remove_neighbour(const int i, const int color) {
     assert(color == WHITE || color == BLACK || color == EMPTY);        
     
     std::tr1::array<int, 4> nbr_pars;
-    int nbr_par_cnt = 0;
+    int nbr_par_cnt = 0;    
 
     for (int k = 0; k < 4; k++) {
         int ai = i + m_dirs[k];
                            
         m_neighbours[ai] += (1 << (NBR_SHIFT * EMPTY))  
                           - (1 << (NBR_SHIFT * color));                                            
-
+        
         bool found = false;
         for (int i = 0; i < nbr_par_cnt; i++) {
             if (nbr_pars[i] == m_parent[ai]) {
@@ -249,7 +249,7 @@ void FastBoard::remove_neighbour(const int i, const int color) {
         if (!found) {
             m_libs[m_parent[ai]]++;
             nbr_pars[nbr_par_cnt++] = m_parent[ai];
-        }
+        }        
     }     
 }
 
@@ -663,8 +663,7 @@ void FastBoard::merge_strings(const int ip, const int aip) {
     /* merge psuedoliberties */    
     m_stones[ip] += m_stones[aip];
     
-    /* loop over stones, update parents */       
-    int color = m_square[ip];
+    /* loop over stones, update parents */           
     int newpos = aip;    
 
     do {       
@@ -672,21 +671,19 @@ void FastBoard::merge_strings(const int ip, const int aip) {
         for (int k = 0; k < 4; k++) {
             int ai = newpos + m_dirs[k];
             // for each liberty, check if it is not shared        
-            if (m_square[ai] == EMPTY) {
-                // find liberty neighbours
-                bool found = false;
+            if (m_square[ai] == EMPTY) {                
+                // find liberty neighbours                
+                bool found = false;                
                 for (int kk = 0; kk < 4; kk++) {
                     int aai = ai + m_dirs[kk];
-
                     // friendly string shouldnt be ip
-                    // ip can also be an aip that has been marked
-                    if (m_square[aai] == color) {
-                        if (m_parent[aai] == ip) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
+                    // ip can also be an aip that has been marked                    
+                    if (m_parent[aai] == ip) {
+                        found = true;
+                        break;
+                    }                    
+                }                                
+                
                 if (!found) {
                     m_libs[ip]++;
                 }
@@ -763,9 +760,7 @@ int FastBoard::update_board_fast(const int color, const int i) {
     m_parent[i]  = i;
     m_libs[i]    = count_pliberties(i);       
     m_stones[i]  = 1;
-    m_totalstones[color]++;                        
-        
-    assert(m_plibs[i] >= 0 && m_plibs[i] <= 4);        
+    m_totalstones[color]++;                                    
         
     add_neighbour(i, color); 
     
@@ -1000,7 +995,7 @@ bool FastBoard::fast_in_atari(int vertex) {
     int par = m_parent[vertex];
     int lib = m_libs[par];
     
-    return lib <= 1;       
+    return lib == 1;       
 }
 
 // check if string is in atari, returns 0 if not,
@@ -1117,8 +1112,7 @@ void FastBoard::save_critical_neighbours(int color, int vertex,
                         m_critical.pop();
                     }
                     m_critical.push(atari);
-                }
-            
+                }            
             }
         } 
     }        
@@ -1132,34 +1126,24 @@ int FastBoard::get_extra_dir(int i) {
     return m_extradirs[i];
 }
 
-bool FastBoard::kill_or_connect(int color, int vertex) {     
-    int connecting = false;
-    int i = vertex;          
-    
-    add_neighbour(i, color);
-    
-    bool opps_live = true;    
-    bool live_connect = false;
-    
+bool FastBoard::kill_or_connect(int color, int vertex) {                        
     for (int k = 0; k < 4; k++) {
-        int ai = i + m_dirs[k];
+        int ai = vertex + m_dirs[k];
         
         int sq = get_square(ai);
         
-        if (sq >= EMPTY) continue;
-                 
-        int libs = m_libs[m_parent[ai]];
-        
-        if (libs == 0 && sq == !color) {  
-            opps_live = false;                                   
-        } else if (libs >= 2 && sq == color) {
-            live_connect = true;
-        }      
-    }  
+        if (sq < EMPTY) {                 
+            int libs = m_libs[m_parent[ai]];
+            
+            if (libs <= 1 && sq == !color) {  
+                return true;                                   
+            } else if (libs >= 3 && sq == color) {
+                return true;
+            }      
+        }
+    }          
     
-    remove_neighbour(i, color);      
-    
-    return live_connect || !opps_live;    
+    return false;       
 }
 
 template <int N> 
@@ -1183,6 +1167,7 @@ void FastBoard::add_string_liberties(int vertex,
                     for (int i = 0; i < nbr_libs_cnt; i++) {
                         if (nbr_libs[i] == ai) {
                             found = true;
+                            break;
                         }
                     }
                                         
@@ -1207,10 +1192,8 @@ void FastBoard::add_string_liberties(int vertex,
 bool FastBoard::self_atari(int color, int vertex) {    
     assert(get_square(vertex) == FastBoard::EMPTY);
     
-    // 1) count new liberties, if we add 2 or more we're safe        
-    int newlibs = count_pliberties(vertex);
-    
-    if (newlibs >= 2) {        
+    // 1) count new liberties, if we add 2 or more we're safe                
+    if (count_pliberties(vertex) >= 2) {        
         return false;                
     }
     
@@ -1240,11 +1223,13 @@ bool FastBoard::self_atari(int color, int vertex) {
             for (int i = 0; i < nbr_libs_cnt; i++) {
                 if (nbr_libs[i] == ai) {
                     found = true;
+                    break;
                 }
             }
                                         
             // not in list yet, so add
             if (!found) {
+                if (nbr_libs_cnt > 1) return false;
                 nbr_libs[nbr_libs_cnt++] = ai;
             }                
         } else if (get_square(ai) == color) {        
@@ -1256,12 +1241,11 @@ bool FastBoard::self_atari(int color, int vertex) {
             // more liberties than just the one that is "vertex"
             if (lib > 1) {
                 add_string_liberties<3>(ai, nbr_libs, nbr_libs_cnt);
+                if (nbr_libs_cnt > 2) {            
+                    return false;
+                }
             }            
-        }
-        
-        if (nbr_libs_cnt > 2) {            
-            return false;
-        }
+        }                
     }
 
     // if we get here, there are no more than 2 liberties,
@@ -1305,28 +1289,12 @@ int FastBoard::get_pattern_fast_augment(const int sq) {
          | (sqs[4] <<  6)
          | (sqs[5] <<  4)
          | (sqs[6] <<  2)
-         | (sqs[7] <<  0);   
-         
-    if (sqs[1] < EMPTY) {
-        lib[0] = fast_in_atari(sq - size - 2);
-    } else {
-        lib[0] = 0;
-    }
-    if (sqs[3] < EMPTY) {
-        lib[1] = fast_in_atari(sq - 1);
-    } else {
-        lib[1] = 0;
-    }
-    if (sqs[4] < EMPTY) {
-        lib[2] = fast_in_atari(sq + 1);
-    } else {
-        lib[2] = 0;
-    }
-    if (sqs[6] < EMPTY) {
-        lib[3] = fast_in_atari(sq + size + 2);
-    } else {
-        lib[3] = 0;
-    }    
+         | (sqs[7] <<  0);            
+    
+    lib[0] = fast_in_atari(sq - size - 2);    
+    lib[1] = fast_in_atari(sq - 1);    
+    lib[2] = fast_in_atari(sq + 1);    
+    lib[3] = fast_in_atari(sq + size + 2);
     
     res |= (lib[0] << 19 | lib[1] << 18 | lib[2] << 17 | lib[3] << 16);
     
@@ -1833,7 +1801,6 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
 
 void FastBoard::add_pattern_moves(int color, int vertex,
                                   std::vector<int> & work) {                                         
-
     for (int i = 0; i < 8; i++) {        
         int sq = vertex + m_extradirs[i];
         
