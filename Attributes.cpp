@@ -24,7 +24,10 @@ int Attributes::border_distance(std::pair<int, int> xy, int bsize) {
     return mindist; 
 }
 
-void FastAttributes::get_from_move(FastState * state, int vtx) {
+void FastAttributes::get_from_move(FastState * state, 
+                               std::vector<int> & territory,
+                               std::vector<int> & moyo,
+                               int vtx) {
     m_present.reset();
 
     int tomove = state->get_to_move();
@@ -70,6 +73,45 @@ void FastAttributes::get_from_move(FastState * state, int vtx) {
         sa = false;
     }    
     m_present[bitpos++] = sa;
+    
+    // our liberties
+    // liberty increase
+    int al;
+    if (vtx != FastBoard::PASS) {
+        al = state->board.minimum_elib_count(!tomove, vtx);
+        // isolated stone
+        if (al == 100) {
+            al = 0;
+        }
+    } else {
+        al = -1;
+    }
+        
+    m_present[bitpos++] = (al ==  2);
+    m_present[bitpos++] = (al ==  3);
+    m_present[bitpos++] = (al ==  4);
+    m_present[bitpos++] = (al ==  5);
+    m_present[bitpos++] = (al ==  6);
+    m_present[bitpos++] = (al >   6); 
+    
+     // generalized atari
+    int at;
+    if (vtx != FastBoard::PASS) {
+        at = state->board.minimum_elib_count(tomove, vtx);
+        // isolated stone
+        if (at == 100) {
+            at = 0;
+        }
+    } else {
+        at = -1;
+    }            
+      
+    m_present[bitpos++] = (at == 2);                           // atari
+    m_present[bitpos++] = (at == 3);
+    m_present[bitpos++] = (at == 4);
+    m_present[bitpos++] = (at == 5);
+    m_present[bitpos++] = (at == 6);
+    m_present[bitpos++] = (at >  6);             
     
     // shape  (border check)            
     int pat;
@@ -265,7 +307,7 @@ void Attributes::get_from_move(FastState * state,
     // border    
     int borddist;
     if (vtx != FastBoard::PASS) {
-        borddist = border_distance(state->board.get_xy(vtx), 
+        borddist = Attributes::border_distance(state->board.get_xy(vtx), 
                                    state->board.get_boardsize());
     } else {
         borddist = -1;
@@ -288,7 +330,7 @@ void Attributes::get_from_move(FastState * state,
     // prev move distance
     int prevdist;
     if (state->get_last_move() > 0 && vtx > 0) {
-        prevdist = move_distance(state->board.get_xy(state->get_last_move()), 
+        prevdist = Attributes::move_distance(state->board.get_xy(state->get_last_move()), 
                                  state->board.get_xy(vtx));
     } else {
         prevdist = -1;
@@ -313,7 +355,7 @@ void Attributes::get_from_move(FastState * state,
     // prev prev move
     int prevprevdist;
     if (state->get_prevlast_move() > 0 && vtx > 0) {
-        prevprevdist = move_distance(state->board.get_xy(vtx), 
+        prevprevdist = Attributes::move_distance(state->board.get_xy(vtx), 
                                      state->board.get_xy(state->get_prevlast_move()));
     } else {
         prevprevdist = -1;

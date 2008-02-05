@@ -801,7 +801,7 @@ int FastBoard::update_board_fast(const int color, const int i) {
     m_empty_idx[lastvertex]      = m_empty_idx[i];
     m_empty[m_empty_idx[i]]      = lastvertex;                      
         
-    assert(m_plibs[m_parent[i]] >= 0);        
+    assert(m_libs[m_parent[i]] >= 0);        
 
     /* check whether we still live (i.e. detect suicide) */    
     if (m_libs[m_parent[i]] == 0) {                                
@@ -990,7 +990,7 @@ std::string FastBoard::get_string(int vertex) {
 }
 
 bool FastBoard::fast_in_atari(int vertex) {        
-    assert(m_square[vertex] < EMPTY);
+//    assert(m_square[vertex] < EMPTY);
     
     int par = m_parent[vertex];
     int lib = m_libs[par];

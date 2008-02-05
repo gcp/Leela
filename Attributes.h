@@ -17,7 +17,7 @@ public:
                        std::vector<int> & moyo, 
                        int move);    
     uint64 get_pattern(void);    
-    bool attribute_enabled(int idx);
+    bool attribute_enabled(int idx);    
     static int border_distance(std::pair<int, int> xy, int bsize);
     static int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);    
 private:        
@@ -28,12 +28,15 @@ private:
 // Move attributes for quick move ordering
 class FastAttributes {
 public:               
-    void get_from_move(FastState * state, int move);    
+    void get_from_move(FastState * state, 
+                       std::vector<int> & territory,
+                       std::vector<int> & moyo, 
+                       int move);    
     uint64 get_pattern(void);    
-    bool attribute_enabled(int idx);
+    bool attribute_enabled(int idx);    
 private:         
     int m_pattern;
-    std::bitset<2> m_present; 
+    std::bitset<14> m_present; 
 };
 
 #endif

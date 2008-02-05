@@ -103,7 +103,7 @@ int FullBoard::update_board(const int color, const int i) {
     m_parent[i]    = i;
     m_libs[i]      = count_pliberties(i);    
     m_stones[i]    = 1;
-    m_stones[color]++;
+    m_totalstones[color]++;
     
     hash    ^= Zobrist::zobrist[m_square[i]][i];
     ko_hash ^= Zobrist::zobrist[m_square[i]][i];               
