@@ -147,9 +147,9 @@ int FastState::play_random_move(int color) {
             int sq = m_work[i];
             
             int pattern = board.get_pattern_fast_augment(sq);
-            int score = matcher->matches(color, pattern);                                                   
+            int score = matcher->matches(color, pattern);                                                                                 
         
-            if (score >= Matcher::UNITY) {                                                                       
+            if (score >= Matcher::THRESHOLD) {
                 cumul += score;
                 m_moves.push_back(std::make_pair(sq, cumul));                                      
             }
@@ -183,7 +183,7 @@ int FastState::play_random_move(int color) {
         
         int pattern = board.get_pattern_fast_augment(vtx);
         int score = matcher->matches(color, pattern);         
-        
+                
         if (mctab->is_primed()) {
             float mcown = mctab->get_score(color, vtx);
             if (mcown > 0.40f && mcown < 0.70f) {
@@ -197,8 +197,8 @@ int FastState::play_random_move(int color) {
                     score = (score * 64) / 128;
                 }       
             }                 
-        }             
-                    
+        }                                      
+                
         if (score > bestscore) {
             if (board.self_atari(color, vtx)) {
                 score = score / 40;               

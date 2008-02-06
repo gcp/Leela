@@ -17,8 +17,18 @@
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
-: m_rootstate(g), m_nodes(0), m_score(0.0f), m_root(g.get_to_move(), FastBoard::PASS, 0.0f),
-  m_maxvisits(UCTSearch::MAX_TREE_SIZE * 100) {    
+: m_rootstate(g), 
+  m_nodes(0), 
+  m_score(0.0f), 
+  m_root(g.get_to_move(), FastBoard::PASS, 0.0f),
+  m_maxvisits(UCTSearch::MAX_TREE_SIZE * 100), 
+  m_hasrunflag(false), 
+  m_runflag(NULL) {    
+}
+
+void UCTSearch::set_runflag(bool * flag) {
+    m_runflag = flag;
+    m_hasrunflag = true;
 }
 
 Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
@@ -372,7 +382,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
             last_update = centiseconds_elapsed;            
             dump_thinking();                        
         }        
-    } while(centiseconds_elapsed < time_for_move && m_root.get_visits() < m_maxvisits);
+    } while(centiseconds_elapsed < time_for_move 
+           && m_root.get_visits() < m_maxvisits
+           && (!m_hasrunflag || (*m_runflag)));
     
     // stop the search
     m_run = false;
@@ -421,7 +433,7 @@ void UCTSearch::ponder() {
     do {
         KoState currstate = m_rootstate;                
         play_simulation(currstate, &m_root);                             
-    } while(!Utils::input_pending());  
+    } while(!Utils::input_pending() && (!m_hasrunflag || (*m_runflag)));  
            
     // stop the search
     m_run = false;    

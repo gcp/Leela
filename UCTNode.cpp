@@ -244,7 +244,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
     
     // Mixing
     const float k = 5000.0f;
-    float beta = sqrtf(k / ((3.0f * parentvisits) + k));     
+    const float beta = sqrtf(k / ((3.0f * parentvisits) + k));     
         
     childcount = 0;
     child = m_firstchild;            

@@ -9,24 +9,28 @@
 
 #include "KoState.h"
 
+class BaseAttributes {
+public:                   
+    static int border_distance(std::pair<int, int> xy, int bsize);
+    static int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);    
+};
+
 // Move attributes for full move ordering
-class Attributes {
+class Attributes : public BaseAttributes {
 public:               
     void get_from_move(FastState * state, 
                        std::vector<int> & territory,
                        std::vector<int> & moyo, 
                        int move);    
     uint64 get_pattern(void);    
-    bool attribute_enabled(int idx);    
-    static int border_distance(std::pair<int, int> xy, int bsize);
-    static int move_distance(std::pair<int, int> xy1, std::pair<int, int> xy2);    
+    bool attribute_enabled(int idx);        
 private:        
     int m_pattern;
     std::bitset<103> m_present;     
 };
 
 // Move attributes for quick move ordering
-class FastAttributes {
+class FastAttributes : public BaseAttributes {
 public:               
     void get_from_move(FastState * state, 
                        std::vector<int> & territory,
@@ -36,7 +40,7 @@ public:
     bool attribute_enabled(int idx);    
 private:         
     int m_pattern;
-    std::bitset<14> m_present; 
+    std::bitset<24> m_present; 
 };
 
 #endif

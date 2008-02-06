@@ -34,8 +34,9 @@ public:
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
-    void set_visit_limit(int visits);
-    void ponder();    
+    void set_visit_limit(int visits);    
+    void set_runflag(bool * flag);
+    void ponder();        
     bool is_running();      
     Playout play_simulation(KoState & currstate, UCTNode * node);    
     float get_score();
@@ -52,7 +53,11 @@ private:
     int m_nodes;  
     int m_maxvisits;
     float m_score;
-    bool m_run;            
+    bool m_run;        
+    
+    // For external control
+    bool m_hasrunflag;
+    bool * m_runflag;        
 };
 
 class UCTWorker {
