@@ -275,17 +275,16 @@ UCTNode* UCTNode::uct_select_child(int color) {
             }                                                    
             
             // RAVE part            
-            float ravewinrate = child->get_raverate(color);
-            float ravechildrate = lograveparent / child->get_ravevisits();                        
-            float rave = 0.32f * sqrtf(ravechildrate);
+            float ravewinrate = child->get_raverate(color);            
             
-            float ravevalue = ravewinrate + rave + patternbonus;                         
+            float ravevalue = ravewinrate + patternbonus;                         
                
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             
             assert(value > -1000.0f);
         } else {
             /// XXX: can't happen due to priors
+            assert(FALSE);
             patternbonus = (child->get_score() * 0.01f);
             
             value = 1.1f + patternbonus;  

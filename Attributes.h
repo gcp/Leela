@@ -40,7 +40,7 @@ public:
     bool attribute_enabled(int idx);    
 private:         
     int m_pattern;
-    std::bitset<24> m_present; 
+    std::bitset<13> m_present; 
 };
 
 #endif

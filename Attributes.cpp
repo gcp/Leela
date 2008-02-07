@@ -90,50 +90,17 @@ void FastAttributes::get_from_move(FastState * state,
     m_present[bitpos++] = (mcown >=  0.60f && mcown <  0.70);
     m_present[bitpos++] = (mcown >=  0.70f && mcown <  0.80);
     m_present[bitpos++] = (mcown >=  0.80f && mcown <  0.90);
-    m_present[bitpos++] = (mcown >=  0.90f && mcown <  1.01);   
-
-    
-    // our liberties
-    // liberty increase
-    int al;
-    if (vtx != FastBoard::PASS) {
-        al = state->board.minimum_elib_count(!tomove, vtx);
-        // isolated stone
-        if (al == 100) {
-            al = 0;
-        }
-    } else {
-        al = -1;
-    }
-
-    // isolated stone play
-    m_present[bitpos++] = (al ==  0);    
-
-    m_present[bitpos++] = (al ==  2);
-    m_present[bitpos++] = (al ==  3);
-    m_present[bitpos++] = (al ==  4);
-    m_present[bitpos++] = (al ==  5);    
-    m_present[bitpos++] = (al >   5); 
+    m_present[bitpos++] = (mcown >=  0.90f && mcown <  1.01);       
     
      // generalized atari
     int at;
     if (vtx != FastBoard::PASS) {
-        at = state->board.minimum_elib_count(tomove, vtx);
-        // isolated stone
-        if (at == 100) {
-            at = 0;
-        }
+        at = state->board.minimum_elib_count(tomove, vtx);        
     } else {
         at = -1;
-    }            
-    
-    m_present[bitpos++] = (at == 0);                           // atari    
+    }                    
 
     m_present[bitpos++] = (at == 2);                           // atari
-    m_present[bitpos++] = (at == 3);
-    m_present[bitpos++] = (at == 4);
-    m_present[bitpos++] = (at == 5);    
-    m_present[bitpos++] = (at >  5);             
     
     // shape  (border check)            
     int pat;

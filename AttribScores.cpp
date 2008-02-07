@@ -51,7 +51,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             assert(treewalk->get_state() != NULL);
             
             // check every 3rd move
-            if (counter % 3 == 0) {               
+            if (1/*counter % 3 == 0*/) {               
                 KoState * state = treewalk->get_state();
                 int tomove = state->get_to_move();
                 int move;
@@ -234,7 +234,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(24);
+    m_fweight.resize(13);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();

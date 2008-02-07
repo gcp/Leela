@@ -147,7 +147,12 @@ int FastState::play_random_move(int color) {
             int sq = m_work[i];
             
             int pattern = board.get_pattern_fast_augment(sq);
-            int score = matcher->matches(color, pattern);                                                                                 
+            int score = matcher->matches(color, pattern);
+                        
+            int at = board.minimum_elib_count(color, sq);
+            if (at == 2) {
+                score = (score * 192) / 128;
+            }
         
             if (score >= Matcher::THRESHOLD) {
                 cumul += score;
@@ -197,8 +202,8 @@ int FastState::play_random_move(int color) {
                     score = (score * 64) / 128;
                 }       
             }                 
-        }                                      
-                
+        }                                           
+                                                    
         if (score > bestscore) {
             if (board.self_atari(color, vtx)) {
                 score = score / 40;               
