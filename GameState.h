@@ -31,6 +31,7 @@ public:
     void stop_clock(int color);
     TimeControl * get_timecontrol();
     void set_timecontrol(int maintime, int byotime, int byostones);
+    void set_timecontrol(TimeControl tmc);
     void adjust_time(int color, int time, int stones);
 
     void display_state();

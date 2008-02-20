@@ -156,6 +156,10 @@ void GameState::set_timecontrol(int maintime, int byotime, int byostones) {
     m_timecontrol = timecontrol;
 }
 
+void GameState::set_timecontrol(TimeControl tmc) {
+    m_timecontrol = tmc;
+}
+
 void GameState::adjust_time(int color, int time, int stones) {
     m_timecontrol.adjust_time(color, time, stones);
 }

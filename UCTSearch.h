@@ -36,15 +36,17 @@ public:
     int think(int color, passflag_t passflag = NORMAL);
     void set_visit_limit(int visits);    
     void set_runflag(bool * flag);
+    void set_analyzing(bool flag);
     void ponder();        
     bool is_running();      
     Playout play_simulation(KoState & currstate, UCTNode * node);    
     float get_score();
     
 private:             
-    void dump_stats(GameState & state, UCTNode & parent);
-    void dump_pv(GameState & state, UCTNode & parent);
+    void dump_stats(GameState & state, UCTNode & parent);    
+    std::string get_pv(GameState & state, UCTNode & parent);
     void dump_thinking();        
+    void dump_analysis();
     void dump_order2(void);
     int get_best_move(passflag_t passflag);    
 
@@ -58,6 +60,9 @@ private:
     // For external control
     bool m_hasrunflag;
     bool * m_runflag;        
+    
+    // Special modes
+    bool m_analyzing;
 };
 
 class UCTWorker {
