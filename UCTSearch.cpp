@@ -329,9 +329,13 @@ void UCTSearch::dump_analysis(void) {
     int color = tempstate.board.m_tomove;
                 
     std::string pvstring = get_pv(tempstate, m_root);
+    
+    float winrate = m_root.get_winrate(color) * 100.0f;
+    winrate = std::max(0.0f, winrate);
+    winrate = std::min(100.0f, winrate);
         
     GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(), 
-               m_root.get_winrate(color) * 100.0f, pvstring.c_str());   
+               winrate, pvstring.c_str());   
 }
 
 bool UCTSearch::is_running() {
