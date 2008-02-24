@@ -118,7 +118,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
                   tmp.c_str(), 
                   node->get_visits(), 
                   node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
-                  node->get_visits() > 0 ? node->get_raverate(color)*100.0f : 0.0f,
+                  node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
                   node->get_ravevisits(),
                   tmp.c_str());
         
@@ -369,12 +369,13 @@ int UCTSearch::think(int color, passflag_t passflag) {
         GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
     } else {
         time_for_move = MAX_TREE_SIZE * 100;
-        
+                
         GUIprintf("Analyzing...");
     }
     
     //XXX: testing
     //m_maxvisits = 10000;
+    int max_iterations = 10000;    
                  
     m_rootstate.start_clock(color);
 
@@ -397,7 +398,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
     }        
 #endif    
-    bool keeprunning = true;    
+    bool keeprunning = true;   
+    int iterations = 0; 
     do {
         KoState currstate = m_rootstate;
                 
@@ -422,7 +424,10 @@ int UCTSearch::think(int color, passflag_t passflag) {
                 dump_analysis();                        
             }  
             keeprunning = (!m_hasrunflag || (*m_runflag));
-        }        
+        }   
+        if (iterations++ > max_iterations) {
+            keeprunning = false;
+        }     
     } while(keeprunning);
     
     // stop the search

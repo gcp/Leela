@@ -20,6 +20,7 @@ void FastState::init_game(int size, float komi) {
     
     movenum = 0;                          
     
+    komove = 0;
     lastmove = 0;
     onebutlastmove = lastmove;
     m_komi = komi;

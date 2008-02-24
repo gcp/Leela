@@ -15,7 +15,7 @@ public:
     bool first_visit() const;
     bool has_children() const;    
     float get_winrate(int tomove) const;
-    float get_raverate(int tomove) const;
+    float get_raverate() const;
     float get_blackwins() const;
     int create_children(FastState & state, bool scorepass = FALSE);
     void kill_superkos(KoState & state);

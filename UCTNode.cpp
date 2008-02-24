@@ -199,7 +199,7 @@ float UCTNode::get_winrate(int tomove) const {
     return rate;
 }
 
-float UCTNode::get_raverate(int tomove) const {
+float UCTNode::get_raverate() const {
     float rate = m_ravestmwins / m_ravevisits;        
     
     return rate;
@@ -240,12 +240,8 @@ UCTNode* UCTNode::uct_select_child(int color) {
     }
     
     float logparent     = logf((float)parentvisits);    
-    float lograveparent = logf((float)rave_parentvisits);        
-    
-    // Mixing
-    const float k = 5000.0f;
-    const float beta = sqrtf(k / ((3.0f * parentvisits) + k));     
-        
+    float lograveparent = logf((float)rave_parentvisits);                
+            
     childcount = 0;
     child = m_firstchild;            
     // make sure we are at a valid successor        
@@ -256,6 +252,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
         float value;
         float uctvalue;                        
         float patternbonus;        
+        float ravevisits;     
 
         if (child->get_ravevisits() > 0) {        
             if (!child->first_visit()) {
@@ -274,9 +271,12 @@ UCTNode* UCTNode::uct_select_child(int color) {
             }                                                    
             
             // RAVE part                        
-            float ravewinrate = child->get_raverate(color);            
+            float ravewinrate = child->get_raverate();                        
+            ravevisits = child->get_ravevisits();
             
-            float ravevalue = ravewinrate + patternbonus;                         
+            float ravevalue = ravewinrate + patternbonus;                
+            
+            float beta = 1.0f - logf(1.0f + child->get_visits()) / 12.0f; 
                
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             
@@ -284,15 +284,14 @@ UCTNode* UCTNode::uct_select_child(int color) {
         } else {
             /// XXX: can't happen due to priors
             assert(FALSE);
-            patternbonus = (child->get_score() * 0.01f);
-            
+            patternbonus = (child->get_score() * 0.01f);            
             value = 1.1f + patternbonus;  
         }                
-        
+                        
         if (value > best_value) {
             best_value = value;
             best = child;
-        }                
+        }                        
         
         child = child->m_nextsibling;     
         // make sure we are at a valid successor        
