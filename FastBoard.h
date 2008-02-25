@@ -58,6 +58,7 @@ public:
     void set_square(int x, int y, square_t content);
     void set_square(int vertex, square_t content); 
     std::pair<int, int> get_xy(int vertex);
+    int get_groupid(int vertex);
         
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
@@ -109,6 +110,7 @@ public:
     std::string move_to_text_sgf(int move);
     std::string get_string(int vertex);   
     std::string get_stone_list(); 
+    int string_size(int vertex);
     
     void reset_board(int size);                    
     void display_map(std::vector<int> influence);            
@@ -161,8 +163,7 @@ protected:
                                                std::tr1::array<int, N> & nbr_libs, 
                                                int & nbr_libs_cnt);
     void kill_neighbours(int vertex, std::vector<int> & work);                                  
-    void try_capture(int color, int vertex, std::vector<int> & work);
-    int string_size(int vertex);
+    void try_capture(int color, int vertex, std::vector<int> & work);    
     FastBoard remove_dead();
 };
 

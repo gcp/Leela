@@ -32,17 +32,19 @@ void UCTSearch::set_runflag(bool * flag) {
     m_hasrunflag = true;
 }
 
-Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* node) {
+Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     const int color = currstate.get_to_move();
     const uint64 hash = currstate.board.get_hash();
     Playout noderesult;  
         
     TTable::get_TT()->sync(hash, node);        
 
-    if (node->get_visits() <= MATURE_TRESHOLD) {           
+    bool has_children = node->has_children();
+
+    if (has_children == false && node->get_visits() <= MATURE_TRESHOLD) {           
         noderesult.run(currstate);                
     } else {                
-        if (node->has_children() == false && m_nodes < MAX_TREE_SIZE) {                
+        if (has_children == false && m_nodes < MAX_TREE_SIZE) {                
             m_nodes += node->create_children(currstate);
         }        
                 

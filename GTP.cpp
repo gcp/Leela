@@ -14,6 +14,7 @@
 #include "SGFTree.h"
 #include "AttribScores.h"
 #include "Genetic.h"
+#include "PNSearch.h"
 
 using namespace Utils;
 
@@ -521,13 +522,15 @@ bool GTP::execute(GameState & game, std::string xinput) {
         
         gtp_printf(id, "");
         return true;
-    }
-    
-    /* unknown command, if GTP give GTP error else let main decide */
-    if (id != -1) {
-        gtp_fail_printf(id, "unknown command");
+    } else if (command.find("pn") == 0) {
+        std::auto_ptr<PNSearch> pnsearch(new PNSearch(game));
+
+        pnsearch->classify_groups();
+
+        gtp_printf(id, "");
         return true;
-    } else {
-        return false;
     }
+        
+    gtp_fail_printf(id, "unknown command");
+    return true;    
 }

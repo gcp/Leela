@@ -122,7 +122,6 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				WholeProgramOptimization="true"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_SECURE_SCL=0"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
@@ -239,6 +238,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\PNNode.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\PNSearch.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\Random.cpp"
 				>
 			</File>
@@ -342,6 +349,14 @@
 			</File>
 			<File
 				RelativePath="..\Playout.h"
+				>
+			</File>
+			<File
+				RelativePath="..\PNNode.h"
+				>
+			</File>
+			<File
+				RelativePath="..\PNSearch.h"
 				>
 			</File>
 			<File

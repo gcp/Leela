@@ -183,7 +183,7 @@ void UCTNode::set_blackwins(float wins) {
     m_blackwins = wins;       
 }
 
-float UCTNode::get_score() {
+float UCTNode::get_score() const {
     return m_score;
 }
 
@@ -259,7 +259,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
                 // UCT part
                 float winrate   = child->get_winrate(color);     
                 float childrate = logparent / child->get_visits();                                                                                                        
-                float uct = 0.32f * sqrtf(childrate);
+                float uct = 0.15f * sqrtf(childrate);
                 
                 uctvalue = winrate + uct;
                 
@@ -276,7 +276,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             
             float ravevalue = ravewinrate + patternbonus;                
             
-            float beta = 1.0f - logf(1.0f + child->get_visits()) / 12.0f; 
+            float beta = 1.0f - logf(1.0f + child->get_visits()) / 12.0f;             
                
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             
@@ -322,7 +322,11 @@ public:
             return true;
         }
         if (a->first_visit() && b->first_visit()) {
-            return false;
+            if (a->get_score() > b->get_score()) {
+                return true;
+            } else {
+                return false;
+            }
         }            
         
         // first check: are playouts comparable and sufficient?

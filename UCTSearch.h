@@ -39,7 +39,7 @@ public:
     void set_analyzing(bool flag);
     void ponder();        
     bool is_running();      
-    Playout play_simulation(KoState & currstate, UCTNode * node);    
+    Playout play_simulation(KoState & currstate, UCTNode * const node);    
     float get_score();
     
 private:             

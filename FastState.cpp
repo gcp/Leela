@@ -39,7 +39,8 @@ void FastState::reset_game(void) {
 
     movenum = 0;   
     m_passes = 0;     
-    m_handicap = 0;                  
+    m_handicap = 0;    
+    komove = 0;              
     
     lastmove = FastBoard::MAXSQ;
     onebutlastmove = lastmove;
@@ -203,7 +204,7 @@ int FastState::play_random_move(int color) {
                     score = (score * 64) / 128;
                 }       
             }                 
-        }                                           
+        }                                             
                                                     
         if (score > bestscore) {
             if (board.self_atari(color, vtx)) {

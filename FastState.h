@@ -62,8 +62,7 @@ protected:
 
     int walk_empty_list(int color, int vidx, bool allow_sa = false);
     bool try_move(int color, int vertex, bool allow_sa = false);
-    void play_move(int color, int vertex);   
-    void turbomove(int color, int vtx);  
+    void play_move(int color, int vertex);       
 };
 
 #endif

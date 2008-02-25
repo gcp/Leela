@@ -146,12 +146,30 @@ void SGFTree::populate_states(void) {
 
     // handicap stone    
     std::pair<PropertyMap::iterator, 
-              PropertyMap::iterator> range = m_properties.equal_range("AB");
-    for (it = range.first; it != range.second; ++it) {
+              PropertyMap::iterator> abrange = m_properties.equal_range("AB");
+    for (it = abrange.first; it != abrange.second; ++it) {
         std::string move = it->second;      
         int vtx = string_to_vertex(move);
         m_state.play_move(FastBoard::BLACK, vtx);                
     }            
+    
+    std::pair<PropertyMap::iterator, 
+              PropertyMap::iterator> awrange = m_properties.equal_range("AW");
+    for (it = awrange.first; it != awrange.second; ++it) {
+        std::string move = it->second;      
+        int vtx = string_to_vertex(move);
+        m_state.play_move(FastBoard::WHITE, vtx);                
+    }                 
+    
+    it = m_properties.find("PL");
+    if (it != m_properties.end()) {
+        std::string who = it->second;
+        if (who == "W") {
+            m_state.set_to_move(FastBoard::WHITE);
+        } else if (who == "B") {
+            m_state.set_to_move(FastBoard::BLACK);
+        }        
+    }     
     
     // now for all children play out the moves
     std::vector<SGFTree>::iterator stateit;

@@ -972,6 +972,13 @@ int FastBoard::get_to_move() {
     return m_tomove;
 }
 
+int FastBoard::get_groupid(int vertex) {
+    assert(m_square[vertex] == WHITE);
+    assert(m_square[vertex] == BLACK);
+
+    return m_parent[vertex];
+}
+
 std::string FastBoard::get_string(int vertex) {
     std::string result;
     

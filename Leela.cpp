@@ -50,11 +50,8 @@ int main (int argc, char *argv[]) {
             myprintf("Leela: ");
         }            
                 
-        std::getline(std::cin, input);       
-        
-        if (!GTP::execute(*maingame, input)) {
-            myprintf("? unknown command\n");                   
-        } 
+        std::getline(std::cin, input);               
+        GTP::execute(*maingame, input);            
     }    
     return 0;
 }
