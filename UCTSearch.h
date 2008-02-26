@@ -25,7 +25,7 @@ public:
         Don't expand children until at least this many
         visits happened.
     */        
-    static const int MATURE_TRESHOLD = 30;
+    static const int MATURE_TRESHOLD = 15;
      
     /*
         Maximum size of the tree in memory.

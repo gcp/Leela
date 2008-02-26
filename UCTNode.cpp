@@ -216,8 +216,8 @@ int UCTNode::get_ravevisits() const {
 UCTNode* UCTNode::uct_select_child(int color) {                                   
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
-        
-    int childbound = std::max(2, (int)(((logf((float)get_visits()) - 3.688879f) / 0.33647223f) + 2.0f));     
+            
+    int childbound = std::max(2, (int)(((logf((float)get_visits()) - 3.0f) / 0.33647223f) + 2.0f));     
         
     int rave_parentvisits = 1;
     int parentvisits      = 1;   // avoid logparent being illegal
@@ -239,8 +239,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
         childcount++;
     }
     
-    float logparent     = logf((float)parentvisits);    
-    float lograveparent = logf((float)rave_parentvisits);                
+    float logparent = logf((float)parentvisits);                    
             
     childcount = 0;
     child = m_firstchild;            
@@ -276,7 +275,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             
             float ravevalue = ravewinrate + patternbonus;                
             
-            float beta = 1.0f - logf(1.0f + child->get_visits()) / 12.0f;             
+            float beta = std::max(0.0f, 1.0f - logf(1.0f + child->get_visits()) / 12.0f);                         
                
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             

@@ -100,7 +100,8 @@ public:
     std::vector<int> influence(void);
     std::vector<int> moyo(void);
     std::vector<int> area(void);
-    
+    bool is_alive(int vertex);
+
     int eval(float komi); 
     int get_prisoners(int side);
     bool black_to_move();

@@ -973,8 +973,7 @@ int FastBoard::get_to_move() {
 }
 
 int FastBoard::get_groupid(int vertex) {
-    assert(m_square[vertex] == WHITE);
-    assert(m_square[vertex] == BLACK);
+    assert(m_square[vertex] == WHITE || m_square[vertex] == BLACK);
 
     return m_parent[vertex];
 }
@@ -2280,4 +2279,40 @@ std::vector<int> FastBoard::get_neighbour_ids(int vertex) {
     }
     
     return result;
+}
+
+// Not alive does not imply dead
+bool FastBoard::is_alive(int vertex) {     
+    int par = m_parent[vertex];
+    int color = m_square[vertex];
+    int pos = par;
+
+    assert(color == WHITE || color == BLACK);    
+
+    std::vector<bool> marker(m_maxsq, false);
+    int eyes = 0;
+  
+    do {       
+        assert(m_square[pos] == color);
+        
+        for (int k = 0; k < 4; k++) {
+            int ai = pos + m_dirs[k];
+            if (m_square[ai] == EMPTY) {
+                if (!marker[ai]) {                    
+                    marker[ai] = true;
+                    // not seen liberty, check if it's a real eye
+                    if (is_eye(color, ai)) {
+                        eyes++;
+                        if (eyes >= 2) {
+                            return true;
+                        }
+                    }
+                    // might check liberties here?
+                }
+            }
+        }                
+        pos = m_next[pos];
+    } while (pos != vertex);            
+
+    return false;
 }
