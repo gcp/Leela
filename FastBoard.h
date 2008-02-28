@@ -76,7 +76,7 @@ public:
     bool is_connecting(const int color, const int vertex);
     int nbr_weight(const int color, const int vertex);
     int merged_string_size(int color, int vertex);
-    std::vector<int> get_neighbour_ids(int vertex);
+    std::vector<int> get_neighbour_ids(int vertex);    
         
     bool self_atari(int color, int vertex);    
     int get_dir(int i);

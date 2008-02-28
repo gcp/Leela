@@ -2109,7 +2109,7 @@ int FastBoard::minimum_elib_count(int color, int vertex) {
 }
 
 int FastBoard::count_rliberties(int vertex) {
-    std::vector<bool> marker(m_maxsq, false);
+    /*std::vector<bool> marker(m_maxsq, false);
     
     int pos = vertex;
     int liberties = 0;
@@ -2132,7 +2132,8 @@ int FastBoard::count_rliberties(int vertex) {
         pos = m_next[pos];
     } while (pos != vertex);            
     
-    return liberties;
+    return liberties;*/
+    return m_libs[m_parent[vertex]];
 }
 
 bool FastBoard::check_losing_ladder(const int color, const int vtx, int branching) {

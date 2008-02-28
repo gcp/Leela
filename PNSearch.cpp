@@ -51,11 +51,14 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
     m_root->evaluate(&m_rootstate, m_group_color, m_group_to_check);    
 
     int iters = 0;
-    while(!m_root->solved() && ++iters < 50000) {
+    while(!m_root->solved() && ++iters < 500000) {
         m_workstate = m_rootstate;
-        PNNode * most_proving = m_root->select_most_proving(&m_workstate, PNNode::OR);        
+        PNNode * most_proving = m_root->select_most_proving(&m_workstate,
+                                                             m_workstate.get_to_move() == m_group_color ? 
+                                                             PNNode::OR : PNNode::AND);        
         most_proving->develop_node(&m_workstate, m_group_color, m_group_to_check);        
-        most_proving->update_ancestors(m_workstate.get_to_move() == rootcolor ? PNNode::OR : PNNode::AND);               
+        most_proving->update_ancestors(m_workstate.get_to_move() == m_group_color  ? 
+                                       PNNode::OR : PNNode::AND);               
         if ((iters & 1023) == 0) {
             m_workstate = m_rootstate;
             std::string pv = get_pv(&m_workstate, &(*m_root));
@@ -63,7 +66,9 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
         }
     }
 
-    myprintf("P: %d D: %d Iter: %d\n", m_root->get_proof(), m_root->get_disproof(), iters);
+    m_workstate = m_rootstate;
+    std::string pv = get_pv(&m_workstate, &(*m_root));
+    myprintf("P: %d D: %d Iter: %d PV: %s\n", m_root->get_proof(), m_root->get_disproof(), iters, pv.c_str());
 
     return UNKNOWN;
 }
@@ -73,11 +78,14 @@ std::string PNSearch::get_pv(KoState * state, PNNode * node) {
 
     PNNode * oldnode = NULL;
     PNNode * critical = node;
-    PNNode::node_type_t type = PNNode::OR;
+    PNNode::node_type_t type = state->get_to_move() == m_group_color  ? 
+                               PNNode::OR : PNNode::AND;
 
     do {
-        oldnode = critical;        
-        critical = critical->select_critical(state, type);    
+        if (!critical->has_children()) break;
+
+        oldnode = critical;               
+        critical = critical->select_critical(state, type);            
         int move = critical->get_move();        
         //state->play_move(move);
         std::string mtxt = state->board.move_to_text(move);        

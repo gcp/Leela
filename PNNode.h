@@ -24,6 +24,7 @@ public:
     int get_disproof() const;
     int get_move() const;
     bool is_expanded() const;
+    bool has_children() const;
 
 private:
     int m_pn;

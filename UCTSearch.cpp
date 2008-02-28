@@ -205,21 +205,22 @@ int UCTSearch::get_best_move(passflag_t passflag) {
                 myprintf("Pass is the only acceptable move.\n");
             }
         }
-    } else {    
-        if (m_root.get_pass_child() != NULL) {
-            if (!m_root.get_pass_child()->first_visit()) {
-                float passscore = m_root.get_pass_child()->get_winrate(color);
-                
-                // is passing a winning move?
-                if (passscore > 0.90f) {                    
-                    // is passing within 5% of the best move?    
-                    // XXX: sampled enough?        
-                    if (bestscore - passscore < 0.05f) {
-                        myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
-                                  passscore * 100.0f, bestscore * 100.0f);
-                        bestmove = FastBoard::PASS;                
+    } else {
+        if (m_rootstate.get_last_move() == FastBoard::PASS) {
+            if (m_root.get_pass_child() != NULL) {
+                if (m_root.get_pass_child()->get_visits() > 100) {
+                    float passscore = m_root.get_pass_child()->get_winrate(color);
+                    
+                    // is passing a winning move?
+                    if (passscore > 0.90f) {                    
+                        // is passing within 5% of the best move?                                   
+                        if (bestscore - passscore < 0.05f) {
+                            myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
+                                      passscore * 100.0f, bestscore * 100.0f);
+                            bestmove = FastBoard::PASS;                
+                        }
                     }
-                }
+                }            
             }
         }
         // either by forcing or coincidence passing is
@@ -393,7 +394,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_root.kill_superkos(m_rootstate);        
     
     m_run = true;            
-    int cpus = SMP::get_num_cpus();        
+    //int cpus = SMP::get_num_cpus();        
+    int cpus = 2;
     boost::thread_group tg;         
 #ifdef USE_SMP       
     for (int i = 1; i < cpus; i++) {         
@@ -469,7 +471,8 @@ void UCTSearch::ponder() {
     Playout::mc_owner(m_rootstate, 64);             
          
     m_run = true;
-    int cpus = SMP::get_num_cpus();       
+    //int cpus = SMP::get_num_cpus();       
+    int cpus = 2;       
     boost::thread_group tg;        
 #ifdef USE_SMP        
     for (int i = 1; i < cpus; i++) {         

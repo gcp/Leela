@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include "Attributes.h"
 #include "PNNode.h"
 #include "FastBoard.h"
 
@@ -43,13 +44,15 @@ void PNNode::evaluate(FastState * ks, int groupcolor, int groupid) {
         return;
     }
 
-    m_pn = 1;
-    m_dn = 1;     
+    //m_pn = 1;
+    //m_dn = ks->board.count_rliberties(groupid);
+    m_pn = std::max(1, 7 - ks->board.count_rliberties(groupid));
+    m_dn = std::max(1, ks->board.count_rliberties(groupid)); 
 }
 
 void PNNode::set_proof_disproof(node_type_t type) {
     assert(m_evaluated);
-    if (m_expanded) {    
+    if (m_expanded && m_children.size() > 0) {    
         int proof;
         int disproof;
 
@@ -69,10 +72,17 @@ void PNNode::set_proof_disproof(node_type_t type) {
                 proof = std::min(proof, m_children[i].m_pn);
                 disproof += m_children[i].m_dn;                
             }
-        }   
+        }  
+
+        proof = std::min(proof, INF);
+        disproof = std::min(disproof, INF);
 
         m_pn = proof;
         m_dn = disproof;
+    } else if (m_expanded && m_children.size() == 0) {
+        // Pass pass situation is win for defender
+        m_pn = 0;
+        m_dn = INF;
     }
 }
 
@@ -84,6 +94,7 @@ bool PNNode::solved() {
 }
 
 PNNode * PNNode::select_critical(KoState * ks, node_type_t type) {
+    assert(m_children.size() > 0);
     int i = 0;
     if (type == OR) {            
         while (m_children[i].m_pn != m_pn) i++;
@@ -109,14 +120,43 @@ void PNNode::develop_node(KoState * ks, int groupcolor, int groupid) {
     std::vector<int> moves = ks->generate_moves(ks->get_to_move());
 
     for (int i = 0; i < moves.size(); i++) {
-        PNNode node(this, moves[i]);
-        m_children.push_back(node);
+        if (moves[i] != FastBoard::PASS) {
+            std::vector<int> nbrs = ks->board.get_neighbour_ids(moves[i]);
+            std::vector<int>::iterator it = std::find(nbrs.begin(), nbrs.end(), groupid);
+
+            if (it != nbrs.end()) {
+                PNNode node(this, moves[i]);
+                m_children.push_back(node);        
+            } else if (ks->get_last_move() != FastBoard::PASS) {
+                int d = Attributes::move_distance(ks->board.get_xy(ks->get_last_move()),
+                                                  ks->board.get_xy(moves[i]));
+                if (d <= 3) {
+                    PNNode node(this, moves[i]);
+                    m_children.push_back(node);        
+                }
+            }
+        }        
     }
+    
+    if (ks->get_last_move() != FastBoard::PASS) {
+        m_children.push_back(PNNode(this, FastBoard::PASS));    
+    }
+
+    //if (m_children.size() == 0) {
+    //    ks->display_state();        
+    //}
         
     for (int i = 0; i < m_children.size(); i++) {
-        FastState tmp = *ks;        
-        tmp.play_move_fast(m_children[i].m_move);
-        m_children[i].evaluate(&tmp, groupcolor, groupid);     
+        KoState tmp = *ks;        
+        tmp.play_move(m_children[i].m_move);
+        if (m_children[i].m_move == FastBoard::PASS || !tmp.superko()) {
+            m_children[i].evaluate(&tmp, groupcolor, groupid);     
+        } else {
+            // superko is a loss for the killer
+            m_children[i].m_pn = 0;
+            m_children[i].m_dn = INF;
+            m_children[i].m_evaluated = true;
+        }
     } 
 
     m_expanded = true;
@@ -144,4 +184,8 @@ int PNNode::get_move() const {
 
 bool PNNode::is_expanded() const {
     return m_expanded;
+}
+
+bool PNNode::has_children() const {
+    return m_children.size() > 0;
 }
