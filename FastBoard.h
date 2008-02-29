@@ -76,13 +76,18 @@ public:
     bool is_connecting(const int color, const int vertex);
     int nbr_weight(const int color, const int vertex);
     int merged_string_size(int color, int vertex);
-    std::vector<int> get_neighbour_ids(int vertex);    
+    std::vector<int> get_neighbour_ids(int vertex);
+    void augment_chain(std::vector<int> & chains, int vertex);
+    std::vector<int> get_augmented_string(int vertex);
+    std::vector<int> dilate_liberties(std::vector<int> & vtxlist);
+    std::vector<int> get_nearby_enemies(std::vector<int> & vtxlist);
         
     bool self_atari(int color, int vertex);    
     int get_dir(int i);
     int get_extra_dir(int i);
 
     bool is_eye(const int color, const int vtx);
+    bool is_solid_eye(const int color, const int vtx);
     bool no_eye_fill(const int i);
     int get_pattern_fast(const int sq);    
     int get_pattern_fast_augment(const int sq); 
@@ -104,14 +109,16 @@ public:
 
     int eval(float komi); 
     int get_prisoners(int side);
+    int get_empty();
     bool black_to_move();
     int get_to_move();
         
     std::string move_to_text(int move);
-    std::string move_to_text_sgf(int move);
-    std::string get_string(int vertex);   
+    std::string move_to_text_sgf(int move);    
     std::string get_stone_list(); 
     int string_size(int vertex);
+    std::vector<int> get_string_stones(int vertex);    
+    std::string get_string(int vertex);
     
     void reset_board(int size);                    
     void display_map(std::vector<int> influence);            

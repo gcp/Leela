@@ -184,6 +184,7 @@ int FastBoard::count_pliberties(const int i) {
     return count_neighbours(EMPTY, i);
 }
 
+// count neighbours of color c at vertex v
 int FastBoard::count_neighbours(const int c, const int v) {
     assert(c == WHITE || c == BLACK || c == EMPTY);
     return (m_neighbours[v] >> (NBR_SHIFT * c)) & 7;
@@ -837,11 +838,15 @@ bool FastBoard::is_eye(const int color, const int i) {
     /* check for 4 neighbors of the same color */
     int ownsurrounded = (m_neighbours[i] & s_eyemask[color]);
     
-    /* if not, it can't be an eye */
+    // if not, it can't be an eye 
+    // this takes advantage of borders being colored
+    // both ways
     if (!ownsurrounded) {
         return false;
-    }                                      
-
+    }      
+    
+    // 2 or more diagonals taken
+    // 1 for side groups                                
     int colorcount[4];
     
     colorcount[BLACK] = 0;
@@ -862,6 +867,75 @@ bool FastBoard::is_eye(const int color, const int i) {
             return false;
         }
     }                        
+                               
+    return true;    
+}
+
+bool FastBoard::is_solid_eye(const int color, const int i) {
+    /* check for 4 neighbors of the same color */
+    int ownsurrounded = (m_neighbours[i] & s_eyemask[color]);
+    
+    // if not, it can't be an eye 
+    // this takes advantage of borders being colored
+    // both ways
+    if (!ownsurrounded) {
+        return false;
+    }      
+    
+    // 2 or more diagonals taken
+    // 1 for side groups                                
+    int colorcount[4];
+    
+    colorcount[BLACK] = 0;
+    colorcount[WHITE] = 0;
+    colorcount[INVAL] = 0;
+
+    colorcount[m_square[i - 1 - m_boardsize - 2]]++;
+    colorcount[m_square[i + 1 - m_boardsize - 2]]++;
+    colorcount[m_square[i - 1 + m_boardsize + 2]]++;
+    colorcount[m_square[i + 1 + m_boardsize + 2]]++;
+
+    // enemies are flaws    
+    int flaws = colorcount[!color];     
+                                                             
+    // in addition to the above valid diagonals should be secure
+    // this means they can't "just" be empty but must be 
+    // ours-taken or empty-secure
+    int pos;
+    pos = i - 1 - m_boardsize - 2;    
+    if (m_square[pos] == EMPTY) {    
+        if (count_neighbours(color, pos) < 4) {
+            flaws++;
+        }
+    }
+    pos = i + 1 - m_boardsize - 2;    
+    if (m_square[pos] == EMPTY) {    
+        if (count_neighbours(color, pos) < 4) {
+            flaws++;
+        }
+    }
+    pos = i - 1 + m_boardsize + 2;    
+    if (m_square[pos] == EMPTY) {    
+        if (count_neighbours(color, pos) < 4) {
+            flaws++;
+        }
+    }
+    pos = i + 1 + m_boardsize + 2;    
+    if (m_square[pos] == EMPTY) {    
+        if (count_neighbours(color, pos) < 4) {
+            flaws++;
+        }
+    }   
+    
+    if (colorcount[INVAL] == 0) {
+        if (flaws > 1) {
+            return false;
+        }
+    } else {
+        if (flaws) {
+            return false;
+        }        
+    }    
                                
     return true;    
 }
@@ -976,6 +1050,23 @@ int FastBoard::get_groupid(int vertex) {
     assert(m_square[vertex] == WHITE || m_square[vertex] == BLACK);
 
     return m_parent[vertex];
+}
+
+std::vector<int> FastBoard::get_string_stones(int vertex) {
+    int start = m_parent[vertex];
+
+    std::vector<int> res;    
+    res.reserve(m_stones[start]);    
+    
+    int newpos = start;
+    
+    do {       
+        assert(m_square[newpos] == m_square[vertex]);
+        res.push_back(newpos);
+        newpos = m_next[newpos];
+    } while (newpos != start);   
+        
+    return res;
 }
 
 std::string FastBoard::get_string(int vertex) {
@@ -2091,7 +2182,6 @@ std::pair<int, int> FastBoard::get_xy(int vertex) {
     return xy;
 }
 
-// returns 1 to 7 real liberties
 int FastBoard::minimum_elib_count(int color, int vertex) {
     int minlib = 100; // XXX hardcoded in some places
     
@@ -2302,7 +2392,7 @@ bool FastBoard::is_alive(int vertex) {
                 if (!marker[ai]) {                    
                     marker[ai] = true;
                     // not seen liberty, check if it's a real eye
-                    if (is_eye(color, ai)) {
+                    if (is_solid_eye(color, ai)) {
                         eyes++;
                         if (eyes >= 2) {
                             return true;
@@ -2316,4 +2406,142 @@ bool FastBoard::is_alive(int vertex) {
     } while (pos != vertex);            
 
     return false;
+}
+
+int FastBoard::get_empty() {
+    return m_empty_cnt;
+}
+
+void FastBoard::augment_chain(std::vector<int> & chains, int vertex) {
+    // get our id
+    int par = m_parent[vertex];
+
+    // check if we were found already
+    std::vector<int>::iterator it = std::find(chains.begin(), chains.end(), par);
+
+    // we are already on the list, return
+    if (it != chains.end()) {
+        return;
+    } else {
+        // add ourselves to the list
+        chains.push_back(par);
+    }
+
+    int color = m_square[vertex];
+    int pos = par;
+
+    assert(color == WHITE || color == BLACK);    
+    
+    // discovered nearby chains (identified by parent)
+    // potential chains need 2 liberties
+    // sure chains are sure to be connected
+    std::vector<bool> potential_chain(m_maxsq, false);
+
+    // marks visited places
+    // XXX: this is redundant with the previous
+    std::vector<bool> marker(m_maxsq, false);    
+  
+    // go over string, note our stones and get nearby chains
+    // that are surely connected
+    do {       
+        assert(m_square[pos] == color);                        
+
+        for (int k = 0; k < 4; k++) {
+            int ai = pos + m_dirs[k];
+            
+            // liberty, check if we link up through it
+            if (m_square[ai] == EMPTY && !marker[ai]) {                    
+                // mark it as visited
+                marker[ai] = true;
+                // is there another string nearby?
+                for (int j = 0; j < 4; j++) {
+                    int aai = ai + m_dirs[j];
+                    // friendly string, not ourselves
+                    if (m_square[aai] == color && m_parent[aai] != par) {
+                        // playing on the liberty is illegal or 
+                        // gets captured instantly, or we already
+                        // found another shared liberty
+                        if (count_neighbours(color, ai) >= 3
+                            || potential_chain[m_parent[aai]]) {
+                            augment_chain(chains, aai);
+                        } else {                                    
+                            potential_chain[m_parent[aai]] = true;
+                        }                            
+                    }
+                }                                                                                
+            }
+        }                
+        pos = m_next[pos];
+    } while (pos != vertex);       
+}
+
+// returns a list of all vertices on the augmented
+// chain of the string pointed to by vertex
+std::vector<int> FastBoard::get_augmented_string(int vertex) {
+    std::vector<int> res;
+    std::vector<int> chains;
+
+    augment_chain(chains, vertex);
+
+    for (int i = 0; i < chains.size(); i++) {
+        std::vector<int> stones = get_string_stones(chains[i]);
+        std::copy(stones.begin(), stones.end(), back_inserter(res));
+    }
+
+    return res;
+}
+
+std::vector<int> FastBoard::dilate_liberties(std::vector<int> & vtxlist) {  
+    std::vector<int> res;
+
+    std::copy(vtxlist.begin(), vtxlist.end(), back_inserter(res));    
+
+    // add all direct liberties
+    for (int i = 0; i < vtxlist.size(); i++) {
+        for (int k = 0; k < 4; k++) {
+            int ai = m_dirs[k] + vtxlist[i];
+            if (m_square[ai] == EMPTY) {
+                res.push_back(ai);
+            }
+        }
+    }
+
+    // now uniq the list
+    std::sort(res.begin(), res.end());    
+    res.erase(std::unique(res.begin(), res.end()), res.end());    
+
+    return res;
+}
+
+std::vector<int> FastBoard::get_nearby_enemies(std::vector<int> & vtxlist) {    
+    std::vector<int> strings;
+    std::vector<int> res;
+
+    if (vtxlist.empty()) return strings;
+
+    int color = m_square[vtxlist[0]];
+
+    for (int i = 0; i < vtxlist.size(); i++) {
+        assert(m_square[vtxlist[i]] == color);
+        for (int k = 0; k < 8; k++) {
+            int ai = get_extra_dir(k) + vtxlist[i];
+            if (m_square[ai] == !color) {
+                if (m_libs[m_parent[ai]] <= 3)  {
+                    strings.push_back(m_parent[ai]);
+                }
+            }
+        }
+    }
+
+    // uniq the list of string ids
+    std::sort(strings.begin(), strings.end());    
+    strings.erase(std::unique(strings.begin(), strings.end()), strings.end());    
+
+    // now add full strings
+    for (int i = 0; i < strings.size(); i++) {
+        std::vector<int> stones = get_string_stones(strings[i]);
+        std::copy(stones.begin(), stones.end(), back_inserter(res));
+    }
+
+    return res;
 }

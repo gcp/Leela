@@ -276,6 +276,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             float ravevalue = ravewinrate + patternbonus;                
             
             float beta = std::max(0.0f, 1.0f - logf(1.0f + child->get_visits()) / 12.0f);                         
+            //float beta = 100.0f / (100.0f + child->get_visits());
                
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             

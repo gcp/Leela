@@ -34,25 +34,42 @@ void PNNode::evaluate(FastState * ks, int groupcolor, int groupid) {
         m_dn = 0;
         return;
     }
+    
+    // excessive liberties
+    /*if (ks->board.count_rliberties(groupid) >= 8) {
+        m_pn = 0;
+        m_dn = INF;
+        return;
+    }*/
 
     bool alive = ks->board.is_alive(groupid);
 
-    // group alive
+    // group alive by 2 eyes
     if (alive) {
+        //ks->display_state();
+        m_pn = 0;
+        m_dn = INF;
+        return;
+    }
+    
+    // group alive by passout
+    if (ks->get_passes() >= 2) {
         m_pn = 0;
         m_dn = INF;
         return;
     }
 
-    //m_pn = 1;
-    //m_dn = ks->board.count_rliberties(groupid);
-    m_pn = std::max(1, 7 - ks->board.count_rliberties(groupid));
-    m_dn = std::max(1, ks->board.count_rliberties(groupid)); 
+    // still fighting, set heuristics
+    m_pn = 1;
+    m_dn = 1;
+    //m_pn = std::max(1, 7 - ks->board.count_rliberties(groupid));
+    //m_dn = std::max(1, ks->board.count_rliberties(groupid)); 
 }
 
 void PNNode::set_proof_disproof(node_type_t type) {
     assert(m_evaluated);
-    if (m_expanded && m_children.size() > 0) {    
+    assert(m_children.size() > 0);
+    if (m_expanded) {    
         int proof;
         int disproof;
 
@@ -79,11 +96,7 @@ void PNNode::set_proof_disproof(node_type_t type) {
 
         m_pn = proof;
         m_dn = disproof;
-    } else if (m_expanded && m_children.size() == 0) {
-        // Pass pass situation is win for defender
-        m_pn = 0;
-        m_dn = INF;
-    }
+    } 
 }
 
 bool PNNode::solved() {
@@ -93,7 +106,7 @@ bool PNNode::solved() {
     return false;
 }
 
-PNNode * PNNode::select_critical(KoState * ks, node_type_t type) {
+PNNode * PNNode::select_critical(node_type_t type) {
     assert(m_children.size() > 0);
     int i = 0;
     if (type == OR) {            
@@ -108,7 +121,7 @@ PNNode * PNNode::select_most_proving(KoState * ks, node_type_t type) {
     PNNode * res = this;
 
     if (m_expanded) {
-        PNNode * critical = select_critical(ks, type); 
+        PNNode * critical = select_critical(type); 
         ks->play_move(critical->m_move);
         res = critical->select_most_proving(ks, type == AND ? OR : AND);        
     }
@@ -116,31 +129,28 @@ PNNode * PNNode::select_most_proving(KoState * ks, node_type_t type) {
     return res;
 }
 
-void PNNode::develop_node(KoState * ks, int groupcolor, int groupid) {    
+void PNNode::develop_node(KoState * ks, std::vector<bool> & roi, int groupcolor, int groupid) {    
     std::vector<int> moves = ks->generate_moves(ks->get_to_move());
 
-    for (int i = 0; i < moves.size(); i++) {
+    for (int i = 0; i < moves.size(); i++) {       
         if (moves[i] != FastBoard::PASS) {
-            std::vector<int> nbrs = ks->board.get_neighbour_ids(moves[i]);
-            std::vector<int>::iterator it = std::find(nbrs.begin(), nbrs.end(), groupid);
+            //std::vector<int> nbrs = ks->board.get_neighbour_ids(moves[i]);
+            //std::vector<int>::iterator it = std::find(nbrs.begin(), nbrs.end(), groupid);
 
-            if (it != nbrs.end()) {
+            if (/*it != nbrs.end() ||*/ roi[moves[i]]) {
                 PNNode node(this, moves[i]);
                 m_children.push_back(node);        
-            } else if (ks->get_last_move() != FastBoard::PASS) {
-                int d = Attributes::move_distance(ks->board.get_xy(ks->get_last_move()),
-                                                  ks->board.get_xy(moves[i]));
-                if (d <= 3) {
-                    PNNode node(this, moves[i]);
-                    m_children.push_back(node);        
-                }
             }
         }        
     }
     
-    if (ks->get_last_move() != FastBoard::PASS) {
+    // allow pass if there are 2 or less good options (could be eye fills
+    // for the defender)
+    // if attacker has no good moves and there is already a pass, 
+    // set_proof_disproof knows that the group is alive
+    if (m_children.size() <= 2) {
         m_children.push_back(PNNode(this, FastBoard::PASS));    
-    }
+    }    
 
     //if (m_children.size() == 0) {
     //    ks->display_state();        
@@ -152,10 +162,20 @@ void PNNode::develop_node(KoState * ks, int groupcolor, int groupid) {
         if (m_children[i].m_move == FastBoard::PASS || !tmp.superko()) {
             m_children[i].evaluate(&tmp, groupcolor, groupid);     
         } else {
-            // superko is a loss for the killer
-            m_children[i].m_pn = 0;
-            m_children[i].m_dn = INF;
-            m_children[i].m_evaluated = true;
+            // neither player can win a ko fight            
+            if (tmp.get_to_move() == groupcolor) {
+                // illegal move was made by attacker
+                // group is safe
+                m_children[i].m_pn = 0;
+                m_children[i].m_dn = INF;
+                m_children[i].m_evaluated = true;
+            } else if (tmp.get_to_move() == !groupcolor) {
+                // illegal move made by defender
+                // group is dead
+                m_children[i].m_pn = INF;
+                m_children[i].m_dn = 0;
+                m_children[i].m_evaluated = true;
+            }            
         }
     } 
 

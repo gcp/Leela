@@ -378,13 +378,30 @@ int UCTSearch::think(int color, passflag_t passflag) {
     
     //XXX: testing
     //m_maxvisits = 10000;
-    //int max_iterations = 10000;    
+    int max_iterations = 10000;    
                  
     m_rootstate.start_clock(color);
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();  
-    Playout::mc_owner(m_rootstate, 64);    
+    float score = Playout::mc_owner(m_rootstate, 64);    
+    
+    /*float delta_komi = 0.0f;
+    if (score > 0.65f) {        
+        delta_komi = pow(10.0f, ((float)m_rootstate.board.get_empty() 
+                                  / ((float)(m_rootstate.board.get_boardsize()
+                                     *m_rootstate.board.get_boardsize()))
+                                   ) - 1.0f);
+        myprintf("Winning position adjustment: %f\n", delta_komi);
+    } else if (score < 0.40f) {
+        delta_komi = pow(10.0f, 2.0f * (((float)m_rootstate.board.get_empty() 
+                                       / (float)(m_rootstate.board.get_boardsize()
+                                        *m_rootstate.board.get_boardsize()
+                                        )) - 1.0f));
+        myprintf("Losing position adjustment: %f\n", delta_komi);
+    }*/
+    
+    //25 & 40
     
     //dump_order2();                  
         
@@ -394,8 +411,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_root.kill_superkos(m_rootstate);        
     
     m_run = true;            
-    //int cpus = SMP::get_num_cpus();        
-    int cpus = 2;
+    int cpus = SMP::get_num_cpus();        
+    //int cpus = 2;
     boost::thread_group tg;         
 #ifdef USE_SMP       
     for (int i = 1; i < cpus; i++) {         
@@ -429,9 +446,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
             }  
             keeprunning = (!m_hasrunflag || (*m_runflag));
         }   
-        //if (iterations++ > max_iterations) {
-        //    keeprunning = false;
-        //}     
+        if (iterations++ > max_iterations) {
+            keeprunning = false;
+        }     
     } while(keeprunning);
     
     // stop the search
@@ -471,8 +488,8 @@ void UCTSearch::ponder() {
     Playout::mc_owner(m_rootstate, 64);             
          
     m_run = true;
-    //int cpus = SMP::get_num_cpus();       
-    int cpus = 2;       
+    int cpus = SMP::get_num_cpus();       
+    //int cpus = 2;       
     boost::thread_group tg;        
 #ifdef USE_SMP        
     for (int i = 1; i < cpus; i++) {         

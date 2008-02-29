@@ -16,8 +16,8 @@ public:
     void set_proof_disproof(node_type_t type);
     bool solved();
     PNNode * select_most_proving(KoState * ks, node_type_t type);
-    PNNode * select_critical(KoState * ks, node_type_t type);
-    void develop_node(KoState * ks, int rootcolor, int groupid);
+    PNNode * select_critical(node_type_t type);
+    void develop_node(KoState * ks, std::vector<bool> & roi, int rootcolor, int groupid);
     void update_ancestors(node_type_t type);
 
     int get_proof() const;

@@ -23,9 +23,9 @@ private:
     KoState m_rootstate;
     KoState m_workstate;
     int m_group_to_check;
-    int m_group_color;
+    int m_group_color;        
 
-    std::auto_ptr<PNNode> m_root;
+    std::auto_ptr<PNNode> m_root;    
 };
 
 #endif

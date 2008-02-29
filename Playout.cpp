@@ -127,9 +127,11 @@ void Playout::do_playout_benchmark(GameState& game) {
     myprintf("Avg Len: %5.2f Score: %f\n", len/(float)AUTOGAMES, score/AUTOGAMES);
 }
 
-void Playout::mc_owner(FastState & state, int iterations) {                
+float Playout::mc_owner(FastState & state, int iterations) {                
     const int boardsize = state.board.get_boardsize();    
-    const int playoutlen = (boardsize * boardsize) * 2;                 
+    const int playoutlen = (boardsize * boardsize) * 2;      
+    
+    int bwins = 0;           
     
     for (int i = 0; i < iterations; i++) {
         FastState tmp = state;
@@ -137,5 +139,15 @@ void Playout::mc_owner(FastState & state, int iterations) {
         Playout p;
         
         p.run(tmp, false);                
+        
+        bwins += p.get_score() > 0.0f ? 1 : 0;
     }                
+    
+    float score = bwins / (float)iterations;
+    
+    if (state.get_to_move() != FastBoard::BLACK) {
+        score = 1.0f - score;
+    }
+    
+    return score;
 }
