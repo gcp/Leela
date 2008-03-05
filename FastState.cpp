@@ -135,12 +135,11 @@ int FastState::play_random_move(int color) {
             // remove ko captures     
             m_work.erase(std::remove(m_work.begin(), m_work.end(), komove), m_work.end());                                           
         }        
-    }        
-                
-    if (!m_work.empty()) {                                             
-        // remove multiple moves            
-        m_moves.clear();
+    }   
         
+    m_moves.clear();     
+                
+    if (!m_work.empty()) {                                                             
         Matcher * matcher = Matcher::get_Matcher();        
         
         int cumul = 0;                
@@ -176,9 +175,8 @@ int FastState::play_random_move(int color) {
     Matcher * matcher = Matcher::get_Matcher();    
     MCOwnerTable * mctab = MCOwnerTable::get_MCO();      
     
-    int loops = 4;
-    int bestvtx = FastBoard::PASS;
-    int bestscore = -1;
+    int loops = 4;    
+    int cumul = 0;
     
     do {
         int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
@@ -205,20 +203,26 @@ int FastState::play_random_move(int color) {
                 }       
             }                 
         }                                             
-                                                    
-        if (score > bestscore) {
-            if (board.self_atari(color, vtx)) {
-                score = score / 40;               
-            }                       
+                                                            
+        if (board.self_atari(color, vtx)) {
+            score = score / 40;               
+        }                       
         
-            if (score > bestscore) {                
-                bestscore = score;
-                bestvtx = vtx;
-            }
-        }
+        cumul += score + 1;
+        m_moves.push_back(std::make_pair(vtx, cumul));              
+        
     } while (--loops > 0);
     
-    return play_move_fast(bestvtx);      
+    int index = Random::get_Rng()->randint(cumul);
+
+    for (int i = 0; i < m_moves.size(); i++) {
+        int point = m_moves[i].second;
+        if (index < point) {
+            return play_move_fast(m_moves[i].first);                    
+        }
+    }  
+    
+    return play_move_fast(FastBoard::PASS);      
 }
 
 float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {       

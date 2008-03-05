@@ -129,15 +129,36 @@ PNNode * PNNode::select_most_proving(KoState * ks, node_type_t type) {
     return res;
 }
 
-void PNNode::develop_node(KoState * ks, std::vector<bool> & roi, int groupcolor, int groupid) {    
+void PNNode::develop_node(KoState * ks, int groupcolor, int groupid) {    
+    // complete movegen
     std::vector<int> moves = ks->generate_moves(ks->get_to_move());
 
-    for (int i = 0; i < moves.size(); i++) {       
-        if (moves[i] != FastBoard::PASS) {
-            //std::vector<int> nbrs = ks->board.get_neighbour_ids(moves[i]);
-            //std::vector<int>::iterator it = std::find(nbrs.begin(), nbrs.end(), groupid);
+    // determine Region Of Interest
+    std::vector<bool> roi_map(ks->board.m_maxsq, false);
+    
+    std::vector<int> stones = ks->board.get_augmented_string(groupid);
+    std::vector<int> libs_1 = ks->board.dilate_liberties(stones);
+    std::vector<int> libs_2 = ks->board.dilate_liberties(libs_1);    
 
-            if (/*it != nbrs.end() ||*/ roi[moves[i]]) {
+    std::vector<int> attackers = ks->board.get_nearby_enemies(stones);
+    std::vector<int> defenders = ks->board.get_nearby_enemies(attackers);
+
+    std::vector<int> attack_libs = ks->board.dilate_liberties(attackers);
+    std::vector<int> defend_libs = ks->board.dilate_liberties(defenders);
+
+    std::vector<int> roi;
+    
+    std::copy(libs_2.begin(), libs_2.end(),           back_inserter(roi));
+    std::copy(attack_libs.begin(), attack_libs.end(), back_inserter(roi));
+    std::copy(defend_libs.begin(), defend_libs.end(), back_inserter(roi));    
+
+    for (int i = 0; i < roi.size(); i++) {        
+        roi_map[roi[i]] = true;
+    }
+
+    for (int i = 0; i < moves.size(); i++) {       
+        if (moves[i] != FastBoard::PASS) {            
+            if (roi_map[moves[i]]) {
                 PNNode node(this, moves[i]);
                 m_children.push_back(node);        
             }

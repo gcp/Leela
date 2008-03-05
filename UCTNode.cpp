@@ -21,9 +21,21 @@ using namespace Utils;
 UCTNode::UCTNode(int color, int vertex, float score) 
  : m_firstchild(NULL), m_move(vertex), m_score(score),
    m_blackwins(0.0f), m_visits(0), m_valid(true) {
-     
-    m_ravevisits = 50;  
-    m_ravestmwins = 25.0f;   
+    
+    m_ravevisits = 20;  
+    m_ravestmwins = 10.0f;   
+    //m_ravestmwins = 25.0f + (score/100.0f);
+    /*if (score > 50.0f) {
+        m_ravevisits =  25.0f;
+        m_ravestmwins = 25.0f;
+    } else {
+        m_ravevisits  = 25.0f;
+        m_ravestmwins = 12.5f;
+    }*/
+    //m_ravevisits = 1;  
+    //m_ravestmwins = 1.0f + (score / 100.0f);
+    //m_ravevisits = 20;  
+    //m_ravestmwins = 15.0f * tanhf(score);  20 for pr20
 }
 
 UCTNode::~UCTNode() {    
@@ -249,7 +261,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
     }
     while (child != NULL && childcount < childbound) {
         float value;
-        float uctvalue;                        
+        float uctvalue;                                                             
         float patternbonus;        
         float ravevisits;     
 
@@ -260,30 +272,26 @@ UCTNode* UCTNode::uct_select_child(int color) {
                 float childrate = logparent / child->get_visits();                                                                                                        
                 float uct = 0.15f * sqrtf(childrate);
                 
-                uctvalue = winrate + uct;
-                
-                patternbonus = (child->get_score() * 0.01f) / child->get_visits();                                
+                uctvalue = winrate + uct;                
+                patternbonus = (child->get_score() * 0.05f) / child->get_visits();                                
             } else {
-                uctvalue = 1.1f;                
-                
-                patternbonus = (child->get_score() * 0.01f);
+                uctvalue = 1.1f;                                                                                
+                patternbonus = (child->get_score() * 0.05f);
             }                                                    
             
-            // RAVE part                        
-            float ravewinrate = child->get_raverate();                        
+            // RAVE part                                                                                
+            float ravewinrate = child->get_raverate();                                    
             ravevisits = child->get_ravevisits();
             
             float ravevalue = ravewinrate + patternbonus;                
-            
             float beta = std::max(0.0f, 1.0f - logf(1.0f + child->get_visits()) / 12.0f);                         
-            //float beta = 100.0f / (100.0f + child->get_visits());
                
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             
             assert(value > -1000.0f);
         } else {
             /// XXX: can't happen due to priors
-            assert(FALSE);
+            assert(FALSE);                        
             patternbonus = (child->get_score() * 0.01f);            
             value = 1.1f + patternbonus;  
         }                

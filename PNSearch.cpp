@@ -61,35 +61,7 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
 
     m_group_to_check = groupid;
     m_group_color = m_rootstate.board.get_square(groupid);            
-    int rootcolor = m_rootstate.get_to_move();  
-
-    // determine Region Of Interest
-    std::vector<bool> roi_map(m_rootstate.board.m_maxsq, false);
-    
-    std::vector<int> stones = m_rootstate.board.get_augmented_string(groupid);
-    std::vector<int> libs_1 = m_rootstate.board.dilate_liberties(stones);
-    std::vector<int> libs_2 = m_rootstate.board.dilate_liberties(libs_1);    
-
-    std::vector<int> attackers = m_rootstate.board.get_nearby_enemies(stones);
-    std::vector<int> defenders = m_rootstate.board.get_nearby_enemies(attackers);
-
-    std::vector<int> attack_libs = m_rootstate.board.dilate_liberties(attackers);
-    std::vector<int> defend_libs = m_rootstate.board.dilate_liberties(defenders);
-
-    std::vector<int> roi;
-    
-    std::copy(libs_2.begin(), libs_2.end(),           back_inserter(roi));
-    std::copy(attack_libs.begin(), attack_libs.end(), back_inserter(roi));
-    std::copy(defend_libs.begin(), defend_libs.end(), back_inserter(roi));
-
-    std::sort(roi.begin(), roi.end());    
-    roi.erase(std::unique(roi.begin(), roi.end()), roi.end());    
-
-    myprintf("ROI size: %d\n", roi.size());
-
-    for (int i = 0; i < roi.size(); i++) {        
-        roi_map[roi[i]] = true;
-    }
+    int rootcolor = m_rootstate.get_to_move();    
     
     // start Proof number search
     m_root->evaluate(&m_rootstate, m_group_color, m_group_to_check);    
@@ -100,7 +72,7 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
         PNNode * most_proving = m_root->select_most_proving(&m_workstate,
                                                              m_workstate.get_to_move() == m_group_color ? 
                                                              PNNode::OR : PNNode::AND);        
-        most_proving->develop_node(&m_workstate, roi_map, m_group_color, m_group_to_check);        
+        most_proving->develop_node(&m_workstate, m_group_color, m_group_to_check);        
         most_proving->update_ancestors(m_workstate.get_to_move() == m_group_color  ? 
                                        PNNode::OR : PNNode::AND);               
         if ((iters & 1023) == 0) {

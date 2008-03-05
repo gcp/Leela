@@ -42,18 +42,16 @@ void FastAttributes::get_from_move(FastState * state,
         prevdist = 100;
     }
     
-    m_present[bitpos++] = (prevdist <=  3);        
+    m_present[bitpos++] = (prevdist <=  2);
+    m_present[bitpos++] = (prevdist ==  3);        
           
     // atari-escape (saving-size) adding liberties (only count pseudos)
-    // adding 1 is self-atari so doesn't count    
-   /* int ae;
+    // adding 1 is self-atari so doesn't count        
     int ss;
     if (vtx != FastBoard::PASS) {
-        ss = state->board.saving_size(tomove, vtx);
-        ae = state->board.count_liberties(vtx);
+        ss = state->board.saving_size(tomove, vtx);   
     } else {
-        ss = -1;
-        ae = -1;
+        ss = -1;        
     }            
     m_present[bitpos++] = (ss > 0);    
         
@@ -63,7 +61,7 @@ void FastAttributes::get_from_move(FastState * state,
     } else {
         cs = -1;
     }    
-    m_present[bitpos++] = (cs > 0);*/
+    m_present[bitpos++] = (cs > 0);
     
     // sa
     bool sa;
@@ -81,16 +79,10 @@ void FastAttributes::get_from_move(FastState * state,
     } else {
         mcown = -1.0f;
     }
-    m_present[bitpos++] = (mcown >= -0.01f && mcown <  0.10);
-    m_present[bitpos++] = (mcown >=  0.10f && mcown <  0.20);
-    m_present[bitpos++] = (mcown >=  0.20f && mcown <  0.30);
-    m_present[bitpos++] = (mcown >=  0.30f && mcown <  0.40);
-    m_present[bitpos++] = (mcown >=  0.40f && mcown <  0.50);
-    m_present[bitpos++] = (mcown >=  0.50f && mcown <  0.60);
-    m_present[bitpos++] = (mcown >=  0.60f && mcown <  0.70);
-    m_present[bitpos++] = (mcown >=  0.70f && mcown <  0.80);
-    m_present[bitpos++] = (mcown >=  0.80f && mcown <  0.90);
-    m_present[bitpos++] = (mcown >=  0.90f && mcown <  1.01);       
+    m_present[bitpos++] = (mcown >= -0.01f && mcown <  0.10f);
+    m_present[bitpos++] = (mcown >=  0.10f && mcown <  0.20f);    
+    m_present[bitpos++] = (mcown >=  0.40f && mcown <  0.70f);
+    m_present[bitpos++] = (mcown >=  0.90f && mcown <  1.01f);       
     
      // generalized atari
     int at;
@@ -100,7 +92,7 @@ void FastAttributes::get_from_move(FastState * state,
         at = -1;
     }                    
 
-    m_present[bitpos++] = (at == 2);                           // atari
+    m_present[bitpos++] = (at == 2);                           // atari giving
     
     // shape  (border check)            
     int pat;
