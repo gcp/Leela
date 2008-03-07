@@ -1,3 +1,6 @@
+#ifndef PNNODE_H_INCLUDED
+#define PNNODE_H_INCLUDED
+
 #include "config.h"
 
 #include <vector>
@@ -12,12 +15,12 @@ public:
 
     PNNode();
     PNNode(PNNode * m_parent, int move);    
-    void evaluate(FastState * ks, int rootcolor, int groupid);
+    void evaluate(KoState * ks, int rootcolor, int groupid, int maxnodes = 0);
     void set_proof_disproof(node_type_t type);
     bool solved();
     PNNode * select_most_proving(KoState * ks, node_type_t type);
     PNNode * select_critical(node_type_t type);
-    void develop_node(KoState * ks, int rootcolor, int groupid);
+    void develop_node(KoState * ks, int rootcolor, int groupid, int maxnodes = 0);
     void update_ancestors(node_type_t type);
 
     int get_proof() const;
@@ -37,3 +40,5 @@ private:
     PNNode * m_parent;    
     std::vector<PNNode> m_children;
 };
+
+#endif

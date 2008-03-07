@@ -15,7 +15,8 @@ class PNSearch {
 public:
     PNSearch(KoState & ks);
     void classify_groups();
-    status_t check_group(int groupid);      
+    status_t check_group(int groupid);
+    std::pair<int,int> do_search(int groupid, int maxnodes);
 
 private:
     std::string get_pv(KoState * state, PNNode * node);

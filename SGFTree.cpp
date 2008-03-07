@@ -150,7 +150,7 @@ void SGFTree::populate_states(void) {
     for (it = abrange.first; it != abrange.second; ++it) {
         std::string move = it->second;      
         int vtx = string_to_vertex(move);
-        m_state.play_move(FastBoard::BLACK, vtx);                
+        apply_move(FastBoard::BLACK, vtx);                
     }            
     
     std::pair<PropertyMap::iterator, 
@@ -158,7 +158,7 @@ void SGFTree::populate_states(void) {
     for (it = awrange.first; it != awrange.second; ++it) {
         std::string move = it->second;      
         int vtx = string_to_vertex(move);
-        m_state.play_move(FastBoard::WHITE, vtx);                
+        apply_move(FastBoard::WHITE, vtx);                
     }                 
     
     it = m_properties.find("PL");
@@ -193,8 +193,18 @@ void SGFTree::set_state(KoState & state) {
     m_state = state;
 }
 
-void SGFTree::apply_move(int move) {    
-    m_state.play_move(move);    
+
+void SGFTree::apply_move(int color, int move) {      
+    if (m_state.board.get_square(move) != FastBoard::EMPTY 
+        && move != FastBoard::PASS) {
+            throw new std::exception("Illegal move");
+    }
+    m_state.play_move(color, move);    
+}
+
+void SGFTree::apply_move(int move) {  
+    int color = m_state.get_to_move();
+    apply_move(color, move);    
 }
 
 void SGFTree::add_property(std::string property, std::string value) {

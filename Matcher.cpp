@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <map>
+#include <math.h>
 
 #include "Matcher.h"
 #include "FastBoard.h"
@@ -92,7 +93,7 @@ Matcher::Matcher() {
         patmap::iterator it = patweights.find(reducpat1);
         
         if (it != patweights.end()) {
-            float weight = it->second * (Matcher::PROXFACTOR * Matcher::UNITY);
+            float weight = it->second * (Matcher::PROXFACTOR * Matcher::UNITY);            
             m_patterns[FastBoard::BLACK][i] = clip((int)(weight + 0.5f));
         } else {
             m_patterns[FastBoard::BLACK][i] = clip(Matcher::UNITY * Matcher::PROXFACTOR);
@@ -101,7 +102,7 @@ Matcher::Matcher() {
         it = patweights.find(reducpat2);
         
         if (it != patweights.end()) {
-            float weight = it->second * (Matcher::PROXFACTOR * Matcher::UNITY);
+            float weight = it->second * (Matcher::PROXFACTOR * Matcher::UNITY);            
             m_patterns[FastBoard::WHITE][i] = clip((int)(weight + 0.5f));
         } else {
             m_patterns[FastBoard::WHITE][i] = clip(Matcher::UNITY * Matcher::PROXFACTOR);

@@ -37,9 +37,13 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
     int gamecount = 0;
     int allcount = 0;
     
-    while (gamecount < gametotal) {        
+    while (gamecount < gametotal) {         
         std::auto_ptr<SGFTree> sgftree(new SGFTree);        
-        sgftree->load_from_file(filename, gamecount);                                    
+
+        try {
+            sgftree->load_from_file(filename, gamecount);                                    
+        } catch (...) {
+        };
         
         int movecount = sgftree->count_mainline_moves();                                
         
@@ -70,7 +74,9 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 
                 std::vector<int> territory = state->board.influence();
                 std::vector<int> moyo = state->board.moyo();
-                
+                //std::vector<int> territory;
+                //std::vector<int> moyo;
+
                 // sitting at a state, with the move actually played in move
                 // gather feature sets of all moves
                 std::vector<int> moves = state->generate_moves(tomove);            
@@ -117,6 +123,8 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             
             std::vector<int> territory = state->board.influence();
             std::vector<int> moyo = state->board.moyo();
+            //std::vector<int> territory;
+            //std::vector<int> moyo;
             
             std::vector<int> moves = state->generate_moves(tomove);            
 

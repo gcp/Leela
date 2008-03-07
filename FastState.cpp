@@ -149,11 +149,23 @@ int FastState::play_random_move(int color) {
             
             int pattern = board.get_pattern_fast_augment(sq);
             int score = matcher->matches(color, pattern);
-                        
+            
+            int am = board.minimum_elib_count(!color, sq);
             int at = board.minimum_elib_count(color, sq);
-            if (at == 2) {
-                score = (score * 192) / 128;
+            
+            // my liberties
+            // capture escape
+            if (am == 1) {
+                score = (score * 608) / 128;                
             }
+            
+            // enemy liberties
+            // capture, atari
+            if (at == 1) {
+                score = (score * 445) / 128;
+            } else if (at == 2) {
+                score = (score * 205) / 128;                
+            }            
         
             if (score >= Matcher::THRESHOLD) {
                 cumul += score;
@@ -202,10 +214,10 @@ int FastState::play_random_move(int color) {
                     score = (score * 64) / 128;
                 }       
             }                 
-        }                                             
-                                                            
-        if (board.self_atari(color, vtx)) {
-            score = score / 40;               
+        }       
+                            
+        if (board.self_atari(color, vtx)) {            
+            score = score / 24;               
         }                       
         
         cumul += score + 1;

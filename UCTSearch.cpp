@@ -378,7 +378,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     
     //XXX: testing
     //m_maxvisits = 10000;
-    int max_iterations = 10000;    
+    int max_iterations = 5000;    
                  
     m_rootstate.start_clock(color);
 

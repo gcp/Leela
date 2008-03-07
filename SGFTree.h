@@ -31,6 +31,7 @@ public:
 
 private:     
     void populate_states(void);    
+    void apply_move(int color, int move);
     void apply_move(int move);
     void set_state(KoState & state); 
     int string_to_vertex(std::string move);
