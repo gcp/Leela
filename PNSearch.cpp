@@ -91,7 +91,7 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
     m_root->evaluate(&m_rootstate, m_group_color, m_group_to_check);    
 
     int iters = 0;
-    while(!m_root->solved() && ++iters < 500000) {
+    while(!m_root->solved() && ++iters < 100000) {
         m_workstate = m_rootstate;
         PNNode * most_proving = m_root->select_most_proving(&m_workstate,
                                                              m_workstate.get_to_move() == m_group_color ? 
@@ -99,13 +99,11 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
         most_proving->develop_node(&m_workstate, m_group_color, groupid, iters);        
         most_proving->update_ancestors(m_workstate.get_to_move() == m_group_color  ? 
                                        PNNode::OR : PNNode::AND);               
-        //if ((iters & 1023) == 0) {
-        {
+        if ((iters & 1023) == 0) {        
             m_workstate = m_rootstate;
             std::string pv = get_pv(&m_workstate, &(*m_root));
             myprintf("P: %d D: %d Iter: %d PV: %s\n", m_root->get_proof(), m_root->get_disproof(), iters, pv.c_str());
-        }
-        //}
+        }        
     }
 
     m_workstate = m_rootstate;

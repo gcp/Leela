@@ -61,15 +61,15 @@ void PNNode::evaluate(KoState * ks, int groupcolor, int groupid, int maxnodes) {
     }
 
     // still fighting, set heuristics
-    if (maxnodes) {
+    /*if (maxnodes) {
         PNSearch search(*ks);
         std::pair<int,int> res = search.do_search(groupid, maxnodes);
         m_pn = res.first;
         m_dn = res.second;
-    } else {
+    } else {*/
         m_pn = 1;
         m_dn = 1;
-    }
+    //}
 
     //m_pn = std::max(1, 7 - ks->board.count_rliberties(groupid));
     //m_dn = std::max(1, ks->board.count_rliberties(groupid)); 
