@@ -139,7 +139,7 @@ void Genetic::genetic_tune() {
     myprintf("Getting pool errors...\n");
 
     for (int i = 0; i < pool.size(); i++) {
-        Matcher * matcher = new Matcher(pool[i]);
+        Matcher * matcher = new Matcher;//(pool[i]);
         Matcher::set_Matcher(matcher);                                        
         
         poolmse[i] = run_testsets();
@@ -195,7 +195,7 @@ void Genetic::genetic_tune() {
             }       
             
             // evaluate child
-            Matcher * matcher = new Matcher(newrank);
+            Matcher * matcher = new Matcher;//(newrank);
             Matcher::set_Matcher(matcher);                             
         
             float err = run_testsets();                                                                                       

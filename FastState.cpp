@@ -160,7 +160,7 @@ int FastState::play_random_move(int color) {
             if (sq == komove) continue;
             
             int pattern = board.get_pattern_fast_augment(sq);
-            int score = matcher->matches(color, pattern);
+            float score = matcher->matches(color, pattern);
             
             int am = board.minimum_elib_count(!color, sq);
             int at = board.minimum_elib_count(color, sq);
@@ -168,19 +168,27 @@ int FastState::play_random_move(int color) {
             // my liberties
             // capture escape
             if (am == 1) {
-                score = (score * 608) / 128;                
+                score *= 4.75f;
             }
             
             // enemy liberties
             // capture, atari
             if (at == 1) {
-                score = (score * 445) / 128;
+                score *= 3.48f;
             } else if (at == 2) {
-                score = (score * 205) / 128;                
-            }            
+                score *= 1.60f;
+            }                                               
+            
+            int dist = Attributes::move_distance(board.get_xy(lastmove), board.get_xy(sq));     
+            if (dist <= 3) {
+                score *= 40.0f;
+            } else {
+                score *= 40.0f;
+            }
         
-            if (score >= Matcher::THRESHOLD) {
-                cumul += score;
+            if (score >= 1.0f) {
+                int iscore = (int)(score * 10.0f);
+                cumul += iscore;
                 scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }
         }
@@ -211,28 +219,29 @@ int FastState::play_random_move(int color) {
         }
         
         int pattern = board.get_pattern_fast_augment(vtx);
-        int score = matcher->matches(color, pattern);         
+        float score = matcher->matches(color, pattern);         
                 
         if (mctab->is_primed()) {
             float mcown = mctab->get_score(color, vtx);
             if (mcown > 0.40f && mcown < 0.70f) {
-                score = (score * 160) / 128;
+                score *= 1.25f;
             } else {
                 if (mcown < 0.10f) {
-                    score = (score * 19) / 128;
+                    score *= 0.148f;
                 } else if (mcown < 0.20f) {
-                    score = (score * 72) / 128;
+                    score *= 0.563f;
                 } else if (mcown > 0.90f) {
-                    score = (score * 64) / 128;
+                    score *= 0.5f;
                 }       
             }                 
         }       
                             
         if (board.self_atari(color, vtx)) {            
-            score = score / 24;               
+            score *= 0.042f;
         }                       
         
-        cumul += score + 1;
+        int iscore = (int)(score * 10.0f);
+        cumul += iscore + 1;
         scoredmoves[scoredcnt++] = std::make_pair(vtx, cumul);              
         
     } while (--loops > 0);        
