@@ -41,6 +41,7 @@ public:
     int get_movenum();
     int get_last_move();  
     int get_prevlast_move();      
+	int get_komove();
     void display_state();    
     std::string move_to_text(int move);
 
@@ -55,10 +56,8 @@ public:
     int onebutlastmove;     
     
 protected:
-    std::vector<int> m_work;   // working area for move generation
-    
-    typedef std::pair<int, int> movescore;
-    std::vector<movescore> m_moves;
+	FastBoard::movelist_t moves;
+	FastBoard::scoredlist_t scoredmoves;
 
     int walk_empty_list(int color, int vidx, bool allow_sa = false);
     bool try_move(int color, int vertex, bool allow_sa = false);

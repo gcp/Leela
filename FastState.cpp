@@ -14,6 +14,9 @@
 
 using namespace Utils;
 
+//FastBoard::movelist_t FastState::moves;
+//FastBoard::scoredlist_t FastState::scoredmoves;  
+
 void FastState::init_game(int size, float komi) {
     
     board.reset_board(size);
@@ -123,29 +126,38 @@ int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
 }
 
 int FastState::play_random_move(int color) {                            
-    board.m_tomove = color;        
-   
-    m_work.clear();    
+    board.m_tomove = color;
+
+    int movecnt = 0;       
+    int newcnt = 0;
     
     if (lastmove > 0 && lastmove < board.m_maxsq) {
         if (board.get_square(lastmove) == !color) {            
-            board.add_global_captures(color, m_work);                        
-            board.save_critical_neighbours(color, lastmove, m_work);            
-            board.add_pattern_moves(color, lastmove, m_work);                        
-            // remove ko captures     
-            m_work.erase(std::remove(m_work.begin(), m_work.end(), komove), m_work.end());                                           
+            board.add_global_captures(color, moves, movecnt);                        
+            board.save_critical_neighbours(color, lastmove, moves, movecnt);            
+            board.add_pattern_moves(color, lastmove, moves, movecnt);                        
+            // remove ko captures                 
+            newcnt = movecnt;
+            for (int i = 0; i < movecnt; i++) {
+                if (moves[i] == komove) {
+                    newcnt--;
+                }
+            }
         }        
     }   
-        
-    m_moves.clear();     
+         
+    int scoredcnt = 0;
                 
-    if (!m_work.empty()) {                                                             
-        Matcher * matcher = Matcher::get_Matcher();        
-        
+    if (newcnt > 0) {                                                             
+        Matcher * matcher = Matcher::get_Matcher();                        
+
         int cumul = 0;                
         
-        for (int i = 0; i < m_work.size(); i++) {
-            int sq = m_work[i];
+        for (int i = 0; i < movecnt; i++) {
+            int sq = moves[i];
+
+            // skip ko
+            if (sq == komove) continue;
             
             int pattern = board.get_pattern_fast_augment(sq);
             int score = matcher->matches(color, pattern);
@@ -169,16 +181,16 @@ int FastState::play_random_move(int color) {
         
             if (score >= Matcher::THRESHOLD) {
                 cumul += score;
-                m_moves.push_back(std::make_pair(sq, cumul));                                      
+                scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }
         }
                    
         int index = Random::get_Rng()->randint(cumul);
 
-        for (int i = 0; i < m_moves.size(); i++) {
-            int point = m_moves[i].second;
+        for (int i = 0; i < scoredcnt; i++) {
+            int point = scoredmoves[i].second;
             if (index < point) {
-                return play_move_fast(m_moves[i].first);                    
+                return play_move_fast(scoredmoves[i].first);                    
             }
         }                                
     } 
@@ -221,16 +233,16 @@ int FastState::play_random_move(int color) {
         }                       
         
         cumul += score + 1;
-        m_moves.push_back(std::make_pair(vtx, cumul));              
+        scoredmoves[scoredcnt++] = std::make_pair(vtx, cumul);              
         
-    } while (--loops > 0);
-    
+    } while (--loops > 0);        
+
     int index = Random::get_Rng()->randint(cumul);
 
-    for (int i = 0; i < m_moves.size(); i++) {
-        int point = m_moves[i].second;
+    for (int i = 0; i < scoredcnt; i++) {
+        int point = scoredmoves[i].second;
         if (index < point) {
-            return play_move_fast(m_moves[i].first);                    
+            return play_move_fast(scoredmoves[i].first);                    
         }
     }  
     
@@ -473,4 +485,8 @@ void FastState::set_handicap(int hcap) {
       
 int FastState::get_handicap() {
     return m_handicap;
+}
+
+int FastState::get_komove() {
+	return komove;
 }

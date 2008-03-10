@@ -47,9 +47,16 @@ public:
     /*
         possible contents of a square
     */        
-    typedef enum { 
+    enum square_t : unsigned char { 
         BLACK = 0, WHITE = 1, EMPTY = 2, INVAL = 3
-    } square_t;                                                          
+    };
+
+    /*
+        move generation types
+    */
+    typedef std::tr1::array<int, 24> movelist_t;
+    typedef std::pair<int, int> movescore_t;
+    typedef std::tr1::array<movescore_t, 24> scoredlist_t;
     
     int get_boardsize(void);
     square_t get_square(int x, int y);
@@ -63,9 +70,9 @@ public:
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
     int update_board_fast(const int color, const int i);            
-    void save_critical_neighbours(int color, int vertex, std::vector<int> & work);
-    void add_pattern_moves(int color, int vertex, std::vector<int> & work);    
-    void add_global_captures(int color, std::vector<int> & work);         
+    void save_critical_neighbours(int color, int vertex, movelist_t & moves, int & movecnt);
+    void add_pattern_moves(int color, int vertex, movelist_t & moves, int & movecnt);    
+    void add_global_captures(int color, movelist_t & moves, int & movecnt);         
     bool match_pattern(int color, int vertex);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
@@ -128,9 +135,9 @@ public:
     static bool starpoint(int size, int point);
     static bool starpoint(int size, int x, int y);                           
             
-    std::tr1::array<int, MAXSQ> m_empty;       /* empty squares */
-    std::tr1::array<int, MAXSQ> m_empty_idx;   /* indexes of square */
-    int m_empty_cnt;                           /* count of empties */
+    std::tr1::array<unsigned short, MAXSQ> m_empty;       /* empty squares */
+    std::tr1::array<unsigned short, MAXSQ> m_empty_idx;   /* indexes of square */
+    int m_empty_cnt;                                      /* count of empties */
      
     int m_tomove;       
     int m_maxsq;       
@@ -142,18 +149,18 @@ protected:
     static const std::tr1::array<int,      2> s_eyemask; 
     static const std::tr1::array<square_t, 4> s_cinvert; /* color inversion */
     
-    std::tr1::array<square_t, MAXSQ> m_square;      /* board contents */            
-    std::tr1::array<int, MAXSQ+1>    m_next;        /* next stone in string */ 
-    std::tr1::array<int, MAXSQ+1>    m_parent;      /* parent node of string */            
-    std::tr1::array<int, MAXSQ+1>    m_libs;        /* liberties per string parent */        
-    std::tr1::array<int, MAXSQ+1>    m_stones;      /* stones per string parent */        
-    std::tr1::array<int, MAXSQ>      m_neighbours;  /* counts of neighboring stones */       
+    std::tr1::array<square_t,  MAXSQ>           m_square;      /* board contents */            
+    std::tr1::array<unsigned short, MAXSQ+1>    m_next;        /* next stone in string */ 
+    std::tr1::array<unsigned short, MAXSQ+1>    m_parent;      /* parent node of string */            
+    std::tr1::array<unsigned short, MAXSQ+1>    m_libs;        /* liberties per string parent */        
+    std::tr1::array<unsigned short, MAXSQ+1>    m_stones;      /* stones per string parent */        
+    std::tr1::array<unsigned short, MAXSQ>      m_neighbours;  /* counts of neighboring stones */       
     std::tr1::array<int, 4>          m_dirs;        /* movement directions 4 way */
     std::tr1::array<int, 4>          m_alterdirs;   /* to change movement direction */
     std::tr1::array<int, 8>          m_extradirs;   /* movement directions 8 way */
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
     std::tr1::array<int, 2>          m_totalstones; /* stones per color */                 
-    std::queue<int>                  m_critical;    /* queue of critical points */    
+    std::vector<int>                 m_critical;    /* queue of critical points */    
 
     int m_boardsize;    
         
@@ -170,8 +177,8 @@ protected:
     template <int N> void add_string_liberties(int vertex, 
                                                std::tr1::array<int, N> & nbr_libs, 
                                                int & nbr_libs_cnt);
-    void kill_neighbours(int vertex, std::vector<int> & work);                                  
-    void try_capture(int color, int vertex, std::vector<int> & work);    
+    void kill_neighbours(int vertex, movelist_t & moves, int & movecnt);                                  
+    void try_capture(int color, int vertex, movelist_t & moves, int & movecnt);    
     FastBoard remove_dead();
 };
 

@@ -30,6 +30,8 @@ public:
     bool has_children() const;
 
 private:
+    static KoState m_work;
+
     int m_pn;
     int m_dn;
     int m_move;

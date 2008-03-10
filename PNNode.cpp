@@ -5,6 +5,8 @@
 #include "PNSearch.h"
 #include "FastBoard.h"
 
+KoState PNNode::m_work;
+
 PNNode::PNNode(PNNode * parent, int move) 
     : m_parent(parent), m_move(move) {
     m_pn = 1;
@@ -61,15 +63,15 @@ void PNNode::evaluate(KoState * ks, int groupcolor, int groupid, int maxnodes) {
     }
 
     // still fighting, set heuristics
-    /*if (maxnodes) {
+    if (maxnodes) {
         PNSearch search(*ks);
         std::pair<int,int> res = search.do_search(groupid, maxnodes);
         m_pn = res.first;
         m_dn = res.second;
-    } else {*/
+    } else {
         m_pn = 1;
         m_dn = 1;
-    //}
+    }
 
     //m_pn = std::max(1, 7 - ks->board.count_rliberties(groupid));
     //m_dn = std::max(1, ks->board.count_rliberties(groupid)); 
@@ -140,10 +142,7 @@ PNNode * PNNode::select_most_proving(KoState * ks, node_type_t type) {
 
 void PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnodes) {    
     assert(ks->board.get_square(groupid) < FastBoard::EMPTY);
-
-    // complete movegen
-    std::vector<int> moves = ks->generate_moves(ks->get_to_move());
-
+    
     // determine Region Of Interest        
     std::vector<int> stones = ks->board.get_augmented_string(groupid);
     std::vector<int> libs_1 = ks->board.dilate_liberties(stones);
@@ -163,17 +162,14 @@ void PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnode
     std::copy(defend_libs.begin(), defend_libs.end(), back_inserter(roi));  
     
     std::sort(roi.begin(), roi.end());    
-    roi.erase(std::unique(roi.begin(), roi.end()), roi.end()); 
-
-    std::sort(moves.begin(), moves.end());
-
-    std::set_intersection(roi.begin(), roi.end(), 
-                          moves.begin(), moves.end(), 
-                          back_inserter(roimoves));
+    roi.erase(std::unique(roi.begin(), roi.end()), roi.end());     
     
-    for (int i = 0; i < roimoves.size(); i++) {                                
-        PNNode node(this, roimoves[i]);
-        m_children.push_back(node);                
+    for (int i = 0; i < roi.size(); i++) {   
+	int vertex = roi[i];
+	if (ks->board.get_square(vertex) == FastBoard::EMPTY &&
+		!ks->board.is_suicide(vertex, ks->board.get_to_move())) {
+	    m_children.push_back(PNNode(this, vertex));
+	}
     }
     
     // allow pass if there are 2 or less good options (could be eye fills
@@ -183,25 +179,21 @@ void PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnode
     if (m_children.size() <= 2) {
         m_children.push_back(PNNode(this, FastBoard::PASS));    
     }    
-
-    //if (m_children.size() == 0) {
-    //    ks->display_state();        
-    //}
-        
+    
     for (int i = 0; i < m_children.size(); i++) {
-        KoState tmp = *ks;        
-        tmp.play_move(m_children[i].m_move);
-        if (m_children[i].m_move == FastBoard::PASS || !tmp.superko()) {
-            m_children[i].evaluate(&tmp, groupcolor, groupid, maxnodes);     
+        m_work = *ks;        
+        m_work.play_move(m_children[i].m_move);
+        if (m_children[i].m_move == FastBoard::PASS || !m_work.superko()) {
+            m_children[i].evaluate(&m_work, groupcolor, groupid, maxnodes);     
         } else {
             // neither player can win a ko fight            
-            if (tmp.get_to_move() == groupcolor) {
+            if (m_work.get_to_move() == groupcolor) {
                 // illegal move was made by attacker
                 // group is safe
                 m_children[i].m_pn = 0;
                 m_children[i].m_dn = INF;
                 m_children[i].m_evaluated = true;
-            } else if (tmp.get_to_move() == !groupcolor) {
+            } else if (m_work.get_to_move() == !groupcolor) {
                 // illegal move made by defender
                 // group is dead
                 m_children[i].m_pn = INF;

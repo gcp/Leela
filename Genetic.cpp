@@ -21,7 +21,7 @@ float Genetic::run_simulations(FastState & state, float res) {
     int wins = 0;
     int runs = 0;
     
-    for (int i = 0; i < 30; i++) {    
+    for (int i = 0; i < 100; i++) {    
         FastState tmp = state;
         int start_to_move = tmp.get_to_move();
         
