@@ -1,4 +1,5 @@
 #include <time.h>
+#include <limits.h>
 #include "config.h"
 
 #include "Random.h"
@@ -39,7 +40,7 @@ uint32 Random::random(void) {
     b  = (((s1 << 13) & mask) ^ s1) >> 19;
     s1 = (((s1 & 0xFFFFFFFEU) << 12) & mask) ^ b;
     b  = (((s2 << 2) & mask) ^ s2) >> 25;
-    s2 = (((s2 & 0xFFFFFFF8U) << 4) & mask) ^ b;
+    s2 = (((s2 & 0xFFFFFFF8U) <<  4) & mask) ^ b;
     b  = (((s3 << 3) & mask) ^ s3) >> 11;
     s3 = (((s3 & 0xFFFFFFF0U) << 17) & mask) ^ b;
     return (s1 ^ s2 ^ s3);        
@@ -58,3 +59,8 @@ void Random::seedrandom(uint32 s) {
     s2 |= 8;
     s3 |= 16;
 } 
+
+float Random::randflt(void) {
+    uint32 rnd = random();
+    return ((float)rnd)/((float)UINT_MAX);
+}

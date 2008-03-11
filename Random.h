@@ -16,6 +16,11 @@ public:
         random number from 0 to max
     */            
     uint32 randint(const uint16 max);
+
+    /*
+        random float from 0 to 1
+    */
+    float randflt(void);
     
     /*
         return the "global" RNG

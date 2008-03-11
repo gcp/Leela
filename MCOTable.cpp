@@ -48,5 +48,5 @@ void MCOwnerTable::clear() {
 }
 
 bool MCOwnerTable::is_primed() {
-    return (get_MCO()->m_mcsimuls >= 64);
+    return (get_MCO()->m_mcsimuls >= 32);
 }

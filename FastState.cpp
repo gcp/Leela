@@ -11,11 +11,9 @@
 #include "Matcher.h"
 #include "AttribScores.h"
 #include "MCOTable.h"
+#include "Genetic.h"
 
 using namespace Utils;
-
-//FastBoard::movelist_t FastState::moves;
-//FastBoard::scoredlist_t FastState::scoredmoves;  
 
 void FastState::init_game(int size, float komi) {
     
@@ -151,7 +149,7 @@ int FastState::play_random_move(int color) {
     if (newcnt > 0) {                                                             
         Matcher * matcher = Matcher::get_Matcher();                        
 
-        int cumul = 0;                
+        float cumul = 0.0f; 
         
         for (int i = 0; i < movecnt; i++) {
             int sq = moves[i];
@@ -168,35 +166,34 @@ int FastState::play_random_move(int color) {
             // my liberties
             // capture escape
             if (am == 1) {
-                score *= 4.75f;
+                score *= 4.75f * Genetic::g_par[0];
             }
             
             // enemy liberties
             // capture, atari
             if (at == 1) {
-                score *= 3.48f;
+                score *= 3.48f * Genetic::g_par[1];
             } else if (at == 2) {
-                score *= 1.60f;
+                score *= 1.60f * Genetic::g_par[2];
             }                                               
             
             int dist = Attributes::move_distance(board.get_xy(lastmove), board.get_xy(sq));     
             if (dist <= 3) {
-                score *= 40.0f;
+                score *= 40.0f * Genetic::g_par[3];
             } else {
-                score *= 40.0f;
+                score *= 40.0f * Genetic::g_par[4];
             }
         
-            if (score >= 1.0f) {
-                int iscore = (int)(score * 10.0f);
-                cumul += iscore;
+            if (score >= 1.0f * Genetic::g_par[5]) {                
+                cumul += score;
                 scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }
         }
-                   
-        int index = Random::get_Rng()->randint(cumul);
+
+        float index = Random::get_Rng()->randflt() * cumul;
 
         for (int i = 0; i < scoredcnt; i++) {
-            int point = scoredmoves[i].second;
+            float point = scoredmoves[i].second;
             if (index < point) {
                 return play_move_fast(scoredmoves[i].first);                    
             }
@@ -208,7 +205,7 @@ int FastState::play_random_move(int color) {
     MCOwnerTable * mctab = MCOwnerTable::get_MCO();      
     
     int loops = 4;    
-    int cumul = 0;
+    float cumul = 0.0f;
     
     do {
         int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
@@ -224,32 +221,31 @@ int FastState::play_random_move(int color) {
         if (mctab->is_primed()) {
             float mcown = mctab->get_score(color, vtx);
             if (mcown > 0.40f && mcown < 0.70f) {
-                score *= 1.25f;
+                score *= 1.25f * Genetic::g_par[6];
             } else {
                 if (mcown < 0.10f) {
-                    score *= 0.148f;
+                    score *= 0.148f * Genetic::g_par[7];
                 } else if (mcown < 0.20f) {
-                    score *= 0.563f;
+                    score *= 0.563f * Genetic::g_par[8];
                 } else if (mcown > 0.90f) {
-                    score *= 0.5f;
+                    score *= 0.5f * Genetic::g_par[9];
                 }       
             }                 
         }       
                             
         if (board.self_atari(color, vtx)) {            
-            score *= 0.042f;
+            score *= 0.042f * Genetic::g_par[10];
         }                       
-        
-        int iscore = (int)(score * 10.0f);
-        cumul += iscore + 1;
+                
+        cumul += score;
         scoredmoves[scoredcnt++] = std::make_pair(vtx, cumul);              
         
     } while (--loops > 0);        
 
-    int index = Random::get_Rng()->randint(cumul);
+    float index = Random::get_Rng()->randflt() * cumul;
 
     for (int i = 0; i < scoredcnt; i++) {
-        int point = scoredmoves[i].second;
+        float point = scoredmoves[i].second;
         if (index < point) {
             return play_move_fast(scoredmoves[i].first);                    
         }

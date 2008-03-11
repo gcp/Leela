@@ -56,8 +56,8 @@ public:
     int onebutlastmove;     
     
 protected:
-	FastBoard::movelist_t moves;
-	FastBoard::scoredlist_t scoredmoves;
+    FastBoard::movelist_t moves;
+    FastBoard::scoredlist_t scoredmoves;
 
     int walk_empty_list(int color, int vidx, bool allow_sa = false);
     bool try_move(int color, int vertex, bool allow_sa = false);
