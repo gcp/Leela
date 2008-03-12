@@ -2378,7 +2378,7 @@ std::vector<int> FastBoard::get_neighbour_ids(int vertex) {
 }
 
 // Not alive does not imply dead
-bool FastBoard::is_alive(int vertex) {     
+bool FastBoard::predict_is_alive(int move, int vertex) {     
     int par = m_parent[vertex];
     int color = m_square[vertex];
     int pos = par;
@@ -2549,4 +2549,19 @@ std::vector<int> FastBoard::get_nearby_enemies(std::vector<int> & vtxlist) {
     }
 
     return res;
+}
+
+bool FastBoard::predict_kill(int move, int groupid) {
+    if (m_libs[m_parent[groupid]] > 1) return false;
+
+    int color = m_square[groupid];        
+    
+    for (int k = 0; k < 4; k++) {
+        int ai = move + m_dirs[k];
+        if (m_square[ai] == color && m_parent[ai] == groupid) {
+            return true;            
+        }
+    }
+    
+    return false;
 }

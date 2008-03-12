@@ -10,6 +10,7 @@ class KoState : public FastState {
 public:                    
     void init_game(int size = FastBoard::MAXBOARDSIZE, float komi = 7.5f);
     bool superko(void);
+    bool superko(uint64 newhash);
     void reset_game();
     
     bool legal_move(int vertex);      

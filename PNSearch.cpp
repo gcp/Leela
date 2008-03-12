@@ -60,8 +60,8 @@ std::pair<int,int> PNSearch::do_search(int groupid, int maxnodes) {
     m_group_color = m_rootstate.board.get_square(groupid);            
     int rootcolor = m_rootstate.get_to_move();    
    
-    // avoid recusion here
-    m_root->evaluate(&m_rootstate, m_group_color, m_group_to_check, 0);    
+    // avoid recursion here
+    m_root->evaluate(&m_rootstate, FastBoard::PASS, m_group_color, m_group_to_check, 0);    
 
     int iters = 0;
     while(!m_root->solved() && ++iters < maxnodes) {
@@ -88,7 +88,7 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
     int rootcolor = m_rootstate.get_to_move();    
     
     // start Proof number search
-    m_root->evaluate(&m_rootstate, m_group_color, m_group_to_check);    
+    m_root->evaluate(&m_rootstate, FastBoard::PASS, m_group_color, m_group_to_check);    
 
     int iters = 0;
     while(!m_root->solved() && ++iters < 100000) {

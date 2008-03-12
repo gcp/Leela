@@ -15,7 +15,7 @@ public:
 
     PNNode();
     PNNode(PNNode * m_parent, int move);    
-    void evaluate(KoState * ks, int rootcolor, int groupid, int maxnodes = 0);
+    void evaluate(KoState * ks, int move, int rootcolor, int groupid, int maxnodes = 0);
     void set_proof_disproof(node_type_t type);
     bool solved();
     PNNode * select_most_proving(KoState * ks, node_type_t type);
@@ -30,8 +30,6 @@ public:
     bool has_children() const;
 
 private:
-    static KoState m_work;
-
     int m_pn;
     int m_dn;
     int m_move;

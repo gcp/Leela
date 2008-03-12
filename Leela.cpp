@@ -35,8 +35,8 @@ int main (int argc, char *argv[]) {
     std::auto_ptr<Random> rng(new Random(5489UL));          
     Zobrist::init_zobrist(*rng);    
 
-    AttribScores::get_attribscores();
-    Matcher::get_Matcher();
+    //AttribScores::get_attribscores();
+    //Matcher::get_Matcher();
     
     std::auto_ptr<GameState> maingame(new GameState);    
         

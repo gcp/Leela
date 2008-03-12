@@ -92,6 +92,10 @@ uint64 FullBoard::get_hash(void) {
     return hash;
 }
 
+uint64 FullBoard::get_ko_hash(void) {
+    return ko_hash;
+}
+
 int FullBoard::update_board(const int color, const int i) {         
     assert(m_square[i] == EMPTY);   
     
@@ -174,4 +178,42 @@ void FullBoard::reset_board(int size) {
     
     calc_hash();
     calc_ko_hash();    
+}
+
+uint64 FullBoard::predict_ko_hash(int color, int move) {
+    uint64 work = ko_hash;
+    
+    if (move == PASS) {
+        return work;
+    }
+    
+    // add this stone
+    work ^= Zobrist::zobrist[m_square[move]][move];
+    work ^= Zobrist::zobrist[color][move];
+    
+    std::vector<bool> marker(m_maxsq, false);
+    
+    // check for possible removals
+    for (int k = 0; k < 4; k++) {
+        int ai = move + m_dirs[k];
+        
+        if (!marker[ai]) {                        
+            // loop over string
+            if (m_square[ai] == !color && m_libs[m_parent[ai]] <= 1) {
+                int pos = ai;
+                
+                do {
+                    if (!marker[pos]) {
+                        marker[pos] = true;
+                        work ^= Zobrist::zobrist[m_square[pos]][pos];
+                        work ^= Zobrist::zobrist[EMPTY][pos];
+                    }                                                            
+                    pos = m_next[pos];
+                } while (pos != ai);       
+            }        
+            marker[ai] = true;           
+        }        
+    }
+    
+    return work;
 }

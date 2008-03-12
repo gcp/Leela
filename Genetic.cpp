@@ -172,10 +172,9 @@ void Genetic::genetic_tune() {
     }    
     
     int generations = 0;
-    int element = 0;
 
     do {
-        for (element = 0; element < pool.size(); element++) {                               
+        for (int element = 0; element < pool.size(); element++) {                               
             // pick 2 random ancestors with s = 4
             float bestfather = 1.0f;
             float bestmother = 1.0f;

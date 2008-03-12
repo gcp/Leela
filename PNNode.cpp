@@ -5,8 +5,6 @@
 #include "PNSearch.h"
 #include "FastBoard.h"
 
-KoState PNNode::m_work;
-
 PNNode::PNNode(PNNode * parent, int move) 
     : m_parent(parent), m_move(move) {
     m_pn = 1;
@@ -24,28 +22,38 @@ PNNode::PNNode() {
     m_expanded = false;
 }
 
-void PNNode::evaluate(KoState * ks, int groupcolor, int groupid, int maxnodes) {
+void PNNode::evaluate(KoState * ks, int move, int groupcolor, int groupid, int maxnodes) {
     if (m_evaluated) {
         return;
     }
 
     m_evaluated = true;
     
+    // group alive by pass out
+    if ((ks->get_passes() >= 2) 
+        || (ks->get_passes() == 1 && move == FastBoard::PASS)) {
+        m_pn = 0;
+        m_dn = INF;
+        return;
+    }
+     
     // group removed
-    if (ks->board.get_square(groupid) != groupcolor) {
+    if (ks->board.get_square(groupid) != groupcolor
+        || (move != FastBoard::PASS && ks->board.predict_kill(move, groupid))) {
         m_pn = INF;
         m_dn = 0;
         return;
     }
     
     // excessive liberties
+    // XXX needs prediction
     /*if (ks->board.count_rliberties(groupid) >= 8) {
         m_pn = 0;
         m_dn = INF;
         return;
     }*/
 
-    bool alive = ks->board.is_alive(groupid);
+    bool alive = ks->board.predict_is_alive(move, groupid);
 
     // group alive by 2 eyes
     if (alive) {
@@ -53,14 +61,7 @@ void PNNode::evaluate(KoState * ks, int groupcolor, int groupid, int maxnodes) {
         m_pn = 0;
         m_dn = INF;
         return;
-    }
-    
-    // group alive by passout
-    if (ks->get_passes() >= 2) {
-        m_pn = 0;
-        m_dn = INF;
-        return;
-    }
+    }        
 
     // still fighting, set heuristics
     if (maxnodes) {
@@ -166,8 +167,8 @@ void PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnode
     
     for (int i = 0; i < roi.size(); i++) {   
 	int vertex = roi[i];
-	if (ks->board.get_square(vertex) == FastBoard::EMPTY &&
-		!ks->board.is_suicide(vertex, ks->board.get_to_move())) {
+	if (ks->board.get_square(vertex) == FastBoard::EMPTY 
+	    && !ks->board.is_suicide(vertex, ks->board.get_to_move())) {
 	    m_children.push_back(PNNode(this, vertex));
 	}
     }
@@ -180,20 +181,20 @@ void PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnode
         m_children.push_back(PNNode(this, FastBoard::PASS));    
     }    
     
-    for (int i = 0; i < m_children.size(); i++) {
-        m_work = *ks;        
-        m_work.play_move(m_children[i].m_move);
-        if (m_children[i].m_move == FastBoard::PASS || !m_work.superko()) {
-            m_children[i].evaluate(&m_work, groupcolor, groupid, maxnodes);     
+    for (int i = 0; i < m_children.size(); i++) {        
+        uint64 phash = ks->board.predict_ko_hash(ks->board.get_to_move(), m_children[i].m_move);
+                
+        if (m_children[i].m_move == FastBoard::PASS || !ks->superko(phash)) {
+            m_children[i].evaluate(ks, m_children[i].m_move, groupcolor, groupid, maxnodes);     
         } else {
             // neither player can win a ko fight            
-            if (m_work.get_to_move() == groupcolor) {
+            if (ks->get_to_move() != groupcolor) {
                 // illegal move was made by attacker
                 // group is safe
                 m_children[i].m_pn = 0;
                 m_children[i].m_dn = INF;
                 m_children[i].m_evaluated = true;
-            } else if (m_work.get_to_move() == !groupcolor) {
+            } else if (ks->get_to_move() == groupcolor) {
                 // illegal move made by defender
                 // group is dead
                 m_children[i].m_pn = INF;

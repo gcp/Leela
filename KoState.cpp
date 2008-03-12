@@ -50,6 +50,16 @@ bool KoState::superko(void) {
     return (res != last);        
 }
 
+bool KoState::superko(uint64 newhash) {
+    std::vector<uint64>::const_reverse_iterator first = ko_hash_history.rbegin();
+    std::vector<uint64>::const_reverse_iterator last = ko_hash_history.rend();  
+    std::vector<uint64>::const_reverse_iterator res;
+  
+    res = std::find(++first, last, newhash);
+
+    return (res != last);        
+}
+
 void KoState::reset_game() {
     FastState::reset_game();
         

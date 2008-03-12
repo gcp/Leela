@@ -112,7 +112,8 @@ public:
     std::vector<int> influence(void);
     std::vector<int> moyo(void);
     std::vector<int> area(void);
-    bool is_alive(int vertex);
+    bool predict_is_alive(int move, int vertex);    
+    bool predict_kill(int move, int groupid);
 
     int eval(float komi); 
     int get_prisoners(int side);
