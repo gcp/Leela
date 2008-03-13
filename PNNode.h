@@ -20,7 +20,7 @@ public:
     bool solved();
     PNNode * select_most_proving(KoState * ks, node_type_t type);
     PNNode * select_critical(node_type_t type);
-    void develop_node(KoState * ks, int rootcolor, int groupid, int maxnodes = 0);
+    int develop_node(KoState * ks, int rootcolor, int groupid, int maxnodes = 0);
     void update_ancestors(node_type_t type);
 
     int get_proof() const;

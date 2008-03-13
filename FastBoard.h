@@ -72,8 +72,7 @@ public:
     int update_board_fast(const int color, const int i);            
     void save_critical_neighbours(int color, int vertex, movelist_t & moves, int & movecnt);
     void add_pattern_moves(int color, int vertex, movelist_t & moves, int & movecnt);    
-    void add_global_captures(int color, movelist_t & moves, int & movecnt);         
-    bool match_pattern(int color, int vertex);
+    void add_global_captures(int color, movelist_t & moves, int & movecnt);             
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
@@ -93,8 +92,7 @@ public:
     int get_dir(int i);
     int get_extra_dir(int i);
 
-    bool is_eye(const int color, const int vtx);
-    bool is_solid_eye(const int color, const int vtx);
+    bool is_eye(const int color, const int vtx);    
     bool no_eye_fill(const int i);
     int get_pattern_fast(const int sq);    
     int get_pattern_fast_augment(const int sq); 
@@ -112,8 +110,8 @@ public:
     std::vector<int> influence(void);
     std::vector<int> moyo(void);
     std::vector<int> area(void);
-    bool predict_is_alive(int move, int vertex);    
-    bool predict_kill(int move, int groupid);
+    int predict_is_alive(const int move, const int vertex);    
+    bool predict_kill(const int move, const int groupid);
 
     int eval(float komi); 
     int get_prisoners(int side);
@@ -156,8 +154,7 @@ protected:
     std::tr1::array<unsigned short, MAXSQ+1>    m_libs;        /* liberties per string parent */        
     std::tr1::array<unsigned short, MAXSQ+1>    m_stones;      /* stones per string parent */        
     std::tr1::array<unsigned short, MAXSQ>      m_neighbours;  /* counts of neighboring stones */       
-    std::tr1::array<int, 4>          m_dirs;        /* movement directions 4 way */
-    std::tr1::array<int, 4>          m_alterdirs;   /* to change movement direction */
+    std::tr1::array<int, 4>          m_dirs;        /* movement directions 4 way */    
     std::tr1::array<int, 8>          m_extradirs;   /* movement directions 8 way */
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
     std::tr1::array<int, 2>          m_totalstones; /* stones per color */                 
@@ -181,6 +178,7 @@ protected:
     void kill_neighbours(int vertex, movelist_t & moves, int & movecnt);                                  
     void try_capture(int color, int vertex, movelist_t & moves, int & movecnt);    
     FastBoard remove_dead();
+    bool predict_solid_eye(const int move, const int color, const int vtx);
 };
 
 #endif

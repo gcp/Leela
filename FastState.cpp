@@ -166,25 +166,25 @@ int FastState::play_random_move(int color) {
             // my liberties
             // capture escape
             if (am == 1) {
-                score *= 4.75f * Genetic::g_par[0];
+                score *= 4.75f * 0.590201;
             }
             
             // enemy liberties
             // capture, atari
             if (at == 1) {
-                score *= 3.48f * Genetic::g_par[1];
+                score *= 3.48f * 2.24388;
             } else if (at == 2) {
-                score *= 1.60f * Genetic::g_par[2];
+                score *= 1.60f * 0.23206;
             }                                               
             
             int dist = Attributes::move_distance(board.get_xy(lastmove), board.get_xy(sq));     
             if (dist <= 3) {
-                score *= 40.0f * Genetic::g_par[3];
+                score *= 40.0f * 0.654033;
             } else {
-                score *= 40.0f * Genetic::g_par[4];
+                score *= 40.0f * 1.05755;
             }
         
-            if (score >= 1.0f * Genetic::g_par[5]) {                
+            if (score >= 1.0f * 5.82505) {                
                 cumul += score;
                 scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }
@@ -221,20 +221,20 @@ int FastState::play_random_move(int color) {
         if (mctab->is_primed()) {
             float mcown = mctab->get_score(color, vtx);
             if (mcown > 0.40f && mcown < 0.70f) {
-                score *= 1.25f * Genetic::g_par[6];
+                score *= 1.25f * 0.753182;
             } else {
                 if (mcown < 0.10f) {
-                    score *= 0.148f * Genetic::g_par[7];
+                    score *= 0.148f * 0.100786;
                 } else if (mcown < 0.20f) {
-                    score *= 0.563f * Genetic::g_par[8];
+                    score *= 0.563f * 0.129152;
                 } else if (mcown > 0.90f) {
-                    score *= 0.5f * Genetic::g_par[9];
+                    score *= 0.5f * 1.2569;
                 }       
             }                 
         }       
                             
         if (board.self_atari(color, vtx)) {            
-            score *= 0.042f * Genetic::g_par[10];
+            score *= 0.042f * 0.121143;
         }                       
                 
         cumul += score;

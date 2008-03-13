@@ -55,7 +55,7 @@ bool KoState::superko(uint64 newhash) {
     std::vector<uint64>::const_reverse_iterator last = ko_hash_history.rend();  
     std::vector<uint64>::const_reverse_iterator res;
   
-    res = std::find(++first, last, newhash);
+    res = std::find(first, last, newhash);
 
     return (res != last);        
 }

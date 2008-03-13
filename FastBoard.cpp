@@ -77,12 +77,7 @@ void FastBoard::reset_board(int size) {
     m_dirs[1] = +1;
     m_dirs[2] = +size+2;
     m_dirs[3] = -1;    
-    
-    m_alterdirs[0] = 1;
-    m_alterdirs[1] = size+2;
-    m_alterdirs[2] = 1;
-    m_alterdirs[3] = size+2;    
-    
+        
     m_extradirs[0] = -size-2-1;
     m_extradirs[1] = -size-2;
     m_extradirs[2] = -size-2+1;    
@@ -872,16 +867,24 @@ bool FastBoard::is_eye(const int color, const int i) {
     return true;    
 }
 
-bool FastBoard::is_solid_eye(const int color, const int i) {
+// predict if we have 2 solid eyes after executing move
+bool FastBoard::predict_solid_eye(const int move, const int color, const int i) {
     /* check for 4 neighbors of the same color */
-    int ownsurrounded = (m_neighbours[i] & s_eyemask[color]);
-    
-    // if not, it can't be an eye 
-    // this takes advantage of borders being colored
-    // both ways
-    if (!ownsurrounded) {
+    int ownsurrounded = count_neighbours(color, i);
+        
+    if (ownsurrounded < 3) {
         return false;
-    }      
+    } else if (ownsurrounded < 4 && move == PASS) {
+        return false;
+    }        
+    
+    for (int k = 0; k < 4; k++) {
+        int ai = i + m_dirs[k];
+        int sq = m_square[ai];
+        if (sq != color && sq != INVAL && ai != move) {
+            return false;
+        }
+    }
     
     // 2 or more diagonals taken
     // 1 for side groups                                
@@ -904,25 +907,25 @@ bool FastBoard::is_solid_eye(const int color, const int i) {
     // ours-taken or empty-secure
     int pos;
     pos = i - 1 - m_boardsize - 2;    
-    if (m_square[pos] == EMPTY) {    
+    if (m_square[pos] == EMPTY && pos != move) {    
         if (count_neighbours(color, pos) < 4) {
             flaws++;
         }
     }
     pos = i + 1 - m_boardsize - 2;    
-    if (m_square[pos] == EMPTY) {    
+    if (m_square[pos] == EMPTY && pos != move) {    
         if (count_neighbours(color, pos) < 4) {
             flaws++;
         }
     }
     pos = i - 1 + m_boardsize + 2;    
-    if (m_square[pos] == EMPTY) {    
+    if (m_square[pos] == EMPTY && pos != move) {    
         if (count_neighbours(color, pos) < 4) {
             flaws++;
         }
     }
     pos = i + 1 + m_boardsize + 2;    
-    if (m_square[pos] == EMPTY) {    
+    if (m_square[pos] == EMPTY && pos != move) {    
         if (count_neighbours(color, pos) < 4) {
             flaws++;
         }
@@ -1049,6 +1052,7 @@ int FastBoard::get_to_move() {
 
 int FastBoard::get_groupid(int vertex) {
     assert(m_square[vertex] == WHITE || m_square[vertex] == BLACK);
+    assert(m_parent[vertex] == m_parent[m_parent[vertex]]);
 
     return m_parent[vertex];
 }
@@ -1918,175 +1922,6 @@ void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves, int
     return;
 }        
 
-// check for fixed patterns around vertex for color to move
-// include rotations
-bool FastBoard::match_pattern(int color, int vertex) {
-    for (int k = 0; k < 4; k++) {
-        int ss = vertex + m_dirs[k];
-        
-        if (m_square[ss] < EMPTY) {
-            int c1 = m_square[ss];
-            // pattern 1
-            if (m_square[vertex + m_dirs[(k + 1) % 4]] == EMPTY
-                && m_square[vertex + m_dirs[(k + 3) % 4]] == EMPTY) {
-                // pattern 2 empties
-                if (m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY) {
-                    // pattern 2 white stone nbrs
-                    if ((m_square[ss + m_alterdirs[k]] == !c1
-                        && m_square[ss - m_alterdirs[k]] == EMPTY) 
-                        ||
-                        (m_square[ss - m_alterdirs[k]] == !c1
-                         && m_square[ss + m_alterdirs[k]] == EMPTY)) {
-                         return true;
-                    }
-                }
-                // pattern 1 white stone nbrs
-                if (m_square[ss + m_alterdirs[k]] == !c1
-                    && m_square[ss - m_alterdirs[k]] == !c1) {
-                    return true;
-                }
-            }
-            // pattern 3
-            if (m_square[vertex + m_dirs[(k + 1) % 4]] == EMPTY
-                && m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY
-                 && m_square[vertex + m_dirs[(k + 3) % 4]] == !c1) {
-                if (m_square[vertex + m_dirs[k] + m_dirs[(k + 3) % 4]] == !c1) {
-                    return true;
-                }                 
-            }
-            // pattern 3 (other rotation)
-            if (m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY
-               && m_square[vertex + m_dirs[(k + 3) % 4]] == EMPTY
-               && m_square[vertex + m_dirs[(k + 1) % 4]] == !c1) {
-               if (m_square[vertex + m_dirs[k] + m_dirs[(k + 1) % 4]] == !c1) {
-                   return true;
-                }                 
-            }      
-            // pattern 4       
-            if (c1 != color) {
-                if (m_square[vertex + m_dirs[(k + 1) % 4]] == EMPTY
-                    && m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY
-                    && m_square[vertex + m_dirs[(k + 3) % 4]] == EMPTY) {                    
-                    if (m_square[ss + m_alterdirs[k]] == c1
-                        && m_square[ss - m_alterdirs[k]] == !c1) {
-                        return true;
-                    }
-                    if (m_square[ss - m_alterdirs[k]] == c1
-                        && m_square[ss + m_alterdirs[k]] == !c1) {
-                        return true;
-                    }
-                }
-            }
-            // pattern 5             
-            if (m_square[vertex + m_dirs[(k + 1) % 4]] == c1) {
-                if (m_square[vertex + m_dirs[k] + m_dirs[(k + 1) % 4]] == !c1) { 
-                    // pattern 6 & 7                                       
-                    if ((m_square[vertex + m_dirs[(k + 3) % 4]] == c1
-                        && m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY)
-                        ||
-                        (m_square[vertex + m_dirs[(k + 2) % 4]] == c1
-                        && m_square[vertex + m_dirs[(k + 3) % 4]] == EMPTY)) {
-                    } else {
-                        return true;
-                    }                        
-                }
-            }
-            if (m_square[vertex + m_dirs[(k + 3) % 4]] == c1) {
-                if (m_square[vertex + m_dirs[k] + m_dirs[(k + 3) % 4]] == !c1) {
-                    // pattern 6 & 7
-                    if ((m_square[vertex + m_dirs[(k + 1) % 4]] == c1
-                         && m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY)
-                         ||
-                         (m_square[vertex + m_dirs[(k + 2) % 4]] == c1
-                         && m_square[vertex + m_dirs[(k + 1) % 4]] == EMPTY)) {
-                     } else {
-                         return true;
-                     }      
-                 } 
-            }
-            // pattern 8
-            if (m_square[vertex + m_dirs[(k + 1) % 4]] == !c1
-                && m_square[vertex + m_dirs[(k + 3) % 4]] == !c1) {
-                if (m_square[vertex + m_dirs[(k + 2) % 4]] != c1
-                   || m_square[vertex + m_dirs[(k + 2) % 4] + m_alterdirs[k]] != c1
-                   || m_square[vertex + m_dirs[(k + 2) % 4] - m_alterdirs[k]] != c1) {
-                   return true;
-                }
-            }
-        } else if (m_square[ss] == INVAL) {
-            // edge patterns    
-            // pattern 9
-            if (m_square[vertex + m_dirs[(k + 2) % 4]] == EMPTY) {
-                if (m_square[vertex + m_dirs[(k + 1) % 4]] != EMPTY) {
-                    int c1 = m_square[vertex + m_dirs[(k + 1) % 4]];
-                    if (m_square[vertex + m_dirs[(k + 1) % 4] + m_dirs[k]] == !c1
-                        || m_square[vertex + m_dirs[(k + 1) % 4] - m_dirs[k]] == !c1) {
-                        return true;
-                    }
-                }
-                if (m_square[vertex + m_dirs[(k + 3) % 4]] != EMPTY) {
-                    int c1 = m_square[vertex + m_dirs[(k + 3) % 4]];
-                    if (m_square[vertex + m_dirs[(k + 3) % 4] + m_dirs[k]] == !c1
-                        || m_square[vertex + m_dirs[(k + 3) % 4] - m_dirs[k]] == !c1) {
-                        return true;
-                    }
-                }
-            }
-            // pattern 10
-            if (m_square[vertex + m_dirs[(k + 2) % 4]] != EMPTY) {
-                int c1 = m_square[vertex + m_dirs[(k + 2) % 4]];
-                if (m_square[vertex + m_dirs[(k + 3) % 4]] == !c1
-                  && m_square[vertex + m_dirs[(k + 1) % 4]] != c1) {
-                    return true;
-                }
-                if (m_square[vertex + m_dirs[(k + 3) % 4]] == !c1
-                  && m_square[vertex + m_dirs[(k + 1) % 4]] != c1) {
-                    return true;
-                }
-            }
-            // pattern 11
-            if (m_square[vertex + m_dirs[(k + 2) % 4]] == color
-                && m_square[vertex + m_dirs[(k + 2) % 4] + m_alterdirs[k]] == !color) {
-                return true;
-            }
-            if (m_square[vertex + m_dirs[(k + 2) % 4]] == color
-                && m_square[vertex + m_dirs[(k + 2) % 4] - m_alterdirs[k]] == !color) {
-                return true;
-            }
-            // pattern 12
-            if (m_square[vertex + m_dirs[(k + 2) % 4]] == !color) {
-                if (m_square[vertex + m_dirs[(k + 1) % 4]] != !color) {
-                    if (m_square[vertex + m_dirs[(k + 2) % 4] + m_dirs[(k + 1) % 4]] == color) {
-                        return true;
-                    }
-                }
-                if (m_square[vertex + m_dirs[(k + 3) % 4]] != !color) {
-                    if (m_square[vertex + m_dirs[(k + 2) % 4] + m_dirs[(k + 3) % 4]] == color) {
-                        return true;
-                    }
-                }
-            }
-            // pattern 13
-            if (m_square[vertex + m_dirs[(k + 2) % 4]] == !color) {
-                if (m_square[vertex + m_dirs[(k + 1) % 4]] == !color
-                    && m_square[vertex + m_dirs[(k + 3) % 4]] == color) {
-                    if (m_square[vertex + m_dirs[(k + 1) % 4] + m_dirs[(k + 2) % 4]] == color) {
-                        return true;
-                    }
-                }
-                if (m_square[vertex + m_dirs[(k + 3) % 4]] == !color
-                   && m_square[vertex + m_dirs[(k + 1) % 4]] == color) {
-                    if (m_square[vertex + m_dirs[(k + 3) % 4] + m_dirs[(k + 2) % 4]] == color) {
-                        return true;
-                    }
-                }
-            }
-        }    
-    }
-    
-    return false;
-}
-
 // add capture moves for color
 void FastBoard::add_global_captures(int color, movelist_t & moves, int & movecnt) {
     // walk critical squares    
@@ -2378,7 +2213,8 @@ std::vector<int> FastBoard::get_neighbour_ids(int vertex) {
 }
 
 // Not alive does not imply dead
-bool FastBoard::predict_is_alive(int move, int vertex) {     
+// XXX implement prediction really
+int FastBoard::predict_is_alive(const int move, const int vertex) {     
     int par = m_parent[vertex];
     int color = m_square[vertex];
     int pos = par;
@@ -2397,10 +2233,10 @@ bool FastBoard::predict_is_alive(int move, int vertex) {
                 if (!marker[ai]) {                    
                     marker[ai] = true;
                     // not seen liberty, check if it's a real eye
-                    if (is_solid_eye(color, ai)) {
+                    if (predict_solid_eye(move, color, ai)) {
                         eyes++;
                         if (eyes >= 2) {
-                            return true;
+                            return eyes;
                         }
                     }
                     // might check liberties here?
@@ -2410,7 +2246,7 @@ bool FastBoard::predict_is_alive(int move, int vertex) {
         pos = m_next[pos];
     } while (pos != vertex);            
 
-    return false;
+    return eyes;
 }
 
 int FastBoard::get_empty() {
@@ -2551,10 +2387,18 @@ std::vector<int> FastBoard::get_nearby_enemies(std::vector<int> & vtxlist) {
     return res;
 }
 
-bool FastBoard::predict_kill(int move, int groupid) {
+bool FastBoard::predict_kill(const int move, const int groupid) {
+    assert(groupid == m_parent[groupid]);
+
     if (m_libs[m_parent[groupid]] > 1) return false;
 
-    int color = m_square[groupid];        
+    int color = m_square[groupid];       
+    
+    assert(color == WHITE || color == BLACK); 
+    
+    if (get_to_move() == color) {
+        return false;
+    }        
     
     for (int k = 0; k < 4; k++) {
         int ai = move + m_dirs[k];

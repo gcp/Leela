@@ -1,9 +1,14 @@
 #include "config.h"
 
+#include <math.h>
+
 #include "Attributes.h"
 #include "PNNode.h"
 #include "PNSearch.h"
 #include "FastBoard.h"
+#include "Utils.h"
+
+using namespace Utils;
 
 PNNode::PNNode(PNNode * parent, int move) 
     : m_parent(parent), m_move(move) {
@@ -29,6 +34,8 @@ void PNNode::evaluate(KoState * ks, int move, int groupcolor, int groupid, int m
 
     m_evaluated = true;
     
+    groupid = ks->board.get_groupid(groupid);
+    
     // group alive by pass out
     if ((ks->get_passes() >= 2) 
         || (ks->get_passes() == 1 && move == FastBoard::PASS)) {
@@ -47,16 +54,16 @@ void PNNode::evaluate(KoState * ks, int move, int groupcolor, int groupid, int m
     
     // excessive liberties
     // XXX needs prediction
-    /*if (ks->board.count_rliberties(groupid) >= 8) {
+    if (ks->board.count_rliberties(groupid) >= 7) {
         m_pn = 0;
         m_dn = INF;
         return;
-    }*/
+    }
 
-    bool alive = ks->board.predict_is_alive(move, groupid);
+    int eyes = ks->board.predict_is_alive(move, groupid);
 
     // group alive by 2 eyes
-    if (alive) {
+    if (eyes >= 2) {
         //ks->display_state();
         m_pn = 0;
         m_dn = INF;
@@ -66,12 +73,15 @@ void PNNode::evaluate(KoState * ks, int move, int groupcolor, int groupid, int m
     // still fighting, set heuristics
     if (maxnodes) {
         PNSearch search(*ks);
-        std::pair<int,int> res = search.do_search(groupid, maxnodes);
+        float fraction = 1.0f / (1.0f + powf(2.7182818f, (450000.0f - (float)maxnodes)/60000.0f));        
+        std::pair<int,int> res = search.do_search(groupid, (int)((float)maxnodes * fraction));
         m_pn = res.first;
         m_dn = res.second;
     } else {
-        m_pn = 1;
-        m_dn = 1;
+        m_pn = 2 - eyes;
+        //m_dn = 1;
+        //m_pn = std::max(1, 7 - ks->board.count_rliberties(groupid));
+        m_dn = std::max(1, ks->board.count_rliberties(groupid)); 
     }
 
     //m_pn = std::max(1, 7 - ks->board.count_rliberties(groupid));
@@ -131,7 +141,7 @@ PNNode * PNNode::select_critical(node_type_t type) {
 
 PNNode * PNNode::select_most_proving(KoState * ks, node_type_t type) {
     PNNode * res = this;
-
+    
     if (m_expanded) {
         PNNode * critical = select_critical(type); 
         ks->play_move(critical->m_move);
@@ -141,8 +151,12 @@ PNNode * PNNode::select_most_proving(KoState * ks, node_type_t type) {
     return res;
 }
 
-void PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnodes) {    
-    assert(ks->board.get_square(groupid) < FastBoard::EMPTY);
+int PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnodes) {        
+    assert(ks->board.get_square(groupid) < FastBoard::EMPTY);    
+    
+    if (maxnodes) {
+        evaluate(ks, FastBoard::PASS, groupcolor, groupid, maxnodes);
+    }
     
     // determine Region Of Interest        
     std::vector<int> stones = ks->board.get_augmented_string(groupid);
@@ -167,9 +181,12 @@ void PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnode
     
     for (int i = 0; i < roi.size(); i++) {   
 	int vertex = roi[i];
-	if (ks->board.get_square(vertex) == FastBoard::EMPTY 
-	    && !ks->board.is_suicide(vertex, ks->board.get_to_move())) {
-	    m_children.push_back(PNNode(this, vertex));
+	if (ks->board.get_square(vertex) == FastBoard::EMPTY 	    
+	    && !ks->board.is_suicide(vertex, ks->board.get_to_move())) {	    
+	    uint64 phash = ks->board.predict_ko_hash(ks->board.get_to_move(), vertex);
+	    if (!ks->superko(phash)) {
+	        m_children.push_back(PNNode(this, vertex));
+	    }
 	}
     }
     
@@ -181,30 +198,16 @@ void PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnode
         m_children.push_back(PNNode(this, FastBoard::PASS));    
     }    
     
-    for (int i = 0; i < m_children.size(); i++) {        
-        uint64 phash = ks->board.predict_ko_hash(ks->board.get_to_move(), m_children[i].m_move);
-                
-        if (m_children[i].m_move == FastBoard::PASS || !ks->superko(phash)) {
-            m_children[i].evaluate(ks, m_children[i].m_move, groupcolor, groupid, maxnodes);     
-        } else {
-            // neither player can win a ko fight            
-            if (ks->get_to_move() != groupcolor) {
-                // illegal move was made by attacker
-                // group is safe
-                m_children[i].m_pn = 0;
-                m_children[i].m_dn = INF;
-                m_children[i].m_evaluated = true;
-            } else if (ks->get_to_move() == groupcolor) {
-                // illegal move made by defender
-                // group is dead
-                m_children[i].m_pn = INF;
-                m_children[i].m_dn = 0;
-                m_children[i].m_evaluated = true;
-            }            
-        }
-    } 
+    // immediate evaluation at leaves
+    if (!maxnodes) {
+        for (int i = 0; i < m_children.size(); i++) {                    
+            m_children[i].evaluate(ks, m_children[i].m_move, groupcolor, groupid, 0);
+        } 
+    }
 
     m_expanded = true;
+    
+    return m_children.size();
 }
 
 void PNNode::update_ancestors(node_type_t type) {
