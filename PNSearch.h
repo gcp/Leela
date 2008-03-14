@@ -18,12 +18,12 @@ public:
     status_t check_group(int groupid);
     std::pair<int,int> do_search(int groupid, int maxnodes);
 
-private:
+private:        
     std::string get_pv(KoState * state, PNNode * node);
 
     KoState m_rootstate;
     KoState m_workstate;    
-    int m_group_color;        
+    int m_group_color;   
 
     std::auto_ptr<PNNode> m_root;    
 };

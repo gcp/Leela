@@ -4,6 +4,7 @@
 #include "FastBoard.h"
 #include "PNSearch.h"
 #include "Utils.h"
+#include "Timing.h"
 
 using namespace Utils;
 
@@ -59,11 +60,11 @@ std::pair<int,int> PNSearch::do_search(int groupid, int maxnodes) {
     m_group_color = m_rootstate.board.get_square(groupid);            
     int rootcolor = m_rootstate.get_to_move();    
    
-    // avoid recursion here
-    m_root->evaluate(&m_rootstate, FastBoard::PASS, m_group_color, groupid, 0);    
+    // no need as it happened in the father tree
+    m_root->evaluate(&m_rootstate, FastBoard::PASS, m_group_color, groupid);    
 
     int iters = 0;
-    while(!m_root->solved() && ++iters < maxnodes) {
+    while(!m_root->solved() && iters++ < maxnodes) {                
         m_workstate = m_rootstate;
         PNNode * most_proving = m_root->select_most_proving(&m_workstate,
                                                              m_workstate.get_to_move() == m_group_color ? 
@@ -86,12 +87,15 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
     int rootcolor = m_rootstate.get_to_move();    
     
     // start Proof number search
-    //m_root->evaluate(&m_rootstate, FastBoard::PASS, m_group_color, groupid);   
+    m_root->evaluate(&m_rootstate, FastBoard::PASS, m_group_color, groupid);   
     
-    int nodes = 1; 
-
+    int nodes = 1;     
     int iters = 0;
-    while(!m_root->solved() && ++iters < 500000) {
+    int last_update = 0;
+    
+    Time start;
+    
+    while(!m_root->solved() && ++iters < 500000) {                
         m_workstate = m_rootstate;
         PNNode * most_proving = m_root->select_most_proving(&m_workstate,
                                                              m_workstate.get_to_move() == m_group_color ? 
@@ -99,13 +103,19 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
         nodes += most_proving->develop_node(&m_workstate, m_group_color, groupid, nodes); 
         most_proving->update_ancestors(m_workstate.get_to_move() == m_group_color  ? 
                                        PNNode::OR : PNNode::AND);               
-        //if ((iters & 1023) == 0) {
+                                       
+        Time elapsed;
+        int centiseconds_elapsed = Time::timediff(start, elapsed);        
+           
+         //if (centiseconds_elapsed - last_update > 100) {
+            last_update = centiseconds_elapsed;            
             m_workstate = m_rootstate;
             std::string pv = get_pv(&m_workstate, &(*m_root));
-            myprintf("P: %d D: %d N: %d Iter: %d PV: %s\n", m_root->get_proof(), 
-                                                            m_root->get_disproof(), 
-                                                            nodes, iters, pv.c_str());		
-        //}        
+            myprintf("P: %d D: %d N: %d Iter: %d PV: %s\n",   m_root->get_proof(), 
+                                                              m_root->get_disproof(), 
+                                                              nodes,
+                                                              iters, pv.c_str());		
+        //}                   
     }
 
     m_workstate = m_rootstate;

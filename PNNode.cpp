@@ -38,7 +38,7 @@ void PNNode::evaluate(KoState * ks, int move, int groupcolor, int groupid, int m
     
     // group alive by pass out
     if ((ks->get_passes() >= 2) 
-        || (ks->get_passes() == 1 && move == FastBoard::PASS)) {
+        /*|| (ks->get_passes() == 1 && move == FastBoard::PASS)*/) {
         m_pn = 0;
         m_dn = INF;
         return;
@@ -54,11 +54,11 @@ void PNNode::evaluate(KoState * ks, int move, int groupcolor, int groupid, int m
     
     // excessive liberties
     // XXX needs prediction
-    if (ks->board.count_rliberties(groupid) >= 7) {
-        m_pn = 0;
-        m_dn = INF;
-        return;
-    }
+    //if (ks->board.count_rliberties(groupid) >= 7) {
+    //    m_pn = 0;
+    //    m_dn = INF;
+    //    return;
+    //}
 
     int eyes = ks->board.predict_is_alive(move, groupid);
 
@@ -71,16 +71,20 @@ void PNNode::evaluate(KoState * ks, int move, int groupcolor, int groupid, int m
     }        
 
     // still fighting, set heuristics
-    if (maxnodes) {
-        PNSearch search(*ks);
+    if (maxnodes) {        
         float fraction = 1.0f / (1.0f + powf(2.7182818f, (450000.0f - (float)maxnodes)/60000.0f));        
-        std::pair<int,int> res = search.do_search(groupid, (int)((float)maxnodes * fraction));
-        m_pn = res.first;
-        m_dn = res.second;
+        int nodes_to_search = (int)((float)maxnodes * fraction);
+        if (nodes_to_search > 0) {
+            PNSearch search(*ks);
+            std::pair<int,int> res = search.do_search(groupid, nodes_to_search);
+            m_pn = res.first;
+            m_dn = res.second;
+        } else {
+            m_pn = 2 - eyes;        
+            m_dn = std::max(1, ks->board.count_rliberties(groupid)); 
+        }
     } else {
-        m_pn = 2 - eyes;
-        //m_dn = 1;
-        //m_pn = std::max(1, 7 - ks->board.count_rliberties(groupid));
+        m_pn = 2 - eyes;        
         m_dn = std::max(1, ks->board.count_rliberties(groupid)); 
     }
 
@@ -153,11 +157,7 @@ PNNode * PNNode::select_most_proving(KoState * ks, node_type_t type) {
 
 int PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnodes) {        
     assert(ks->board.get_square(groupid) < FastBoard::EMPTY);    
-    
-    if (maxnodes) {
-        evaluate(ks, FastBoard::PASS, groupcolor, groupid, maxnodes);
-    }
-    
+        
     // determine Region Of Interest        
     std::vector<int> stones = ks->board.get_augmented_string(groupid);
     std::vector<int> libs_1 = ks->board.dilate_liberties(stones);
@@ -198,12 +198,10 @@ int PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnodes
         m_children.push_back(PNNode(this, FastBoard::PASS));    
     }    
     
-    // immediate evaluation at leaves
-    if (!maxnodes) {
-        for (int i = 0; i < m_children.size(); i++) {                    
-            m_children[i].evaluate(ks, m_children[i].m_move, groupcolor, groupid, 0);
-        } 
-    }
+    // immediate evaluation    
+    for (int i = 0; i < m_children.size(); i++) {                    
+        m_children[i].evaluate(ks, m_children[i].m_move, groupcolor, groupid, maxnodes);
+    }     
 
     m_expanded = true;
     

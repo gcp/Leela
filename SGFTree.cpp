@@ -195,9 +195,8 @@ void SGFTree::set_state(KoState & state) {
 
 
 void SGFTree::apply_move(int color, int move) {      
-    if (m_state.board.get_square(move) != FastBoard::EMPTY 
-        && move != FastBoard::PASS) {
-            throw new std::exception("Illegal move");
+    if (move != FastBoard::PASS && m_state.board.get_square(move) != FastBoard::EMPTY) {
+        throw new std::exception("Illegal move");
     }
     m_state.play_move(color, move);    
 }

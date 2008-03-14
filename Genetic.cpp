@@ -18,7 +18,7 @@
 
 using namespace Utils;
 
-std::vector<float> Genetic::g_par(11, 1.0f);
+std::vector<float> Genetic::g_par(9, 1.0f);
 
 float Genetic::run_simulations(FastState & state, float res) {            
     int wins = 0;
@@ -30,7 +30,7 @@ float Genetic::run_simulations(FastState & state, float res) {
     FastState tmp;  
     int start_to_move = state.get_to_move();  
     
-    for (int i = 0; i < 100; i++) {    
+    for (int i = 0; i < 250; i++) {    
         tmp = state;        
                 
         Playout p;        
@@ -150,7 +150,7 @@ void Genetic::genetic_tune() {
     myprintf("Filling pool of %d entries...", pool.size());
     
     for (int i = 0; i < pool.size(); i++) {
-        pool[i].resize(11);
+        pool[i].resize(9);
         for (int j = 0; j < pool[i].size(); j++) {            
             pool[i][j] = powf(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
         }                
@@ -198,12 +198,12 @@ void Genetic::genetic_tune() {
             }                                        
             
             paramset newrank;
-            newrank.resize(11);
+            newrank.resize(9);
             
             // crossover/mutate
             for (int i = 0; i < newrank.size(); i++) {            
-                int mutate = Random::get_Rng()->randint(20);
-                if (mutate != 19) {
+                int mutate = Random::get_Rng()->randint(10);
+                if (mutate != 0) {
                     int cross = Random::get_Rng()->randint(2);
                     if (cross == 0) {
                         newrank[i] = pool[father][i];                    
