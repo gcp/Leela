@@ -95,7 +95,7 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
     
     Time start;
     
-    while(!m_root->solved() && ++iters < 500000) {                
+    while(!m_root->solved() && ++iters < 5000) {                
         m_workstate = m_rootstate;
         PNNode * most_proving = m_root->select_most_proving(&m_workstate,
                                                              m_workstate.get_to_move() == m_group_color ? 
@@ -107,7 +107,7 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
         Time elapsed;
         int centiseconds_elapsed = Time::timediff(start, elapsed);        
            
-         //if (centiseconds_elapsed - last_update > 100) {
+         if (centiseconds_elapsed - last_update > 100) {
             last_update = centiseconds_elapsed;            
             m_workstate = m_rootstate;
             std::string pv = get_pv(&m_workstate, &(*m_root));
@@ -115,7 +115,7 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
                                                               m_root->get_disproof(), 
                                                               nodes,
                                                               iters, pv.c_str());		
-        //}                   
+        }                   
     }
 
     m_workstate = m_rootstate;
