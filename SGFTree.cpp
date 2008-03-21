@@ -150,8 +150,10 @@ void SGFTree::populate_states(void) {
     for (it = abrange.first; it != abrange.second; ++it) {
         std::string move = it->second;      
         int vtx = string_to_vertex(move);
-        apply_move(FastBoard::BLACK, vtx);                
+        apply_move(FastBoard::BLACK, vtx);                        
     }            
+    
+    //XXX:count handicap stones
     
     std::pair<PropertyMap::iterator, 
               PropertyMap::iterator> awrange = m_properties.equal_range("AW");

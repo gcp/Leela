@@ -25,12 +25,12 @@ float Genetic::run_simulations(FastState & state, float res) {
     int runs = 0;
     
     MCOwnerTable::clear();  
-    Playout::mc_owner(state, 32); 
+    Playout::mc_owner(state, 64); 
     
     FastState tmp;  
     int start_to_move = state.get_to_move();  
     
-    for (int i = 0; i < 250; i++) {    
+    for (int i = 0; i < 200; i++) {    
         tmp = state;        
                 
         Playout p;        

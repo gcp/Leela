@@ -41,7 +41,7 @@ public:
     int get_movenum();
     int get_last_move();  
     int get_prevlast_move();      
-	int get_komove();
+    int get_komove();
     void display_state();    
     std::string move_to_text(int move);
 
