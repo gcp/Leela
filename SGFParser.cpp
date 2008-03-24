@@ -171,7 +171,9 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
             // new node
             std::auto_ptr<SGFTree> newnode(new SGFTree);
             SGFTree * newptr = node->add_child(*newnode);                        
-            parse(strm, newptr);
+            node = newptr;
+            continue;
+            //parse(strm, newptr);
         }
     }
 }

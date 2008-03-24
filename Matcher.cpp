@@ -7,6 +7,7 @@
 #include "FastBoard.h"
 #include "WeightsMatcher.h"
 #include "Utils.h"
+#include "Genetic.h"
 
 Matcher* Matcher::s_matcher = 0;
 
@@ -44,8 +45,12 @@ Matcher::Matcher() {
     patmap patweights;
     
     for (int i = 0; i < internal_weights_fast.size(); i++) {
-        patweights.insert(std::make_pair(internal_patterns_fast[i],
-                                         internal_weights_fast[i]));
+        std::pair<int, float> pr = std::make_pair(internal_patterns_fast[i],
+                                                  internal_weights_fast[i]);
+        if (i+11 < Genetic::g_par.size()) {                                                  
+            pr.second *= Genetic::g_par[i+11]; 
+        }                                                  
+        patweights.insert(pr);
     }    
     
     for (int i = 0; i < max; i++) {

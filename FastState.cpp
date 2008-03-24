@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include <vector>
 #include <algorithm>
 
@@ -158,26 +159,33 @@ int FastState::play_random_move(int color) {
             if (sq == komove) continue;
             
             int pattern = board.get_pattern_fast_augment(sq);
-            float score = matcher->matches(color, pattern);
-            
+            float score = matcher->matches(color, pattern);                        
+
             int am = board.minimum_elib_count(!color, sq);
             int at = board.minimum_elib_count(color, sq);
             
             // my liberties
             // capture escape
             if (am == 1) {
-                score *= 15.0f;
+                score *= 4.75f * 0.773749f * Genetic::g_par[0];
             }
             
             // enemy liberties
             // capture, atari
             if (at == 1) {
-                score *= 30.0f;
+                score *= 3.48f * 4.01328f * Genetic::g_par[1];
             } else if (at == 2) {
-                score *= 14.5f;
-            }                                                                       
+                score *= 1.60f * 7.72503f * Genetic::g_par[2];
+            }                                                                    
         
-            if (score >= 0.60f) {                
+            int dist = Attributes::move_distance(board.get_xy(lastmove), board.get_xy(sq));     
+            if (dist <= 3) {
+                score *= 40.0f * 0.121703f * Genetic::g_par[3];
+            } else {
+                score *= 40.0f * 2.41657f * Genetic::g_par[4];
+            }
+        
+            if (score >= 1.0f * 2.25528f * Genetic::g_par[5]) {                
                 cumul += score;
                 scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }
@@ -209,25 +217,25 @@ int FastState::play_random_move(int color) {
         }
         
         int pattern = board.get_pattern_fast_augment(vtx);
-        float score = matcher->matches(color, pattern);         
-                
+        float score = matcher->matches(color, pattern);                         
+
         if (mctab->is_primed()) {
             float mcown = mctab->get_score(color, vtx);
             if (mcown > 0.40f && mcown < 0.70f) {
-                score *= 1.50f;
+                score *= 1.25f * 2.02488f * Genetic::g_par[6];
             } else {
                 if (mcown < 0.10f) {
-                    score *= 0.02f;
+                    score *= 0.148f * 0.112021f * Genetic::g_par[7];
                 } else if (mcown < 0.20f) {
-                    score *= 0.05f;
+                    score *= 0.563f * 0.119564f * Genetic::g_par[8];
                 } else if (mcown > 0.90f) {
-                    score *= 1.0f;
+                    score *= 0.5f * 1.44944f * Genetic::g_par[9];
                 }       
             }                 
         }       
                             
         if (board.self_atari(color, vtx)) {            
-            score *= 0.004f;
+            score *= 0.042f * 0.35051f * Genetic::g_par[10];
         }                       
                 
         cumul += score;

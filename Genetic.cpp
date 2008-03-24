@@ -18,19 +18,19 @@
 
 using namespace Utils;
 
-std::vector<float> Genetic::g_par(9, 1.0f);
+std::vector<float> Genetic::g_par(20+11, 1.0f);
 
 float Genetic::run_simulations(FastState & state, float res) {            
     int wins = 0;
     int runs = 0;
     
     MCOwnerTable::clear();  
-    Playout::mc_owner(state, 64); 
+    Playout::mc_owner(state, 32); 
     
     FastState tmp;  
     int start_to_move = state.get_to_move();  
     
-    for (int i = 0; i < 200; i++) {    
+    for (int i = 0; i < 250; i++) {    
         tmp = state;        
                 
         Playout p;        
@@ -98,40 +98,41 @@ void Genetic::load_testsets() {
 }
 
 float Genetic::run_testsets() {    
-    float se = 0.0f;
-    int positions = 0;
-    FastState state;
+    float ftmp;
+    int loop;    
+    float len;
+    float score;
+    GameState game;
     
-    for (int i = 0; i < m_winpool.size(); i++) {
-        state = m_winpool[i];   
-        //myprintf("Running %s\t", file.c_str());
-        se += run_simulations(state, 1.0f);
-        positions++;
+    game.init_game(9, 7.5f);
+    
+    const int boardsize = game.board.get_boardsize();
+    const int resign = (boardsize * boardsize) / 3;
+    const int playoutlen = (boardsize * boardsize) * 2;    
+    
+    len = 0.0;
+    score = 0;    
+    
+    for (loop = 0; loop < 20000; loop++) {
+        do {                                    
+            int move = game.play_random_move();                                                                   
+        } while (game.get_passes() < 2 
+                 && game.get_movenum() < playoutlen
+                 && abs(game.estimate_mc_score()) < resign); 
+                
+        len += game.get_movenum();
+        ftmp = game.calculate_mc_score();   
+        score += ftmp;                
+                
+        game.reset_game();
     }
     
-    for (int i = 0; i < m_losepool.size(); i++) {
-        state = m_losepool[i];   
-        //myprintf("Running %s\t", file.c_str());
-        se += run_simulations(state, 0.0f);
-        positions++;
-    }
-
-    for (int i = 0; i < m_drawpool.size(); i++) {
-        state = m_drawpool[i];   
-        //myprintf("Running %s\t", file.c_str());
-        se += run_simulations(state, 0.5f);
-        positions++;
-    }
-    
-    float mse = se/(float)positions;    
-    //myprintf("MSE: %f\n", mse);    
-    
-    return mse;
+    return len/20000.0f;
 }
 
 void Genetic::genetic_tune() {
     // load the sets
-    load_testsets();
+    //load_testsets();
     
     float err = run_testsets();     
     myprintf("Starting MSE: %f\n", err);            
@@ -139,7 +140,7 @@ void Genetic::genetic_tune() {
 //    return;                
 
     // run the optimization
-    float bestmse = 1.0f;      
+    float bestmse = 1000.0f;      
         
     typedef std::vector<float> paramset;    
     
@@ -150,7 +151,7 @@ void Genetic::genetic_tune() {
     myprintf("Filling pool of %d entries...", pool.size());
     
     for (int i = 0; i < pool.size(); i++) {
-        pool[i].resize(9);
+        pool[i].resize(31);
         for (int j = 0; j < pool[i].size(); j++) {            
             pool[i][j] = powf(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
         }                
@@ -161,7 +162,9 @@ void Genetic::genetic_tune() {
     myprintf("Getting pool errors...\n");
 
     for (int i = 0; i < pool.size(); i++) {
-        g_par = pool[i];                               
+        g_par = pool[i];   
+        
+        Matcher::set_Matcher(new Matcher);                            
         
         poolmse[i] = run_testsets();
         
@@ -176,8 +179,8 @@ void Genetic::genetic_tune() {
     do {
         for (int element = 0; element < pool.size(); element++) {                               
             // pick 2 random ancestors with s = 4
-            float bestfather = 1.0f;
-            float bestmother = 1.0f;
+            float bestfather = 1000.0f;
+            float bestmother = 1000.0f;
             int father;
             int mother;            
             
@@ -198,11 +201,11 @@ void Genetic::genetic_tune() {
             }                                        
             
             paramset newrank;
-            newrank.resize(9);
+            newrank.resize(31);
             
             // crossover/mutate
             for (int i = 0; i < newrank.size(); i++) {            
-                int mutate = Random::get_Rng()->randint(10);
+                int mutate = Random::get_Rng()->randint(20);
                 if (mutate != 0) {
                     int cross = Random::get_Rng()->randint(2);
                     if (cross == 0) {
@@ -217,6 +220,8 @@ void Genetic::genetic_tune() {
             
             // evaluate child
             g_par = newrank;
+                        
+            Matcher::set_Matcher(new Matcher);
             
             float err = run_testsets();                                                                                       
             
