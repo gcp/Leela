@@ -127,14 +127,16 @@ int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
 int FastState::play_random_move(int color) {                            
     board.m_tomove = color;
 
-    int movecnt = 0;       
+    int movecnt = 0;    
     int newcnt = 0;
+    int scoredcnt = 0;
     
     if (lastmove > 0 && lastmove < board.m_maxsq) {
         if (board.get_square(lastmove) == !color) {            
-            board.add_global_captures(color, moves, movecnt);                        
-            board.save_critical_neighbours(color, lastmove, moves, movecnt);            
-            board.add_pattern_moves(color, lastmove, moves, movecnt);                        
+            board.add_global_captures(color, moves, movecnt);
+            board.save_critical_neighbours(color, lastmove, moves, movecnt);                        
+            board.add_pattern_moves(color, lastmove, moves, movecnt);
+            
             // remove ko captures                 
             newcnt = movecnt;
             for (int i = 0; i < movecnt; i++) {
@@ -144,12 +146,10 @@ int FastState::play_random_move(int color) {
             }
         }        
     }   
-         
-    int scoredcnt = 0;
+    
+    Matcher * matcher = Matcher::get_Matcher();                                    
                 
-    if (newcnt > 0) {                                                             
-        Matcher * matcher = Matcher::get_Matcher();                        
-
+    if (newcnt > 0) {                                                                     
         float cumul = 0.0f; 
         
         for (int i = 0; i < movecnt; i++) {
@@ -159,33 +159,34 @@ int FastState::play_random_move(int color) {
             if (sq == komove) continue;
             
             int pattern = board.get_pattern_fast_augment(sq);
-            float score = matcher->matches(color, pattern);                        
-
-            int am = board.minimum_elib_count(!color, sq);
-            int at = board.minimum_elib_count(color, sq);
+            float score = matcher->matches(color, pattern);                                    
+            std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);            
             
-            // my liberties
-            // capture escape
-            if (am == 1) {
-                score *= 4.75f * 0.773749f * Genetic::g_par[0];
+            static const std::tr1::array<float, 9> crit_mine = {
+                1.0f, 3.675f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f                        
+            };
+            
+            static const std::tr1::array<float, 9> crit_enemy = {
+                1.0f, 14.0f, 12.36f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
+            };
+                        
+            score *= crit_mine[nbr_crit.first];            
+            score *= crit_enemy[nbr_crit.second];                        
+                    
+            bool nearby = false;
+            for (int i = 0; i < 8; i++) {
+                int ai = lastmove + board.get_extra_dir(i);
+                if (ai == sq) {
+                    nearby = true;
+                    break;
+                }
             }
             
-            // enemy liberties
-            // capture, atari
-            if (at == 1) {
-                score *= 3.48f * 4.01328f * Genetic::g_par[1];
-            } else if (at == 2) {
-                score *= 1.60f * 7.72503f * Genetic::g_par[2];
-            }                                                                    
+            if (!nearby) {
+                score *= 19.85f;
+            }                             
         
-            int dist = Attributes::move_distance(board.get_xy(lastmove), board.get_xy(sq));     
-            if (dist <= 3) {
-                score *= 40.0f * 0.121703f * Genetic::g_par[3];
-            } else {
-                score *= 40.0f * 2.41657f * Genetic::g_par[4];
-            }
-        
-            if (score >= 1.0f * 2.25528f * Genetic::g_par[5]) {                
+            if (score >= 0.463f) {                
                 cumul += score;
                 scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }
@@ -201,8 +202,7 @@ int FastState::play_random_move(int color) {
         }                                
     } 
     
-    // fall back global moves  
-    Matcher * matcher = Matcher::get_Matcher();    
+    // fall back global moves      
     MCOwnerTable * mctab = MCOwnerTable::get_MCO();      
     
     int loops = 4;    
@@ -222,20 +222,20 @@ int FastState::play_random_move(int color) {
         if (mctab->is_primed()) {
             float mcown = mctab->get_score(color, vtx);
             if (mcown > 0.40f && mcown < 0.70f) {
-                score *= 1.25f * 2.02488f * Genetic::g_par[6];
+                score *= 2.53f;
             } else {
                 if (mcown < 0.10f) {
-                    score *= 0.148f * 0.112021f * Genetic::g_par[7];
+                    score *= 0.0166f;
                 } else if (mcown < 0.20f) {
-                    score *= 0.563f * 0.119564f * Genetic::g_par[8];
+                    score *= 0.067f;
                 } else if (mcown > 0.90f) {
-                    score *= 0.5f * 1.44944f * Genetic::g_par[9];
+                    score *= 0.725f;
                 }       
             }                 
         }       
                             
         if (board.self_atari(color, vtx)) {            
-            score *= 0.042f * 0.35051f * Genetic::g_par[10];
+            score *= 0.01472f;
         }                       
                 
         cumul += score;

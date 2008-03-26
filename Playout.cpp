@@ -90,7 +90,7 @@ bool Playout::passthrough(int color, int vertex) {
     return m_sq[color][vertex];
 }
 
-void Playout::do_playout_benchmark(GameState& game) {   
+void Playout::do_playout_benchmark(GameState & game) {   
     float ftmp;
     int loop;    
     float len;

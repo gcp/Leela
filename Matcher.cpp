@@ -47,8 +47,8 @@ Matcher::Matcher() {
     for (int i = 0; i < internal_weights_fast.size(); i++) {
         std::pair<int, float> pr = std::make_pair(internal_patterns_fast[i],
                                                   internal_weights_fast[i]);
-        if (i+11 < Genetic::g_par.size()) {                                                  
-            pr.second *= Genetic::g_par[i+11]; 
+        if (i < Genetic::g_par.size()) {                                                  
+            pr.second *= Genetic::g_par[i]; 
         }                                                  
         patweights.insert(pr);
     }    

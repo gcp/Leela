@@ -62,5 +62,6 @@ void Random::seedrandom(uint32 s) {
 
 float Random::randflt(void) {
     uint32 rnd = random();
-    return ((float)rnd)/((float)UINT_MAX);
+    static const float umax = 1.0f / (float)UINT_MAX;
+    return ((float)rnd) * umax;
 }

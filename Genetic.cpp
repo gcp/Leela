@@ -18,7 +18,7 @@
 
 using namespace Utils;
 
-std::vector<float> Genetic::g_par(20+11, 1.0f);
+std::vector<float> Genetic::g_par(60, 1.0f);
 
 float Genetic::run_simulations(FastState & state, float res) {            
     int wins = 0;
@@ -98,41 +98,40 @@ void Genetic::load_testsets() {
 }
 
 float Genetic::run_testsets() {    
-    float ftmp;
-    int loop;    
-    float len;
-    float score;
-    GameState game;
+    float se = 0.0f;
+    int positions = 0;
+    FastState state;
     
-    game.init_game(9, 7.5f);
-    
-    const int boardsize = game.board.get_boardsize();
-    const int resign = (boardsize * boardsize) / 3;
-    const int playoutlen = (boardsize * boardsize) * 2;    
-    
-    len = 0.0;
-    score = 0;    
-    
-    for (loop = 0; loop < 20000; loop++) {
-        do {                                    
-            int move = game.play_random_move();                                                                   
-        } while (game.get_passes() < 2 
-                 && game.get_movenum() < playoutlen
-                 && abs(game.estimate_mc_score()) < resign); 
-                
-        len += game.get_movenum();
-        ftmp = game.calculate_mc_score();   
-        score += ftmp;                
-                
-        game.reset_game();
+    for (int i = 0; i < m_winpool.size(); i++) {
+        state = m_winpool[i];   
+        //myprintf("Running %s\t", file.c_str());
+        se += run_simulations(state, 1.0f);
+        positions++;
     }
     
-    return len/20000.0f;
+    for (int i = 0; i < m_losepool.size(); i++) {
+        state = m_losepool[i];   
+        //myprintf("Running %s\t", file.c_str());
+        se += run_simulations(state, 0.0f);
+        positions++;
+    }
+
+    for (int i = 0; i < m_drawpool.size(); i++) {
+        state = m_drawpool[i];   
+        //myprintf("Running %s\t", file.c_str());
+        se += run_simulations(state, 0.5f);
+        positions++;
+    }
+    
+    float mse = se/(float)positions;    
+    //myprintf("MSE: %f\n", mse);    
+    
+    return mse;
 }
 
 void Genetic::genetic_tune() {
     // load the sets
-    //load_testsets();
+    load_testsets();
     
     float err = run_testsets();     
     myprintf("Starting MSE: %f\n", err);            
@@ -151,7 +150,7 @@ void Genetic::genetic_tune() {
     myprintf("Filling pool of %d entries...", pool.size());
     
     for (int i = 0; i < pool.size(); i++) {
-        pool[i].resize(31);
+        pool[i].resize(60);
         for (int j = 0; j < pool[i].size(); j++) {            
             pool[i][j] = powf(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
         }                
@@ -201,7 +200,7 @@ void Genetic::genetic_tune() {
             }                                        
             
             paramset newrank;
-            newrank.resize(31);
+            newrank.resize(60);
             
             // crossover/mutate
             for (int i = 0; i < newrank.size(); i++) {            

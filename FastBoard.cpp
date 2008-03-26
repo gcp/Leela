@@ -2038,6 +2038,31 @@ int FastBoard::minimum_elib_count(int color, int vertex) {
     return minlib;
 }
 
+// returns our lowest liberties, enemies lowest liberties
+// 8 is the maximum
+std::pair<int, int> FastBoard::nbr_criticality(int color, int vertex) {
+    int minmine = 8;
+    int minhis = 8;
+    
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        if (m_square[ai] < EMPTY) {
+            int lc = m_libs[m_parent[ai]];            
+            if (m_square[ai] == color) {            
+                if (lc < minmine) {
+                    minmine = lc;
+                }
+            } else if (m_square[ai] == !color) {
+                if (lc < minhis) {
+                    minhis = lc;
+                }
+            }
+        } 
+    } 
+    
+    return std::make_pair(minmine, minhis);
+}
+
 int FastBoard::count_rliberties(int vertex) {
     /*std::vector<bool> marker(m_maxsq, false);
     
