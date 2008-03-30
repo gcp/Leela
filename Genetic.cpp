@@ -18,7 +18,7 @@
 
 using namespace Utils;
 
-std::vector<float> Genetic::g_par(60, 1.0f);
+std::vector<float> Genetic::g_par(1, 1.0f);
 
 float Genetic::run_simulations(FastState & state, float res) {            
     int wins = 0;

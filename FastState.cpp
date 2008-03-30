@@ -183,10 +183,10 @@ int FastState::play_random_move(int color) {
             }
             
             if (!nearby) {
-                score *= 19.85f;
-            }                             
+                score *= 19.86f;
+            }
         
-            if (score >= 0.463f) {                
+            if (score >= 0.75f) {                
                 cumul += score;
                 scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }

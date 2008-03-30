@@ -94,7 +94,7 @@ int TimeControl::max_time_for_move(int color) {
         no byo yomi, easiest
     */
     if (m_byotime == 0) {    
-        return m_remaining_time[color] / m_moves_expected;  
+        return ((m_remaining_time[color] / m_moves_expected) * 3) / 2;  
     }
     
     /*

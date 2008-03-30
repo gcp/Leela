@@ -48,7 +48,8 @@ private:
     void dump_thinking();        
     void dump_analysis();
     void dump_order2(void);
-    int get_best_move(passflag_t passflag);    
+    int get_best_move(passflag_t passflag);  
+    bool allow_early_exit();  
 
     GameState & m_rootstate;        
     UCTNode m_root;    

@@ -167,6 +167,52 @@ void UCTSearch::dump_thinking() {
               m_root.get_visits(), bestmove.c_str());
 }
 
+bool UCTSearch::allow_early_exit() {    
+    int color = m_rootstate.board.m_tomove;    
+    
+    if (!m_root.has_children()) {
+        return false;
+    }
+    
+    m_root.sort_children(color);
+    
+    // do we have statistics on the moves?
+    UCTNode * first = m_root.get_first_child();
+    if (first != NULL) {
+        if (first->first_visit()) {
+            return false;
+        }
+    } else {
+        return false;
+    }
+    
+    UCTNode * second = first->get_sibling();    
+    if (second != NULL) {
+        if (second->first_visit()) {
+            return false;
+        }
+    } else {
+        return false;
+    }
+    
+    float n1 = first->get_visits();
+    float p1 = first->get_winrate(color);
+    float n2 = second->get_visits();
+    float p2 = second->get_winrate(color);
+    
+    float low, high;
+        
+    low  = p1 - 3.0f * sqrtf(0.25f / n1);
+    high = p2 + 3.0f * sqrtf(0.25f / n2);    
+    
+    if (low > high) {
+        myprintf("Allowing early exit: low: %f > high: %f\n", low, high);
+        return true;
+    }
+    
+    return false;    
+}
+
 int UCTSearch::get_best_move(passflag_t passflag) { 
     int color = m_rootstate.board.m_tomove;    
 
@@ -384,26 +430,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();  
-    float score = Playout::mc_owner(m_rootstate, 64);    
-    
-    /*float delta_komi = 0.0f;
-    if (score > 0.65f) {        
-        delta_komi = pow(10.0f, ((float)m_rootstate.board.get_empty() 
-                                  / ((float)(m_rootstate.board.get_boardsize()
-                                     *m_rootstate.board.get_boardsize()))
-                                   ) - 1.0f);
-        myprintf("Winning position adjustment: %f\n", delta_komi);
-    } else if (score < 0.40f) {
-        delta_komi = pow(10.0f, 2.0f * (((float)m_rootstate.board.get_empty() 
-                                       / (float)(m_rootstate.board.get_boardsize()
-                                        *m_rootstate.board.get_boardsize()
-                                        )) - 1.0f));
-        myprintf("Losing position adjustment: %f\n", delta_komi);
-    }*/
-    
-    //25 & 40
-    
-    //dump_order2();                  
+    float score = Playout::mc_owner(m_rootstate, 64);                   
         
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)
@@ -439,6 +466,11 @@ int UCTSearch::think(int color, passflag_t passflag) {
             keeprunning = (centiseconds_elapsed < time_for_move 
                            && m_root.get_visits() < m_maxvisits
                            && (!m_hasrunflag || (*m_runflag)));
+                           
+            // check for early exit                           
+            if (keeprunning && ((iterations & 127) == 0) && centiseconds_elapsed > time_for_move/2) {
+                keeprunning = !allow_early_exit();    
+            }                           
         } else {
             if (centiseconds_elapsed - last_update > 100) {
                 last_update = centiseconds_elapsed;            
