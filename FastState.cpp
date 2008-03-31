@@ -137,7 +137,7 @@ int FastState::play_random_move(int color) {
             board.save_critical_neighbours(color, lastmove, moves, movecnt);                        
             board.add_pattern_moves(color, lastmove, moves, movecnt);
             
-            // remove ko captures                 
+            // remove ko captures from count              
             newcnt = movecnt;
             for (int i = 0; i < movecnt; i++) {
                 if (moves[i] == komove) {
@@ -147,7 +147,7 @@ int FastState::play_random_move(int color) {
         }        
     }   
     
-    Matcher * matcher = Matcher::get_Matcher();                                    
+    Matcher * matcher = Matcher::get_Matcher(); 
                 
     if (newcnt > 0) {                                                                     
         float cumul = 0.0f; 
@@ -170,9 +170,9 @@ int FastState::play_random_move(int color) {
                 1.0f, 14.0f, 12.36f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
             };
                         
-            score *= crit_mine[nbr_crit.first];            
+            score *= crit_mine[nbr_crit.first];
             score *= crit_enemy[nbr_crit.second];                        
-                    
+
             bool nearby = false;
             for (int i = 0; i < 8; i++) {
                 int ai = lastmove + board.get_extra_dir(i);
@@ -186,7 +186,7 @@ int FastState::play_random_move(int color) {
                 score *= 19.86f;
             }
         
-            if (score >= 0.75f) {                
+            if (score >= 1.0f) {                
                 cumul += score;
                 scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }
@@ -200,7 +200,7 @@ int FastState::play_random_move(int color) {
                 return play_move_fast(scoredmoves[i].first);                    
             }
         }                                
-    } 
+    }
     
     // fall back global moves      
     MCOwnerTable * mctab = MCOwnerTable::get_MCO();      
@@ -213,14 +213,15 @@ int FastState::play_random_move(int color) {
         int vtx = walk_empty_list(board.m_tomove, vidx, true);
         
         if (vtx == FastBoard::PASS) {
-            return play_move_fast(vtx);
+            return play_move_fast(FastBoard::PASS);
         }
         
         int pattern = board.get_pattern_fast_augment(vtx);
         float score = matcher->matches(color, pattern);                         
 
         if (mctab->is_primed()) {
-            float mcown = mctab->get_score(color, vtx);
+            float mcown = mctab->get_score(color, vtx);          
+            
             if (mcown > 0.40f && mcown < 0.70f) {
                 score *= 2.53f;
             } else {
@@ -231,7 +232,7 @@ int FastState::play_random_move(int color) {
                 } else if (mcown > 0.90f) {
                     score *= 0.725f;
                 }       
-            }                 
+            }
         }       
                             
         if (board.self_atari(color, vtx)) {            

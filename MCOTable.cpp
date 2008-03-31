@@ -29,7 +29,7 @@ void MCOwnerTable::update(Playout::bitboard_t & blacksq) {
     m_mcsimuls++;
 }
 
-float MCOwnerTable::get_score(int color, int vertex) {    
+float MCOwnerTable::get_score(const int color, const int vertex) {    
     assert(vertex >= 0 && vertex < FastBoard::MAXSQ);
     
     float owns = (float)m_mcowner[vertex];

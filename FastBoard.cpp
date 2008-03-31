@@ -656,7 +656,7 @@ void FastBoard::display_liberties(int lastmove) {
 void FastBoard::merge_strings(const int ip, const int aip) {            
     assert(ip != MAXSQ && aip != MAXSQ);
 
-    /* merge psuedoliberties */    
+    /* merge stones */    
     m_stones[ip] += m_stones[aip];
     
     /* loop over stones, update parents */           
@@ -668,11 +668,11 @@ void FastBoard::merge_strings(const int ip, const int aip) {
             int ai = newpos + m_dirs[k];
             // for each liberty, check if it is not shared        
             if (m_square[ai] == EMPTY) {                
-                // find liberty neighbours                
+                // find liberty neighbors                
                 bool found = false;                
                 for (int kk = 0; kk < 4; kk++) {
                     int aai = ai + m_dirs[kk];
-                    // friendly string shouldnt be ip
+                    // friendly string shouldn't be ip
                     // ip can also be an aip that has been marked                    
                     if (m_parent[aai] == ip) {
                         found = true;
@@ -760,10 +760,7 @@ int FastBoard::update_board_fast(const int color, const int i) {
     m_totalstones[color]++;                                    
         
     add_neighbour(i, color); 
-    
-    int captured_sq;    
-    int captured_stones = 0;
-    
+        
     for (int k = 0; k < 4; k++) {
         int ai = i + m_dirs[k];
         
@@ -772,10 +769,8 @@ int FastBoard::update_board_fast(const int color, const int i) {
         assert(ai >= 0 && ai <= m_maxsq);
                                        
         if (m_square[ai] == !color) {
-            if (m_libs[m_parent[ai]] <= 0) {
-                int this_captured    = remove_string_fast(ai);
-                captured_sq          = ai;
-                captured_stones     += this_captured;                                                                      
+            if (m_libs[m_parent[ai]] <= 0) {                
+                m_prisoners[color] += remove_string_fast(ai);
             }
         } else if (m_square[ai] == color) {                                                    
             int ip  = m_parent[i];
@@ -789,9 +784,7 @@ int FastBoard::update_board_fast(const int color, const int i) {
                 }
             }
         }        
-    }           
-    
-    m_prisoners[color] += captured_stones;   
+    }                   
     
     /* move last vertex in list to our position */    
     int lastvertex               = m_empty[--m_empty_cnt];
@@ -801,31 +794,9 @@ int FastBoard::update_board_fast(const int color, const int i) {
     assert(m_libs[m_parent[i]] >= 0);        
 
     /* check whether we still live (i.e. detect suicide) */    
-    if (m_libs[m_parent[i]] == 0) {                                
-        assert(captured_stones == 0);        
+    if (m_libs[m_parent[i]] == 0) {                                               
         remove_string_fast(i);                
     } 
-
-   /* if (m_square[i] != EMPTY) {
-        {
-            int ax = count_rliberties(i);
-            int ay = m_libs[m_parent[i]];
-            if (ax != ay) {
-                myprintf("l: %d il: %d\n", ax, ay);
-                display_board(i);
-                assert(ax == ay);    
-            }
-        }
-        {
-            int ax = string_size(i);
-            int ay = m_stones[m_parent[i]];
-            if (ax != ay) {
-                myprintf("l: %d il: %d\n", ax, ay);
-                display_board(i);
-                assert(ax == ay);    
-            }
-        }
-    }*/
         
     return -1;
 }
@@ -1237,19 +1208,13 @@ int FastBoard::get_extra_dir(int i) {
 
 bool FastBoard::kill_or_connect(int color, int vertex) {                        
     for (int k = 0; k < 4; k++) {
-        int ai = vertex + m_dirs[k];
+        int ai = vertex + m_dirs[k];        
+        int sq = get_square(ai);                              
+        int libs = m_libs[m_parent[ai]];
         
-        int sq = get_square(ai);
-        
-        if (sq < EMPTY) {                 
-            int libs = m_libs[m_parent[ai]];
-            
-            if (libs <= 1 && sq == !color) {  
-                return true;                                   
-            } else if (libs >= 3 && sq == color) {
-                return true;
-            }      
-        }
+        if ((libs <= 1 && sq == !color) || (libs >= 3 && sq == color)) {
+            return true;
+        }              
     }          
     
     return false;       
@@ -1312,7 +1277,14 @@ bool FastBoard::self_atari(int color, int vertex) {
         return false;
     }
     
-    // 3) we only add at most 1 liberty, and we removed 1, so check if 
+    // any neighbor by itself has at most 2 liberties now,
+    // and we can have at most one empty neighbor
+    // 3) if we don't connect at all, we're dead
+    if (count_neighbours(color, vertex) == 0) {
+        return true;
+    }
+    
+    // 4) we only add at most 1 liberty, and we removed 1, so check if 
     // the sum of friendly neighbors had 2 or less that might have 
     // become one (or less, in which case this is multi stone suicide)
     
@@ -2040,27 +2012,23 @@ int FastBoard::minimum_elib_count(int color, int vertex) {
 
 // returns our lowest liberties, enemies lowest liberties
 // 8 is the maximum
-std::pair<int, int> FastBoard::nbr_criticality(int color, int vertex) {
-    int minmine = 8;
-    int minhis = 8;
+std::pair<int, int> FastBoard::nbr_criticality(int color, int vertex) {    
+    std::tr1::array<int, 4> color_libs;
+
+    color_libs[0] = 8;
+    color_libs[1] = 8;
+    color_libs[2] = 8;
+    color_libs[3] = 8;
     
     for (int k = 0; k < 4; k++) {
-        int ai = vertex + m_dirs[k];
-        if (m_square[ai] < EMPTY) {
-            int lc = m_libs[m_parent[ai]];            
-            if (m_square[ai] == color) {            
-                if (lc < minmine) {
-                    minmine = lc;
-                }
-            } else if (m_square[ai] == !color) {
-                if (lc < minhis) {
-                    minhis = lc;
-                }
-            }
-        } 
+        int ai = vertex + m_dirs[k];        
+        int lc = m_libs[m_parent[ai]];     
+        if (lc < color_libs[m_square[ai]]) {
+            color_libs[m_square[ai]] = lc;
+        }
     } 
-    
-    return std::make_pair(minmine, minhis);
+        
+    return std::make_pair(color_libs[color], color_libs[!color]);    
 }
 
 int FastBoard::count_rliberties(int vertex) {

@@ -520,8 +520,8 @@ void UCTSearch::ponder() {
     Playout::mc_owner(m_rootstate, 64);             
          
     m_run = true;
-    int cpus = SMP::get_num_cpus();       
-    //int cpus = 2;     
+    //int cpus = SMP::get_num_cpus();       
+    int cpus = 2;     
     boost::thread_group tg;        
 #ifdef USE_SMP        
     for (int i = 1; i < cpus; i++) {         
