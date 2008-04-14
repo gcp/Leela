@@ -147,7 +147,7 @@ int FastState::play_random_move(int color) {
         }        
     }   
     
-    Matcher * matcher = Matcher::get_Matcher(); 
+    Matcher * matcher = Matcher::get_Matcher();   
                 
     if (newcnt > 0) {                                                                     
         float cumul = 0.0f; 
@@ -184,7 +184,7 @@ int FastState::play_random_move(int color) {
             
             if (!nearby) {
                 score *= 19.86f;
-            }
+            }                       
         
             if (score >= 1.0f) {                
                 cumul += score;
@@ -201,9 +201,9 @@ int FastState::play_random_move(int color) {
             }
         }                                
     }
-    
+           
     // fall back global moves      
-    MCOwnerTable * mctab = MCOwnerTable::get_MCO();      
+    MCOwnerTable * mctab = MCOwnerTable::get_MCO(); 
     
     int loops = 4;    
     float cumul = 0.0f;
@@ -217,7 +217,7 @@ int FastState::play_random_move(int color) {
         }
         
         int pattern = board.get_pattern_fast_augment(vtx);
-        float score = matcher->matches(color, pattern);                         
+        float score = matcher->matches(color, pattern);                                         
 
         if (mctab->is_primed()) {
             float mcown = mctab->get_score(color, vtx);          

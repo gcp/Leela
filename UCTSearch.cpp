@@ -478,9 +478,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
             }  
             keeprunning = (!m_hasrunflag || (*m_runflag));
         }   
-        if (iterations++ > max_iterations) {
-            keeprunning = false;
-        }     
+        //if (iterations++ > max_iterations) {
+    //        keeprunning = false;
+      //  }     
     } while(keeprunning);
     
     // stop the search
@@ -520,8 +520,8 @@ void UCTSearch::ponder() {
     Playout::mc_owner(m_rootstate, 64);             
          
     m_run = true;
-    //int cpus = SMP::get_num_cpus();       
-    int cpus = 2;     
+    int cpus = SMP::get_num_cpus();       
+    //int cpus = 2;     
     boost::thread_group tg;        
 #ifdef USE_SMP        
     for (int i = 1; i < cpus; i++) {         

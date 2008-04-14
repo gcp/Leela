@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -7,8 +9,8 @@
 #include <vector>
 #include <functional>
 #include <boost/thread.hpp>
+#include <boost/tuple/tuple.hpp>
 
-#include "config.h"
 #include "FastState.h"
 #include "Playout.h"
 #include "UCTNode.h"
@@ -23,19 +25,7 @@ UCTNode::UCTNode(int color, int vertex, float score)
    m_blackwins(0.0f), m_visits(0), m_valid(true) {
     
     m_ravevisits = 20;  
-    m_ravestmwins = 10.0f;   
-    //m_ravestmwins = 25.0f + (score/100.0f);
-    /*if (score > 50.0f) {
-        m_ravevisits =  25.0f;
-        m_ravestmwins = 25.0f;
-    } else {
-        m_ravevisits  = 25.0f;
-        m_ravestmwins = 12.5f;
-    }*/
-    //m_ravevisits = 1;  
-    //m_ravestmwins = 1.0f + (score / 100.0f);
-    //m_ravevisits = 20;  
-    //m_ravestmwins = 15.0f * tanhf(score);  20 for pr20
+    m_ravestmwins = 10.0f;       
 }
 
 UCTNode::~UCTNode() {    
@@ -310,23 +300,24 @@ UCTNode* UCTNode::uct_select_child(int color) {
     return best;
 }
 
-class NodeComp : public std::binary_function<UCTNode*, UCTNode*, bool> {   
+class NodeComp : public std::binary_function<UCTNode::sortnode_t, UCTNode::sortnode_t, bool> {   
 private:
-    const int m_color;
+    const int m_maxvisits;
 public:   
-    NodeComp(const int color) : m_color(color) {}
+    NodeComp(const int maxvisits) : m_maxvisits(maxvisits) {}
    
-    bool operator()(const UCTNode * a, const UCTNode * b) {  
-    
+    bool operator()(const UCTNode::sortnode_t a, const UCTNode::sortnode_t b) {                      
         // edge cases, one playout or none
-        if (a->first_visit() && !b->first_visit()) {
+        if (!a.get<1>() && b.get<1>()) {
             return false;
         }  
-        if (b->first_visit() && !a->first_visit()) {
+        
+        if (!b.get<1>() && a.get<1>()) {
             return true;
         }
-        if (a->first_visit() && b->first_visit()) {
-            if (a->get_score() > b->get_score()) {
+        
+        if (!a.get<1>() && !b.get<1>()) {
+            if ((a.get<2>())->get_score() > (b.get<2>())->get_score()) {
                 return true;
             } else {
                 return false;
@@ -336,25 +327,25 @@ public:
         // first check: are playouts comparable and sufficient?
         // then winrate counts        
 
-        if (a->get_visits() > UCTSearch::MATURE_TRESHOLD 
-            && b->get_visits() > UCTSearch::MATURE_TRESHOLD
-            && a->get_visits() * 2 > b->get_visits()
-            && b->get_visits() * 2 > a->get_visits()) {
+        if (a.get<1>() > UCTSearch::MATURE_TRESHOLD 
+            && b.get<1>() > UCTSearch::MATURE_TRESHOLD
+            && a.get<1>() * 2 > m_maxvisits
+            && b.get<1>() * 2 > m_maxvisits) {
         
-            if (a->get_winrate(m_color) == b->get_winrate(m_color)) {
-                if (a->get_visits() > b->get_visits()) {
+            if (a.get<0>() == b.get<0>()) {
+                if (a.get<1> ()> b.get<1>()) {
                     return true;
                 } else {
                     return false;
                 }
-            } else if (a->get_winrate(m_color) > b->get_winrate(m_color)) {
+            } else if (a.get<0>() > b.get<0>()) {
                 return true;
             } else {
                 return false;
             } 
         } else {        
             // playout amount differs greatly, prefer playouts                       
-            if (a->get_visits() > b->get_visits()) {
+            if (a.get<1>() > b.get<1>()) {
                 return true;
             } else {
                 return false;
@@ -368,27 +359,31 @@ public:
     sorting the vector, and reconstructing to linked list again
 */        
 void UCTNode::sort_children(int color) {
-    SMP::Lock lock(get_mutex());    
-    std::vector<UCTNode*> tmp;
+    SMP::Lock lock(get_mutex());             
+    std::vector<sortnode_t> tmp;
     
     UCTNode * child = m_firstchild;    
+    int maxvisits = 0;
     
     while (child != NULL) {        
-        tmp.push_back(child);
+        int visits = child->get_visits();
+        tmp.push_back(boost::make_tuple(child->get_winrate(color), visits, child));
+        
+        maxvisits = std::max(maxvisits, visits);                
                         
         child = child->m_nextsibling;       
     }        
     
     // reverse sort, because list reconstruction is backwards
-    std::sort(tmp.begin(), tmp.end(), NodeComp(color));        
+    std::sort(tmp.begin(), tmp.end(), NodeComp(maxvisits));        
     std::reverse(tmp.begin(), tmp.end());
     
     m_firstchild = NULL;
     
-    std::vector<UCTNode*>::iterator it;
+    std::vector<sortnode_t>::iterator it;
     
     for (it = tmp.begin(); it != tmp.end(); ++it) {
-        link_child(*it);   
+        link_child(it->get<2>());   
     }       
 }
 
@@ -480,7 +475,7 @@ void UCTNode::updateRAVE(Playout & playout, int color) {
             bool bpass = playout.passthrough(FastBoard::BLACK, move);        
             
             if (bpass) { 
-                SMP::Lock lock(get_mutex());    
+                SMP::Lock lock(child->get_mutex());    
                 child->m_ravevisits++;
                         
                 if (score > 0.0f) {
@@ -491,7 +486,7 @@ void UCTNode::updateRAVE(Playout & playout, int color) {
             bool wpass = playout.passthrough(FastBoard::WHITE, move);        
             
             if (wpass) { 
-                SMP::Lock lock(get_mutex());    
+                SMP::Lock lock(child->get_mutex());    
                 child->m_ravevisits++;
                         
                 if (score < 0.0f) {

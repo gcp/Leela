@@ -4,12 +4,16 @@
 #include "config.h"
 
 #include <boost/thread.hpp>
+#include <boost/tuple/tuple.hpp>
+
 #include "SMP.h"
 #include "GameState.h"
 #include "Playout.h"
 
 class UCTNode {
 public:        
+    typedef boost::tuple<float, int, UCTNode*> sortnode_t;
+
     UCTNode(int color, int vertex, float score);
     ~UCTNode();    
     bool first_visit() const;
@@ -40,7 +44,8 @@ public:
     void sort_children(int color);    
     SMP::Mutex & get_mutex();
 
-private:                   
+private:            
+           
     void link_child(UCTNode * newchild);        
         
     // Tree data
