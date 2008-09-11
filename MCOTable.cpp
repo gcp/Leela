@@ -1,5 +1,5 @@
 #include "config.h"
-
+#include <cassert>
 #include <vector>
 
 #include "MCOTable.h"

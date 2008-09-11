@@ -206,7 +206,11 @@ bool UCTSearch::allow_early_exit() {
     high = p2 + 3.0f * sqrtf(0.25f / n2);    
     
     if (low > high) {
-        myprintf("Allowing early exit: low: %f > high: %f\n", low, high);
+        myprintf("Allowing early exit: low: %f%% > high: %f%%\n", low * 100.0f, high * 100.0f);
+        return true;
+    }
+    if (p1 < 0.10f || p1 > 0.95f) {
+        myprintf("Allowing early exit: score: %f%%\n", p1 * 100.0f);
         return true;
     }
     
@@ -422,9 +426,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
         GUIprintf("Analyzing...");
     }
     
-    //XXX: testing
-    //m_maxvisits = 10000;
-    int max_iterations = 5000;    
+    //XXX: testing    
+    int max_iterations = 10000;    
                  
     m_rootstate.start_clock(color);
 
@@ -439,7 +442,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     
     m_run = true;            
     int cpus = SMP::get_num_cpus();        
-    //int cpus = 2;
+    //int cpus = 4;
     boost::thread_group tg;         
 #ifdef USE_SMP       
     for (int i = 1; i < cpus; i++) {         
@@ -466,7 +469,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             keeprunning = (centiseconds_elapsed < time_for_move 
                            && m_root.get_visits() < m_maxvisits
                            && (!m_hasrunflag || (*m_runflag)));
-                           
+                                       
             // check for early exit                           
             if (keeprunning && ((iterations & 127) == 0) && centiseconds_elapsed > time_for_move/2) {
                 keeprunning = !allow_early_exit();    
@@ -478,9 +481,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
             }  
             keeprunning = (!m_hasrunflag || (*m_runflag));
         }   
-        //if (iterations++ > max_iterations) {
-    //        keeprunning = false;
-      //  }     
+        if (iterations++ > max_iterations) {
+            keeprunning = false;
+        }     
     } while(keeprunning);
     
     // stop the search
@@ -521,7 +524,7 @@ void UCTSearch::ponder() {
          
     m_run = true;
     int cpus = SMP::get_num_cpus();       
-    //int cpus = 2;     
+    //int cpus = 4;     
     boost::thread_group tg;        
 #ifdef USE_SMP        
     for (int i = 1; i < cpus; i++) {         

@@ -1,3 +1,4 @@
+#include <cassert>
 #include "config.h"
 
 #include <math.h>

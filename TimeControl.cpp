@@ -1,3 +1,4 @@
+#include <cassert>
 #include "TimeControl.h"
 #include "Utils.h"
 

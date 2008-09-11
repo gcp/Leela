@@ -1,5 +1,6 @@
 #include <vector>
 #include <boost/tr1/array.hpp>
+#include <cassert>
 #include "config.h"
 
 #include "Timing.h"

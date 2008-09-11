@@ -114,7 +114,9 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (std::isdigit(input[0])) {        
         std::istringstream strm(input);
+        char spacer;
         strm >> id;
+        strm >> std::noskipws >> spacer;
         std::getline(strm, command);
     } else {
         command = input;
@@ -243,7 +245,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             {
                 std::auto_ptr<UCTSearch> search(new UCTSearch(game));
 
-                int move = search->think(who);
+                int move = search->think(who, UCTSearch::NOPASS);
                 game.play_move(who, move);                    
 
                 std::string vertex = game.move_to_text(move);            

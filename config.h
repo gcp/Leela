@@ -20,8 +20,8 @@
 #define VERSION         "0.3.14"
 
 /* Features */
-#define USE_PONDER
-#define USE_SMP
+//#define USE_PONDER
+//#define USE_SMP
 
 /* Integer types */
 

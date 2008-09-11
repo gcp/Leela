@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "config.h"
 
 #include "FullBoard.h"

@@ -3,6 +3,7 @@
 #include <sstream>
 #include <algorithm>
 #include <assert.h>
+#include <boost/tr1/array.hpp>
 
 #include "config.h"
 
@@ -2101,7 +2102,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
         }
         
         int lc = 0;
-        boost::array<int, 2> libarr;
+		std::tr1::array<int, 2> libarr;
         tmp.add_string_liberties<2>(atari, libarr, lc);
         
         assert(lc == 2);                
