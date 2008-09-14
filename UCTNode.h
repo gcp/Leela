@@ -30,10 +30,12 @@ public:
     int get_visits() const;
     int get_ravevisits() const;    
     float get_score() const;
+	int do_extend() const;
     void set_best();
     void set_move(int move);
     void set_visits(int visits);
     void set_blackwins(float wins);
+	void set_extend(int runs);
     void update(Playout & gameresult, int color); 
     void updateRAVE(Playout & playout, int color);    
     UCTNode* uct_select_child(int color);    
@@ -63,6 +65,8 @@ private:
     float m_score;
     // alive (superko)
     bool m_valid;
+	// extend node
+	int m_extend;
     // mutex    
     SMP::Mutex m_nodemutex;
 };

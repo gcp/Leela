@@ -22,7 +22,7 @@ using namespace Utils;
 
 UCTNode::UCTNode(int color, int vertex, float score) 
  : m_firstchild(NULL), m_move(vertex), m_score(score),
-   m_blackwins(0.0f), m_visits(0), m_valid(true) {
+ m_blackwins(0.0f), m_visits(0), m_valid(true), m_extend(UCTSearch::MATURE_TRESHOLD) {
     
     m_ravevisits = 20;  
     m_ravestmwins = 10.0f;       
@@ -62,7 +62,7 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
     
     FastBoard & board = state.board;      
     
-    typedef std::pair<float, int> scored_node; 
+	typedef std::pair<float, int> scored_node; 
     std::vector<scored_node> nodelist;        
     std::vector<int> territory = state.board.influence();
     std::vector<int> moyo = state.board.moyo();
@@ -76,7 +76,7 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
             // add and score a node        
             if (vertex != state.komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {                                          
-                    float score = state.score_move(territory, moyo, vertex);        
+                    float score = state.score_move(territory, moyo, vertex);
                     nodelist.push_back(std::make_pair(score, vertex));                    
                 } 
             }                                           
@@ -104,6 +104,14 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
     for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
         if (totalchildren - childrenseen <= maxchilds) {                        
             UCTNode * vtx = new UCTNode(state.get_to_move(), it->second, it->first);
+			// atari giving
+			// was == 2, == 1
+			if (state.board.minimum_elib_count(board.m_tomove, it->second) <= 2) {
+				vtx->set_extend(5);
+			}			
+			if (state.board.minimum_elib_count(!board.m_tomove, it->second) == 1) {
+				vtx->set_extend(5);
+			}			
             link_child(vtx);
             childrenadded++;                        
         } 
@@ -140,6 +148,10 @@ int UCTNode::get_move() const {
 
 void UCTNode::set_move(int move) {
     m_move = move;
+}
+
+void UCTNode::set_extend(int runs) {
+	m_extend = runs;
 }
 
 void UCTNode::update(Playout & gameresult, int color) {   
@@ -213,6 +225,10 @@ int UCTNode::get_visits() const {
 
 int UCTNode::get_ravevisits() const {
     return m_ravevisits;
+}
+
+int UCTNode::do_extend() const {
+	return m_extend;
 }
 
 UCTNode* UCTNode::uct_select_child(int color) {                                   

@@ -41,7 +41,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
 
     bool has_children = node->has_children();
 
-    if (has_children == false && node->get_visits() <= MATURE_TRESHOLD) {           
+    if (has_children == false && node->get_visits() <= node->do_extend()) {           
         noderesult.run(currstate);                
     } else {                
         if (has_children == false && m_nodes < MAX_TREE_SIZE) {                

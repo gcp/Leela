@@ -219,21 +219,10 @@ int FastState::play_random_move(int color) {
         int pattern = board.get_pattern_fast_augment(vtx);
         float score = matcher->matches(color, pattern);                                         
 
-        if (mctab->is_primed()) {
-            float mcown = mctab->get_score(color, vtx);          
-            
-            if (mcown > 0.40f && mcown < 0.70f) {
-                score *= 2.53f;
-            } else {
-                if (mcown < 0.10f) {
-                    score *= 0.0166f;
-                } else if (mcown < 0.20f) {
-                    score *= 0.067f;
-                } else if (mcown > 0.90f) {
-                    score *= 0.725f;
-                }       
-            }
-        }       
+		if (mctab->is_primed()) {
+			float mcown = mctab->get_score(color, vtx);                      
+			score *= (0.6f - fabs(mcown - 0.5f)); 
+		} 
                             
         if (board.self_atari(color, vtx)) {            
             score *= 0.01472f;
