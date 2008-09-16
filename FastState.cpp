@@ -221,7 +221,8 @@ int FastState::play_random_move(int color) {
 
 		if (mctab->is_primed()) {
 			float mcown = mctab->get_score(color, vtx);                      
-			score *= (0.6f - fabs(mcown - 0.5f)); 
+			float ownfac = (0.75f - fabs(mcown - 0.5f));
+			score *= ownfac * ownfac; 
 		} 
                             
         if (board.self_atari(color, vtx)) {            

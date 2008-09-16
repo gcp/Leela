@@ -103,15 +103,17 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
         
     for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
         if (totalchildren - childrenseen <= maxchilds) {                        
-            UCTNode * vtx = new UCTNode(state.get_to_move(), it->second, it->first);
-			// atari giving
-			// was == 2, == 1
-			if (state.board.minimum_elib_count(board.m_tomove, it->second) <= 2) {
-				vtx->set_extend(5);
-			}			
-			if (state.board.minimum_elib_count(!board.m_tomove, it->second) == 1) {
-				vtx->set_extend(5);
-			}			
+            UCTNode * vtx = new UCTNode(state.get_to_move(), it->second, it->first);	
+			if (it->second != FastBoard::PASS) {
+				// atari giving
+				// was == 2, == 1
+				if (state.board.minimum_elib_count(board.m_tomove, it->second) <= 2) {
+					vtx->set_extend(5);
+				}			
+				if (state.board.minimum_elib_count(!board.m_tomove, it->second) == 1) {
+					vtx->set_extend(5);
+				}			
+			}
             link_child(vtx);
             childrenadded++;                        
         } 
@@ -383,7 +385,11 @@ void UCTNode::sort_children(int color) {
     
     while (child != NULL) {        
         int visits = child->get_visits();
-        tmp.push_back(boost::make_tuple(child->get_winrate(color), visits, child));
+		if (visits) {
+			tmp.push_back(boost::make_tuple(child->get_winrate(color), visits, child));
+		} else {
+			tmp.push_back(boost::make_tuple(0.0f, 0, child));
+		}
         
         maxvisits = std::max(maxvisits, visits);                
                         
