@@ -133,3 +133,7 @@ void TimeControl::set_boardsize(int boardsize) {
 int TimeControl::get_maintime() {
     return m_maintime / 100;
 }
+
+int TimeControl::get_remaining_time(int color) {
+    return m_remaining_time[color];
+}

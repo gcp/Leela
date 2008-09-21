@@ -427,7 +427,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     }
     
     //XXX: testing    
-    //int max_iterations = 10000;    
+    //int max_iterations = 10000;
                  
     m_rootstate.start_clock(color);
 
@@ -465,6 +465,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             if (centiseconds_elapsed - last_update > 250) {
                 last_update = centiseconds_elapsed;            
                 dump_thinking();                        
+		dump_analysis();
             }  
             keeprunning = (centiseconds_elapsed < time_for_move 
                            && m_root.get_visits() < m_maxvisits

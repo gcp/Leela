@@ -103,17 +103,17 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
         
     for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
         if (totalchildren - childrenseen <= maxchilds) {                        
-            UCTNode * vtx = new UCTNode(state.get_to_move(), it->second, it->first);	
-			if (it->second != FastBoard::PASS) {
-				// atari giving
-				// was == 2, == 1
-				if (state.board.minimum_elib_count(board.m_tomove, it->second) <= 2) {
-					vtx->set_extend(5);
-				}			
-				if (state.board.minimum_elib_count(!board.m_tomove, it->second) == 1) {
-					vtx->set_extend(5);
-				}			
-			}
+            UCTNode * vtx = new UCTNode(state.get_to_move(), it->second, it->first);
+	    if (it->second != FastBoard::PASS) {
+	        // atari giving
+	        // was == 2, == 1
+	        if (state.board.minimum_elib_count(board.m_tomove, it->second) <= 2) {
+		        vtx->set_extend(5);
+	        }			
+	        if (state.board.minimum_elib_count(!board.m_tomove, it->second) == 1) {
+		        vtx->set_extend(5);
+	        }			
+	    }
             link_child(vtx);
             childrenadded++;                        
         } 
@@ -274,10 +274,10 @@ UCTNode* UCTNode::uct_select_child(int color) {
             if (!child->first_visit()) {
                 // UCT part
                 float winrate   = child->get_winrate(color);     
-                float childrate = logparent / child->get_visits();                                                                                                        
-                float uct = 0.15f * sqrtf(childrate);
+                //float childrate = logparent / child->get_visits();                                                                                                        
+                //float uct = 0.15f * sqrtf(childrate);
                 
-                uctvalue = winrate + uct;  
+                uctvalue = winrate;// + uct;  
                 patternbonus = sqrtf((child->get_score() * 0.005f) / child->get_visits());
             } else {
                 uctvalue = 1.1f;                                                                                
@@ -285,10 +285,9 @@ UCTNode* UCTNode::uct_select_child(int color) {
             }                                                    
             
             // RAVE part                                                                                
-            float ravewinrate = child->get_raverate();                                                
-            
-            float ravevalue = ravewinrate + patternbonus; 
-            float beta = std::max(0.0f, 1.0f - logf(1.0f + child->get_visits()) / 12.0f);                         
+            float ravewinrate = child->get_raverate();            
+            float ravevalue = ravewinrate + patternbonus;             
+            float beta = std::max(0.0f, 1.0f - logf(1.0f + child->get_visits()) / 11.0f); 
                
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             
