@@ -149,24 +149,6 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     myprintf("\n");
 }
 
-void UCTSearch::dump_thinking() {
-    GameState tempstate = m_rootstate;   
-    int color = tempstate.board.m_tomove;
-    myprintf("Nodes: %d, Winrate: %5.2f%%, PV: ", 
-              m_root.get_visits(), m_root.get_winrate(color) * 100.0f);
-    myprintf(get_pv(tempstate, m_root).c_str());
-    myprintf("\n");
-    
-    std::string bestmove;
-    if (m_root.get_first_child()) {
-        bestmove = m_rootstate.move_to_text(m_root.get_first_child()->get_move());        
-    } else {
-        bestmove = "pass";
-    }        
-    GUIprintf("Nodes: %d, Best move: %s", 
-              m_root.get_visits(), bestmove.c_str());
-}
-
 bool UCTSearch::allow_early_exit() {    
     int color = m_rootstate.board.m_tomove;    
     
@@ -387,8 +369,13 @@ void UCTSearch::dump_analysis(void) {
     winrate = std::max(0.0f, winrate);
     winrate = std::min(100.0f, winrate);
         
-    GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(), 
-               winrate, pvstring.c_str());   
+    myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n", m_root.get_visits(), 
+             winrate, pvstring.c_str());   
+
+    if (!m_quiet) {
+        GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(), 
+                   winrate, pvstring.c_str());   
+    }
 }
 
 bool UCTSearch::is_running() {
@@ -420,16 +407,38 @@ int UCTSearch::think(int color, passflag_t passflag) {
         time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     
         GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
+
+        // book moves
+        if (m_rootstate.get_handicap() == 0) {
+            if (m_rootstate.board.get_ko_hash() == 0xC554BD10698EC933) {
+                return 60;  // e5
+            } else if (m_rootstate.board.get_ko_hash() == 0x16D49B38172BAE63) {
+                if (Random::get_Rng()->randint(2) == 0) {
+                    return 82; // e7
+                } else {
+                    return 81; // d7
+                }
+            } else if (m_rootstate.board.get_ko_hash() == 0x94CDBE222D4E7F1F) {
+                int rm = Random::get_Rng()->randint(3);
+                if (rm == 0) {
+                    return 352; // r3
+                } else if (rm == 1) {
+                    return 373; // c4
+                } else {
+                    return 374; // d4
+                }
+            }
+        }
     } else {
         time_for_move = MAX_TREE_SIZE * 100;
                 
-        GUIprintf("Analyzing...");
+        GUIprintf("Thinking...");
     }
     
     //XXX: testing    
     //int max_iterations = 10000;
                  
-    m_rootstate.start_clock(color);
+    m_rootstate.start_clock(color);   
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();  
@@ -463,8 +472,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         // check if we should still search
         if (!m_analyzing) {
             if (centiseconds_elapsed - last_update > 250) {
-                last_update = centiseconds_elapsed;            
-                dump_thinking();                        
+                last_update = centiseconds_elapsed;                                                   
 		dump_analysis();
             }  
             keeprunning = (centiseconds_elapsed < time_for_move 
@@ -499,23 +507,23 @@ int UCTSearch::think(int color, passflag_t passflag) {
         
     // display search info        
     myprintf("\n");
-    dump_stats(m_rootstate, m_root);                  
-        
+    dump_stats(m_rootstate, m_root);                          
+
     if (centiseconds_elapsed > 0) {    
         myprintf("\n%d visits, %d nodes, %d vps\n\n", 
                  m_root.get_visits(), 
                  m_nodes,
                  (m_root.get_visits() * 100) / (centiseconds_elapsed+1));  
-        GUIprintf("%d visits, %d nodes, %d vps", 
+        GUIprintf("%d visits, %d nodes, %d vps",      
                  m_root.get_visits(), 
                  m_nodes,
                  (m_root.get_visits() * 100) / (centiseconds_elapsed+1));                                                     
-    }             
-                
+    }      
+
     int bestmove = get_best_move(passflag);
-    
+
     GUIprintf("Best move: %s", m_rootstate.move_to_text(bestmove).c_str());
-       
+               
     return bestmove;
 }
 
@@ -558,4 +566,8 @@ void UCTSearch::set_visit_limit(int visits) {
 
 void UCTSearch::set_analyzing(bool flag) {
     m_analyzing = flag;
+}
+
+void UCTSearch::set_quiet(bool flag) {
+    m_quiet = flag;
 }

@@ -30,13 +30,14 @@ public:
     /*
         Maximum size of the tree in memory.
     */        
-    static const int MAX_TREE_SIZE = 10000000;    
+    static const int MAX_TREE_SIZE = 5000000;    
     
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
     void set_visit_limit(int visits);    
     void set_runflag(bool * flag);
     void set_analyzing(bool flag);
+    void set_quiet(bool flag);
     void ponder();        
     bool is_running();      
     Playout play_simulation(KoState & currstate, UCTNode * const node);    
@@ -64,6 +65,7 @@ private:
     
     // Special modes
     bool m_analyzing;
+    bool m_quiet;
 };
 
 class UCTWorker {

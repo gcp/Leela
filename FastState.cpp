@@ -211,27 +211,27 @@ int FastState::play_random_move(int color) {
     do {
         int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
         int vtx = walk_empty_list(board.m_tomove, vidx, true);
-        
+
         if (vtx == FastBoard::PASS) {
             return play_move_fast(FastBoard::PASS);
         }
-        
+
         int pattern = board.get_pattern_fast_augment(vtx);
         float score = matcher->matches(color, pattern);                                         
 
-		if (mctab->is_primed()) {
-			float mcown = mctab->get_score(color, vtx);                      
-			float ownfac = (0.75f - fabs(mcown - 0.5f));
-			score *= ownfac * ownfac; 
-		} 
-                            
+        if (mctab->is_primed()) {
+            float mcown = mctab->get_score(color, vtx);                      
+            float ownfac = (0.75f - fabs(mcown - 0.5f));
+            score *= ownfac * ownfac; 
+        } 
+
         if (board.self_atari(color, vtx)) {            
             score *= 0.01472f;
         }                       
-                
+
         cumul += score;
         scoredmoves[scoredcnt++] = std::make_pair(vtx, cumul);              
-        
+
     } while (--loops > 0);        
 
     float index = Random::get_Rng()->randflt() * cumul;
