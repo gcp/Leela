@@ -237,8 +237,19 @@ int SGFTree::string_to_vertex(std::string movestring) {
     char c1 = movestring[0];
     char c2 = movestring[1];
     
-    int cc1 = c1 - 'a';
-    int cc2 = bsize - (c2 - 'a') - 1;
+    int cc1;
+    int cc2;
+
+    if (c1 >= 'A' && c1 <= 'Z') {
+        cc1 = 26 + c1 - 'A';        
+    } else {
+        cc1 = c1 - 'a';     
+    }        
+    if (c2 >= 'A' && c2 <= 'Z') {
+        cc2 = bsize - 26 - (c2 - 'A') - 1;
+    } else {
+        cc2 = bsize - (c2 - 'a') - 1;
+    }
     
     // catch illegal SGF
     if (cc1 < 0 || cc1 >= bsize

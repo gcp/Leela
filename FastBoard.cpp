@@ -121,7 +121,7 @@ void FastBoard::reset_board(int size) {
     }         
     
     m_parent[MAXSQ] = MAXSQ;    
-    m_libs[MAXSQ]   = 999;
+    m_libs[MAXSQ]   = 16384;
     m_next[MAXSQ]   = MAXSQ;                        
 }
 
@@ -554,7 +554,11 @@ void FastBoard::display_board(int lastmove) {
       
     myprintf("\n   ");
     for (int i = 0; i < boardsize; i++) {
-        myprintf("%c ", (('a' + i < 'i') ? 'a' + i : 'a' + i + 1));
+        if (i < 25) {
+            myprintf("%c ", (('a' + i < 'i') ? 'a' + i : 'a' + i + 1));
+        } else {
+            myprintf("%c ", (('A' + (i-25) < 'I') ? 'A' + (i-25) : 'A' + (i-25) + 1));
+        }
     }
     myprintf("\n");
     for (int j = boardsize-1; j >= 0; j--) {        
@@ -581,7 +585,11 @@ void FastBoard::display_board(int lastmove) {
     }
     myprintf("   ");
     for (int i = 0; i < boardsize; i++) {
-        myprintf("%c ", (('a' + i < 'i') ? 'a' + i : 'a' + i + 1));
+         if (i < 25) {
+            myprintf("%c ", (('a' + i < 'i') ? 'a' + i : 'a' + i + 1));
+        } else {
+            myprintf("%c ", (('A' + (i-25) < 'I') ? 'A' + (i-25) : 'A' + (i-25) + 1));
+        }
     }
     myprintf("\n\n");
 }
@@ -933,8 +941,14 @@ std::string FastBoard::move_to_text(int move) {
     assert(move == FastBoard::PASS || move == FastBoard::RESIGN || (column >= 0 && column < m_boardsize));
     
     if (move >= 0 && move <= m_maxsq) {
-        result << static_cast<char>(column < 8 ? 'A' + column : 'A' + column + 1);
-        result << (row + 1);        
+        if (column <= 24) {
+            result << static_cast<char>(column < 8 ? 'a' + column : 'a' + column + 1);
+            result << (row + 1);        
+        } else {            
+            column -= 25;
+            result << static_cast<char>(column < 8 ? 'A' + column : 'A' + column + 1);
+            result << (row + 1);        
+        }
     } else if (move == FastBoard::PASS) {
         result << "pass";
     } else if (move == FastBoard::RESIGN) {
@@ -963,8 +977,16 @@ std::string FastBoard::move_to_text_sgf(int move) {
     row = m_boardsize - row - 1;
     
     if (move >= 0 && move <= m_maxsq) {
-        result << static_cast<char>('a' + column);
-        result << static_cast<char>('a' + row);        
+        if (column <= 25) {
+            result << static_cast<char>('a' + column);
+        } else {            
+            result << static_cast<char>('A' + column - 26);
+        }
+        if (row <= 25) {
+            result << static_cast<char>('a' + row);        
+        } else {
+            result << static_cast<char>('A' + row - 26);        
+        }
     } else if (move == FastBoard::PASS) {
         result << "tt";
     } else if (move == FastBoard::RESIGN) {
@@ -1107,8 +1129,8 @@ void FastBoard::kill_neighbours(int vertex, movelist_t & moves, int & movecnt) {
     int kcolor = !scolor;
     int pos = vertex;
 
-	std::tr1::array<int, 4> nbr_list;
-	int nbr_cnt = 0;
+    std::tr1::array<int, 4> nbr_list;
+    int nbr_cnt = 0;
           
     do {                               
         assert(m_square[pos] == scolor);
@@ -1121,18 +1143,18 @@ void FastBoard::kill_neighbours(int vertex, movelist_t & moves, int & movecnt) {
                 int lib = m_libs[par];
                 
                 if (lib <= 1 && nbr_cnt < 4) {				
-					bool found = false;
-					for (int i = 0; i < nbr_cnt; i++) {
-						if (nbr_list[i] == par) {
-							found = true;
-						}
-					}
-					if (!found) {
-						int atari = in_atari(ai);                                        
-						assert(m_square[atari] == EMPTY);
-						moves[movecnt++] = atari;                   
-						nbr_list[nbr_cnt++] = par;
-					}
+		    bool found = false;
+		    for (int i = 0; i < nbr_cnt; i++) {
+			    if (nbr_list[i] == par) {
+				    found = true;
+			    }
+		    }
+		    if (!found) {
+			    int atari = in_atari(ai);                                        
+			    assert(m_square[atari] == EMPTY);
+			    moves[movecnt++] = atari;                   
+			    nbr_list[nbr_cnt++] = par;
+		    }
                 }
             }
         }                        

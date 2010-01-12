@@ -375,6 +375,8 @@ void UCTSearch::dump_analysis(void) {
     if (!m_quiet) {
         GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(), 
                    winrate, pvstring.c_str());   
+    } else {
+        GUIprintf("%d nodes searched", m_root.get_visits());
     }
 }
 
@@ -406,7 +408,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     if (!m_analyzing) {
         time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     
-        GUIprintf("Thinking at most %.2f seconds", time_for_move/100.0f);
+        GUIprintf("Thinking at most %.1f seconds...", time_for_move/100.0f);
 
         // book moves
         if (m_rootstate.get_handicap() == 0) {
@@ -442,7 +444,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();  
-    float score = Playout::mc_owner(m_rootstate, 64);                   
+    float score = Playout::mc_owner(m_rootstate, 128);                   
         
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)

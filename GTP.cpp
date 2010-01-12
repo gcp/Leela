@@ -90,7 +90,8 @@ bool GTP::execute(GameState & game, std::string xinput) {
 	        || xinput[tmp] == 127) {
 	       continue;
         } else {        
-            input += std::tolower(xinput[tmp]);
+            //input += std::tolower(xinput[tmp]);
+            input += xinput[tmp];
         }            
         
         // eat multi whitespace

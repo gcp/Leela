@@ -109,11 +109,19 @@ bool GameState::play_textmove(std::string color, std::string vertex) {
     if (!std::isdigit(vertex[1])) return 0;    
     if (vertex[0] == 'i') return 0;
         
-    if (vertex[0] < 'i') {
-        column = vertex[0] - 'a';
+    if (vertex[0] >= 'A' && vertex[0] <= 'Z') {
+        if (vertex[0] < 'I') {
+            column = 25 + vertex[0] - 'A';
+        } else {
+            column = 25 + (vertex[0] - 'A')-1;
+        }
     } else {
-        column = (vertex[0] - 'a')-1;
-    }
+        if (vertex[0] < 'i') {
+            column = vertex[0] - 'a';
+        } else {
+            column = (vertex[0] - 'a')-1;
+        }
+    }    
         
     std::string rowstring(vertex); 
     rowstring.erase(0, 1);
