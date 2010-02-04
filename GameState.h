@@ -14,6 +14,7 @@ public:
     void init_game(int size = FastBoard::MAXBOARDSIZE, float komi = 7.5f);    
     void reset_game();        
     bool set_fixed_handicap(int stones); 
+    int set_fixed_handicap_2(int stones); 
     void place_free_handicap(int stones);
     void anchor_game_history(void);        
     void trim_game_history(int lastmove);

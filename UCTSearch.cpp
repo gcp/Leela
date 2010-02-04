@@ -444,7 +444,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();  
-    float score = Playout::mc_owner(m_rootstate, 128);                   
+    float score = Playout::mc_owner(m_rootstate, 64);                   
         
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)

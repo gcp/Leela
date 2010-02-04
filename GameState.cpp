@@ -230,6 +230,38 @@ bool GameState::set_fixed_handicap(int handicap) {
     return true;
 }
 
+int GameState::set_fixed_handicap_2(int handicap) {
+    int board_size = board.get_boardsize();
+    int low = board_size >= 13 ? 3 : 2;
+    int mid = board_size / 2; 
+    int high = board_size - 1 - low;
+
+    int interval = (high - mid) / 2;
+    int placed = 0;
+
+    while (interval >= 3) {
+        for (int i = low; i <= high; i += interval) {
+            for (int j = low; j <= high; j += interval) {
+                if (placed >= handicap) return placed;
+                if (board.get_square(i-1, j-1) != FastBoard::EMPTY) continue;
+                if (board.get_square(i-1, j) != FastBoard::EMPTY) continue;
+                if (board.get_square(i-1, j+1) != FastBoard::EMPTY) continue;
+                if (board.get_square(i, j-1) != FastBoard::EMPTY) continue;
+                if (board.get_square(i, j) != FastBoard::EMPTY) continue;
+                if (board.get_square(i, j+1) != FastBoard::EMPTY) continue;
+                if (board.get_square(i+1, j-1) != FastBoard::EMPTY) continue;
+                if (board.get_square(i+1, j) != FastBoard::EMPTY) continue;
+                if (board.get_square(i+1, j+1) != FastBoard::EMPTY) continue;                
+                play_move(FastBoard::BLACK, board.get_vertex(i, j));
+                placed++;                
+            }
+        }
+        interval = interval / 2;
+    }
+
+    return placed;
+}
+
 bool GameState::valid_handicap(int handicap) {
     int board_size = board.get_boardsize();
     
@@ -262,14 +294,20 @@ void GameState::place_free_handicap(int stones) {
     set_fixed_handicap(fixplace);
     stones -= fixplace;    
     
+    stones -= set_fixed_handicap_2(stones);    
+    
     for (int i = 0; i < stones; i++) {
         std::auto_ptr<UCTSearch> search(new UCTSearch(*this));
 
         int move = search->think(FastBoard::BLACK, UCTSearch::NOPASS);
         play_move(FastBoard::BLACK, move);     
-    }    
-    
-    board.m_tomove = FastBoard::WHITE;
+    }
+   
+    if (orgstones)  {
+        board.m_tomove = FastBoard::WHITE;
+    } else {
+        board.m_tomove = FastBoard::BLACK;
+    }
     
     anchor_game_history(); 
     
