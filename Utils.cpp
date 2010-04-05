@@ -6,6 +6,8 @@
 #include <stdarg.h>
 #ifdef WIN32
 #include <windows.h>
+#else
+#include <sys/select.h>
 #endif
 
 #include "Utils.h"
@@ -21,6 +23,8 @@ bool Utils::input_causes_stop() {
 
 bool Utils::input_pending(void) {
 #ifdef HAVE_SELECT
+    fd_set read_fds;
+    struct timeval timeout;
     FD_ZERO(&read_fds);
     FD_SET(0,&read_fds);
     timeout.tv_sec = timeout.tv_usec = 0;

@@ -22,7 +22,7 @@ public:
 #ifdef LITEVERSION    
     static const int MAXBOARDSIZE = 13;
 #else
-    static const int MAXBOARDSIZE = 39;
+    static const int MAXBOARDSIZE = 25;
 #endif    
 
     /*

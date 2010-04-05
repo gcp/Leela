@@ -44,7 +44,7 @@ void FastState::reset_game(void) {
     m_handicap = 0;    
     komove = 0;              
     
-    lastmove = FastBoard::MAXSQ;
+    lastmove = 0;
     onebutlastmove = lastmove;
 }
 
@@ -69,7 +69,7 @@ std::vector<int> FastState::generate_moves(int color) {
         }                                
     }
 
-    result.push_back(FastBoard::PASS);
+    result.push_back(+FastBoard::PASS);
 
     return result;
 }
@@ -275,7 +275,7 @@ void FastState::play_pass(void) {
     onebutlastmove = lastmove;    
     lastmove = FastBoard::PASS;
         
-    board.hash  ^= 0xABCDABCDABCDABCDUI64;    
+    board.hash  ^= 0xABCDABCDABCDABCDULL;    
     board.m_tomove = !board.m_tomove;                 
         
     board.hash ^= Zobrist::zobrist_pass[get_passes()];
@@ -298,7 +298,7 @@ void FastState::play_move(int color, int vertex) {
         movenum++;
         
         if (board.m_tomove == color) {
-            board.hash  ^= 0xABCDABCDABCDABCDUI64;
+            board.hash  ^= 0xABCDABCDABCDABCDULL;
         }            
         board.m_tomove = !color;        
         

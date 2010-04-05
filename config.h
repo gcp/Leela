@@ -10,6 +10,7 @@
 #undef HAVE_SELECT
 #define NOMINMAX
 #else
+#define HAVE_SELECT
 #define GETTIMEOFDAY
 #endif
 

@@ -172,7 +172,7 @@ int FullBoard::update_board(const int color, const int i) {
 void FullBoard::display_board(int lastmove) {
     FastBoard::display_board(lastmove);
     
-    myprintf("Hash: %I64X Ko-Hash: %I64X\n\n", hash, ko_hash);
+    myprintf("Hash: %llX Ko-Hash: %llX\n\n", hash, ko_hash);
 }
 
 void FullBoard::reset_board(int size) {

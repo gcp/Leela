@@ -412,15 +412,15 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
         // book moves
         if (m_rootstate.get_handicap() == 0) {
-            if (m_rootstate.board.get_ko_hash() == 0xC554BD10698EC933) {
+            if (m_rootstate.board.get_ko_hash() == 0xC554BD10698EC933ULL) {
                 return 60;  // e5
-            } else if (m_rootstate.board.get_ko_hash() == 0x16D49B38172BAE63) {
+            } else if (m_rootstate.board.get_ko_hash() == 0x16D49B38172BAE63ULL) {
                 if (Random::get_Rng()->randint(2) == 0) {
                     return 82; // e7
                 } else {
                     return 81; // d7
                 }
-            } else if (m_rootstate.board.get_ko_hash() == 0x94CDBE222D4E7F1F) {
+            } else if (m_rootstate.board.get_ko_hash() == 0x94CDBE222D4E7F1FULL) {
                 int rm = Random::get_Rng()->randint(3);
                 if (rm == 0) {
                     return 352; // r3

@@ -2,6 +2,7 @@
 #include <list>
 #include <set>
 #include <fstream>
+#include <memory>
 #include <boost/tr1/array.hpp>
 #include <boost/lexical_cast.hpp>
 

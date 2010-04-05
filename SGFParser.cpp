@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <cctype>
 #include <string>
+#include <memory>
+#include <stdexcept>
 
 #include "SGFParser.h"
 
@@ -17,7 +19,7 @@ std::string SGFParser::chop_from_file(std::string filename, int index) {
     std::string result;
     
     if (ins.fail()) {
-        throw new std::exception("Error opening file");
+        throw new std::runtime_error("Error opening file");
     }
     
     ins >> std::noskipws;
@@ -183,7 +185,7 @@ int SGFParser::count_games_in_file(std::string filename) {
     std::ifstream ins(filename.c_str(), std::ifstream::binary | std::ifstream::in);         
 
     if (ins.fail()) {
-        throw new std::exception("Error opening file");
+        throw new std::runtime_error("Error opening file");
     }
 
     int count = 0;

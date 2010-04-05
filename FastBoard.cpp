@@ -281,8 +281,8 @@ std::vector<bool> FastBoard::calc_reach_color(int col) {
     std::vector<bool> bd(m_maxsq);
     std::vector<bool> last(m_maxsq);
         
-    fill(bd.begin(), bd.end(), false);
-    fill(last.begin(), last.end(), false);
+    std::fill(bd.begin(), bd.end(), false);
+    std::fill(last.begin(), last.end(), false);
         
     /* needs multi pass propagation, slow */
     do {
@@ -1118,7 +1118,7 @@ int FastBoard::in_atari(int vertex) {
         pos = m_next[pos];
     } while (pos != vertex);    
     
-    assert(FALSE);
+    assert(false);
     
     return false;
 }

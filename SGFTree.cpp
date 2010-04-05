@@ -2,6 +2,8 @@
 #include <fstream>
 #include <cctype>
 #include <sstream>
+#include <stdexcept>
+#include <memory>
 #include <boost/lexical_cast.hpp>
 
 #include "SGFTree.h"
@@ -116,7 +118,7 @@ void SGFTree::populate_states(void) {
     it = m_properties.find("GM");
     if (it != m_properties.end()) {
         if (it->second != "1") {
-            throw new std::exception("SGF Game is not a Go game");
+            throw new std::runtime_error("SGF Game is not a Go game");
         }        
     }
     
@@ -130,7 +132,7 @@ void SGFTree::populate_states(void) {
         if (bsize <= FastBoard::MAXBOARDSIZE) {
             m_state.init_game(bsize);
         } else {
-            throw std::exception("Board size not supported.");
+            throw std::runtime_error("Board size not supported.");
         }
     } 
     
@@ -198,7 +200,7 @@ void SGFTree::set_state(KoState & state) {
 
 void SGFTree::apply_move(int color, int move) {      
     if (move != FastBoard::PASS && m_state.board.get_square(move) != FastBoard::EMPTY) {
-        throw new std::exception("Illegal move");
+        throw new std::runtime_error("Illegal move");
     }
     m_state.play_move(color, move);    
 }
@@ -254,7 +256,7 @@ int SGFTree::string_to_vertex(std::string movestring) {
     // catch illegal SGF
     if (cc1 < 0 || cc1 >= bsize
         || cc2 < 0 || cc2 >= bsize) {
-        throw std::exception("Illegal SGF move");
+        throw std::runtime_error("Illegal SGF move");
     }
     
     int vtx = m_state.board.get_vertex(cc1, cc2);

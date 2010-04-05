@@ -1,4 +1,5 @@
-#include <time.h>
+#include <ctime>
+#include <cstdlib>
 
 #include "config.h"
 

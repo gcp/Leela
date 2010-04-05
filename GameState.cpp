@@ -302,9 +302,9 @@ void GameState::place_free_handicap(int stones) {
         int move = search->think(FastBoard::BLACK, UCTSearch::NOPASS);
         play_move(FastBoard::BLACK, move);     
     }
-   
+    
     if (orgstones)  {
-        board.m_tomove = FastBoard::WHITE;
+    board.m_tomove = FastBoard::WHITE;
     } else {
         board.m_tomove = FastBoard::BLACK;
     }

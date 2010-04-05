@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include <string>
+#include <memory>
 
 #include "FastBoard.h"
 #include "KoState.h"

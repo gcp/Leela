@@ -118,8 +118,8 @@ void PNNode::set_proof_disproof(node_type_t type) {
             }
         }  
 
-        proof = std::min(proof, INF);
-        disproof = std::min(disproof, INF);
+        proof = std::min(proof, +INF);
+        disproof = std::min(disproof, +INF);
 
         m_pn = proof;
         m_dn = disproof;

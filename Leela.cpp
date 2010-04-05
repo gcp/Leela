@@ -1,4 +1,7 @@
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
+#include <memory>
 
 #include "config.h"
 

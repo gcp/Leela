@@ -88,7 +88,7 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
         } else {
             passscore = 0;
         }
-        nodelist.push_back(std::make_pair(passscore, FastBoard::PASS));        
+        nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));        
     }    
     
     // sort (this will reverse scores, but linking is backwards too)
@@ -237,9 +237,10 @@ UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
             
-    int childbound = std::max(2, (int)(((logf((float)get_visits()) - 3.0f) / 0.33647223f) + 2.0f));     
-            
+    int childbound = std::max(2, (int)(((logf((float)get_visits()) - 3.0f) / 0.33647223f) + 2.0f));    
     int parentvisits      = 1;   // avoid logparent being illegal
+    
+    SMP::Lock lock(get_mutex()); 
     
     int childcount = 0;
     UCTNode * child = m_firstchild;
@@ -294,7 +295,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             assert(value > -1000.0f);
         } else {
             /// XXX: can't happen due to priors
-            assert(FALSE);                        
+            assert(false);                        
             patternbonus = (child->get_score() * 0.01f);            
             value = 1.1f;  
         }                
