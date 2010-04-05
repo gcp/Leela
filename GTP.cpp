@@ -254,7 +254,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             }
 #ifdef USE_PONDER
             // now start pondering
-            {
+            if (game.get_last_move() != FastBoard::RESIGN) {
                 std::auto_ptr<UCTSearch> search(new UCTSearch(game));
                 search->ponder();
             }                
@@ -382,7 +382,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
 #ifdef USE_PONDER
             // KGS sends this after our move
             // now start pondering
-            {
+            if (game.get_last_move() != FastBoard::RESIGN) {            
                 std::auto_ptr<UCTSearch> search(new UCTSearch(game));
                 search->ponder();
             }                
