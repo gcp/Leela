@@ -16,7 +16,8 @@ Random* Random::get_Rng(void) {
 
 Random::Random(int seed) {
     if (seed == -1) {
-        seedrandom((uint32)time(0));
+        //seedrandom((uint32)time(0));
+        seedrandom(0);
     } else {
         seedrandom(seed);
     }        
