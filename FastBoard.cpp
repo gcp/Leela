@@ -550,8 +550,8 @@ int FastBoard::eval(float komi) {
 }
 
 void FastBoard::display_board(int lastmove) {
-    int boardsize = get_boardsize();
-      
+    int boardsize = get_boardsize();     
+
     myprintf("\n   ");
     for (int i = 0; i < boardsize; i++) {
         if (i < 25) {

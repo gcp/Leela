@@ -16,6 +16,7 @@ public:
         random number from 0 to max
     */            
     uint32 randint(const uint16 max);
+    uint32 randint32(const uint32 max);
 
     /*
         random float from 0 to 1

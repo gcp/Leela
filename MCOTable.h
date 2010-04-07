@@ -19,6 +19,7 @@ public:
     void update(Playout::bitboard_t & blacksq);    
     
     float get_score(const int color, const int vertex);    
+    int get_score_i(const int color, const int vertex);    
     bool is_primed();    
     
 private:   

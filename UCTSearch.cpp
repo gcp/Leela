@@ -24,7 +24,8 @@ UCTSearch::UCTSearch(GameState & g)
   m_maxvisits(UCTSearch::MAX_TREE_SIZE * 100), 
   m_hasrunflag(false), 
   m_runflag(NULL),
-  m_analyzing(false) {    
+  m_analyzing(false),
+  m_quiet(false) {    
 }
 
 void UCTSearch::set_runflag(bool * flag) {
@@ -319,7 +320,7 @@ void UCTSearch::dump_order2(void) {
         }
     } 
     
-    std::sort(ord_list.rbegin(), ord_list.rend());
+    std::stable_sort(ord_list.rbegin(), ord_list.rend());
     
     myprintf("\nOrder Table\n");
     myprintf("--------------------\n");

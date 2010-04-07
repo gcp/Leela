@@ -92,7 +92,7 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
     }    
     
     // sort (this will reverse scores, but linking is backwards too)
-    std::sort(nodelist.begin(), nodelist.end());        
+    std::stable_sort(nodelist.begin(), nodelist.end());        
     
     // link the nodes together, we only really link the last few
     std::vector<scored_node>::const_iterator it; 
@@ -397,7 +397,7 @@ void UCTNode::sort_children(int color) {
     }        
     
     // reverse sort, because list reconstruction is backwards
-    std::sort(tmp.begin(), tmp.end(), NodeComp(maxvisits));        
+    std::stable_sort(tmp.begin(), tmp.end(), NodeComp(maxvisits));        
     std::reverse(tmp.begin(), tmp.end());
     
     m_firstchild = NULL;

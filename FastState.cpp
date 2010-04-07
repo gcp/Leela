@@ -150,8 +150,11 @@ int FastState::play_random_move(int color) {
     Matcher * matcher = Matcher::get_Matcher();   
                 
     if (newcnt > 0) {                                                                     
-        float cumul = 0.0f; 
-        
+        int cumul = 0; 
+        int bidx = Random::get_Rng()->randint(6);
+	static const int idxs[6] = { 64, 128, 256, 256, 512, 1024 };
+	int bound = idxs[bidx];
+
         for (int i = 0; i < movecnt; i++) {
             int sq = moves[i];
 
@@ -159,15 +162,15 @@ int FastState::play_random_move(int color) {
             if (sq == komove) continue;
             
             int pattern = board.get_pattern_fast_augment(sq);
-            float score = matcher->matches(color, pattern);                                    
+            int score = matcher->matches(color, pattern);                                    
             std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);            
             
-            static const std::tr1::array<float, 9> crit_mine = {
-                1.0f, 3.675f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f                        
+            static const std::tr1::array<int, 9> crit_mine = {
+                1, 4, 1, 1, 1, 1, 1, 1, 1                        
             };
             
-            static const std::tr1::array<float, 9> crit_enemy = {
-                1.0f, 14.0f, 12.36f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
+            static const std::tr1::array<int, 9> crit_enemy = {
+                1, 14, 12, 1, 1, 1, 1, 1, 1
             };
                         
             score *= crit_mine[nbr_crit.first];
@@ -183,19 +186,19 @@ int FastState::play_random_move(int color) {
             }
             
             if (!nearby) {
-                score *= 19.86f;
+                score *= 20;
             }                       
         
-            if (score >= 1.0f) {                
+            if (score >= bound) {    
                 cumul += score;
                 scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }
         }
 
-        float index = Random::get_Rng()->randflt() * cumul;
+        int index = Random::get_Rng()->randint32(cumul);
 
         for (int i = 0; i < scoredcnt; i++) {
-            float point = scoredmoves[i].second;
+            int point = scoredmoves[i].second;
             if (index < point) {
                 return play_move_fast(scoredmoves[i].first);                    
             }
@@ -206,7 +209,7 @@ int FastState::play_random_move(int color) {
     MCOwnerTable * mctab = MCOwnerTable::get_MCO(); 
     
     int loops = 4;    
-    float cumul = 0.0f;
+    int cumul = 0;
     
     do {
         int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
@@ -217,16 +220,16 @@ int FastState::play_random_move(int color) {
         }
 
         int pattern = board.get_pattern_fast_augment(vtx);
-        float score = matcher->matches(color, pattern);                                         
+        int score = matcher->matches(color, pattern);                                         
 
         if (mctab->is_primed()) {
-            float mcown = mctab->get_score(color, vtx);                      
-            float ownfac = (0.75f - fabs(mcown - 0.5f));
-            score *= ownfac * ownfac; 
+            int mcown = mctab->get_score_i(color, vtx);                      
+            int ownfac = (750 - abs(mcown - 500));
+            score = (score * ownfac * ownfac) >> 6; 
         } 
 
         if (board.self_atari(color, vtx)) {            
-            score *= 0.01472f;
+            score /= 64;
         }                       
 
         cumul += score;
@@ -234,10 +237,10 @@ int FastState::play_random_move(int color) {
 
     } while (--loops > 0);        
 
-    float index = Random::get_Rng()->randflt() * cumul;
+    int index = Random::get_Rng()->randint32(cumul);
 
     for (int i = 0; i < scoredcnt; i++) {
-        float point = scoredmoves[i].second;
+        int point = scoredmoves[i].second;
         if (index < point) {
             return play_move_fast(scoredmoves[i].first);                    
         }

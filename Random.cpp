@@ -16,8 +16,8 @@ Random* Random::get_Rng(void) {
 
 Random::Random(int seed) {
     if (seed == -1) {
-        //seedrandom((uint32)time(0));
-        seedrandom(0);
+        seedrandom((uint32)time(0));
+        //seedrandom(0);
     } else {
         seedrandom(seed);
     }        
@@ -27,6 +27,10 @@ Random::Random(int seed) {
 // 0 .. n-1
 uint32 Random::randint(const uint16 max) {
     return ((random() >> 16) * max) >> 16;
+}
+
+uint32 Random::randint32(const uint32 max) {
+    return ((uint64)random() * (uint64)max) >> 32;
 }
 
 //----------------------------------------------------------------------------//

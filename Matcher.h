@@ -13,7 +13,7 @@ public:
     //static const int THRESHOLD = 2;
     //static const int PROXFACTOR = 40;
 
-    float matches(int color, int pattern);
+    uint16 matches(int color, int pattern);
 
     /*
         return the "global" matcher
@@ -22,11 +22,11 @@ public:
     static void set_Matcher(Matcher * m);
 
 private:            
-    static unsigned char clip(int val);
+    static unsigned short clip(int val);
 
     static Matcher* s_matcher;   
 
-    std::tr1::array<std::vector<float>, 2> m_patterns;
+    std::tr1::array<std::vector<uint16>, 2> m_patterns;
 };
 
 #endif

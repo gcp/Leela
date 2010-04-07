@@ -66,18 +66,18 @@ Matcher::Matcher() {
         
         if (it != patweights.end()) {
             float weight = it->second;
-            m_patterns[FastBoard::BLACK][i] = weight;
+            m_patterns[FastBoard::BLACK][i] = clip(weight * 256.0);
         } else {
-            m_patterns[FastBoard::BLACK][i] = 1.0f;
+            m_patterns[FastBoard::BLACK][i] = 256;
         }
         
         it = patweights.find(reducpat2);
         
         if (it != patweights.end()) {
             float weight = it->second;
-            m_patterns[FastBoard::WHITE][i] = weight;
+            m_patterns[FastBoard::WHITE][i] = clip(weight * 256.0);
         } else {
-            m_patterns[FastBoard::WHITE][i] = 1.0f;
+            m_patterns[FastBoard::WHITE][i] = 256;
         }
                            
         //m_patterns[FastBoard::BLACK][i] = board.match_pattern(FastBoard::BLACK, startvtx);
@@ -85,15 +85,15 @@ Matcher::Matcher() {
     }           
 }
 
-float Matcher::matches(int color, int pattern) {
+uint16 Matcher::matches(int color, int pattern) {
     return m_patterns[color][pattern];
 }
 
-unsigned char Matcher::clip(int val) {
+uint16 Matcher::clip(int val) {
     if (val < 0) {
         val = 0;
-    } else if (val > 255) {
-        val = 255;
+    } else if (val > 0xFFFF) {
+        val = 0xFFFF;
     }
     
     return val;

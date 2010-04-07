@@ -29,6 +29,19 @@ void MCOwnerTable::update(Playout::bitboard_t & blacksq) {
     m_mcsimuls++;
 }
 
+int MCOwnerTable::get_score_i(const int color, const int vertex) {    
+    assert(vertex >= 0 && vertex < FastBoard::MAXSQ);
+    
+    int owns = m_mcowner[vertex];
+    int score = (1000 * owns) / m_mcsimuls;
+    
+    if (color == FastBoard::BLACK) {
+        return score;
+    } else {
+        return 1000 - score;
+    }
+}
+
 float MCOwnerTable::get_score(const int color, const int vertex) {    
     assert(vertex >= 0 && vertex < FastBoard::MAXSQ);
     
