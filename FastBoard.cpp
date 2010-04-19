@@ -384,7 +384,7 @@ FastBoard FastBoard::remove_dead() {
     for (int i = 0; i < m_boardsize; i++) {
         for (int j = 0; j < m_boardsize;j++) {
             int vtx = get_vertex(i, j);
-            float mcown = MCOwnerTable::get_MCO()->get_score(BLACK, vtx);
+            float mcown = MCOwnerTable::get_MCO()->get_blackown(BLACK, vtx);
             
             if (m_square[vtx] == BLACK && mcown < 0.20f) {
                 tmp.set_square(vtx, EMPTY);

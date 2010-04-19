@@ -223,10 +223,13 @@ int FastState::play_random_move(int color) {
         int score = matcher->matches(color, pattern);                                         
 
         if (mctab->is_primed()) {
-            int mcown = mctab->get_score_i(color, vtx);                      
+            int mcown = mctab->get_blackown_i(color, vtx);                      
             int ownfac = (750 - abs(mcown - 500));
             score = (score * ownfac * ownfac) >> 6; 
-        } 
+
+            int crit = mctab->get_criticality_i(vtx);
+            score = (score * crit) / 100;
+        }        
 
         if (board.self_atari(color, vtx)) {            
             score /= 64;

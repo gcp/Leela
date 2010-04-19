@@ -9,6 +9,7 @@
 #include "Playout.h"
 #include "Utils.h"
 #include "MCOTable.h"
+#include "Random.h"
 
 using namespace Utils;
 
@@ -60,23 +61,23 @@ void Playout::run(FastState & state, bool resigning) {
     float score = state.calculate_mc_score();                                  
              
     // get ownership info             
-    bitboard_t blackowns;     
+    bitboard_t blackowns;       
     
     for (int i = 0; i < boardsize; i++) {
         for (int j = 0; j < boardsize; j++) {
             int vtx = state.board.get_vertex(i, j);            
             if (state.board.get_square(vtx) == FastBoard::BLACK) {
-                blackowns[vtx] = true;
+                blackowns[vtx] = true;                
             } else if (state.board.get_square(vtx) == FastBoard::EMPTY) {
                 if (state.board.is_eye(FastBoard::BLACK, vtx)) {
-                    blackowns[vtx] = true;    
-                }
-            }          
+                    blackowns[vtx] = true;                       
+                } 
+            } 
         }
     }
 
     // update MCO in one swoop
-    MCOwnerTable::get_MCO()->update(blackowns);  
+    MCOwnerTable::get_MCO()->update_owns(blackowns, score > 0.0f);
 
     m_run = true;                    
     m_score = score / (boardsize * boardsize);       

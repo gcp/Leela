@@ -14,19 +14,22 @@ public:
     static void clear();    
     
     /*
-        update corresponding entry
+        update_blackowns corresponding entry
     */            
-    void update(Playout::bitboard_t & blacksq);    
+    void update_owns(Playout::bitboard_t & blacksq, bool blackwon);        
     
-    float get_score(const int color, const int vertex);    
-    int get_score_i(const int color, const int vertex);    
+    float get_blackown(const int color, const int vertex);    
+    int get_blackown_i(const int color, const int vertex);
+    int get_criticality_i(const int vertex);
     bool is_primed();    
     
 private:   
     MCOwnerTable();
 
-    std::vector<int> m_mcowner;
+    std::vector<int> m_mcblackowner;
+    std::vector<int> m_mcwinowner;
     int m_mcsimuls;
+    int m_blackwins;
     SMP::Mutex m_mutex;
 
     static MCOwnerTable* s_mcowntable;       

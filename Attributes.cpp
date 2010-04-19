@@ -75,7 +75,7 @@ void FastAttributes::get_from_move(FastState * state,
     // mcowner
     float mcown;
     if (vtx != FastBoard::PASS) {
-        mcown = MCOwnerTable::get_MCO()->get_score(tomove, vtx);
+        mcown = MCOwnerTable::get_MCO()->get_blackown(tomove, vtx);
     } else {
         mcown = -1.0f;
     }
@@ -117,7 +117,7 @@ void Attributes::get_from_move(FastState * state,
     // mcowner
     float mcown;
     if (vtx != FastBoard::PASS) {
-        mcown = MCOwnerTable::get_MCO()->get_score(tomove, vtx);
+        mcown = MCOwnerTable::get_MCO()->get_blackown(tomove, vtx);
     } else {
         mcown = -1.0f;
     }
