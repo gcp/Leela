@@ -15,6 +15,7 @@
 #include "Utils.h"
 #include "FastBoard.h"
 #include "MCOTable.h"
+#include "Random.h"
 
 #include "Weights.h"
 
@@ -56,7 +57,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             assert(treewalk->get_state() != NULL);
             
             // check every 3rd move
-            if (counter % 3 == 0) {               
+            if (Random::get_Rng()->randint(4) == 0) {               
                 KoState * state = treewalk->get_state();
                 int tomove = state->get_to_move();
                 int move;
@@ -149,7 +150,10 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 }
             }                                      
             
-            data.push_back(position);  
+            if (Random::get_Rng()->randint(3) == 0) {
+                allcount += position.second.size();
+                data.push_back(position);  
+            }
             
             state->play_move(FastBoard::PASS);
             moves = state->generate_moves(tomove);            
@@ -171,9 +175,10 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 }
             }                                      
 
-            allcount += position.second.size();
-            
-            data.push_back(position);  
+            if (Random::get_Rng()->randint(4) == 0) {
+                allcount += position.second.size();
+                data.push_back(position);  
+            }
         }
         
         gamecount++;                
@@ -243,7 +248,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(10);
+    m_fweight.resize(20);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();
