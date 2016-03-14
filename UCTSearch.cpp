@@ -407,6 +407,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int last_update = 0;
     
     if (!m_analyzing) {
+        m_rootstate.get_timecontrol()->set_boardsize(m_rootstate.board.get_boardsize());
         time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
     
         GUIprintf("Thinking at most %.1f seconds...", time_for_move/100.0f);
