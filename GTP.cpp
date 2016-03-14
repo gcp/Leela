@@ -245,7 +245,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             
             // start thinking
             {
-                std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+                std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
                 int move = search->think(who);
                 game.play_move(who, move);                    
@@ -256,7 +256,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
 #ifdef USE_PONDER
             // now start pondering
             if (game.get_last_move() != FastBoard::RESIGN) {
-                std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+                std::unique_ptr<UCTSearch> search(new UCTSearch(game));
                 search->ponder();
             }                
 #endif            
@@ -285,7 +285,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             
             game.set_passes(0);
 
-            std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+            std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
             int move = search->think(who, UCTSearch::NOPASS);
             game.play_move(who, move);                    
@@ -384,7 +384,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             // KGS sends this after our move
             // now start pondering
             if (game.get_last_move() != FastBoard::RESIGN) {            
-                std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+                std::unique_ptr<UCTSearch> search(new UCTSearch(game));
                 search->ponder();
             }                
 #endif            
@@ -394,7 +394,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (command.find("auto") == 0) {    
         do {
-            std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+            std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
             int move = search->think(game.get_to_move(), UCTSearch::NORMAL);
             game.play_move(move);  
@@ -407,7 +407,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         Playout::do_playout_benchmark(game);
         return true;
     } else if (command.find("go") == 0) {
-        std::auto_ptr<UCTSearch> search(new UCTSearch(game));
+        std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
         int move = search->think(game.get_to_move());
         game.play_move(move);                    
@@ -486,7 +486,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             movenum = 999;
         }
         
-        std::auto_ptr<SGFTree> sgftree(new SGFTree);
+        std::unique_ptr<SGFTree> sgftree(new SGFTree);
         
         sgftree->load_from_file(filename);                
         game = sgftree->get_mainline(movenum);
@@ -501,14 +501,14 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
         cmdstream >> filename;        
         
-        std::auto_ptr<AttribScores> scores(new AttribScores);
+        std::unique_ptr<AttribScores> scores(new AttribScores);
         
         scores->autotune_from_file(filename);
         
         gtp_printf(id, "");
         return true;
     } else if (command.find("genetune") == 0) {        
-        std::auto_ptr<Genetic> genetic(new Genetic);
+        std::unique_ptr<Genetic> genetic(new Genetic);
         
         genetic->genetic_tune();
         
@@ -521,13 +521,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
         cmdstream >> tmp;   // eat tune 
         cmdstream >> filename;          
         
-        std::auto_ptr<Genetic> genetic(new Genetic);  
+        std::unique_ptr<Genetic> genetic(new Genetic);  
         genetic->genetic_split(filename);
         
         gtp_printf(id, "");
         return true;
     } else if (command.find("pn") == 0) {
-        std::auto_ptr<PNSearch> pnsearch(new PNSearch(game));
+        std::unique_ptr<PNSearch> pnsearch(new PNSearch(game));
 
         pnsearch->classify_groups();
 
