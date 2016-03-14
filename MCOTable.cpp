@@ -18,6 +18,8 @@ MCOwnerTable* MCOwnerTable::get_MCO() {
 MCOwnerTable::MCOwnerTable() {
     m_mcblackowner.resize(FastBoard::MAXSQ);
     m_mcwinowner.resize(FastBoard::MAXSQ);
+    m_mcsimuls = 0;
+    m_blackwins = 0;
 }
 
 void MCOwnerTable::update_owns(Playout::bitboard_t & blacksq, 
