@@ -33,20 +33,21 @@ AttribScores* AttribScores::get_attribscores(void) {
 }
 
 void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
-    int gametotal = SGFParser::count_games_in_file(filename);    
-    myprintf("Total games in file: %d\n", gametotal);    
-
+    std::vector<std::string> games = SGFParser::chop_all(filename);
+    int gametotal = games.size();
     int gamecount = 0;
     int allcount = 0;
-    
-    while (gamecount < gametotal) {         
-        std::auto_ptr<SGFTree> sgftree(new SGFTree);        
+
+    myprintf("Total games in file: %d\n", gametotal);
+
+    while (gamecount < gametotal) {
+        std::unique_ptr<SGFTree> sgftree(new SGFTree);
 
         try {
-            sgftree->load_from_file(filename, gamecount);                                    
+            sgftree->load_from_string(games[gamecount]);
         } catch (...) {
         };
-        
+
         int movecount = sgftree->count_mainline_moves();                                
         
         SGFTree * treewalk = &(*sgftree); 
@@ -108,6 +109,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                     data.push_back(position);         
                 } else {
                     myprintf("Mainline move not found: %d\n", move);
+                    goto skipnext;
                 }                
             }
             
@@ -150,7 +152,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 }
             }                                      
             
-            if (Random::get_Rng()->randint(3) == 0) {
+            if (Random::get_Rng()->randint(4) == 0) {
                 allcount += position.second.size();
                 data.push_back(position);  
             }
@@ -180,7 +182,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 data.push_back(position);  
             }
         }
-        
+skipnext:
         gamecount++;                
         
         myprintf("Game %d, %3d moves, %d positions, %d allpos\n", 
@@ -248,7 +250,7 @@ void AttribScores::autotune_from_file(std::string filename) {
     }        
 
     // setup the weights    
-    m_fweight.resize(20);
+    m_fweight.resize(110);
     fill(m_fweight.begin(), m_fweight.end(), 1.0f); 
 
     m_pat.clear();

@@ -26,7 +26,7 @@ public:
     bool attribute_enabled(int idx);        
 private:        
     int m_pattern;
-    std::bitset<103> m_present;     
+    std::bitset<110> m_present;
 };
 
 // Move attributes for quick move ordering

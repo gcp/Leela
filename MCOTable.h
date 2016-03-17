@@ -21,6 +21,7 @@ public:
     float get_blackown(const int color, const int vertex);    
     int get_blackown_i(const int color, const int vertex);
     int get_criticality_i(const int vertex);
+    float get_criticality_f(const int vertex);
     bool is_primed();    
     
 private:   

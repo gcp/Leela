@@ -132,6 +132,22 @@ void Attributes::get_from_move(FastState * state,
     m_present[bitpos++] = (mcown >=  0.80f && mcown <  0.90);
     m_present[bitpos++] = (mcown >=  0.90f && mcown <  1.01);   
 
+
+    // criticality
+    float crit;
+    if (vtx != FastBoard::PASS) {
+        crit = MCOwnerTable::get_MCO()->get_criticality_f(vtx);
+    } else {
+        crit = 0.0f;
+    }
+    m_present[bitpos++] = (crit >= -0.01f && crit <  0.03);
+    m_present[bitpos++] = (crit >=  0.03f && crit <  0.07);
+    m_present[bitpos++] = (crit >=  0.07f && crit <  0.11);
+    m_present[bitpos++] = (crit >=  0.11f && crit <  0.15);
+    m_present[bitpos++] = (crit >=  0.15f && crit <  0.20);
+    m_present[bitpos++] = (crit >=  0.20f && crit <  0.25);
+    m_present[bitpos++] = (crit >=  0.25f && crit <  0.51);
+
     // saving size
     // 0, 1, 2, 3, >3
     int ss;

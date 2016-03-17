@@ -12,6 +12,46 @@
 //XXX: The scanners don't handle escape sequences
 //XXX: make a char reading routine for this
 
+std::vector<std::string> SGFParser::chop_all(std::string filename) {
+    std::ifstream ins(filename.c_str(), std::ifstream::binary | std::ifstream::in);
+    std::string gamebuff;
+    std::vector<std::string> result;
+
+    if (ins.fail()) {
+        throw new std::runtime_error("Error opening file");
+    }
+
+    ins >> std::noskipws;
+
+    int nesting = 0;
+    gamebuff.clear();
+
+    char c;
+    while (ins >> c) {
+        gamebuff.push_back(c);
+
+        if (c == '(') {
+            if (nesting == 0) {
+                // eat ; too
+                ins >> c;
+                gamebuff.clear();
+            }
+
+            nesting++;
+        } else if (c == ')') {
+            nesting--;
+
+            if (nesting == 0) {
+                result.push_back(gamebuff);
+            }
+        }
+    }
+
+    ins.close();
+
+    return result;
+}
+
 // scan the file and extract the game with number index
 std::string SGFParser::chop_from_file(std::string filename, int index) {
     std::ifstream ins(filename.c_str(), std::ifstream::binary | std::ifstream::in); 
