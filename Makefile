@@ -2,29 +2,31 @@ default:
 	$(MAKE) CC=gcc CXX=g++ \
 		CFLAGS='$(CFLAGS) -Wall -pipe -O3 -g -std=c++11 -DNDEBUG -D_CONSOLE' \
 		CXXFLAGS='$(CXXFLAGS) -Wall -pipe -O3 -g -std=c++11 -DNDEBUG -D_CONSOLE'  \
-		LDFLAGS='$(LDFLAGS) -lpthread -lboost_thread -lboost_system' \
+		LDFLAGS='$(LDFLAGS)' \
 		leela
 
 gcc32b:
 	$(MAKE) CC=gcc CXX=g++ \
 		CFLAGS='$(CFLAGS) -Wall -pipe -O2  -g -m32 -std=c++11 -DNDEBUG -D_CONSOLE' \
 		CXXFLAGS='$(CXXFLAGS) -Wall -pipe -O2 -g -m32 -std=c++11 -DNDEBUG -D_CONSOLE'  \
-		LDFLAGS='$(LDFLAGS) -m32 -lpthread -lboost_thread -lboost_system' \
+		LDFLAGS='$(LDFLAGS) -m32' \
 		leela
 
 debug:
 	$(MAKE) CC=gcc CXX=g++ \
-		CFLAGS='$(CFLAGS) -Wall -pipe -O0 -g -std=c++11 -D_CONSOLE' \
-		CXXFLAGS='$(CXXFLAGS) -Wall -pipe -O0 -g -std=c++11 -D_CONSOLE' \
-		LDFLAGS='$(LDFLAGS) -g -lpthread -lboost_thread -lboost_system' \
+		CFLAGS='$(CFLAGS) -Wall -pipe -Og -g -std=c++11 -D_CONSOLE' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -pipe -Og -g -std=c++11 -D_CONSOLE' \
+		LDFLAGS='$(LDFLAGS) -g' \
 		leela
 
 llvm:
 	$(MAKE) CC=~/svn/llvm/build/bin/clang CXX=~/svn/llvm/build/bin/clang++ \
-		CFLAGS='$(CFLAGS) -Wall -fsanitize=address -fno-omit-frame-pointer -O0 -g -std=c++11 -D_CONSOLE' \
-		CXXFLAGS='$(CXXFLAGS) -Wall -fsanitize=address -fno-omit-frame-pointer -O0 -g -std=c++11 -D_CONSOLE' \
-		LDFLAGS='$(LDFLAGS) -g -fsanitize=address -lpthread -lboost_thread -lboost_system' \
+		CFLAGS='$(CFLAGS) -Wall -fsanitize=address -fno-omit-frame-pointer -O1 -g -std=c++11 -D_CONSOLE' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -fsanitize=address -fno-omit-frame-pointer -O1 -g -std=c++11 -D_CONSOLE' \
+		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
 		leela
+
+LIBS = -pthread -lboost_thread -lboost_system -ltbb -ltbbmalloc
 
 sources = AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
 	  Ruleset.cpp TimeControl.cpp UCTSearch.cpp Attributes.cpp \
