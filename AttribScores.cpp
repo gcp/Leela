@@ -58,7 +58,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             assert(treewalk->get_state() != NULL);
             
             // check every 3rd move
-            if (Random::get_Rng()->randint(4) == 0) {               
+            if (Random::get_Rng()->randint(3) == 0) {               
                 KoState * state = treewalk->get_state();
                 int tomove = state->get_to_move();
                 int move;
@@ -152,7 +152,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 }
             }                                      
             
-            if (Random::get_Rng()->randint(4) == 0) {
+            if (Random::get_Rng()->randint(3) == 0) {
                 allcount += position.second.size();
                 data.push_back(position);  
             }
@@ -177,7 +177,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 }
             }                                      
 
-            if (Random::get_Rng()->randint(4) == 0) {
+            if (Random::get_Rng()->randint(3) == 0) {
                 allcount += position.second.size();
                 data.push_back(position);  
             }
