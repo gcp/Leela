@@ -38,9 +38,9 @@ public:
                        int move);    
     uint64 get_pattern(void);    
     bool attribute_enabled(int idx);    
-private:         
+private:
     int m_pattern;
-    std::bitset<10> m_present; 
+    std::bitset<10> m_present;
 };
 
 #endif
