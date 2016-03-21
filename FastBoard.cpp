@@ -2098,6 +2098,30 @@ int FastBoard::count_rliberties(int vertex) {
     return m_libs[m_parent[vertex]];
 }
 
+std::pair<int, int> FastBoard::after_liberties(const int color, const int vtx) {
+    FastBoard tmp = *this;
+    int mylibs;
+    int opplibs;
+
+    if (is_suicide(vtx, color)) {
+        mylibs = 0;
+    } else {
+        tmp.update_board_fast(color, vtx);
+        mylibs = tmp.count_rliberties(vtx);
+    }
+
+    tmp = *this;
+
+    if (is_suicide(vtx, !color)) {
+        opplibs = 0;
+    } else {
+        tmp.update_board_fast(!color, vtx);
+        opplibs = tmp.count_rliberties(vtx);
+    }
+
+    return std::make_pair(mylibs, opplibs);
+}
+
 bool FastBoard::check_losing_ladder(const int color, const int vtx, int branching) {
     FastBoard tmp = *this;
     

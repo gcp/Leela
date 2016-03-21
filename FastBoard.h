@@ -80,7 +80,7 @@ public:
     int count_pliberties(const int i);
     int count_rliberties(const int i);
     bool check_losing_ladder(const int color, const int vtx, int branching = 0);
-    bool is_connecting(const int color, const int vertex);
+    std::pair<int, int> after_liberties(const int color, const int vertex);
     int nbr_weight(const int color, const int vertex);
     int merged_string_size(int color, int vertex);
     std::vector<int> get_neighbour_ids(int vertex);

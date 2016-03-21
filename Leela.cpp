@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <glog/logging.h>
 
 #include "config.h"
 
@@ -18,8 +19,10 @@ using namespace Utils;
 int main (int argc, char *argv[]) {        
     int done = false;
     int gtp_mode;
-    std::string input;      
-    
+    std::string input;
+
+    ::google::InitGoogleLogging(argv[0]);
+
     /* default to prompt */
     gtp_mode = false;
     

@@ -16,6 +16,7 @@
 #include "AttribScores.h"
 #include "Genetic.h"
 #include "PNSearch.h"
+#include "Network.h"
 
 using namespace Utils;
 
@@ -530,6 +531,18 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::unique_ptr<PNSearch> pnsearch(new PNSearch(game));
 
         pnsearch->classify_groups();
+
+        gtp_printf(id, "");
+        return true;
+    } else if (command.find("nettune") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp, filename;
+
+        cmdstream >> tmp;   // eat nettune
+        cmdstream >> filename;
+
+        std::unique_ptr<Network> network(new Network);
+        network->autotune_from_file(filename);
 
         gtp_printf(id, "");
         return true;
