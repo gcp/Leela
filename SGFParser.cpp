@@ -7,6 +7,7 @@
 #include <memory>
 #include <stdexcept>
 
+#include "Utils.h"
 #include "SGFParser.h"
 
 //XXX: The scanners don't handle escape sequences
@@ -23,26 +24,35 @@ std::vector<std::string> SGFParser::chop_all(std::string filename) {
 
     ins >> std::noskipws;
 
-    int nesting = 0;
+    int nesting = 0; // parentheses
+    int intag = 0;   // brackets
+    int line = 0;
     gamebuff.clear();
 
     char c;
     while (ins >> c) {
+        if (c == '\n') line++;
         gamebuff.push_back(c);
 
-        if (c == '(') {
+        if (c == '(' && !intag) {
             if (nesting == 0) {
                 // eat ; too
                 ins >> c;
                 gamebuff.clear();
             }
-
             nesting++;
-        } else if (c == ')') {
+        } else if (c == ')' && !intag) {
             nesting--;
 
             if (nesting == 0) {
                 result.push_back(gamebuff);
+            }
+        } else if (c == '[') {
+            intag++;
+        } else if (c == ']') {
+            intag--;
+            if (intag < 0) {
+                Utils::myprintf("Tag error on line %d", line);
             }
         }
     }

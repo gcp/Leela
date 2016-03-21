@@ -13,7 +13,11 @@
 
 using namespace Utils;
 
-SGFTree::SGFTree(void) {    
+SGFTree::SGFTree(void) {
+    // initialize root state with defaults
+    // the SGF might be missing boardsize or komi
+    // which means we'll never initialize
+    m_state.init_game();
 }
 
 KoState * SGFTree::get_state(void) {
@@ -90,9 +94,6 @@ int SGFTree::count_mainline_moves(void) {
 
 void SGFTree::load_from_string(std::string gamebuff) {
     std::istringstream pstream(gamebuff);
-
-    // initialize root state with defaults
-    m_state.init_game();
 
     // loads properties with moves
     SGFParser::parse(pstream, this);

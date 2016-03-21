@@ -2010,7 +2010,8 @@ std::string FastBoard::get_stone_list() {
     return res;
 }
 
-int FastBoard::string_size(int vertex) {    
+int FastBoard::string_size(int vertex) {
+    assert(vertex > 0 && vertex < m_maxsq);
     assert(m_square[vertex] == WHITE || m_square[vertex] == BLACK);
       
     return m_stones[m_parent[vertex]];
