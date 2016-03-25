@@ -13,12 +13,7 @@
 #include "Utils.h"
 
 bool Utils::input_causes_stop() {
-    char c;
-    
-    c = std::cin.get();    
-    std::cin.unget();
-    
-    return true;          
+    return true;
 }
 
 bool Utils::input_pending(void) {
@@ -30,7 +25,7 @@ bool Utils::input_pending(void) {
     timeout.tv_sec = timeout.tv_usec = 0;
     select(1,&read_fds,NULL,NULL,&timeout);
     if (FD_ISSET(0,&read_fds)) {
-        return input_causes_stop();            
+        return input_causes_stop();
     } else {
         return false;
     }

@@ -20,12 +20,11 @@
 
 using namespace Utils;
 
-UCTNode::UCTNode(int color, int vertex, float score) 
- : m_firstchild(NULL), m_move(vertex), m_score(score),
- m_blackwins(0.0f), m_visits(0), m_valid(true), m_extend(UCTSearch::MATURE_TRESHOLD) {
-    
-    m_ravevisits = 20;  
-    m_ravestmwins = 10.0f;       
+UCTNode::UCTNode(int vertex, float score)
+    : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0f), m_visits(0), m_score(score),
+      m_valid(true), m_extend(UCTSearch::MATURE_TRESHOLD) {
+    m_ravevisits = 20;
+    m_ravestmwins = 10.0f;
 }
 
 UCTNode::~UCTNode() {    
@@ -74,7 +73,7 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
             assert(board.get_square(vertex) == FastBoard::EMPTY);             
             
             // add and score a node        
-            if (vertex != state.komove && board.no_eye_fill(vertex)) {
+            if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.m_tomove)) {                                          
                     float score = state.score_move(territory, moyo, vertex);
                     nodelist.push_back(std::make_pair(score, vertex));                    
@@ -103,7 +102,7 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
         
     for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
         if (totalchildren - childrenseen <= maxchilds) {                        
-            UCTNode * vtx = new UCTNode(state.get_to_move(), it->second, it->first);
+            UCTNode * vtx = new UCTNode(it->second, it->first);
 	    if (it->second != FastBoard::PASS) {
 	        // atari giving
 	        // was == 2, == 1
@@ -236,7 +235,7 @@ int UCTNode::do_extend() const {
 UCTNode* UCTNode::uct_select_child(int color) {                                   
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
-            
+
     int childbound = std::max(2, (int)(((logf((float)get_visits()) - 3.0f) / 0.33647223f) + 2.0f));    
     int parentvisits      = 1;   // avoid logparent being illegal
     
@@ -257,9 +256,9 @@ UCTNode* UCTNode::uct_select_child(int color) {
         }        
         childcount++;
     }
-    
-    float logparent = logf((float)parentvisits) / logf(3.0f);  
-            
+
+    //float logparent = logf((float)parentvisits) / logf(3.0f);
+
     childcount = 0;
     child = m_firstchild;            
     // make sure we are at a valid successor        

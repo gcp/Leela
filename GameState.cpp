@@ -37,10 +37,10 @@ void GameState::reset_game() {
 }
 
 bool GameState::forward_move(void) {
-    if (game_history.size() > movenum + 1) { 
-        KoState & f = *this; 
-        movenum++;
-        f = game_history[movenum];        
+    if (game_history.size() > m_movenum + 1) {
+        KoState & f = *this;
+        m_movenum++;
+        f = game_history[m_movenum];
         return true;
     } else {
         return false;
@@ -48,16 +48,16 @@ bool GameState::forward_move(void) {
 }
 
 bool GameState::undo_move(void) {
-    if (movenum > 0) {        
-        movenum--;                
-        
-        // don't actually delete it!     
-        //game_history.pop_back(); 
-        
+    if (m_movenum > 0) {
+        m_movenum--;
+
+        // don't actually delete it!
+        //game_history.pop_back();
+
         // this is not so nice, but it should work
         KoState & f = *this; 
-        f = game_history[movenum];
-                
+        f = game_history[m_movenum];
+
         // This also restores hashes as they're part of state
         return true;
     } else {
@@ -84,12 +84,12 @@ void GameState::play_move(int color, int vertex) {
     } else {        
         KoState::play_pass();
         if (vertex == FastBoard::RESIGN) {
-            lastmove = vertex;
+            m_lastmove = vertex;
         }
     }    
     
     // cut off any leftover moves from navigating
-    game_history.resize(movenum);
+    game_history.resize(m_movenum);
     game_history.push_back(*this);        
 }
 
@@ -174,13 +174,13 @@ void GameState::adjust_time(int color, int time, int stones) {
 
 void GameState::anchor_game_history(void) {
     // handicap moves don't count in game history
-    movenum = 0;
+    m_movenum = 0;
     game_history.clear();
     game_history.push_back(*this); 
 }
 
 void GameState::trim_game_history(int lastmove) {
-    movenum = lastmove - 1;
+    m_movenum = lastmove - 1;
     game_history.resize(lastmove);
 }
 

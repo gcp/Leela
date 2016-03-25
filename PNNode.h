@@ -8,7 +8,7 @@
 #include "KoState.h"
 
 class PNNode {
-public:    
+public:
     static const int INF = 10000000;
 
     enum node_type_t { AND = 0, OR = 1 };
@@ -30,15 +30,15 @@ public:
     bool has_children() const;
 
 private:
+    PNNode * m_parent;
+    std::vector<PNNode> m_children;
+
     int m_pn;
     int m_dn;
     int m_move;
 
     bool m_evaluated;
-    bool m_expanded;    
-
-    PNNode * m_parent;    
-    std::vector<PNNode> m_children;
+    bool m_expanded;
 };
 
 #endif

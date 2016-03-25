@@ -11,11 +11,11 @@
 #include "Playout.h"
 
 class UCTNode {
-public:        
+public:
     typedef boost::tuple<float, int, UCTNode*> sortnode_t;
 
-    UCTNode(int color, int vertex, float score);
-    ~UCTNode();    
+    UCTNode(int vertex, float score);
+    ~UCTNode();
     bool first_visit() const;
     bool has_children() const;    
     float get_winrate(int tomove) const;

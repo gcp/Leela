@@ -205,7 +205,7 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
             // start a variation here
             splitpoint = true;
             // new node
-            std::auto_ptr<SGFTree> newnode(new SGFTree);
+            std::unique_ptr<SGFTree> newnode(new SGFTree);
             SGFTree * newptr = node->add_child(*newnode);                        
             parse(strm, newptr);
         } else if (c == ')') {
@@ -222,7 +222,7 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
             }  
         } else if (c == ';') {
             // new node
-            std::auto_ptr<SGFTree> newnode(new SGFTree);
+            std::unique_ptr<SGFTree> newnode(new SGFTree);
             SGFTree * newptr = node->add_child(*newnode);                        
             node = newptr;
             continue;
@@ -242,11 +242,11 @@ int SGFParser::count_games_in_file(std::string filename) {
     int nesting = 0;    
 
     char c;
-    while (ins >> c) {                
-        if (c > 127 || c < 0) {
+    while (ins >> c) {
+        if (!isascii(c)) {
             do {
                 ins >> c;
-            } while (c > 127 || c < 0);
+            } while (!isascii(c));
             continue;
         }
 

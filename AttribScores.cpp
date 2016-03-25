@@ -205,8 +205,6 @@ void AttribScores::autotune_from_file(std::string filename) {
         // initialize the pattern list with a sparse map     
         std::map<uint64, int> patlist; 
         LearnVector::iterator it;
-        
-        int c = 0;
 
         for (it = data.begin(); it != data.end(); ++it) {            
             AttrList::iterator ita;        
@@ -267,7 +265,7 @@ void AttribScores::autotune_from_file(std::string filename) {
 
             myprintf("Team gathering...");
             for (posit = data.begin(); posit != data.end(); ++posit) {            
-                for (int k = 0; k < posit->second.size(); ++k) {
+                for (size_t k = 0; k < posit->second.size(); ++k) {
                     float teams = team_strength(posit->second[k]);
                     allteams.push_back(teams);
                 }
@@ -295,7 +293,7 @@ void AttribScores::autotune_from_file(std::string filename) {
                     float them = 0.0f;                                         
 
                     // for each participating team                                                            
-                    for (int k = 0; k < posit->second.size(); ++k) {
+                    for (size_t k = 0; k < posit->second.size(); ++k) {
                         // index into global team thing                                                             
                         float teams = allteams[tcount];
                         tcount++;                     
@@ -328,8 +326,8 @@ void AttribScores::autotune_from_file(std::string filename) {
             }
         } 
         // feature parameter learning
-        {                                 
-            for (int pcount = 0; pcount < m_fweight.size(); ++pcount) {                            
+        {
+            for (size_t pcount = 0; pcount < m_fweight.size(); ++pcount) {
                 // prior
                 int  wins = 1;            
                 float sum = 2.0f / (1.0f + m_fweight[pcount]);
@@ -343,7 +341,7 @@ void AttribScores::autotune_from_file(std::string filename) {
                     float them = 0.0f;                                         
 
                     // for each participating team                                                            
-                    for (int k = 0; k < posit->second.size(); ++k) {
+                    for (size_t k = 0; k < posit->second.size(); ++k) {
                         float teams = team_strength(posit->second[k]);
                         // total opposition
                         them += teams;
@@ -382,13 +380,13 @@ void AttribScores::autotune_from_file(std::string filename) {
         std::string fname = "r_fparam" + boost::lexical_cast<std::string>(pass) + ".txt";
         fp_out.open(fname.c_str());
         
-        for (int i = 0; i < m_fweight.size(); i++) {
+        for (size_t i = 0; i < m_fweight.size(); i++) {
             fp_out << m_fweight[i] << std::endl;
         }
         
         fp_out << std::endl;
         
-        for (int i = 0; i < goodpats.size(); i++) {
+        for (size_t i = 0; i < goodpats.size(); i++) {
             uint64 idx = goodpats[i];
             
             fp_out << idx << "," << std::endl;
@@ -396,7 +394,7 @@ void AttribScores::autotune_from_file(std::string filename) {
         
         fp_out << std::endl;
         
-        for (int i = 0; i < goodpats.size(); i++) {
+        for (size_t i = 0; i < goodpats.size(); i++) {
             uint64 idx = goodpats[i];
             
             fp_out << get_patweight(idx) << "," << std::endl;
@@ -412,8 +410,8 @@ float AttribScores::team_strength(Attributes & team) {
     
     float rating = get_patweight(pattern);            
     
-    int sz = m_fweight.size();
-    for (int i = 0; i < sz; i++) {
+    size_t sz = m_fweight.size();
+    for (size_t i = 0; i < sz; i++) {
         if (team.attribute_enabled(i)) {
             rating *= m_fweight[i];
         }        
@@ -427,12 +425,12 @@ void AttribScores::load_internal() {
     m_pat.clear();
 
     m_fweight.reserve(internal_weights.size());
-    
-    for (int i = 0; i < internal_weights.size(); i++) {        
+
+    for (size_t i = 0; i < internal_weights.size(); i++) {
         m_fweight.push_back(internal_weights[i]);
     }
 
-    for (int i = 0; i < internal_patterns.size(); i++) {        
+    for (size_t i = 0; i < internal_patterns.size(); i++) {
         m_pat.insert(std::make_pair(internal_patterns[i], internal_patweights[i]));
     }
 
