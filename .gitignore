@@ -1,1 +1,6 @@
+cachegrind*
+callgrind*
+massif*
+leela-*
+leela
 *.o
