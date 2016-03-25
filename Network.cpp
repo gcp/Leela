@@ -24,7 +24,7 @@
 using namespace Utils;
 
 void Network::gather_features(FastState * state, NNPlanes & planes) {
-    planes.resize(22);
+    planes.resize(20);
     BoardPlane& empt_color = planes[0];
     BoardPlane& move_color = planes[1];
     BoardPlane& othr_color = planes[2];
@@ -45,8 +45,6 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
     BoardPlane& after_2_e  = planes[17];
     BoardPlane& after_3_e  = planes[18];
     BoardPlane& after_4p_e = planes[19];
-    BoardPlane& komove     = planes[20];
-    BoardPlane& ladder     = planes[21];
 
     int tomove = state->get_to_move();
     // collect white, black occupation planes
@@ -118,13 +116,6 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
                 } else if (at >= 4) {
                     after_4p_e[idx] = true;
                 }
-
-                int ss = state->board.saving_size(tomove, vtx);
-                int ae = state->board.count_pliberties(vtx);
-                if (ss > 0 && ae == 2) {
-                    int ll = state->board.check_losing_ladder(tomove, vtx);
-                    ladder[idx] = ll;
-                }
             }
         }
     }
@@ -138,12 +129,6 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
             int idxp = prevlast.second * 19 + prevlast.first;
             lastmoves[idxp] = true;
         }
-    }
-
-    if (state->get_komove() > 0) {
-        std::pair<int, int> kopair = state->board.get_xy(state->get_komove());
-        int idx = kopair.second * 19 + kopair.first;
-        komove[idx] = true;
     }
 }
 
@@ -280,7 +265,7 @@ void Network::train_network(TrainVector& data) {
             int move = position.first;
             NNPlanes& nnplanes = position.second;
             caffe::Datum datum;
-            datum.set_channels(22);
+            datum.set_channels(20);
             datum.set_height(19);
             datum.set_width(19);
             datum.set_label((label_t)move);
