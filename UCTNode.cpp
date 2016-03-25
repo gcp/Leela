@@ -167,8 +167,10 @@ void UCTNode::update(Playout & gameresult, int color) {
     
     if (score > 0.0f) {
         m_blackwins += 1.0f;
-    }        
-    
+    } else if (score == 0.0f) {
+        m_blackwins += 0.5f;
+    }
+
     if (color == FastBoard::WHITE) {
         if (score < 0.0f) {
             m_ravestmwins += 1.0f + 0.05f * -score;
