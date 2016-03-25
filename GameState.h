@@ -40,9 +40,8 @@ public:
 private:
     bool valid_handicap(int stones);        
     
-    std::vector<KoState> game_history;                          
-    
-    TimeControl m_timecontrol;               
+    std::vector<KoState> game_history;
+    TimeControl m_timecontrol;
 };
 
 #endif

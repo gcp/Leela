@@ -59,9 +59,6 @@ void Genetic::load_testsets() {
     static const std::string prefix[] = { "win\\", "loss\\", "draw\\" };
     static const float values[] = { 1.0f, 0.0f, 0.5f };
 
-    float se = 0.0f;
-    int positions = 0;
-    
     for (int j = 0; j < 3; j++) {
         for (int i = 1; i <= 7000; i++) {        
             std::string file = prefix[j];
@@ -102,21 +99,21 @@ float Genetic::run_testsets() {
     int positions = 0;
     FastState state;
     
-    for (int i = 0; i < m_winpool.size(); i++) {
+    for (size_t i = 0; i < m_winpool.size(); i++) {
         state = m_winpool[i];   
         //myprintf("Running %s\t", file.c_str());
         se += run_simulations(state, 1.0f);
         positions++;
     }
     
-    for (int i = 0; i < m_losepool.size(); i++) {
+    for (size_t i = 0; i < m_losepool.size(); i++) {
         state = m_losepool[i];   
         //myprintf("Running %s\t", file.c_str());
         se += run_simulations(state, 0.0f);
         positions++;
     }
 
-    for (int i = 0; i < m_drawpool.size(); i++) {
+    for (size_t i = 0; i < m_drawpool.size(); i++) {
         state = m_drawpool[i];   
         //myprintf("Running %s\t", file.c_str());
         se += run_simulations(state, 0.5f);
@@ -149,9 +146,9 @@ void Genetic::genetic_tune() {
     
     myprintf("Filling pool of %d entries...", pool.size());
     
-    for (int i = 0; i < pool.size(); i++) {
+    for (size_t i = 0; i < pool.size(); i++) {
         pool[i].resize(60);
-        for (int j = 0; j < pool[i].size(); j++) {            
+        for (size_t j = 0; j < pool[i].size(); j++) {
             pool[i][j] = powf(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
         }                
     } 
@@ -160,7 +157,7 @@ void Genetic::genetic_tune() {
     
     myprintf("Getting pool errors...\n");
 
-    for (int i = 0; i < pool.size(); i++) {
+    for (size_t i = 0; i < pool.size(); i++) {
         g_par = pool[i];   
         
         Matcher::set_Matcher(new Matcher);                            
@@ -176,7 +173,7 @@ void Genetic::genetic_tune() {
     int generations = 0;
 
     do {
-        for (int element = 0; element < pool.size(); element++) {                               
+        for (size_t element = 0; element < pool.size(); element++) {
             // pick 2 random ancestors with s = 4
             float bestfather = 1000.0f;
             float bestmother = 1000.0f;
@@ -203,7 +200,7 @@ void Genetic::genetic_tune() {
             newrank.resize(60);
             
             // crossover/mutate
-            for (int i = 0; i < newrank.size(); i++) {            
+            for (size_t i = 0; i < newrank.size(); i++) {
                 int mutate = Random::get_Rng()->randint(20);
                 if (mutate != 0) {
                     int cross = Random::get_Rng()->randint(2);
@@ -234,7 +231,7 @@ void Genetic::genetic_tune() {
                 std::string fname = "matcher_" + boost::lexical_cast<std::string>(err) + ".txt";
                 fp_out.open(fname.c_str());
             
-                for (int i = 0; i < pool[element].size(); i++) {
+                for (size_t i = 0; i < pool[element].size(); i++) {
                     fp_out << pool[element][i] << std::endl;
                 }                  
                     
@@ -270,7 +267,7 @@ void Genetic::genetic_split(std::string filename) {
     int gamecount = 0;    
     
     while (gamecount < gametotal) {        
-        std::auto_ptr<SGFTree> sgftree(new SGFTree);        
+        std::unique_ptr<SGFTree> sgftree(new SGFTree);
         sgftree->load_from_file(filename, gamecount);                    
         
         int movecount = sgftree->count_mainline_moves();                                
@@ -288,8 +285,8 @@ void Genetic::genetic_split(std::string filename) {
             
             int tomove = game.get_to_move();            
             
-            std::auto_ptr<UCTSearch> search(new UCTSearch(game));
-            int move = search->think(tomove, UCTSearch::NOPASS);
+            std::unique_ptr<UCTSearch> search(new UCTSearch(game));
+            search->think(tomove, UCTSearch::NOPASS);
             
             float score = search->get_score();    
             

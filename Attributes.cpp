@@ -261,8 +261,8 @@ void Attributes::get_from_move(FastState * state,
         at = -1;
     }        
     
-    m_present[bitpos++] = (at == 2) && (state->komove != -1);  // atari with ko
-    m_present[bitpos++] = (at == 3) && (state->komove != -1);  // semiatari with ko
+    m_present[bitpos++] = (at == 2) && (state->m_komove != -1);  // atari with ko
+    m_present[bitpos++] = (at == 3) && (state->m_komove != -1);  // semiatari with ko
     m_present[bitpos++] = (at == 2);                           // atari
     m_present[bitpos++] = (at == 3);
     m_present[bitpos++] = (at == 4);

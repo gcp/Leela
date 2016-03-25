@@ -46,15 +46,15 @@ public:
     std::string move_to_text(int move);
 
     FullBoard board;
-     
+
     float m_komi;
     int m_handicap;
     int m_passes;
-    int komove;   
-    int movenum;              
-    int lastmove;   
-    int onebutlastmove;     
-    
+    int m_komove;
+    size_t m_movenum;
+    int m_lastmove;
+    int m_onebutlastmove;
+
 protected:
     FastBoard::movelist_t moves;
     FastBoard::scoredlist_t scoredmoves;

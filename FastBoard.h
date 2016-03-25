@@ -69,10 +69,10 @@ public:
         
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
-    int update_board_fast(const int color, const int i);            
-    void save_critical_neighbours(int color, int vertex, movelist_t & moves, int & movecnt);
-    void add_pattern_moves(int color, int vertex, movelist_t & moves, int & movecnt);    
-    void add_global_captures(int color, movelist_t & moves, int & movecnt);             
+    int update_board_fast(const int color, const int i);
+    void save_critical_neighbours(int color, int vertex, movelist_t & moves, size_t & movecnt);
+    void add_pattern_moves(int color, int vertex, movelist_t & moves, size_t & movecnt);
+    void add_global_captures(int color, movelist_t & moves, size_t & movecnt);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
@@ -176,8 +176,8 @@ protected:
     template <int N> void add_string_liberties(int vertex, 
                                                std::tr1::array<int, N> & nbr_libs, 
                                                int & nbr_libs_cnt);
-    void kill_neighbours(int vertex, movelist_t & moves, int & movecnt);                                  
-    void try_capture(int color, int vertex, movelist_t & moves, int & movecnt);    
+    void kill_neighbours(int vertex, movelist_t & moves, size_t & movecnt);
+    void try_capture(int color, int vertex, movelist_t & moves, size_t & movecnt);
     FastBoard remove_dead();
     bool predict_solid_eye(const int move, const int color, const int vtx);
 };

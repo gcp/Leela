@@ -17,18 +17,18 @@
 using namespace Utils;
 
 void FastState::init_game(int size, float komi) {
-    
+
     board.reset_board(size);
-    
-    movenum = 0;                          
-    
-    komove = 0;
-    lastmove = 0;
-    onebutlastmove = lastmove;
+
+    m_movenum = 0;
+
+    m_komove = 0;
+    m_lastmove = 0;
+    m_onebutlastmove = m_lastmove;
     m_komi = komi;
     m_handicap = 0;
     m_passes = 0;
-    
+
     return;
 }
 
@@ -39,13 +39,13 @@ void FastState::set_komi(float komi) {
 void FastState::reset_game(void) {
     reset_board();
 
-    movenum = 0;   
-    m_passes = 0;     
-    m_handicap = 0;    
-    komove = 0;              
-    
-    lastmove = 0;
-    onebutlastmove = lastmove;
+    m_movenum = 0;
+    m_passes = 0;
+    m_handicap = 0;
+    m_komove = 0;
+
+    m_lastmove = 0;
+    m_onebutlastmove = m_lastmove;
 }
 
 void FastState::reset_board(void) {
@@ -58,13 +58,13 @@ int FastState::play_random_move() {
 
 std::vector<int> FastState::generate_moves(int color) {
     std::vector<int> result;
-    
+
     result.reserve(board.m_empty_cnt);        
-    
+
     for (int i = 0; i < board.m_empty_cnt; i++) {
         int vertex = board.m_empty[i];
 
-        if (vertex != komove && !board.is_suicide(vertex, color)) {   
+        if (vertex != m_komove && !board.is_suicide(vertex, color)) {
             result.push_back(vertex);
         }                                
     }
@@ -75,10 +75,10 @@ std::vector<int> FastState::generate_moves(int color) {
 }
 
 bool FastState::try_move(int color, int vertex, bool allow_sa) {    
-    if (vertex != komove && board.no_eye_fill(vertex)) {
+    if (vertex != m_komove && board.no_eye_fill(vertex)) {
         if (!board.fast_ss_suicide(color, vertex)) {
-            if ((allow_sa) || (!board.self_atari(color, vertex))) {               
-                return true;               
+            if ((allow_sa) || (!board.self_atari(color, vertex))) {
+                return true;
             }
         } 
     }                       
@@ -127,20 +127,20 @@ int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
 int FastState::play_random_move(int color) {                            
     board.m_tomove = color;
 
-    int movecnt = 0;    
+    size_t movecnt = 0;
     int newcnt = 0;
     int scoredcnt = 0;
-    
-    if (lastmove > 0 && lastmove < board.m_maxsq) {
-        if (board.get_square(lastmove) == !color) {            
+
+    if (m_lastmove > 0 && m_lastmove < board.m_maxsq) {
+        if (board.get_square(m_lastmove) == !color) {
             board.add_global_captures(color, moves, movecnt);
-            board.save_critical_neighbours(color, lastmove, moves, movecnt);                        
-            board.add_pattern_moves(color, lastmove, moves, movecnt);
-            
-            // remove ko captures from count              
+            board.save_critical_neighbours(color, m_lastmove, moves, movecnt);
+            board.add_pattern_moves(color, m_lastmove, moves, movecnt);
+
+            // remove ko captures from count
             newcnt = movecnt;
-            for (int i = 0; i < movecnt; i++) {
-                if (moves[i] == komove) {
+            for (size_t i = 0; i < movecnt; i++) {
+                if (moves[i] == m_komove) {
                     newcnt--;
                 }
             }
@@ -155,11 +155,11 @@ int FastState::play_random_move(int color) {
 	static const int idxs[6] = { 64, 128, 256, 256, 512, 1024 };
 	int bound = idxs[bidx];
 
-        for (int i = 0; i < movecnt; i++) {
+        for (size_t i = 0; i < movecnt; i++) {
             int sq = moves[i];
 
             // skip ko
-            if (sq == komove) continue;
+            if (sq == m_komove) continue;
             
             int pattern = board.get_pattern_fast_augment(sq);
             int score = matcher->matches(color, pattern);                                    
@@ -178,7 +178,7 @@ int FastState::play_random_move(int color) {
 
             bool nearby = false;
             for (int i = 0; i < 8; i++) {
-                int ai = lastmove + board.get_extra_dir(i);
+                int ai = m_lastmove + board.get_extra_dir(i);
                 if (ai == sq) {
                     nearby = true;
                     break;
@@ -263,30 +263,30 @@ int FastState::play_move_fast(int vertex) {
     if (vertex == FastBoard::PASS) {                       
         increment_passes();                 
     } else {                                                      
-        komove = board.update_board_fast(board.m_tomove, vertex);        
+        m_komove = board.update_board_fast(board.m_tomove, vertex);
         set_passes(0);                                            
     }
-    
-    onebutlastmove = lastmove;
-    lastmove = vertex;                                              
+
+    m_onebutlastmove = m_lastmove;
+    m_lastmove = vertex;
     board.m_tomove = !board.m_tomove;
-    movenum++; 
-    
+    m_movenum++;
+
     return vertex;
 }
-   
+
 void FastState::play_pass(void) {
-    movenum++;
-        
-    onebutlastmove = lastmove;    
-    lastmove = FastBoard::PASS;
-        
-    board.hash  ^= 0xABCDABCDABCDABCDULL;    
-    board.m_tomove = !board.m_tomove;                 
-        
+    m_movenum++;
+
+    m_onebutlastmove = m_lastmove;
+    m_lastmove = FastBoard::PASS;
+
+    board.hash  ^= 0xABCDABCDABCDABCDULL;
+    board.m_tomove = !board.m_tomove;
+
     board.hash ^= Zobrist::zobrist_pass[get_passes()];
     increment_passes();
-    board.hash ^= Zobrist::zobrist_pass[get_passes()];              
+    board.hash ^= Zobrist::zobrist_pass[get_passes()];
 }
 
 void FastState::play_move(int vertex) {
@@ -294,32 +294,32 @@ void FastState::play_move(int vertex) {
 }
 
 void FastState::play_move(int color, int vertex) {
-    if (vertex != FastBoard::PASS && vertex != FastBoard::RESIGN) {                   
+    if (vertex != FastBoard::PASS && vertex != FastBoard::RESIGN) {
         int kosq = board.update_board(color, vertex);
-    
-        komove = kosq;   
-        onebutlastmove = lastmove;
-        lastmove = vertex;
-    
-        movenum++;
-        
+
+        m_komove = kosq;
+        m_onebutlastmove = m_lastmove;
+        m_lastmove = vertex;
+
+        m_movenum++;
+
         if (board.m_tomove == color) {
             board.hash  ^= 0xABCDABCDABCDABCDULL;
-        }            
-        board.m_tomove = !color;        
-        
+        }
+        board.m_tomove = !color;
+
         if (get_passes() > 0) {
             board.hash ^= Zobrist::zobrist_pass[get_passes()];
             set_passes(0);
             board.hash ^= Zobrist::zobrist_pass[0];
-        }            
+        }
     } else {
         play_pass();
-    }    
+    }
 }
 
 int FastState::get_movenum() {
-    return movenum;
+    return m_movenum;
 }
 
 int FastState::estimate_mc_score(void) {
@@ -335,11 +335,11 @@ float FastState::percentual_area_score() {
 }
 
 int FastState::get_last_move(void) {
-    return lastmove;
+    return m_lastmove;
 }
 
 int FastState::get_prevlast_move() {
-    return onebutlastmove;
+    return m_onebutlastmove;
 }
 
 int FastState::get_passes() {     
@@ -373,7 +373,7 @@ void FastState::display_state() {
     }
     myprintf("    White (O) Prisoners: %d\n", board.get_prisoners(FastBoard::WHITE));              
 
-    board.display_board(lastmove);
+    board.display_board(m_lastmove);
 }
 
 std::string FastState::move_to_text(int move) {
@@ -485,11 +485,11 @@ float FastState::get_komi() {
 void FastState::set_handicap(int hcap) {
     m_handicap = hcap;
 }
-      
+
 int FastState::get_handicap() {
     return m_handicap;
 }
 
 int FastState::get_komove() {
-	return komove;
+    return m_komove;
 }

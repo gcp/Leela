@@ -23,7 +23,7 @@ public:
 
 private:        
     typedef std::vector<Attributes> AttrList;
-    typedef std::pair<int, AttrList> LrnPos;
+    typedef std::pair<size_t, AttrList> LrnPos;
     typedef std::list<LrnPos> LearnVector;
 
     void gather_attributes(std::string filename, LearnVector & data);

@@ -25,7 +25,7 @@ MCOwnerTable::MCOwnerTable() {
 void MCOwnerTable::update_owns(Playout::bitboard_t & blacksq, 
                                bool blackwon) {
     SMP::Lock lock(m_mutex);
-    for (int i = 0; i < blacksq.size(); i++) {
+    for (size_t i = 0; i < blacksq.size(); i++) {
         if (blacksq[i]) {
             m_mcblackowner[i]++;
             if (blackwon) {

@@ -108,7 +108,7 @@ void PNNode::set_proof_disproof(node_type_t type) {
             disproof = 0;
         }
 
-        for (int i = 0; i < m_children.size(); i++) {
+        for (size_t i = 0; i < m_children.size(); i++) {
             if (type == AND) {
                 proof += m_children[i].m_pn;
                 disproof = std::min(disproof, m_children[i].m_dn);
@@ -180,15 +180,15 @@ int PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnodes
     std::sort(roi.begin(), roi.end());    
     roi.erase(std::unique(roi.begin(), roi.end()), roi.end());     
     
-    for (int i = 0; i < roi.size(); i++) {   
-	int vertex = roi[i];
-	if (ks->board.get_square(vertex) == FastBoard::EMPTY 	    
-	    && !ks->board.is_suicide(vertex, ks->board.get_to_move())) {	    
-	    uint64 phash = ks->board.predict_ko_hash(ks->board.get_to_move(), vertex);
-	    if (!ks->superko(phash)) {
-	        m_children.push_back(PNNode(this, vertex));
-	    }
-	}
+    for (size_t i = 0; i < roi.size(); i++) {
+        int vertex = roi[i];
+        if (ks->board.get_square(vertex) == FastBoard::EMPTY
+            && !ks->board.is_suicide(vertex, ks->board.get_to_move())) {
+            uint64 phash = ks->board.predict_ko_hash(ks->board.get_to_move(), vertex);
+            if (!ks->superko(phash)) {
+                m_children.push_back(PNNode(this, vertex));
+            }
+        }
     }
     
     // allow pass if there are 2 or less good options (could be eye fills
@@ -200,7 +200,7 @@ int PNNode::develop_node(KoState * ks, int groupcolor, int groupid, int maxnodes
     }    
     
     // immediate evaluation    
-    for (int i = 0; i < m_children.size(); i++) {                    
+    for (size_t i = 0; i < m_children.size(); i++) {
         m_children[i].evaluate(ks, m_children[i].m_move, groupcolor, groupid, maxnodes);
     }     
 

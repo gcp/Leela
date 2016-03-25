@@ -8,11 +8,13 @@
 
 class TTEntry {
 public:
-    TTEntry();
-    
+    TTEntry()
+        : m_hash(0), m_blackwins(0.0f), m_visits(0) {
+    };
+
     uint64 m_hash;
 
-    // XXX: need RAVE data here? 
+    // XXX: need RAVE data here?
     float m_blackwins;
     int m_visits;
 };

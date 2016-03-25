@@ -43,10 +43,10 @@ Matcher::Matcher() {
     
     typedef std::map<int, float> patmap;    
     patmap patweights;
-    
-    for (int i = 0; i < internal_weights_fast.size(); i++) {
+
+    for (size_t i = 0; i < internal_weights_fast.size(); i++) {
         std::pair<int, float> pr = std::make_pair(internal_patterns_fast[i],
-                                                  internal_weights_fast[i]);        
+                                                  internal_weights_fast[i]);
         patweights.insert(pr);
     }    
     

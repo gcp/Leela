@@ -39,7 +39,7 @@ void PNSearch::classify_groups() {
                         m_rootstate.board.augment_chain(chains, vtx);                        
 
                         // mark the entire augmented chain
-                        for (int i = 0; i < chains.size(); i++) {
+                        for (size_t i = 0; i < chains.size(); i++) {
                             groupstatus[chains[i]] = status;
                             groupmarker[chains[i]] = true;
                             std::string groupname = m_rootstate.board.move_to_text(chains[i]);
@@ -55,11 +55,9 @@ void PNSearch::classify_groups() {
 }
 
 std::pair<int,int> PNSearch::do_search(int groupid, int maxnodes) {
-    m_root.reset(new PNNode());        
+    m_root.reset(new PNNode());
+    m_group_color = m_rootstate.board.get_square(groupid);
 
-    m_group_color = m_rootstate.board.get_square(groupid);            
-    int rootcolor = m_rootstate.get_to_move();    
-   
     // no need as it happened in the father tree
     m_root->evaluate(&m_rootstate, FastBoard::PASS, m_group_color, groupid);    
 
@@ -81,11 +79,10 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
     std::string groupname = m_rootstate.board.move_to_text(groupid);
     myprintf("Scanning group %s\n", groupname.c_str());
 
-    m_root.reset(new PNNode());        
-            
-    m_group_color = m_rootstate.board.get_square(groupid);            
-    int rootcolor = m_rootstate.get_to_move();    
-    
+    m_root.reset(new PNNode());
+
+    m_group_color = m_rootstate.board.get_square(groupid);
+
     // start Proof number search
     m_root->evaluate(&m_rootstate, FastBoard::PASS, m_group_color, groupid);   
     

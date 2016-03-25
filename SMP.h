@@ -10,24 +10,21 @@
 #endif
 
 namespace SMP {
-
     int get_num_cpus();      
 
     class Mutex {
     public:         
         Mutex();   
-        ~Mutex();	
+        ~Mutex();
         friend class Lock;
-    private:  
-#ifdef WIN32       	
+    private:
+#ifdef USE_SMP
+#ifdef WIN32
         volatile long m_lock;
 #else
-#ifdef USE_SMP
-	pthread_spinlock_t m_lock;
-#else   
-        long m_lock;
+        pthread_spinlock_t m_lock;
 #endif
-#endif	
+#endif
     };
 
     class Lock {

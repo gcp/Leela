@@ -74,9 +74,9 @@ public:
       : m_rootstate(state), m_search(search), m_root(root) {};
     void operator()();
 private:
-    GameState & m_rootstate; 
+    GameState & m_rootstate;
+    UCTSearch * m_search;
     UCTNode * m_root;
-    UCTSearch * m_search;        
 };
 
 #endif

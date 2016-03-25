@@ -15,13 +15,13 @@
 
 using namespace Utils;
 
-const std::tr1::array<int, 2> FastBoard::s_eyemask = {    
+const std::tr1::array<int, 2> FastBoard::s_eyemask = {
     4 * (1 << (NBR_SHIFT * BLACK)),
-    4 * (1 << (NBR_SHIFT * WHITE))    
+    4 * (1 << (NBR_SHIFT * WHITE))
 };
 
-const std::tr1::array<FastBoard::square_t, 4> FastBoard::s_cinvert = {    
-    WHITE, BLACK, EMPTY, INVAL        
+const std::tr1::array<FastBoard::square_t, 4> FastBoard::s_cinvert = {
+    WHITE, BLACK, EMPTY, INVAL
 };
 
 int FastBoard::get_boardsize(void) {
@@ -1124,7 +1124,7 @@ int FastBoard::in_atari(int vertex) {
 }
 
 // loop over a string and try to kill neighbors
-void FastBoard::kill_neighbours(int vertex, movelist_t & moves, int & movecnt) {       
+void FastBoard::kill_neighbours(int vertex, movelist_t & moves, size_t & movecnt) {
     int scolor = m_square[vertex];            
     int kcolor = !scolor;
     int pos = vertex;
@@ -1187,7 +1187,7 @@ int FastBoard::saving_size(int color, int vertex) {
 // look for a neighbors of vertex with "color" that are critical,
 // and add moves that save them to work
 // vertex is sure to be filled with !color
-void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & moves, int & movecnt) {        
+void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & moves, size_t & movecnt) {
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
         
@@ -1247,12 +1247,14 @@ template <int N>
 void FastBoard::add_string_liberties(int vertex, 
                                      std::tr1::array<int, N> & nbr_libs, 
                                      int & nbr_libs_cnt) {
-    int pos = vertex;    
+    int pos = vertex;
+#ifndef NDEBUG
     int color = m_square[pos];
-  
-    do {               
+#endif
+
+    do {
         assert(m_square[pos] == color);
-        
+
         if (count_pliberties(pos)) {        
             // look for empties near this stone
             for (int k = 0; k < 4; k++) {
@@ -1709,7 +1711,7 @@ int FastBoard::get_pattern4(const int sq, bool invert) {
     
     /* color symmetry */
     if (invert) {
-        for (int i = 0; i < sqs.size(); i++) {
+        for (size_t i = 0; i < sqs.size(); i++) {
             sqs[i] = s_cinvert[sqs[i]];
         }
     }
@@ -1835,7 +1837,7 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
     
     /* color symmetry */
     if (invert) {
-        for (int i = 0; i < sqs.size(); i++) {
+        for (size_t i = 0; i < sqs.size(); i++) {
             sqs[i] = s_cinvert[sqs[i]];
         }
     }
@@ -1918,7 +1920,7 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
     return idx1;          
 }
 
-void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves, int & movecnt) {                                         
+void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves, size_t & movecnt) {
     for (int i = 0; i < 8; i++) {        
         int sq = vertex + m_extradirs[i];
         
@@ -1933,9 +1935,9 @@ void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves, int
 }        
 
 // add capture moves for color
-void FastBoard::add_global_captures(int color, movelist_t & moves, int & movecnt) {
-    // walk critical squares    
-    for (int i = 0; i < m_critical.size(); i++) {        
+void FastBoard::add_global_captures(int color, movelist_t & moves, size_t & movecnt) {
+    // walk critical squares
+    for (size_t i = 0; i < m_critical.size(); i++) {
         try_capture(color, m_critical[i], moves, movecnt);
     }
     m_critical.clear();
@@ -1966,7 +1968,7 @@ int FastBoard::capture_size(int color, int vertex) {
     return 0;
 }
 
-void FastBoard::try_capture(int color, int vertex, movelist_t & moves, int & movecnt) {
+void FastBoard::try_capture(int color, int vertex, movelist_t & moves, size_t & movecnt) {
     if (m_square[vertex] == EMPTY) {                
         int limitlibs = count_neighbours(!color, vertex);
         
@@ -2252,7 +2254,7 @@ std::vector<int> FastBoard::get_neighbour_ids(int vertex) {
             int par = m_parent[ai];
             
             bool found = false;
-            for (int i = 0; i < result.size(); i++) {
+            for (size_t i = 0; i < result.size(); i++) {
                 if (result[i] == par) {
                     found = true;
                     break;
@@ -2380,7 +2382,7 @@ std::vector<int> FastBoard::get_augmented_string(int vertex) {
 
     augment_chain(chains, vertex);
 
-    for (int i = 0; i < chains.size(); i++) {
+    for (size_t i = 0; i < chains.size(); i++) {
         std::vector<int> stones = get_string_stones(chains[i]);
         std::copy(stones.begin(), stones.end(), back_inserter(res));
     }
@@ -2394,7 +2396,7 @@ std::vector<int> FastBoard::dilate_liberties(std::vector<int> & vtxlist) {
     std::copy(vtxlist.begin(), vtxlist.end(), back_inserter(res));    
 
     // add all direct liberties
-    for (int i = 0; i < vtxlist.size(); i++) {
+    for (size_t i = 0; i < vtxlist.size(); i++) {
         for (int k = 0; k < 4; k++) {
             int ai = m_dirs[k] + vtxlist[i];
             if (m_square[ai] == EMPTY) {
@@ -2418,7 +2420,7 @@ std::vector<int> FastBoard::get_nearby_enemies(std::vector<int> & vtxlist) {
 
     int color = m_square[vtxlist[0]];
 
-    for (int i = 0; i < vtxlist.size(); i++) {
+    for (size_t i = 0; i < vtxlist.size(); i++) {
         assert(m_square[vtxlist[i]] == color);
         for (int k = 0; k < 8; k++) {
             int ai = get_extra_dir(k) + vtxlist[i];
@@ -2435,7 +2437,7 @@ std::vector<int> FastBoard::get_nearby_enemies(std::vector<int> & vtxlist) {
     strings.erase(std::unique(strings.begin(), strings.end()), strings.end());    
 
     // now add full strings
-    for (int i = 0; i < strings.size(); i++) {
+    for (size_t i = 0; i < strings.size(); i++) {
         std::vector<int> stones = get_string_stones(strings[i]);
         std::copy(stones.begin(), stones.end(), back_inserter(res));
     }
