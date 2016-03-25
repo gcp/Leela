@@ -1,5 +1,6 @@
 #include "config.h"
 #ifdef USE_NETS
+#undef NAME
 #include <algorithm>
 #include <cassert>
 #include <list>

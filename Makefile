@@ -27,14 +27,14 @@ llvm:
 		leela
 
 LIBS = -lpthread -lboost_thread -lboost_system
-#LIBS += -ltbb -ltbbmalloc -lcaffe -lprotobuf -lglog
+LIBS += -ltbb -ltbbmalloc -lcaffe -lprotobuf -lglog
 
 CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include
 CAFFE_LIB = $(CAFFE_BASE)/lib
-#CFLAGS   += -I$(CAFFE_INC) -I/usr/local/cuda
-#CXXFLAGS += -I$(CAFFE_INC) -I/usr/local/cuda
-#LDFLAGS  += -L$(CAFFE_LIB)
+CFLAGS   += -I$(CAFFE_INC) -I/usr/local/cuda
+CXXFLAGS += -I$(CAFFE_INC) -I/usr/local/cuda
+LDFLAGS  += -L$(CAFFE_LIB)
 
 CFLAGS   += -I.
 CXXFLAGS += -I.
