@@ -3,4 +3,6 @@ callgrind*
 massif*
 leela-*
 leela
+leela_test
+leela_train
 *.o
