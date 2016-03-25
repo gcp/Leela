@@ -23,6 +23,130 @@
 
 using namespace Utils;
 
+void Network::gather_features(FastState * state, NNPlanes & planes) {
+    planes.resize(22);
+    BoardPlane& empt_color = planes[0];
+    BoardPlane& move_color = planes[1];
+    BoardPlane& othr_color = planes[2];
+    BoardPlane& lastmoves  = planes[3];
+    BoardPlane& libs_1     = planes[4];
+    BoardPlane& libs_2     = planes[5];
+    BoardPlane& libs_3     = planes[6];
+    BoardPlane& libs_4p    = planes[7];
+    BoardPlane& libs_1_e   = planes[8];
+    BoardPlane& libs_2_e   = planes[9];
+    BoardPlane& libs_3_e   = planes[10];
+    BoardPlane& libs_4p_e  = planes[11];
+    BoardPlane& after_1    = planes[12];
+    BoardPlane& after_2    = planes[13];
+    BoardPlane& after_3    = planes[14];
+    BoardPlane& after_4p   = planes[15];
+    BoardPlane& after_1_e  = planes[16];
+    BoardPlane& after_2_e  = planes[17];
+    BoardPlane& after_3_e  = planes[18];
+    BoardPlane& after_4p_e = planes[19];
+    BoardPlane& komove     = planes[20];
+    BoardPlane& ladder     = planes[21];
+
+    int tomove = state->get_to_move();
+    // collect white, black occupation planes
+    for (int j = 0; j < 19; j++) {
+        for(int i = 0; i < 19; i++) {
+            int vtx = state->board.get_vertex(i, j);
+            FastBoard::square_t color =
+                state->board.get_square(vtx);
+            int idx = j * 19 + i;
+            if (color != FastBoard::EMPTY) {
+                int rlibs = state->board.count_rliberties(vtx);
+                if (rlibs == 1) {
+                    if (color == tomove) {
+                        libs_1[idx] = true;
+                        move_color[idx] = true;
+                    } else {
+                        libs_1_e[idx] = true;
+                        othr_color[idx] = true;
+                    }
+                } else if (rlibs == 2) {
+                    if (color == tomove) {
+                        libs_2[idx] = true;
+                        move_color[idx] = true;
+                    } else {
+                        libs_2_e[idx] = true;
+                        othr_color[idx] = true;
+                    }
+                } else if (rlibs == 3) {
+                    if (color == tomove) {
+                        libs_3[idx] = true;
+                        move_color[idx] = true;
+                    } else {
+                        libs_3_e[idx] = true;
+                        othr_color[idx] = true;
+                    }
+                } else if (rlibs >= 4) {
+                    if (color == tomove) {
+                        libs_4p[idx] = true;
+                        move_color[idx] = true;
+                    } else {
+                        libs_4p_e[idx] = true;
+                        othr_color[idx] = true;
+                    }
+                }
+            } else {
+                empt_color[idx] = true;
+
+                //int al = state->board.minimum_elib_count(!tomove, vtx);
+                std::pair<int, int> p =
+                    state->board.after_liberties(tomove, vtx);
+                int al = p.first;
+                int at = p.second;
+                if (al == 1) {
+                    after_1[idx] = true;
+                } else if (al == 2) {
+                    after_2[idx] = true;
+                } else if (al == 3) {
+                    after_3[idx] = true;
+                } else if (al >= 4) {
+                    after_4p[idx] = true;
+                }
+                //int at = state->board.minimum_elib_count(tomove, vtx);
+                if (at == 1) {
+                    after_1_e[idx] = true;
+                } else if (at == 2) {
+                    after_2_e[idx] = true;
+                } else if (at == 3) {
+                    after_3_e[idx] = true;
+                } else if (at >= 4) {
+                    after_4p_e[idx] = true;
+                }
+
+                int ss = state->board.saving_size(tomove, vtx);
+                int ae = state->board.count_pliberties(vtx);
+                if (ss > 0 && ae == 2) {
+                    int ll = state->board.check_losing_ladder(tomove, vtx);
+                    ladder[idx] = ll;
+                }
+            }
+        }
+    }
+
+    if (state->get_last_move() > 0) {
+        std::pair<int, int> lastmove = state->board.get_xy(state->get_last_move());
+        int idx = lastmove.second * 19 + lastmove.first;
+        lastmoves[idx] = true;
+        if (state->get_prevlast_move() > 0) {
+            std::pair<int, int> prevlast = state->board.get_xy(state->get_prevlast_move());
+            int idxp = prevlast.second * 19 + prevlast.first;
+            lastmoves[idxp] = true;
+        }
+    }
+
+    if (state->get_komove() > 0) {
+        std::pair<int, int> kopair = state->board.get_xy(state->get_komove());
+        int idx = kopair.second * 19 + kopair.first;
+        komove[idx] = true;
+    }
+}
+
 void Network::gather_traindata(std::string filename, TrainVector& data) {
     std::vector<std::string> games = SGFParser::chop_all(filename);
     int gametotal = games.size();
@@ -65,182 +189,12 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                     break;
                 }
 
-                // sitting at a state, with the move actually played in move
-                // gather feature sets of all moves
+                TrainPosition position;
+                NNPlanes & planes = position.second;
+                gather_features(state, planes);
+
                 std::vector<int> moves = state->generate_moves(tomove);
                 bool moveseen = false;
-
-                BoardPlane empt_color;   // 0
-                BoardPlane move_color;   // 1
-                BoardPlane othr_color;   // 2
-                BoardPlane lastmoves;    // 3
-                BoardPlane libs_1;       // 4
-                BoardPlane libs_2;       // 5
-                BoardPlane libs_3;       // 6
-                BoardPlane libs_4p;      // 7
-                BoardPlane libs_5p;      // 7
-                BoardPlane libs_1_e;     // 8
-                BoardPlane libs_2_e;     // 9
-                BoardPlane libs_3_e;     //10
-                BoardPlane libs_4p_e;    //11
-                BoardPlane libs_5p_e;    //11
-                BoardPlane after_1;      //10
-                BoardPlane after_2;      //11
-                BoardPlane after_3;      //12
-                BoardPlane after_4p;     //13
-                BoardPlane after_1_e;    //14
-                BoardPlane after_2_e;    //15
-                BoardPlane after_3_e;    //16
-                BoardPlane after_4p_e;   //17
-                BoardPlane ssize_1;      //18
-                BoardPlane ssize_2;      //19
-                BoardPlane ssize_3;      //20
-                BoardPlane ssize_4;     //21
-                BoardPlane ssize_5;      //21
-                BoardPlane ssize_6p;
-                BoardPlane komove;
-                BoardPlane ladder;       //22
-                BoardPlane string_h1;    //21
-                BoardPlane string_h2;    //22
-                BoardPlane string_h3;    //23
-                BoardPlane string_h4;    //24
-                // randomly spread strings through planes
-                int hidx = Random::get_Rng()->randint(4);
-
-                // collect white, black occupation planes
-                for (int j = 0; j < 19; j++) {
-                    for(int i = 0; i < 19; i++) {
-                        int vtx = state->board.get_vertex(i, j);
-                        FastBoard::square_t color =
-                            state->board.get_square(vtx);
-                        int idx = j * 19 + i;
-                        if (color != FastBoard::EMPTY) {
-                            int rlibs = state->board.count_rliberties(vtx);
-                            if (rlibs == 1) {
-                                if (color == tomove) {
-                                    libs_1[idx] = true;
-                                    move_color[idx] = true;
-                                } else {
-                                    libs_1_e[idx] = true;
-                                    othr_color[idx] = true;
-                                }
-                            } else if (rlibs == 2) {
-                                if (color == tomove) {
-                                    libs_2[idx] = true;
-                                    move_color[idx] = true;
-                                } else {
-                                    libs_2_e[idx] = true;
-                                    othr_color[idx] = true;
-                                }
-                            } else if (rlibs == 3) {
-                                if (color == tomove) {
-                                    libs_3[idx] = true;
-                                    move_color[idx] = true;
-                                } else {
-                                    libs_3_e[idx] = true;
-                                    othr_color[idx] = true;
-                                }
-                            } else if (rlibs == 4) {
-                                if (color == tomove) {
-                                    libs_4p[idx] = true;
-                                    move_color[idx] = true;
-                                } else {
-                                    libs_4p_e[idx] = true;
-                                    othr_color[idx] = true;
-                                }
-                                assert(rlibs >= 4);
-                            }
-                            else if (rlibs >= 5) {
-                                if (color == tomove) {
-                                    libs_5p[idx] = true;
-                                    move_color[idx] = true;
-                                } else {
-                                    libs_5p_e[idx] = true;
-                                    othr_color[idx] = true;
-                                }
-                            }
-                            int ss = state->board.string_size(vtx);
-                            if (ss == 1) {
-                                ssize_1[idx] = true;
-                            } else if (ss == 2) {
-                                ssize_2[idx] = true;
-                            } else if (ss == 3) {
-                                ssize_3[idx] = true;
-                            } else if (ss == 4) {
-                                ssize_4[idx] = true;
-                            } else if (ss == 5) {
-                                ssize_5[idx] = true;
-                            } else if (ss >= 6) {
-                                ssize_6p[idx] = true;
-                            }
-                            int pid = state->board.get_groupid(vtx);
-                            int gidx = (pid + hidx) % 4;
-                            if (gidx == 0) {
-                                string_h1[idx] = true;
-                            } else if (gidx == 1) {
-                                string_h2[idx] = true;
-                            } else if (gidx == 2) {
-                                string_h3[idx] = true;
-                            } else if (gidx == 3) {
-                                string_h4[idx] = true;
-                            }
-                        } else {
-                            empt_color[idx] = true;
-
-                            //int al = state->board.minimum_elib_count(!tomove, vtx);
-                            std::pair<int, int> p =
-                                state->board.after_liberties(tomove, vtx);
-                            int al = p.first;
-                            int at = p.second;
-			    if (al == 1) {
-				after_1[idx] = true;
-			    } else if (al == 2) {
-				after_2[idx] = true;
-			    } else if (al == 3) {
-				after_3[idx] = true;
-			    } else if (al >= 4) {
-				after_4p[idx] = true;
-                            }
-                            //int at = state->board.minimum_elib_count(tomove, vtx);
-                            if (at == 1) {
-                               after_1_e[idx] = true;
-                            } else if (at == 2) {
-                               after_2_e[idx] = true;
-                            } else if (at == 3) {
-                               after_3_e[idx] = true;
-                            } else if (at >= 4) {
-                               after_4p_e[idx] = true;
-                            }
-
-                            int ss = state->board.saving_size(tomove, vtx);
-                            int ae = state->board.count_pliberties(vtx);
-                            if (ss > 0 && ae == 2) {
-                                int ll = state->board.check_losing_ladder(tomove, vtx);
-                                ladder[idx] = ll;
-                            }
-                        }
-                    }
-                }
-
-                if (state->get_last_move() > 0) {
-                    std::pair<int, int> lastmove = state->board.get_xy(state->get_last_move());
-                    int idx = lastmove.second * 19 + lastmove.first;
-                    lastmoves[idx] = true;
-                    if (state->get_prevlast_move() > 0) {
-                        std::pair<int, int> prevlast = state->board.get_xy(state->get_prevlast_move());
-                        int idxp = prevlast.second * 19 + prevlast.first;
-                        lastmoves[idxp] = true;
-                    }
-                }
-
-                if (state->get_komove() > 0) {
-                    std::pair<int, int> kopair = state->board.get_xy(state->get_komove());
-                    int idx = kopair.second * 19 + kopair.first;
-                    komove[idx] = true;
-                }
-
-                TrainPosition position;
-
                 for(auto it = moves.begin(); it != moves.end(); ++it) {
                     if (*it == move) {
                         if (move != FastBoard::PASS) {
@@ -253,52 +207,6 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 }
 
                 if (moveseen && move != FastBoard::PASS) {
-                    position.second.resize(22);
-                    position.second[0] = empt_color;
-                    position.second[1] = move_color;
-                    position.second[2] = othr_color;
-                    position.second[3] = libs_1;
-                    position.second[4] = libs_2;
-                    position.second[5] = libs_3;
-                    position.second[6] = libs_4p;
-                    position.second[7] = libs_5p;
-                    position.second[8] = libs_1_e;
-                    position.second[9] = libs_2_e;
-                    position.second[10] = libs_3_e;
-                    position.second[11] = libs_4p_e;
-                    position.second[12] = libs_5p_e;
-                    position.second[13] = lastmoves;
-                    //position.second[14] = after_1;
-                    //position.second[15] = after_2;
-                    //position.second[16] = after_3;
-                    //position.second[17] = after_4p;
-                    //position.second[18] = after_1_e;
-                    //position.second[19] = after_2_e;
-                    //position.second[20] = after_3_e;
-                    //position.second[21] = after_4p_e;
-                    position.second[14] = ssize_1;
-                    position.second[15] = ssize_2;
-                    position.second[16] = ssize_3;
-                    position.second[17] = ssize_4;
-                    position.second[18] = ssize_5;
-                    position.second[19] = ssize_6p;
-                    position.second[20] = ladder;
-                    position.second[21] = komove;
-                    //position.second[30] = string_h1;
-                    //position.second[31] = string_h2;
-                    //position.second[32] = string_h3;
-                    //position.second[33] = string_h4;
-                    /*     position.second.resize(10);
-                    position.second[0] = empt_color;
-                    position.second[1] = libs_1;
-                    position.second[2] = libs_2;
-                    position.second[3] = libs_3;
-                    position.second[4] = libs_4p;
-                    position.second[5] = libs_1_e;
-                    position.second[6] = libs_2_e;
-                    position.second[7] = libs_3_e;
-                    position.second[8] = libs_4p_e;
-                    position.second[9] = lastmoves;*/
                     data.push_back(position);
                 } else if (move != FastBoard::PASS) {
                     myprintf("Mainline move not found: %d\n", move);

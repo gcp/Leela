@@ -15,12 +15,15 @@ using namespace tiny_cnn::activation;
 // Move attributes
 class Network {
 public:
-    void autotune_from_file(std::string filename);
-private:
     typedef std::bitset<19*19> BoardPlane;
     typedef std::vector<BoardPlane> NNPlanes;
     typedef std::pair<int, NNPlanes> TrainPosition;
     typedef std::vector<TrainPosition> TrainVector;
+
+    void autotune_from_file(std::string filename);
+    void gather_features(FastState * state, NNPlanes & planes);
+
+private:
     typedef network<cross_entropy_multiclass, gradient_descent> NN;
     NN nn;
 
