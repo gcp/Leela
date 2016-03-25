@@ -1,3 +1,5 @@
+#include "config.h"
+#ifdef USE_NETS
 #include <algorithm>
 #include <cassert>
 #include <list>
@@ -11,8 +13,6 @@
 #include <caffe/util/io.hpp>
 
 #include "tiny_cnn/tiny_cnn.h"
-
-#include "config.h"
 
 #include "SGFTree.h"
 #include "SGFParser.h"
@@ -375,3 +375,4 @@ void Network::autotune_from_file(std::string filename) {
 
     train_network(data);
 }
+#endif

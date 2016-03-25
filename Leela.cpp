@@ -1,10 +1,12 @@
+#include "config.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#ifdef USE_NETS
 #include <glog/logging.h>
-
-#include "config.h"
+#endif
 
 #include "Zobrist.h"
 #include "GTP.h"
@@ -21,7 +23,9 @@ int main (int argc, char *argv[]) {
     int gtp_mode;
     std::string input;
 
+#ifdef USE_NETS
     ::google::InitGoogleLogging(argv[0]);
+#endif
 
     /* default to prompt */
     gtp_mode = false;

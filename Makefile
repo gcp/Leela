@@ -26,12 +26,18 @@ llvm:
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
 		leela
 
-LIBS = -lpthread -lboost_thread -lboost_system -ltbb -ltbbmalloc -lcaffe -lprotobuf -lglog
+LIBS = -lpthread -lboost_thread -lboost_system
+#LIBS += -ltbb -ltbbmalloc -lcaffe -lprotobuf -lglog
 
 CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include
 CAFFE_LIB = $(CAFFE_BASE)/lib
-LDFLAGS += -L$(CAFFE_LIB)
+#CFLAGS   += -I$(CAFFE_INC) -I/usr/local/cuda
+#CXXFLAGS += -I$(CAFFE_INC) -I/usr/local/cuda
+#LDFLAGS  += -L$(CAFFE_LIB)
+
+CFLAGS   += -I.
+CXXFLAGS += -I.
 
 sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
 	  Ruleset.cpp TimeControl.cpp UCTSearch.cpp Attributes.cpp \
@@ -45,10 +51,10 @@ objects = $(sources:.cpp=.o)
 headers = $(wildcard *.h)
 
 %.o: %.c $(headers)
-	$(CC) $(CFLAGS) -I. -I$(CAFFE_INC) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 %.o: %.cpp $(headers)
-	$(CXX) $(CXXFLAGS) -I. -I$(CAFFE_INC) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 leela:	$(objects)
 	$(CXX) $(LDFLAGS) -o leela $(objects) $(LIBS)

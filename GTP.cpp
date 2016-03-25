@@ -16,7 +16,9 @@
 #include "AttribScores.h"
 #include "Genetic.h"
 #include "PNSearch.h"
+#ifdef USE_NETS
 #include "Network.h"
+#endif
 
 using namespace Utils;
 
@@ -534,7 +536,8 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
         gtp_printf(id, "");
         return true;
-    } else if (command.find("nettune") == 0) {
+    }  else if (command.find("nettune") == 0) {
+#ifdef USE_NETS
         std::istringstream cmdstream(command);
         std::string tmp, filename;
 
@@ -543,7 +546,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
         std::unique_ptr<Network> network(new Network);
         network->autotune_from_file(filename);
-
+#endif
         gtp_printf(id, "");
         return true;
     }

@@ -21,7 +21,8 @@
 #define VERSION         "0.4.2"
 
 /* Features */
-//#define USE_PONDER
+//#define USE_NETS
+#define USE_PONDER
 //#define USE_SMP
 
 /* Integer types */
