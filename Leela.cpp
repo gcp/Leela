@@ -38,13 +38,13 @@ int main (int argc, char *argv[]) {
     setbuf(stdin, NULL);
     setbuf(stderr, NULL);    
                     
-    std::auto_ptr<Random> rng(new Random(5489UL));          
+    std::unique_ptr<Random> rng(new Random(5489UL));
     Zobrist::init_zobrist(*rng);    
 
     AttribScores::get_attribscores();
     Matcher::get_Matcher();
     
-    std::auto_ptr<GameState> maingame(new GameState);    
+    std::unique_ptr<GameState> maingame(new GameState);
         
     /* set board limits */    
     float komi = 7.5;         
