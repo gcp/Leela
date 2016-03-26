@@ -23,10 +23,10 @@ private:
     std::string get_pv(KoState * state, PNNode * node);
 
     KoState m_rootstate;
-    KoState m_workstate;    
-    int m_group_color;   
+    KoState m_workstate;
+    int m_group_color;
 
-    std::auto_ptr<PNNode> m_root;    
+    std::unique_ptr<PNNode> m_root;
 };
 
 #endif

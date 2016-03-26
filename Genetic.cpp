@@ -65,7 +65,7 @@ void Genetic::load_testsets() {
             file += boost::lexical_cast<std::string>(i);
             file += std::string(".sgf");
             
-            std::auto_ptr<SGFTree> sgftree(new SGFTree);
+            std::unique_ptr<SGFTree> sgftree(new SGFTree);
             try {            
                 sgftree->load_from_file(file);                
                 int moves = sgftree->count_mainline_moves();
