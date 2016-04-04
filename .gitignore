@@ -6,3 +6,5 @@ leela
 leela_test
 leela_train
 *.o
+tools/*.sgf
+snapshot_*
