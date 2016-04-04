@@ -124,7 +124,7 @@ int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
     return FastBoard::PASS;        
 }
 
-int FastState::play_random_move(int color) {                            
+int FastState::play_random_move(int color) {
     board.m_tomove = color;
 
     size_t movecnt = 0;
@@ -144,37 +144,34 @@ int FastState::play_random_move(int color) {
                     newcnt--;
                 }
             }
-        }        
-    }   
-    
-    Matcher * matcher = Matcher::get_Matcher();   
-                
-    if (newcnt > 0) {                                                                     
-        int cumul = 0; 
-        int bidx = Random::get_Rng()->randint(6);
-	static const int idxs[6] = { 64, 128, 256, 256, 512, 1024 };
-	int bound = idxs[bidx];
+        }
+    }
+
+    Matcher * matcher = Matcher::get_Matcher();
+
+    if (newcnt > 0) {
+        int cumul = 0;
 
         for (size_t i = 0; i < movecnt; i++) {
             int sq = moves[i];
 
             // skip ko
             if (sq == m_komove) continue;
-            
+
             int pattern = board.get_pattern_fast_augment(sq);
-            int score = matcher->matches(color, pattern);                                    
-            std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);            
-            
+            int score = matcher->matches(color, pattern);
+            std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
+
             static const std::tr1::array<int, 9> crit_mine = {
-                1, 4, 1, 1, 1, 1, 1, 1, 1                        
+                1, 4, 1, 1, 1, 1, 1, 1, 1
             };
-            
+
             static const std::tr1::array<int, 9> crit_enemy = {
                 1, 14, 12, 1, 1, 1, 1, 1, 1
             };
-                        
+
             score *= crit_mine[nbr_crit.first];
-            score *= crit_enemy[nbr_crit.second];                        
+            score *= crit_enemy[nbr_crit.second];
 
             bool nearby = false;
             for (int i = 0; i < 8; i++) {
@@ -184,12 +181,12 @@ int FastState::play_random_move(int color) {
                     break;
                 }
             }
-            
+
             if (!nearby) {
                 score *= 20;
-            }                       
-        
-            if (score >= bound) {    
+            }
+
+            if (score >= 256) {
                 cumul += score;
                 scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
             }
@@ -200,19 +197,16 @@ int FastState::play_random_move(int color) {
         for (int i = 0; i < scoredcnt; i++) {
             int point = scoredmoves[i].second;
             if (index < point) {
-                return play_move_fast(scoredmoves[i].first);                    
+                return play_move_fast(scoredmoves[i].first);
             }
-        }                                
+        }
     }
-           
-    // fall back global moves      
-    MCOwnerTable * mctab = MCOwnerTable::get_MCO(); 
-    
-    int loops = 4;    
+
+    int loops = board.m_empty_cnt / 64;
     int cumul = 0;
-    
+
     do {
-        int vidx = Random::get_Rng()->randint(board.m_empty_cnt); 
+        int vidx = Random::get_Rng()->randint(board.m_empty_cnt);
         int vtx = walk_empty_list(board.m_tomove, vidx, true);
 
         if (vtx == FastBoard::PASS) {
@@ -220,36 +214,27 @@ int FastState::play_random_move(int color) {
         }
 
         int pattern = board.get_pattern_fast_augment(vtx);
-        int score = matcher->matches(color, pattern);                                         
+        int score = matcher->matches(color, pattern);
 
-        if (mctab->is_primed()) {
-            int mcown = mctab->get_blackown_i(color, vtx);                      
-            int ownfac = (750 - abs(mcown - 500));
-            score = (score * ownfac * ownfac) >> 6; 
-
-            int crit = mctab->get_criticality_i(vtx);
-            score = (score * crit) / 100;
-        }        
-
-        if (board.self_atari(color, vtx)) {            
+        if (board.self_atari(color, vtx)) {
             score /= 64;
-        }                       
+        }
 
-        cumul += score;
-        scoredmoves[scoredcnt++] = std::make_pair(vtx, cumul);              
+        cumul += std::max<int>(1, score);
+        scoredmoves[scoredcnt++] = std::make_pair(vtx, cumul);
 
-    } while (--loops > 0);        
+    } while (--loops > 0);
 
     int index = Random::get_Rng()->randint32(cumul);
 
     for (int i = 0; i < scoredcnt; i++) {
         int point = scoredmoves[i].second;
         if (index < point) {
-            return play_move_fast(scoredmoves[i].first);                    
+            return play_move_fast(scoredmoves[i].first);
         }
-    }  
-    
-    return play_move_fast(FastBoard::PASS);      
+    }
+
+    return play_move_fast(FastBoard::PASS);
 }
 
 float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {       
