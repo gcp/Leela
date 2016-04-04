@@ -25,7 +25,7 @@
 using namespace Utils;
 
 void Network::gather_features(FastState * state, NNPlanes & planes) {
-    planes.resize(20);
+    planes.resize(22);
     BoardPlane& empt_color = planes[0];
     BoardPlane& move_color = planes[1];
     BoardPlane& othr_color = planes[2];
@@ -46,6 +46,11 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
     BoardPlane& after_2_e  = planes[17];
     BoardPlane& after_3_e  = planes[18];
     BoardPlane& after_4p_e = planes[19];
+    BoardPlane& komove     = planes[20];
+    BoardPlane& ladder     = planes[21];
+
+    // Every position in a random rotation/symmetry
+    int symmetry = Random::get_Rng()->randint(8);
 
     int tomove = state->get_to_move();
     // collect white, black occupation planes
@@ -54,7 +59,8 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
             int vtx = state->board.get_vertex(i, j);
             FastBoard::square_t color =
                 state->board.get_square(vtx);
-            int idx = j * 19 + i;
+            int orig_idx = j * 19 + i;
+            int idx = state->board.rotate_vertex(orig_idx, symmetry);
             if (color != FastBoard::EMPTY) {
                 int rlibs = state->board.count_rliberties(vtx);
                 if (rlibs == 1) {
@@ -93,7 +99,6 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
             } else {
                 empt_color[idx] = true;
 
-                //int al = state->board.minimum_elib_count(!tomove, vtx);
                 std::pair<int, int> p =
                     state->board.after_liberties(tomove, vtx);
                 int al = p.first;
@@ -107,7 +112,6 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
                 } else if (al >= 4) {
                     after_4p[idx] = true;
                 }
-                //int at = state->board.minimum_elib_count(tomove, vtx);
                 if (at == 1) {
                     after_1_e[idx] = true;
                 } else if (at == 2) {
@@ -116,6 +120,12 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
                     after_3_e[idx] = true;
                 } else if (at >= 4) {
                     after_4p_e[idx] = true;
+                }
+                int ss = state->board.saving_size(tomove, vtx);
+                int ae = state->board.count_pliberties(vtx);
+                if (ss > 0 && ae == 2) {
+                    int ll = state->board.check_losing_ladder(tomove, vtx);
+                    ladder[idx] = ll;
                 }
             }
         }
@@ -130,6 +140,12 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
             int idxp = prevlast.second * 19 + prevlast.first;
             lastmoves[idxp] = true;
         }
+    }
+
+    if (state->get_komove() > 0) {
+        std::pair<int, int> kosq = state->board.get_xy(state->get_komove());
+        int idx = kosq.second * 19 + kosq.first;
+        komove[idx] = true;
     }
 }
 
@@ -159,9 +175,9 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
             if (treewalk->get_state()->board.get_boardsize() != 19)
                 break;
 
-            int skip = Random::get_Rng()->randint(3);
             // check every 3rd move
-            if (skip == 0) {
+            //int skip = Random::get_Rng()->randint(3);
+            if (1) {
                 KoState * state = treewalk->get_state();
                 int tomove = state->get_to_move();
                 int move;
@@ -176,8 +192,6 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 }
 
                 TrainPosition position;
-                NNPlanes & planes = position.second;
-                gather_features(state, planes);
 
                 std::vector<int> moves = state->generate_moves(tomove);
                 bool moveseen = false;
@@ -193,6 +207,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 }
 
                 if (moveseen && move != FastBoard::PASS) {
+                    gather_features(state, position.second);
                     data.push_back(position);
                 } else if (move != FastBoard::PASS) {
                     myprintf("Mainline move not found: %d\n", move);
@@ -266,7 +281,7 @@ void Network::train_network(TrainVector& data) {
             int move = position.first;
             NNPlanes& nnplanes = position.second;
             caffe::Datum datum;
-            datum.set_channels(20);
+            datum.set_channels(22);
             datum.set_height(19);
             datum.set_width(19);
             datum.set_label((label_t)move);

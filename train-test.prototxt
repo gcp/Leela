@@ -64,10 +64,26 @@ layer {
 }
 
 layer {
+  name: "bn1"
+  type: "BatchNorm"
+  bottom: "conv1"
+  top: "bn1"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+}
+
+layer {
   name: "conv2"
   type: "Convolution"
   # input -> output
-  bottom: "conv1"
+  bottom: "bn1"
   top: "conv2"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -87,17 +103,33 @@ layer {
 
 layer {
   name: "relu2"
-  type: "ReLU"
+  type:  "ReLU"
   # in-place
   bottom: "conv2"
   top: "conv2"
 }
 
 layer {
+  name: "bn2"
+  type: "BatchNorm"
+  bottom: "conv2"
+  top: "bn2"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+}
+
+layer {
   name: "conv3"
   type: "Convolution"
   # input -> output
-  bottom: "conv2"
+  bottom: "bn2"
   top: "conv3"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -124,10 +156,26 @@ layer {
 }
 
 layer {
+  name: "bn3"
+  type: "BatchNorm"
+  bottom: "conv3"
+  top: "bn3"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+}
+
+layer {
   name: "conv4"
   type: "Convolution"
   # input -> output
-  bottom: "conv3"
+  bottom: "bn3"
   top: "conv4"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -154,10 +202,26 @@ layer {
 }
 
 layer {
+  name: "bn4"
+  type: "BatchNorm"
+  bottom: "conv4"
+  top: "bn4"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+}
+
+layer {
   name: "conv5"
   type: "Convolution"
   # input -> output
-  bottom: "conv4"
+  bottom: "bn4"
   top: "conv5"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
