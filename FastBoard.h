@@ -63,10 +63,11 @@ public:
     square_t get_square(int vertex); 
     int get_vertex(int i, int j);
     void set_square(int x, int y, square_t content);
-    void set_square(int vertex, square_t content); 
+    void set_square(int vertex, square_t content);
+    int rotate_vertex(int vertex, int symmetry);
     std::pair<int, int> get_xy(int vertex);
     int get_groupid(int vertex);
-        
+
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
     int update_board_fast(const int color, const int i);
