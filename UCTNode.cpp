@@ -500,21 +500,25 @@ void UCTNode::updateRAVE(Playout & playout, int color) {
             if (bpass) { 
                 SMP::Lock lock(child->get_mutex());    
                 child->m_ravevisits++;
-                        
+
                 if (score > 0.0f) {
                     child->m_ravestmwins += 1.0f + 0.05f * score;
-                }                 
-            }        
+                } else if (score == 0.0f) {
+                    child->m_ravestmwins += 0.5f;
+                }
+            }
         } else {
             bool wpass = playout.passthrough(FastBoard::WHITE, move);        
             
             if (wpass) { 
                 SMP::Lock lock(child->get_mutex());    
                 child->m_ravevisits++;
-                        
+
                 if (score < 0.0f) {
                     child->m_ravestmwins += 1.0f + 0.05f * -score;
-                }                 
+                } else if (score == 0.0f) {
+                    child->m_ravestmwins += 0.5f;
+                }
             }
         }
                         

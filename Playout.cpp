@@ -77,10 +77,16 @@ void Playout::run(FastState & state, bool resigning) {
     }
 
     // update MCO in one swoop
-    MCOwnerTable::get_MCO()->update_owns(blackowns, score > 0.0f);
+    bool blackwon;
+    if (score == 0.0f) {
+        blackwon = (Random::get_Rng()->randint(2) == 0);
+    } else {
+        blackwon = (score > 0.0f);
+    }
+    MCOwnerTable::get_MCO()->update_owns(blackowns, blackwon);
 
-    m_run = true;                    
-    m_score = score / (boardsize * boardsize);       
+    m_run = true;
+    m_score = score / (boardsize * boardsize);
 }
 
 bool Playout::passthrough(int color, int vertex) {
@@ -131,23 +137,28 @@ void Playout::do_playout_benchmark(GameState & game) {
 }
 
 float Playout::mc_owner(FastState & state, int iterations) {
-    int bwins = 0;           
-    
+    float bwins = 0;
+
     for (int i = 0; i < iterations; i++) {
         FastState tmp = state;
-        
+
         Playout p;
-        
-        p.run(tmp, false);                
-        
-        bwins += p.get_score() > 0.0f ? 1 : 0;
-    }                
-    
+
+        p.run(tmp, false);
+
+        float score = p.get_score();
+        if (score == 0.0f) {
+            bwins += 0.5f;
+        } else if (score > 0.0f) {
+            bwins += 1.0f;
+        }
+    }
+
     float score = bwins / (float)iterations;
-    
+
     if (state.get_to_move() != FastBoard::BLACK) {
         score = 1.0f - score;
     }
-    
+
     return score;
 }
