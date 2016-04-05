@@ -1,7 +1,7 @@
 default:
 	$(MAKE) CC=gcc CXX=g++ \
-		CFLAGS='$(CFLAGS) -Wall -Wextra -pipe -O3 -g -march=native -std=c++11 -DNDEBUG -D_CONSOLE' \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -march=native -std=c++11 -DNDEBUG -D_CONSOLE'  \
+		CFLAGS='$(CFLAGS) -Wall -Wextra -pipe -flto -O3 -g -march=native -std=c++11 -DNDEBUG -D_CONSOLE' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -flto -O3 -g -march=native -std=c++11 -DNDEBUG -D_CONSOLE'  \
 		LDFLAGS='$(LDFLAGS)' \
 		leela
 
