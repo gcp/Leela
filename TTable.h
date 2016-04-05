@@ -15,7 +15,7 @@ public:
     uint64 m_hash;
 
     // XXX: need RAVE data here?
-    float m_blackwins;
+    double m_blackwins;
     int m_visits;
 };
 

@@ -52,13 +52,13 @@ private:
     int get_best_move(passflag_t passflag);  
     bool allow_early_exit();  
 
-    GameState & m_rootstate;        
-    UCTNode m_root;    
-    int m_nodes;  
+    GameState & m_rootstate;
+    UCTNode m_root;
+    int m_nodes;
     int m_maxvisits;
     float m_score;
-    bool m_run;        
-    
+    bool m_run;
+
     // For external control
     bool m_hasrunflag;
     bool * m_runflag;        

@@ -21,10 +21,10 @@
 using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score)
-    : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0f), m_visits(0), m_score(score),
+    : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
       m_valid(true), m_extend(UCTSearch::MATURE_TRESHOLD) {
     m_ravevisits = 20;
-    m_ravestmwins = 10.0f;
+    m_ravestmwins = 10.0;
 }
 
 UCTNode::~UCTNode() {    
@@ -60,9 +60,9 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
     }                      
     
     FastBoard & board = state.board;      
-    
-	typedef std::pair<float, int> scored_node; 
-    std::vector<scored_node> nodelist;        
+
+    typedef std::pair<float, int> scored_node;
+    std::vector<scored_node> nodelist;
     std::vector<int> territory = state.board.influence();
     std::vector<int> moyo = state.board.moyo();
 
@@ -156,48 +156,48 @@ void UCTNode::set_extend(int runs) {
 }
 
 void UCTNode::update(Playout & gameresult, int color) {   
-    SMP::Lock lock(get_mutex());   
-    m_visits++;    
+    SMP::Lock lock(get_mutex());
+    m_visits++;
     m_ravevisits++;
-    
-    // prefer winning with more territory    
+
+    // prefer winning with more territory
     float score = gameresult.get_score();
-           
-    m_blackwins += 0.05f * score; 
-    
+
+    m_blackwins += 0.05 * score;
+
     if (score > 0.0f) {
-        m_blackwins += 1.0f;
+        m_blackwins += 1.0;
     } else if (score == 0.0f) {
-        m_blackwins += 0.5f;
+        m_blackwins += 0.5;
     }
 
     if (color == FastBoard::WHITE) {
         if (score < 0.0f) {
-            m_ravestmwins += 1.0f + 0.05f * -score;
+            m_ravestmwins += 1.0 + 0.05 * -score;
         }
     } else if (color == FastBoard::BLACK) {
         if (score > 0.0f) {
-            m_ravestmwins += 1.0f + 0.05f * score;
+            m_ravestmwins += 1.0 + 0.05 * score;
         }
-    }    
+    }
 }
 
 bool UCTNode::has_children() const {    
     return m_firstchild != NULL;
 }
 
-float UCTNode::get_blackwins() const {
+double UCTNode::get_blackwins() const {
     return m_blackwins;
 }
 
-void UCTNode::set_visits(int visits) {    
-    SMP::Lock lock(get_mutex());      
+void UCTNode::set_visits(int visits) {
+    SMP::Lock lock(get_mutex());
     m_visits = visits;
 }
 
-void UCTNode::set_blackwins(float wins) {
-    SMP::Lock lock(get_mutex());   
-    m_blackwins = wins;       
+void UCTNode::set_blackwins(double wins) {
+    SMP::Lock lock(get_mutex());
+    m_blackwins = wins;
 }
 
 float UCTNode::get_score() const {
@@ -217,8 +217,8 @@ float UCTNode::get_winrate(int tomove) const {
 }
 
 float UCTNode::get_raverate() const {
-    float rate = m_ravestmwins / m_ravevisits;        
-    
+    float rate = m_ravestmwins / m_ravevisits;
+
     return rate;
 }
 
@@ -231,18 +231,18 @@ int UCTNode::get_ravevisits() const {
 }
 
 int UCTNode::do_extend() const {
-	return m_extend;
+    return m_extend;
 }
 
 UCTNode* UCTNode::uct_select_child(int color) {                                   
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
 
-    int childbound = std::max(2, (int)(((logf((float)get_visits()) - 3.0f) / 0.33647223f) + 2.0f));    
+    int childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
     int parentvisits      = 1;   // avoid logparent being illegal
-    
-    SMP::Lock lock(get_mutex()); 
-    
+
+    SMP::Lock lock(get_mutex());
+
     int childcount = 0;
     UCTNode * child = m_firstchild;
     // make sure we are at a valid successor        
@@ -289,7 +289,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             // RAVE part                                                                                
             float ravewinrate = child->get_raverate();            
             float ravevalue = ravewinrate + patternbonus;             
-            float beta = std::max(0.0f, 1.0f - logf(1.0f + child->get_visits()) / 11.0f); 
+            float beta = std::max(0.0, 1.0 - log(1.0 + child->get_visits()) / 11.0);
                
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             

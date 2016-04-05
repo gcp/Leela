@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <limits.h>
 #include <vector>
 #include <utility>
 #include <boost/thread.hpp>
@@ -20,7 +21,7 @@ UCTSearch::UCTSearch(GameState & g)
 : m_rootstate(g),
   m_root(FastBoard::PASS, 0.0f),
   m_nodes(0),
-  m_maxvisits(UCTSearch::MAX_TREE_SIZE * 100),
+  m_maxvisits(INT_MAX),
   m_score(0.0f),
   m_hasrunflag(false),
   m_runflag(NULL),
@@ -171,26 +172,25 @@ bool UCTSearch::allow_early_exit() {
         return false;
     }
     
-    float n1 = first->get_visits();
-    float p1 = first->get_winrate(color);
-    float n2 = second->get_visits();
-    float p2 = second->get_winrate(color);
-    
-    float low, high;
-        
-    low  = p1 - 3.0f * sqrtf(0.25f / n1);
-    high = p2 + 3.0f * sqrtf(0.25f / n2);    
-    
+    double n1 = first->get_visits();
+    double p1 = first->get_winrate(color);
+    double n2 = second->get_visits();
+    double p2 = second->get_winrate(color);
+    double low, high;
+
+    low  = p1 - 3.0 * sqrt(0.25 / n1);
+    high = p2 + 3.0 * sqrt(0.25 / n2);
+ 
     if (low > high) {
-        myprintf("Allowing early exit: low: %f%% > high: %f%%\n", low * 100.0f, high * 100.0f);
+        myprintf("Allowing early exit: low: %f%% > high: %f%%\n", low * 100.0, high * 100.0);
         return true;
     }
-    if (p1 < 0.10f || p1 > 0.95f) {
-        myprintf("Allowing early exit: score: %f%%\n", p1 * 100.0f);
+    if (p1 < 0.10 || p1 > 0.95) {
+        myprintf("Allowing early exit: score: %f%%\n", p1 * 100.0);
         return true;
     }
-    
-    return false;    
+
+    return false;
 }
 
 int UCTSearch::get_best_move(passflag_t passflag) { 
@@ -307,7 +307,6 @@ void UCTSearch::dump_order2(void) {
     for (size_t i = 0; i < moves.size(); i++) {
         if (moves[i] > 0) {
             ord_list.push_back(std::make_pair(
-                               //AMAFTable::get_AMAFT()->get_score(m_rootstate.get_to_move(), moves[i]),
                                m_rootstate.score_move(territory, moyo, moves[i]), 
                                m_rootstate.move_to_text(moves[i])));
         }
@@ -427,7 +426,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             }
         }
     } else {
-        time_for_move = MAX_TREE_SIZE * 100;
+        time_for_move = INT_MAX;
                 
         GUIprintf("Thinking...");
     }
@@ -557,7 +556,7 @@ void UCTSearch::ponder() {
 
 void UCTSearch::set_visit_limit(int visits) {
     if (visits == 0) {
-        m_maxvisits = UCTSearch::MAX_TREE_SIZE * 100;
+        m_maxvisits = INT_MAX;
     } else {
         m_maxvisits = visits;
     }
