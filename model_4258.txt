@@ -13,6 +13,7 @@ layer {
   bottom: "data"
   top: "conv1"
   convolution_param {
+    engine: CAFFE
     num_output: 160
     kernel_size: 3
     pad: 1
@@ -23,6 +24,9 @@ layer {
 layer {
   name: "relu1"
   type: "ReLU"
+  relu_param {
+    engine: CAFFE
+  }
   # in-place
   bottom: "conv1"
   top: "conv1"
@@ -54,6 +58,7 @@ layer {
   bottom: "bn1"
   top: "conv2"
   convolution_param {
+    engine: CAFFE
     num_output: 96
     kernel_size: 3
     pad: 1
@@ -64,6 +69,9 @@ layer {
 layer {
   name: "relu2"
   type:  "ReLU"
+  relu_param {
+    engine: CAFFE
+  }
   # in-place
   bottom: "conv2"
   top: "conv2"
@@ -95,6 +103,7 @@ layer {
   bottom: "bn2"
   top: "conv3"
   convolution_param {
+    engine: CAFFE
     num_output: 32
     kernel_size: 3
     pad: 1
@@ -105,6 +114,9 @@ layer {
 layer {
   name: "relu3"
   type: "ReLU"
+  relu_param {
+    engine: CAFFE
+  }
   # in-place
   bottom: "conv3"
   top: "conv3"
@@ -136,6 +148,7 @@ layer {
   bottom: "bn3"
   top: "conv4"
   convolution_param {
+    engine: CAFFE
     num_output: 32
     kernel_size: 3
     pad: 1
@@ -146,6 +159,9 @@ layer {
 layer {
   name: "relu4"
   type: "ReLU"
+  relu_param {
+    engine: CAFFE
+  }
   # in-place
   bottom: "conv4"
   top: "conv4"
@@ -176,9 +192,8 @@ layer {
   # input -> output
   bottom: "bn4"
   top: "conv5"
-  param { lr_mult: 1 decay_mult: 1 }
-  param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
+    engine: CAFFE
     num_output: 1
     kernel_size: 3 
     pad: 1
@@ -196,6 +211,9 @@ layer {
 layer {
   name: "loss"
   type: "Softmax"
+  softmax_param {
+    engine: CAFFE
+  }
   # input
   bottom: "flatten"
   # output

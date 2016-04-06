@@ -159,7 +159,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
 
     float cum = 0.0f;
     size_t tried = 0;
-    while (cum < 0.95f && tried < result.size()) {
+    while (cum < 0.90f && tried < result.size()) {
         if (result[tried].first < 0.01f) break;
         std::cerr << boost::format("%1.3f (") % result[tried].first
                   << state->board.move_to_text(result[tried].second)
@@ -179,15 +179,15 @@ void Network::gather_features(FastState * state, NNPlanes & planes, bool rotate)
     BoardPlane& empt_color = planes[0];
     BoardPlane& move_color = planes[1];
     BoardPlane& othr_color = planes[2];
-    BoardPlane& lastmoves  = planes[3];
-    BoardPlane& libs_1     = planes[4];
-    BoardPlane& libs_2     = planes[5];
-    BoardPlane& libs_3     = planes[6];
-    BoardPlane& libs_4p    = planes[7];
-    BoardPlane& libs_1_e   = planes[8];
-    BoardPlane& libs_2_e   = planes[9];
-    BoardPlane& libs_3_e   = planes[10];
-    BoardPlane& libs_4p_e  = planes[11];
+    BoardPlane& libs_1     = planes[3];
+    BoardPlane& libs_2     = planes[4];
+    BoardPlane& libs_3     = planes[5];
+    BoardPlane& libs_4p    = planes[6];
+    BoardPlane& libs_1_e   = planes[7];
+    BoardPlane& libs_2_e   = planes[8];
+    BoardPlane& libs_3_e   = planes[9];
+    BoardPlane& libs_4p_e  = planes[10];
+    BoardPlane& lastmoves  = planes[11];
     BoardPlane& after_1    = planes[12];
     BoardPlane& after_2    = planes[13];
     BoardPlane& after_3    = planes[14];
@@ -196,8 +196,8 @@ void Network::gather_features(FastState * state, NNPlanes & planes, bool rotate)
     BoardPlane& after_2_e  = planes[17];
     BoardPlane& after_3_e  = planes[18];
     BoardPlane& after_4p_e = planes[19];
-    BoardPlane& komove     = planes[20];
-    BoardPlane& ladder     = planes[21];
+    BoardPlane& ladder     = planes[20];
+    BoardPlane& komove     = planes[21];
 
     // Every position in a random rotation/symmetry
     int symmetry = Random::get_Rng()->randint(8);
@@ -207,9 +207,10 @@ void Network::gather_features(FastState * state, NNPlanes & planes, bool rotate)
     for (int j = 0; j < 19; j++) {
         for(int i = 0; i < 19; i++) {
             int vtx = state->board.get_vertex(i, j);
-            if (rotate) {
-                vtx = state->board.rotate_vertex(vtx, symmetry);
-            }
+            //Needs to rotate board input, or planes will be nonsense
+            //if (rotate) {
+            //    vtx = state->board.rotate_vertex(vtx, symmetry);
+            //}
             FastBoard::square_t color =
                 state->board.get_square(vtx);
             int idx = j * 19 + i;
