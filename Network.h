@@ -25,6 +25,7 @@ public:
 
     std::vector<std::pair<float, int>> get_scored_moves(FastState * state);
     void initialize();
+    void benchmark(FastState * state);
     void autotune_from_file(std::string filename);
     static Network* get_Network(void);
 

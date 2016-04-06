@@ -14,6 +14,9 @@
 #include "Utils.h"
 #include "TTable.h"
 #include "MCOTable.h"
+#ifdef USE_NETS
+#include "Network.h"
+#endif
 
 using namespace Utils;
 
@@ -192,6 +195,115 @@ bool UCTSearch::allow_early_exit() {
 
     return false;
 }
+
+int UCTSearch::get_best_move_nosearch(std::vector<std::pair<float, int>> moves,
+                                      float score, passflag_t passflag) {
+    int color = m_rootstate.board.m_tomove;
+
+    // Resort
+    std::stable_sort(moves.rbegin(), moves.rend());
+    int bestmove = moves[0].second;
+
+    static const size_t min_alternates = 20;
+    static const size_t max_consider = 3;
+
+    // Pick proportionally from top 3 moves, if close enough and enought left.
+    if (moves.size() > min_alternates) {
+        float best_score = moves[0].first;
+        float cumul_score = best_score;
+        int viable_moves = 1;
+        for (size_t i = 1; i < max_consider; i++) {
+            // Must be at least half as likely to be played.
+            if (moves[i].first > best_score / 2.0f) {
+                cumul_score += moves[i].first;
+                viable_moves++;
+            } else {
+                break;
+            }
+        }
+        float pick = Random::get_Rng()->randflt() * cumul_score;
+        float cumul_find = 0.0f;
+        for (size_t i = 0; i < max_consider; i++) {
+            cumul_find += moves[i].first;
+            if (pick < cumul_find) {
+                bestmove = moves[i].second;
+                // Move in the expected place
+                std::swap(moves[0], moves[i]);
+                break;
+            }
+        }
+    }
+
+    if (passflag & UCTSearch::NOPASS) {
+        if (bestmove == FastBoard::PASS) {
+            // Alternatives to passing?
+            if (moves.size() > 0) {
+                int altmove = moves[1].second;
+                // The alternate move is a self-atari, check if
+                // passing would actually win.
+                if (m_rootstate.board.self_atari(color, altmove)) {
+                    // score with no dead group removal
+                    float score = m_rootstate.calculate_mc_score();
+                    // passing would lose? play the self-atari
+                    if ((score > 0.0f && color == FastBoard::WHITE)
+                        ||
+                        (score < 0.0f && color == FastBoard::BLACK)) {
+                        myprintf("Passing loses, playing self-atari.\n");
+                        bestmove = altmove;
+                    } else {
+                        myprintf("Passing wins, avoiding self-atari.\n");
+                    }
+                } else {
+                    // alternatve move is not self-atari, so play it
+                    bestmove = altmove;
+                }
+            } else {
+                myprintf("Pass is the only acceptable move.\n");
+            }
+        }
+    } else {
+        // Check what happens if we pass twice
+        if (m_rootstate.get_last_move() == FastBoard::PASS) {
+            // score including dead stone removal
+            float score = m_rootstate.final_score();
+            // do we lose by passing?
+            if ((score > 0.0f && color == FastBoard::WHITE)
+                ||
+                (score < 0.0f && color == FastBoard::BLACK)) {
+                myprintf("Passing loses :-(\n");
+                // We were going to pass, so try something else
+                if (bestmove == FastBoard::PASS) {
+                    if (moves.size() > 1) {
+                        myprintf("Avoiding pass because it loses.\n");
+                        bestmove = moves[1].second;
+                    } else {
+                        myprintf("No alternative to passing.\n");
+                    }
+                }
+            } else {
+                myprintf("Passing wins :-)\n");
+                bestmove = FastBoard::PASS;
+            }
+        }
+    }
+
+    // if we aren't passing, should we consider resigning?
+    if (bestmove != FastBoard::PASS) {
+        // resigning allowed
+        if ((passflag & UCTSearch::NORESIGN) == 0) {
+            size_t movetresh = (m_rootstate.board.get_boardsize()
+                                * m_rootstate.board.get_boardsize()) / 2;
+            // bad score and zero wins in the playouts
+            if (score <= 0.0f && m_rootstate.m_movenum > movetresh) {
+                myprintf("All playouts lose. Resigning.\n");
+                bestmove = FastBoard::RESIGN;
+            }
+        }
+    }
+
+    return bestmove;
+}
+
 
 int UCTSearch::get_best_move(passflag_t passflag) { 
     int color = m_rootstate.board.m_tomove;    
@@ -394,16 +506,16 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // set up timing info
     Time start;
-    int centiseconds_elapsed;
     int time_for_move;
-    int last_update = 0;
-    
+
+
     if (!m_analyzing) {
         m_rootstate.get_timecontrol()->set_boardsize(m_rootstate.board.get_boardsize());
         time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
-    
+
         GUIprintf("Thinking at most %.1f seconds...", time_for_move/100.0f);
 
+#ifdef USE_SEARCH
         // book moves
         if (m_rootstate.get_handicap() == 0) {
             if (m_rootstate.board.get_ko_hash() == 0xF64DA7066702B027ULL) {
@@ -430,6 +542,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
                 }
             }
         }
+#endif
     } else {
         time_for_move = INT_MAX;
                 
@@ -443,13 +556,14 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();
-    Playout::mc_owner(m_rootstate, 64);
-        
+    float mc_score = Playout::mc_owner(m_rootstate, 64);
+
+#ifdef USE_SEARCH
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)
     m_nodes += m_root.create_children(m_rootstate, true);
-    m_root.kill_superkos(m_rootstate);        
-    
+    m_root.kill_superkos(m_rootstate);
+
     m_run = true;
 #ifdef USE_SMP
     int cpus = SMP::get_num_cpus();
@@ -459,15 +573,16 @@ int UCTSearch::think(int color, passflag_t passflag) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
     }
 #endif
-    bool keeprunning = true;   
-    int iterations = 0; 
+    bool keeprunning = true;
+    int iterations = 0;
+    int last_update = 0;
     do {
         KoState currstate = m_rootstate;
                 
         play_simulation(currstate, &m_root);                   
 
         Time elapsed;
-        centiseconds_elapsed = Time::timediff(start, elapsed);        
+        int centiseconds_elapsed = Time::timediff(start, elapsed);
 
         // output some stats every second
         // check if we should still search
@@ -504,14 +619,52 @@ int UCTSearch::think(int color, passflag_t passflag) {
     if (!m_root.has_children()) {
         return FastBoard::PASS;
     }
-    
-    m_rootstate.stop_clock(color);     
-        
+#else
+    myprintf("MC Score: %f\n", mc_score);
+    // Pure NN player
+    // Not all net_moves vertices are legal
+    auto net_moves = Network::get_Network()->get_scored_moves(&m_rootstate);
+    auto gen_moves = m_rootstate.generate_moves(color);
+    std::vector<std::pair<float, int>> filter_moves;
+
+    // Legal moves minus superkos
+    for(auto it = gen_moves.begin(); it != gen_moves.end(); ++it) {
+        int move = *it;
+        if (move != FastBoard::PASS) {
+            // self atari, suicide, eyefill
+            if (m_rootstate.try_move(color, move, true)) {
+                KoState mystate = m_rootstate;
+                mystate.play_move(move);
+                if (!mystate.superko()) {
+                    // "move" is now legal, find it
+                    for (auto it_net = net_moves.begin();
+                         it_net != net_moves.end(); ++it_net) {
+                        if (it_net->second == move) {
+                            filter_moves.push_back(std::make_pair(it_net->first, move));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    int stripped_moves = net_moves.size() - filter_moves.size();
+    if (stripped_moves) {
+        myprintf("Stripped %d illegal move(s).\n", stripped_moves);
+    }
+    // Add passing at a very low but non-zero weight
+    filter_moves.push_back(std::make_pair(0.0001f, FastBoard::PASS));
+#endif
+    m_rootstate.stop_clock(color);
+
+#ifdef USE_SEARCH
     // display search info        
     myprintf("\n");
-    dump_stats(m_rootstate, m_root);                          
 
-    if (centiseconds_elapsed > 0) {    
+    dump_stats(m_rootstate, m_root);
+
+    int centiseconds_elapsed = Time::timediff(start, elapsed);
+    if (centiseconds_elapsed > 0) {
         myprintf("\n%d visits, %d nodes, %d vps\n\n", 
                  m_root.get_visits(), 
                  m_nodes,
@@ -520,21 +673,24 @@ int UCTSearch::think(int color, passflag_t passflag) {
                  m_root.get_visits(), 
                  m_nodes,
                  (m_root.get_visits() * 100) / (centiseconds_elapsed+1));                                                     
-    }      
-
+    }
     int bestmove = get_best_move(passflag);
+#else
+    int bestmove = get_best_move_nosearch(filter_moves, mc_score, passflag);
+#endif
 
     GUIprintf("Best move: %s", m_rootstate.move_to_text(bestmove).c_str());
-               
+
     return bestmove;
 }
 
-void UCTSearch::ponder() {                          
-    MCOwnerTable::clear();  
-    Playout::mc_owner(m_rootstate, 64);             
-         
+void UCTSearch::ponder() {
+    MCOwnerTable::clear();
+    Playout::mc_owner(m_rootstate, 64);
+
+#ifdef USE_SEARCH
     m_run = true;
-#ifdef USE_SMP 
+#ifdef USE_SMP
     int cpus = SMP::get_num_cpus();
     //int cpus = 4;     
     boost::thread_group tg;
@@ -556,7 +712,8 @@ void UCTSearch::ponder() {
     myprintf("\n");
     dump_stats(m_rootstate, m_root);                  
                
-    myprintf("\n%d visits, %d nodes\n\n", m_root.get_visits(), m_nodes);                                 
+    myprintf("\n%d visits, %d nodes\n\n", m_root.get_visits(), m_nodes);
+#endif
 }
 
 void UCTSearch::set_visit_limit(int visits) {

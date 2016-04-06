@@ -6,7 +6,7 @@
  *  GETTICKCOUNT, GETTIMEOFDAY
  */
 #ifdef _WIN32
-#define GETTICKCOUNT 
+#define GETTICKCOUNT
 #undef HAVE_SELECT
 #define NOMINMAX
 #else
@@ -22,6 +22,7 @@
 
 /* Features */
 #define USE_NETS
+//#define USE_SEARCH
 //#define USE_PONDER
 //#define USE_SMP
 

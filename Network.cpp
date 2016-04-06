@@ -38,6 +38,22 @@ Network * Network::get_Network(void) {
     return s_net;
 }
 
+void Network::benchmark(FastState * state) {
+    static const int BENCH_AMOUNT = 1000;
+    Time start;
+
+    for (int loop = 0; loop < BENCH_AMOUNT; loop++) {
+        auto vec = get_scored_moves(state);
+    }
+
+    Time end;
+
+    myprintf("%d predictions in %5.2f seconds -> %d p/s\n",
+             BENCH_AMOUNT,
+             (float)Time::timediff(start,end)/100.0,
+             (int)((float)BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
+}
+
 void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::CPU);
@@ -131,19 +147,21 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
             maxout = val;
             maxvtx = vtx;
         }
-        result.push_back(std::make_pair(val, vtx));
+        if (state->board.get_square(vtx) == FastBoard::EMPTY) {
+            result.push_back(std::make_pair(val, vtx));
+        }
     }
     std::stable_sort(result.rbegin(), result.rend());
 
     for (int i = display_map.size() - 1; i >= 0; --i) {
-        std::cout << display_map[i] << std::endl;
+        std::cerr << display_map[i] << std::endl;
     }
 
     float cum = 0.0f;
     size_t tried = 0;
     while (cum < 0.95f && tried < result.size()) {
         if (result[tried].first < 0.01f) break;
-        std::cout << boost::format("%1.3f%% (") % result[tried].first
+        std::cerr << boost::format("%1.3f (") % result[tried].first
                   << state->board.move_to_text(result[tried].second)
                   << ")" << std::endl;
         cum += result[tried].first;

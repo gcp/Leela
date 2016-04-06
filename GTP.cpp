@@ -549,6 +549,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
 #endif
         gtp_printf(id, "");
         return true;
+    } else if (command.find("netbench") == 0) {
+#ifdef USE_NETS
+        Network::get_Network()->benchmark(&game);
+#endif
+        gtp_printf(id, "");
+        return true;
+
     } else if (command.find("predict") == 0) {
 #ifdef USE_NETS
         auto vec = Network::get_Network()->get_scored_moves(&game);
