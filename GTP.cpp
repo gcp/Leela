@@ -132,10 +132,10 @@ bool GTP::execute(GameState & game, std::string xinput) {
         gtp_printf(id, "%d", GTP_VERSION);
         return true;
     } else if (command == "name") {
-        gtp_printf(id, NAME);
+        gtp_printf(id, PROGRAM_NAME);
         return true;  
     } else if (command == "version") {
-        gtp_printf(id, VERSION);
+        gtp_printf(id, PROGRAM_VERSION);
         return true;
     } else if (command == "quit") {
         gtp_printf(id, "");
@@ -549,8 +549,14 @@ bool GTP::execute(GameState & game, std::string xinput) {
 #endif
         gtp_printf(id, "");
         return true;
+    } else if (command.find("predict") == 0) {
+#ifdef USE_NETS
+        auto vec = Network::get_Network()->get_scored_moves(&game);
+#endif
+        gtp_printf(id, "");
+        return true;
     }
-        
+
     gtp_fail_printf(id, "unknown command");
     return true;    
 }

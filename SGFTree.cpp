@@ -301,10 +301,10 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
     res.append("SZ[" + boost::lexical_cast<std::string>(size) + "]");
     res.append("KM[" + boost::lexical_cast<std::string>(komi) + "]");
     if (compcolor == FastBoard::WHITE) {
-        res.append("PW[Leela " + std::string(VERSION) + "]");
+        res.append("PW[Leela " + std::string(PROGRAM_VERSION) + "]");
         res.append("PB[Human]");
     } else {
-        res.append("PB[Leela " + std::string(VERSION) + "]");
+        res.append("PB[Leela " + std::string(PROGRAM_VERSION) + "]");
         res.append("PW[Human]");
     }
     

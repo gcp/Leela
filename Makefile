@@ -26,7 +26,7 @@ llvm:
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
 		leela
 
-LIBS = -lpthread -lboost_thread -lboost_system
+LIBS = -lpthread -lboost_thread -lboost_system -lboost_filesystem
 LIBS += -ltbb -ltbbmalloc -lcaffe -lprotobuf -lglog
 
 CAFFE_BASE = /usr/local
