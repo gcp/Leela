@@ -115,7 +115,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
-                input_data[input_layer->offset(0, c, h, w)] = (float)planes[c][h * 19 + w];
+                input_data[(c * height + h) * width + w] = (float)planes[c][h * 19 + w];
             }
         }
     }
