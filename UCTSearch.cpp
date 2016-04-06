@@ -145,7 +145,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 }
 
 bool UCTSearch::allow_early_exit() {    
-    int color = m_rootstate.board.m_tomove;    
+    int color = m_rootstate.board.get_to_move();    
     
     if (!m_root.has_children()) {
         return false;
@@ -194,7 +194,7 @@ bool UCTSearch::allow_early_exit() {
 }
 
 int UCTSearch::get_best_move(passflag_t passflag) { 
-    int color = m_rootstate.board.m_tomove;    
+    int color = m_rootstate.board.get_to_move();    
 
     // make sure best is first
     m_root.sort_children(color);
@@ -354,7 +354,7 @@ std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
 
 void UCTSearch::dump_analysis(void) {
     GameState tempstate = m_rootstate;   
-    int color = tempstate.board.m_tomove;
+    int color = tempstate.board.get_to_move();
                 
     std::string pvstring = get_pv(tempstate, m_root);
     
@@ -390,7 +390,7 @@ float UCTSearch::get_score() {
 
 int UCTSearch::think(int color, passflag_t passflag) {
     // set side to move
-    m_rootstate.board.m_tomove = color;
+    m_rootstate.board.set_to_move(color);
 
     // set up timing info
     Time start;

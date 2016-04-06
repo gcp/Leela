@@ -22,7 +22,7 @@ public:
     static void set_Matcher(Matcher * m);
 
 private:            
-    static unsigned short clip(int val);
+    static unsigned short clip(double val);
 
     static Matcher* s_matcher;   
 

@@ -1081,6 +1081,10 @@ int FastBoard::get_to_move() {
     return m_tomove;
 }
 
+void FastBoard::set_to_move(int tomove) {
+    m_tomove = tomove;
+}
+
 int FastBoard::get_groupid(int vertex) {
     assert(m_square[vertex] == WHITE || m_square[vertex] == BLACK);
     assert(m_parent[vertex] == m_parent[m_parent[vertex]]);
@@ -1875,7 +1879,7 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
     /* color symmetry */
     if (invert) {
         for (size_t i = 0; i < sqs.size(); i++) {
-            sqs[i] = s_cinvert[sqs[i]];
+            sqs[i] = s_cinvert[(square_t)sqs[i]];
         }
     }
   
@@ -2346,6 +2350,10 @@ int FastBoard::predict_is_alive(const int move, const int vertex) {
 
 int FastBoard::get_empty() {
     return m_empty_cnt;
+}
+
+int FastBoard::get_empty_vertex(int idx) {
+    return m_empty[idx];
 }
 
 void FastBoard::augment_chain(std::vector<int> & chains, int vertex) {

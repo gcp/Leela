@@ -72,17 +72,17 @@ float MCOwnerTable::get_blackown(const int color, const int vertex) {
 float MCOwnerTable::get_criticality_f(const int vtx) {
     assert(vtx >= 0 && vtx < FastBoard::MAXSQ);
 
-    float N = m_mcsimuls;
-    float vx = m_mcwinowner[vtx];
-    float term1 = (N - m_mcblackowner[vtx]);
-    float term2 = (N - m_blackwins);
-    float term3 = (m_mcblackowner[vtx]);
-    float term4 = (m_blackwins);
+    double N = m_mcsimuls;
+    double vx = m_mcwinowner[vtx];
+    double term1 = (N - m_mcblackowner[vtx]);
+    double term2 = (N - m_blackwins);
+    double term3 = (m_mcblackowner[vtx]);
+    double term4 = (m_blackwins);
 
-    float term12 = ((term1/N) * (term2/N));
-    float term34 = ((term3/N) * (term4/N));
+    double term12 = ((term1/N) * (term2/N));
+    double term34 = ((term3/N) * (term4/N));
 
-    float crit = (vx/N) - (term12 + term34);
+    double crit = (vx/N) - (term12 + term34);
     crit = std::max<float>(0.0f, crit);
 
     assert(crit >= 0.0f && crit <= 0.51f);

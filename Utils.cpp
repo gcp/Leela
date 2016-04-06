@@ -33,7 +33,7 @@ bool Utils::input_pending(void) {
     static int init = 0, pipe;
     static HANDLE inh;
     DWORD dw;
-    
+
     if (!init) {
         init = 1;
         inh = GetStdHandle(STD_INPUT_HANDLE);
@@ -46,27 +46,27 @@ bool Utils::input_pending(void) {
 
     if (pipe) {
         if (!PeekNamedPipe(inh, NULL, 0, NULL, &dw, NULL)) {
-            myprintf("Nothing at other end - exiting\n");                        
-            exit(EXIT_FAILURE);                
-        }                         
+            myprintf("Nothing at other end - exiting\n");
+            exit(EXIT_FAILURE); 
+        }
 
-        if (dw) {                    
+        if (dw) {
             return input_causes_stop();
         } else {
             return false;
         }
     } else {
         if (!GetNumberOfConsoleInputEvents(inh, &dw)) {
-            myprintf("Nothing at other end - exiting\n");                     
-            exit(EXIT_FAILURE);                
+            myprintf("Nothing at other end - exiting\n");
+            exit(EXIT_FAILURE);
         }
-        
+
         if (dw <= 1) {
             return false;
         } else {
             return input_causes_stop();
         }
-    }    
+    }
 #endif
     return false;
 }
@@ -75,8 +75,8 @@ bool Utils::input_pending(void) {
 static wxEvtHandler * GUIQ = NULL;
 static int GUIQ_T = 0;
 
-void Utils::setGUIQueue(wxEvtHandler * evt, int evt_type) {   
-    GUIQ = evt;    
+void Utils::setGUIQueue(wxEvtHandler * evt, int evt_type) {
+    GUIQ = evt; 
     GUIQ_T = evt_type;
 }
 #endif

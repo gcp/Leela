@@ -89,12 +89,14 @@ uint16 Matcher::matches(int color, int pattern) {
     return m_patterns[color][pattern];
 }
 
-uint16 Matcher::clip(int val) {
+uint16 Matcher::clip(double val) {
+    uint16 result;
     if (val < 0) {
-        val = 0;
+        result = 0;
     } else if (val > 0xFFFF) {
-        val = 0xFFFF;
+        result = 0xFFFF;
     }
-    
-    return val;
+    result = (uint16)val;
+
+    return result;
 }

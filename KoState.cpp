@@ -78,7 +78,7 @@ void KoState::play_pass(void) {
 }
 
 void KoState::play_move(int vertex) {
-    play_move(board.m_tomove, vertex);
+    play_move(board.get_to_move(), vertex);
 }
 
 void KoState::play_move(int color, int vertex) {

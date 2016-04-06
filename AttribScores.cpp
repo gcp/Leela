@@ -427,11 +427,11 @@ void AttribScores::load_internal() {
     m_fweight.reserve(internal_weights.size());
 
     for (size_t i = 0; i < internal_weights.size(); i++) {
-        m_fweight.push_back(internal_weights[i]);
+        m_fweight.push_back((float)internal_weights[i]);
     }
 
     for (size_t i = 0; i < internal_patterns.size(); i++) {
-        m_pat.insert(std::make_pair(internal_patterns[i], internal_patweights[i]));
+        m_pat.insert(std::make_pair(internal_patterns[i], (float)internal_patweights[i]));
     }
 
     myprintf("%d feature weights loaded, %d patterns\n", m_fweight.size(), m_pat.size());

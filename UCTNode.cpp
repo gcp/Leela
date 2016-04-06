@@ -67,18 +67,18 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
     std::vector<int> moyo = state.board.moyo();
 
     if (state.get_passes() < 2) {             
-        for (int i = 0; i < board.m_empty_cnt; i++) {  
-            int vertex = board.m_empty[i];  
+        for (int i = 0; i < board.get_empty(); i++) {  
+            int vertex = board.get_empty_vertex(i);
             
             assert(board.get_square(vertex) == FastBoard::EMPTY);             
             
             // add and score a node        
             if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
-                if (!board.is_suicide(vertex, board.m_tomove)) {                                          
+                if (!board.is_suicide(vertex, board.get_to_move())) {
                     float score = state.score_move(territory, moyo, vertex);
-                    nodelist.push_back(std::make_pair(score, vertex));                    
-                } 
-            }                                           
+                    nodelist.push_back(std::make_pair(score, vertex));
+                }
+            }
         }      
             
         float passscore;    
@@ -106,12 +106,12 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
 	    if (it->second != FastBoard::PASS) {
 	        // atari giving
 	        // was == 2, == 1
-	        if (state.board.minimum_elib_count(board.m_tomove, it->second) <= 2) {
-		        vtx->set_extend(5);
-	        }			
-	        if (state.board.minimum_elib_count(!board.m_tomove, it->second) == 1) {
-		        vtx->set_extend(5);
-	        }			
+	        if (state.board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
+                    vtx->set_extend(5);
+	        }
+	        if (state.board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
+                    vtx->set_extend(5);
+	        }
 	    }
             link_child(vtx);
             childrenadded++;                        

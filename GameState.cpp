@@ -71,7 +71,7 @@ void GameState::rewind(void) {
 }
 
 void GameState::play_move(int vertex) {
-    play_move(board.m_tomove, vertex);
+    play_move(board.get_to_move(), vertex);
 }
 
 void GameState::play_pass() {
@@ -221,7 +221,7 @@ bool GameState::set_fixed_handicap(int handicap) {
         play_move(FastBoard::BLACK, board.get_vertex(mid, high));
     }
     
-    board.m_tomove = FastBoard::WHITE;
+    board.set_to_move(FastBoard::WHITE);
     
     anchor_game_history();
     
@@ -302,14 +302,14 @@ void GameState::place_free_handicap(int stones) {
         int move = search->think(FastBoard::BLACK, UCTSearch::NOPASS);
         play_move(FastBoard::BLACK, move);     
     }
-    
+
     if (orgstones)  {
-    board.m_tomove = FastBoard::WHITE;
+        board.set_to_move(FastBoard::WHITE);
     } else {
-        board.m_tomove = FastBoard::BLACK;
+        board.set_to_move(FastBoard::BLACK);
     }
-    
-    anchor_game_history(); 
+
+    anchor_game_history();
     
     set_handicap(orgstones);       
 }

@@ -9,6 +9,7 @@
 #include <boost/tr1/array.hpp>
 
 class FastBoard {
+    friend class FastState;
 public:
     /* 
         neighbor counts are up to 4, so 3 bits is ok,
@@ -118,9 +119,11 @@ public:
     int eval(float komi); 
     int get_prisoners(int side);
     int get_empty();
+    int get_empty_vertex(int idx);
     bool black_to_move();
     int get_to_move();
-        
+    void set_to_move(int color);
+
     std::string move_to_text(int move);
     std::string move_to_text_sgf(int move);    
     std::string get_stone_list(); 
@@ -135,14 +138,7 @@ public:
 
     static bool starpoint(int size, int point);
     static bool starpoint(int size, int x, int y);                           
-            
-    std::tr1::array<unsigned short, MAXSQ> m_empty;       /* empty squares */
-    std::tr1::array<unsigned short, MAXSQ> m_empty_idx;   /* indexes of square */
-    int m_empty_cnt;                                      /* count of empties */
-     
-    int m_tomove;       
-    int m_maxsq;       
-    
+                
 protected:
     /*
         bit masks to detect eyes on neighbors
@@ -161,9 +157,15 @@ protected:
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
     std::tr1::array<int, 2>          m_totalstones; /* stones per color */                 
     std::vector<int>                 m_critical;    /* queue of critical points */    
+    std::tr1::array<unsigned short, MAXSQ> m_empty;       /* empty squares */
+    std::tr1::array<unsigned short, MAXSQ> m_empty_idx;   /* indexes of square */
+    int m_empty_cnt;                                      /* count of empties */
 
-    int m_boardsize;    
-        
+    int m_tomove;
+    int m_maxsq;
+
+    int m_boardsize;
+
     int count_neighbours(const int color, const int i);   
     void merge_strings(const int ip, const int aip);    
     int remove_string_fast(int i);        

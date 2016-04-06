@@ -22,7 +22,7 @@
 
 /* Features */
 //#define USE_NETS
-#define USE_PONDER
+//#define USE_PONDER
 //#define USE_SMP
 
 /* Integer types */
