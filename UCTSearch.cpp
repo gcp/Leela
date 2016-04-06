@@ -556,7 +556,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();
-    float mc_score = Playout::mc_owner(m_rootstate, 64);
+    float territory;
+    float mc_score = Playout::mc_owner(m_rootstate, 64, &territory);
 
 #ifdef USE_SEARCH
     // create a sorted list off legal moves (make sure we
@@ -620,7 +621,12 @@ int UCTSearch::think(int color, passflag_t passflag) {
         return FastBoard::PASS;
     }
 #else
-    myprintf("MC Score: %f\n", mc_score);
+    myprintf("MC winrate=%f score=", mc_score);
+    if (territory > 0.0f) {
+        myprintf("B+%3.1f\n", territory);
+    } else {
+        myprintf("W+%3.1f\n", -territory);
+    }
     // Pure NN player
     // Not all net_moves vertices are legal
     auto net_moves = Network::get_Network()->get_scored_moves(&m_rootstate);

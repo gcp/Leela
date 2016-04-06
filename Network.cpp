@@ -159,7 +159,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
 
     float cum = 0.0f;
     size_t tried = 0;
-    while (cum < 0.90f && tried < result.size()) {
+    while (cum < 0.85f && tried < result.size()) {
         if (result[tried].first < 0.01f) break;
         std::cerr << boost::format("%1.3f (") % result[tried].first
                   << state->board.move_to_text(result[tried].second)
