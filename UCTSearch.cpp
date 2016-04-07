@@ -198,7 +198,7 @@ bool UCTSearch::allow_early_exit() {
 
 int UCTSearch::get_best_move_nosearch(std::vector<std::pair<float, int>> moves,
                                       float score, passflag_t passflag) {
-    int color = m_rootstate.board.m_tomove;
+    int color = m_rootstate.board.get_to_move();
 
     // Resort
     std::stable_sort(moves.rbegin(), moves.rend());
@@ -669,6 +669,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     dump_stats(m_rootstate, m_root);
 
+    Time elapsed;
     int centiseconds_elapsed = Time::timediff(start, elapsed);
     if (centiseconds_elapsed > 0) {
         myprintf("\n%d visits, %d nodes, %d vps\n\n", 
