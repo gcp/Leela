@@ -15,7 +15,7 @@ public:
         Depending on rule set and state of the game, we might
         prefer to pass, or we might prefer not to pass unless
         it's the last resort. Same for resigning.
-    */        
+    */
     typedef int passflag_t;
     static const passflag_t NORMAL   = 0;
     static const passflag_t NOPASS   = 1 << 0;
@@ -24,9 +24,9 @@ public:
     /*
         Don't expand children until at least this many
         visits happened.
-    */        
+    */
     static const int MATURE_TRESHOLD = 15;
-     
+
     /*
         Maximum size of the tree in memory.
     */        
@@ -49,8 +49,10 @@ private:
     void dump_thinking();        
     void dump_analysis();
     void dump_order2(void);
-    int get_best_move(passflag_t passflag);  
-    bool allow_early_exit();  
+    int get_best_move(passflag_t passflag);
+    int get_best_move_nosearch(std::vector<std::pair<float, int>> moves,
+                               float score, passflag_t passflag);
+    bool allow_early_exit();
 
     GameState & m_rootstate;
     UCTNode m_root;

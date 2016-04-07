@@ -13,7 +13,7 @@
 
 using namespace Utils;
 
-Playout::Playout() {    
+Playout::Playout() {
     m_run = false;
     m_sq[0].reset();
     m_sq[1].reset();
@@ -24,6 +24,11 @@ float Playout::get_score() {
     assert(m_score > -2.00f && m_score < 2.00f);
 
     return m_score;
+}
+
+float Playout::get_territory() {
+    assert(m_run);
+    return m_territory;
 }
 
 void Playout::set_final_score(float score) {
@@ -39,7 +44,7 @@ void Playout::run(FastState & state, bool resigning) {
     const int resign = (boardsize * boardsize) / 3;
     const int playoutlen = (boardsize * boardsize) * 2;        
     
-    int counter = 0; 
+    int counter = 0;
     
     // do the main loop        
     do {                                    
@@ -56,13 +61,11 @@ void Playout::run(FastState & state, bool resigning) {
         counter++;                 
     } while (state.get_passes() < 2 
              && state.get_movenum() < playoutlen
-             && (!resigning || abs(state.estimate_mc_score()) < resign));     
-             
-    float score = state.calculate_mc_score();                                  
-             
-    // get ownership info             
-    bitboard_t blackowns;       
-    
+             && (!resigning || abs(state.estimate_mc_score()) < resign));
+
+    // get ownership info
+    bitboard_t blackowns;
+
     for (int i = 0; i < boardsize; i++) {
         for (int j = 0; j < boardsize; j++) {
             int vtx = state.board.get_vertex(i, j);            
@@ -71,10 +74,12 @@ void Playout::run(FastState & state, bool resigning) {
             } else if (state.board.get_square(vtx) == FastBoard::EMPTY) {
                 if (state.board.is_eye(FastBoard::BLACK, vtx)) {
                     blackowns[vtx] = true;                       
-                } 
-            } 
+                }
+            }
         }
     }
+
+    float score = state.calculate_mc_score();
 
     // update MCO in one swoop
     bool blackwon;
@@ -86,6 +91,8 @@ void Playout::run(FastState & state, bool resigning) {
     MCOwnerTable::get_MCO()->update_owns(blackowns, blackwon);
 
     m_run = true;
+    m_territory = score;
+    // Scale to -1.0 <--> 1.0
     m_score = score / (boardsize * boardsize);
 }
 
@@ -136,8 +143,9 @@ void Playout::do_playout_benchmark(GameState & game) {
     myprintf("Avg Len: %5.2f Score: %f\n", len/(float)AUTOGAMES, score/AUTOGAMES);
 }
 
-float Playout::mc_owner(FastState & state, int iterations) {
-    float bwins = 0;
+float Playout::mc_owner(FastState & state, int iterations, float* points) {
+    float bwins = 0.0f;
+    float board_score = 0.0f;
 
     for (int i = 0; i < iterations; i++) {
         FastState tmp = state;
@@ -152,12 +160,19 @@ float Playout::mc_owner(FastState & state, int iterations) {
         } else if (score > 0.0f) {
             bwins += 1.0f;
         }
+
+        board_score += p.get_territory();
     }
 
     float score = bwins / (float)iterations;
+    float territory = board_score / (float)iterations;
 
     if (state.get_to_move() != FastBoard::BLACK) {
         score = 1.0f - score;
+    }
+
+    if (points != nullptr) {
+        *points = territory;
     }
 
     return score;

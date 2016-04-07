@@ -16,11 +16,12 @@ public:
     int play_move_fast(int vertex);
     float score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex);
     
-    void play_pass(void);    
-    void play_move(int vertex); 
-    
+    void play_pass(void);
+    void play_move(int vertex);
+
     std::vector<int> generate_moves(int color);
-          
+    bool try_move(int color, int vertex, bool allow_sa = false);
+
     void set_komi(float komi);        
     float get_komi(); 
     void set_handicap(int hcap);        
@@ -60,8 +61,7 @@ protected:
     FastBoard::scoredlist_t scoredmoves;
 
     int walk_empty_list(int color, int vidx, bool allow_sa = false);
-    bool try_move(int color, int vertex, bool allow_sa = false);
-    void play_move(int color, int vertex);       
+    void play_move(int color, int vertex);
 };
 
 #endif

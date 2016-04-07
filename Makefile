@@ -26,7 +26,7 @@ llvm:
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
 		leela
 
-LIBS = -lpthread -lboost_thread -lboost_system
+LIBS = -lpthread -lboost_thread -lboost_system -lboost_filesystem
 LIBS += -ltbb -ltbbmalloc -lcaffe -lprotobuf -lglog
 
 CAFFE_BASE = /usr/local
@@ -38,6 +38,7 @@ LDFLAGS  += -L$(CAFFE_LIB)
 
 CFLAGS   += -I.
 CXXFLAGS += -I.
+CPPFLAGS += -MD -MP
 
 sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
 	  Ruleset.cpp TimeControl.cpp UCTSearch.cpp Attributes.cpp \
@@ -47,19 +48,20 @@ sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
 	  MCOTable.cpp Random.cpp SMP.cpp UCTNode.cpp
 
 objects = $(sources:.cpp=.o)
+deps = $(sources:%.cpp=%.d)
 
-headers = $(wildcard *.h)
+-include $(deps)
 
-%.o: %.c $(headers)
-	$(CC) $(CFLAGS) -c -o $@ $<
+%.o: %.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
-%.o: %.cpp $(headers)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
-leela:	$(objects)
-	$(CXX) $(LDFLAGS) -o leela $(objects) $(LIBS)
+leela: $(objects)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 clean:
-	-$(RM) leela $(objects)
+	-$(RM) leela $(objects) $(deps)
 
 .PHONY: clean default gcc32b debug llvm

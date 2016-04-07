@@ -6,7 +6,7 @@
  *  GETTICKCOUNT, GETTIMEOFDAY
  */
 #ifdef _WIN32
-#define GETTICKCOUNT 
+#define GETTICKCOUNT
 #undef HAVE_SELECT
 #define NOMINMAX
 #else
@@ -16,14 +16,15 @@
 
 /* Hard limits */
 
-#define NAME            "Leela"
+#define PROGRAM_NAME "Leela"
 //#define VERSION         "0.4.0. I will resign when I am lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I am won. You can download a free version at http://www.sjeng.org/leela"
-#define VERSION         "0.4.6"
+#define PROGRAM_VERSION "0.5.0"
 
 /* Features */
-//#define USE_NETS
-#define USE_PONDER
-#define USE_SMP
+#define USE_NETS
+//#define USE_SEARCH
+//#define USE_PONDER
+//#define USE_SMP
 
 /* Integer types */
 

@@ -1,17 +1,20 @@
 #include "config.h"
 #ifdef USE_NETS
-#undef NAME
 #include <algorithm>
 #include <cassert>
 #include <list>
 #include <set>
 #include <fstream>
 #include <memory>
+#include <boost/utility.hpp>
 #include <boost/tr1/array.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/format.hpp>
+
 #include <caffe/proto/caffe.pb.h>
 #include <caffe/util/db.hpp>
 #include <caffe/util/io.hpp>
+#include <caffe/blob.hpp>
 
 #include "tiny_cnn/tiny_cnn.h"
 
@@ -23,21 +26,168 @@
 #include "Network.h"
 
 using namespace Utils;
+using namespace caffe;
 
-void Network::gather_features(FastState * state, NNPlanes & planes) {
+Network* Network::s_net = nullptr;
+
+Network * Network::get_Network(void) {
+    if (!s_net) {
+        s_net = new Network();
+        s_net->initialize();
+    }
+    return s_net;
+}
+
+void Network::benchmark(FastState * state) {
+    static const int BENCH_AMOUNT = 1000;
+    Time start;
+
+    for (int loop = 0; loop < BENCH_AMOUNT; loop++) {
+        auto vec = get_scored_moves(state);
+    }
+
+    Time end;
+
+    myprintf("%d predictions in %5.2f seconds -> %d p/s\n",
+             BENCH_AMOUNT,
+             (float)Time::timediff(start,end)/100.0,
+             (int)((float)BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
+}
+
+void Network::initialize(void) {
+    myprintf("Initializing DCNN...");
+    Caffe::set_mode(Caffe::CPU);
+
+    net.reset(new Net<float>("model_4258.txt", TEST));
+    net->CopyTrainedLayersFrom("model_4258.caffemodel");
+
+    myprintf("Inputs: %d Outputs: %d\n",
+        net->num_inputs(), net->num_outputs());
+
+    Blob<float>* input_layer = net->input_blobs()[0];
+    int num_channels = input_layer->channels();
+    int width = input_layer->width();
+    int height = input_layer->height();
+    myprintf("Input: channels=%d, width=%d, height=%d\n", num_channels, width, height);
+
+    Blob<float>* output_layer = net->output_blobs()[0];
+    int num_out_channels = output_layer->channels();
+    width = output_layer->width();
+    height = output_layer->height();
+    myprintf("Output: channels=%d, width=%d, height=%d\n", num_out_channels, width, height);
+
+    int total_weights = 0;
+    auto & layers = net->layers();
+    myprintf("%d layers:\n", layers.size());
+    int layer_num = 1;
+    for (auto it = layers.begin(); it != layers.end(); ++it, ++layer_num) {
+        myprintf("layer %d (%s)", layer_num, (*it)->type());
+        auto & params = (*it)->blobs();
+        if (params.size() > 0) myprintf(" = ");
+        for (auto pars = params.begin(); pars != params.end(); ++pars) {
+            total_weights += (*pars)->count();
+            myprintf("%s ", (*pars)->shape_string().c_str());
+            if (boost::next(pars) != params.end()) myprintf("+ ");
+        }
+        myprintf("\n");
+    }
+    myprintf("%d total DCNN weights\n", total_weights);
+}
+
+std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) {
+    std::vector<std::pair<float, int>> result;
+    if (state->board.get_boardsize() != 19) {
+        return result;
+    }
+
+    NNPlanes planes;
+    gather_features(state, planes, false);
+
+    Blob<float>* input_layer = net->input_blobs()[0];
+    int channels = input_layer->channels();
+    int width = input_layer->width();
+    int height = input_layer->height();
+    assert(channels == (int)planes.size());
+    assert(width == state->board.get_boardsize());
+    assert(height == state->board.get_boardsize());
+    float* input_data = input_layer->mutable_cpu_data();
+
+    for (int c = 0; c < channels; ++c) {
+        for (int h = 0; h < height; ++h) {
+            for (int w = 0; w < width; ++w) {
+                input_data[(c * height + h) * width + w] = (float)planes[c][h * 19 + w];
+            }
+        }
+    }
+
+    net->Forward();
+
+    Blob<float>* output_layer = net->output_blobs()[0];
+    const float* begin = output_layer->cpu_data();
+    const float* end = begin + output_layer->channels();
+    auto outputs = std::vector<float>(begin, end);
+    float maxout = 0.0f;
+    int maxvtx = -1;
+    int idx = 0;
+
+    std::vector<std::string> display_map;
+    std::string line;
+
+    for (auto it = outputs.begin(); it != outputs.end(); ++it, ++idx) {
+        float val = *it;
+        line += boost::str(boost::format("%3d ") % int(val * 1000));
+        if (idx % 19 == 18) {
+            display_map.push_back(line);
+            line.clear();
+        }
+        int x = idx % 19;
+        int y = idx / 19;
+        int vtx = state->board.get_vertex(x, y);
+        if (val > maxout) {
+            maxout = val;
+            maxvtx = vtx;
+        }
+        if (state->board.get_square(vtx) == FastBoard::EMPTY) {
+            result.push_back(std::make_pair(val, vtx));
+        }
+    }
+    std::stable_sort(result.rbegin(), result.rend());
+
+    for (int i = display_map.size() - 1; i >= 0; --i) {
+        std::cerr << display_map[i] << std::endl;
+    }
+
+    float cum = 0.0f;
+    size_t tried = 0;
+    while (cum < 0.85f && tried < result.size()) {
+        if (result[tried].first < 0.01f) break;
+        std::cerr << boost::format("%1.3f (") % result[tried].first
+                  << state->board.move_to_text(result[tried].second)
+                  << ")" << std::endl;
+        cum += result[tried].first;
+        tried++;
+    }
+
+    std::string move = state->board.move_to_text(maxvtx);
+    myprintf("move: %s max index: %d value: %f\n", move.c_str(), maxvtx, maxout);
+
+    return result;
+}
+
+void Network::gather_features(FastState * state, NNPlanes & planes, bool rotate) {
     planes.resize(22);
     BoardPlane& empt_color = planes[0];
     BoardPlane& move_color = planes[1];
     BoardPlane& othr_color = planes[2];
-    BoardPlane& lastmoves  = planes[3];
-    BoardPlane& libs_1     = planes[4];
-    BoardPlane& libs_2     = planes[5];
-    BoardPlane& libs_3     = planes[6];
-    BoardPlane& libs_4p    = planes[7];
-    BoardPlane& libs_1_e   = planes[8];
-    BoardPlane& libs_2_e   = planes[9];
-    BoardPlane& libs_3_e   = planes[10];
-    BoardPlane& libs_4p_e  = planes[11];
+    BoardPlane& libs_1     = planes[3];
+    BoardPlane& libs_2     = planes[4];
+    BoardPlane& libs_3     = planes[5];
+    BoardPlane& libs_4p    = planes[6];
+    BoardPlane& libs_1_e   = planes[7];
+    BoardPlane& libs_2_e   = planes[8];
+    BoardPlane& libs_3_e   = planes[9];
+    BoardPlane& libs_4p_e  = planes[10];
+    BoardPlane& lastmoves  = planes[11];
     BoardPlane& after_1    = planes[12];
     BoardPlane& after_2    = planes[13];
     BoardPlane& after_3    = planes[14];
@@ -46,8 +196,8 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
     BoardPlane& after_2_e  = planes[17];
     BoardPlane& after_3_e  = planes[18];
     BoardPlane& after_4p_e = planes[19];
-    BoardPlane& komove     = planes[20];
-    BoardPlane& ladder     = planes[21];
+    BoardPlane& ladder     = planes[20];
+    BoardPlane& komove     = planes[21];
 
     // Every position in a random rotation/symmetry
     int symmetry = Random::get_Rng()->randint(8);
@@ -57,10 +207,13 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
     for (int j = 0; j < 19; j++) {
         for(int i = 0; i < 19; i++) {
             int vtx = state->board.get_vertex(i, j);
+            //Needs to rotate board input, or planes will be nonsense
+            //if (rotate) {
+            //    vtx = state->board.rotate_vertex(vtx, symmetry);
+            //}
             FastBoard::square_t color =
                 state->board.get_square(vtx);
-            int orig_idx = j * 19 + i;
-            int idx = state->board.rotate_vertex(orig_idx, symmetry);
+            int idx = j * 19 + i;
             if (color != FastBoard::EMPTY) {
                 int rlibs = state->board.count_rliberties(vtx);
                 if (rlibs == 1) {
@@ -207,7 +360,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 }
 
                 if (moveseen && move != FastBoard::PASS) {
-                    gather_features(state, position.second);
+                    gather_features(state, position.second, true);
                     data.push_back(position);
                 } else if (move != FastBoard::PASS) {
                     myprintf("Mainline move not found: %d\n", move);

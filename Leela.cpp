@@ -6,6 +6,7 @@
 #include <memory>
 #ifdef USE_NETS
 #include <glog/logging.h>
+#include "Network.h"
 #endif
 
 #include "Zobrist.h"
@@ -25,6 +26,7 @@ int main (int argc, char *argv[]) {
 
 #ifdef USE_NETS
     ::google::InitGoogleLogging(argv[0]);
+    Network::get_Network();
 #endif
 
     /* default to prompt */
