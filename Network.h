@@ -9,11 +9,7 @@
 #include <memory>
 #include <caffe/caffe.hpp>
 
-#include "tiny_cnn/tiny_cnn.h"
 #include "FastState.h"
-
-using namespace tiny_cnn;
-using namespace tiny_cnn::activation;
 
 // Move attributes
 class Network {
@@ -30,13 +26,12 @@ public:
     static Network* get_Network(void);
 
 private:
-    typedef network<cross_entropy_multiclass, gradient_descent> NN;
-    NN nn;
     std::unique_ptr<caffe::Net<float>> net;
 
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv);
-    static void gather_features(FastState * state, NNPlanes & planes, bool rotate = false);
+    static void gather_features(FastState * state, NNPlanes & planes);
+    static int rotate_nn_idx(int vertex, int symmetry);
 
     static Network* s_net;
 };

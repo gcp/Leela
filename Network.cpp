@@ -4,6 +4,7 @@
 #include <cassert>
 #include <list>
 #include <set>
+#include <iostream>
 #include <fstream>
 #include <memory>
 #include <boost/utility.hpp>
@@ -16,8 +17,6 @@
 #include <caffe/util/io.hpp>
 #include <caffe/blob.hpp>
 
-#include "tiny_cnn/tiny_cnn.h"
-
 #include "SGFTree.h"
 #include "SGFParser.h"
 #include "Utils.h"
@@ -29,6 +28,29 @@ using namespace Utils;
 using namespace caffe;
 
 Network* Network::s_net = nullptr;
+
+extern std::tr1::array<float, 52800> conv1_w;
+extern std::tr1::array<float, 96> conv1_b;
+extern std::tr1::array<float, 96> bn1_w1;
+extern std::tr1::array<float, 96> bn1_w2;
+extern float bn1_w3;
+extern std::tr1::array<float, 110592> conv2_w;
+extern std::tr1::array<float, 128> conv2_b;
+extern std::tr1::array<float, 128> bn2_w1;
+extern std::tr1::array<float, 128> bn2_w2;
+extern float bn2_w3;
+extern std::tr1::array<float, 36864> conv3_w;
+extern std::tr1::array<float, 32> conv3_b;
+extern std::tr1::array<float, 32> bn3_w1;
+extern std::tr1::array<float, 32> bn3_w2;
+extern float bn3_w3;
+extern std::tr1::array<float, 9216> conv4_w;
+extern std::tr1::array<float, 32> conv4_b;
+extern std::tr1::array<float, 32> bn4_w1;
+extern std::tr1::array<float, 32> bn4_w2;
+extern float bn4_w3;
+extern std::tr1::array<float, 288> conv5_w;
+extern std::tr1::array<float, 1> conv5_b;
 
 Network * Network::get_Network(void) {
     if (!s_net) {
@@ -58,8 +80,8 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::CPU);
 
-    net.reset(new Net<float>("model_4258.txt", TEST));
-    net->CopyTrainedLayersFrom("model_4258.caffemodel");
+    net.reset(new Net<float>("model_4289.txt", TEST));
+    net->CopyTrainedLayersFrom("model_4289.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         net->num_inputs(), net->num_outputs());
@@ -76,22 +98,160 @@ void Network::initialize(void) {
     height = output_layer->height();
     myprintf("Output: channels=%d, width=%d, height=%d\n", num_out_channels, width, height);
 
+#ifdef WRITE_WEIGHTS
+    std::ofstream out("weights.txt");
+#endif
+
     int total_weights = 0;
     auto & layers = net->layers();
     myprintf("%d layers:\n", layers.size());
     int layer_num = 1;
     for (auto it = layers.begin(); it != layers.end(); ++it, ++layer_num) {
         myprintf("layer %d (%s)", layer_num, (*it)->type());
-        auto & params = (*it)->blobs();
-        if (params.size() > 0) myprintf(" = ");
-        for (auto pars = params.begin(); pars != params.end(); ++pars) {
-            total_weights += (*pars)->count();
-            myprintf("%s ", (*pars)->shape_string().c_str());
-            if (boost::next(pars) != params.end()) myprintf("+ ");
+        auto & blobs = (*it)->blobs();
+        if (blobs.size() > 0) myprintf(" = ");
+        for (auto pars = blobs.begin(); pars != blobs.end(); ++pars) {
+            const Blob<float> & blob = *(*pars);
+            total_weights += blob.count();
+            myprintf("%s ", blob.shape_string().c_str());
+            if (boost::next(pars) != blobs.end()) myprintf("+ ");
+
+#ifdef WRITE_WEIGHTS
+            out << blob.blob.shape_string() << std::endl;
+            for (int idx = 0; idx < blob.count(); idx++) {
+                out << blob.cpu_data()[idx] << ", ";
+            }
+            out << std::endl;
+#endif
         }
         myprintf("\n");
     }
+#ifdef WRITE_WEIGHTS
+    out.close();
+#endif
     myprintf("%d total DCNN weights\n", total_weights);
+}
+
+template<int filter_size, int channels, int outputs,
+         unsigned long W, unsigned long B>
+void convolve(std::vector<float>& input,
+              std::tr1::array<float, W>& weights,
+              std::tr1::array<float, B>& biases,
+              std::vector<float>& output) {
+    assert(&input != &output);
+
+    // fixed for 19x19
+    constexpr int width = 19;
+    constexpr int height = 19;
+
+    // size 5 = mid 3
+    constexpr int pad = (filter_size / 2) + 1;
+    constexpr int extent = pad - 1;
+
+    for (unsigned int o = 0; o < outputs; o++) {
+        for (unsigned int oh = 0; oh < height; oh++) {
+            for (unsigned int ow = 0; ow < width; ow++) {
+                // accumulator
+                float val = 0.0f;
+
+                int fwstart = ow - extent;
+                int fwend   = ow + extent;
+                int fhstart = oh - extent;
+                int fhend   = oh + extent;
+
+                if (fwstart >= 0 && fwend < width
+                    && fhstart >= 0 && fhend < height) {
+                    for (unsigned int c = 0; c < channels; c++) {
+                        // reset filter start (e.g 96 22 5 5)
+                        unsigned int fidx = (o * channels + c) * filter_size * filter_size;
+                        for (unsigned int i = 0; i < filter_size; i++) {
+                            for (unsigned int j = 0; j < filter_size; j++) {
+                                unsigned int ch = fhstart + i;
+                                unsigned int cw = fwstart + j;
+                                val +=
+                                    input[(c * height + ch) * width + cw]
+                                    *
+                                    weights[fidx++];
+                            }
+                        }
+                    }
+                } else {
+                    for (unsigned int c = 0; c < channels; c++) {
+                        // reset filter start (e.g 96 22 5 5)
+                        unsigned int fidx = (o * channels + c) * filter_size * filter_size;
+                        for (int ch = fhstart; ch <= fhend; ch++) {
+                            for (int cw = fwstart; cw <= fwend; cw++) {
+                                // "zero padding"
+                                if (ch < 0 || ch >= height) {
+                                    fidx++;
+                                    continue;
+                                }
+                                if (cw < 0 || cw >= width) {
+                                    fidx++;
+                                    continue;
+                                }
+                                val +=
+                                    input[(c * height + ch) * width + cw]
+                                    *
+                                    weights[fidx++];
+                            }
+                        }
+                    }
+                }
+
+                val += biases[o];
+
+                // ReLU
+                val = (val > 0.0f) ? val : 0.0f;
+                output[(o * height + oh) * width + ow] = val;
+            }
+        }
+    }
+}
+
+template<unsigned long W1>
+void batchnorm(std::vector<float>& input,
+               int channels,
+               std::tr1::array<float, W1>& means,
+               std::tr1::array<float, W1>& variances,
+               float scale,
+               std::vector<float>& output)
+{
+    // fixed for 19x19
+    const int width = 19;
+    const int height = 19;
+
+    assert(channels == W1);
+
+    for (int c = 0; c < channels; ++c) {
+        float mean = means[c] / scale;
+        float variance = variances[c] / scale;
+        float stddiv = sqrtf(variance);
+        for (int h = 0; h < height; ++h) {
+            for (int w = 0; w < width; ++w) {
+                float val = input[(c * height + h) * width + w];
+                val -= mean;
+                val /= stddiv;
+                output[(c * height + h) * width + w] = val;
+            }
+        }
+    }
+}
+
+void softmax(std::vector<float>& input,
+             std::vector<float>& output) {
+    assert(&input != &output);
+
+    float alpha = *std::max_element(input.begin(), input.end());
+
+    for (size_t i = 0; i < output.size(); i++) {
+        float numer = std::exp(input[i] - alpha);
+        float denom = 0.0f;
+        for (size_t j = 0; j < input.size(); j++) {
+            denom += std::exp(input[j] - alpha);
+        }
+        output[i] = numer / denom;
+    }
 }
 
 std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) {
@@ -101,8 +261,9 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     }
 
     NNPlanes planes;
-    gather_features(state, planes, false);
+    gather_features(state, planes);
 
+#ifdef CAFFE
     Blob<float>* input_layer = net->input_blobs()[0];
     int channels = input_layer->channels();
     int width = input_layer->width();
@@ -111,7 +272,15 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     assert(width == state->board.get_boardsize());
     assert(height == state->board.get_boardsize());
     float* input_data = input_layer->mutable_cpu_data();
-
+#else
+    const int channels = 22;
+    const int width = 19;
+    const int height = 19;
+    const int max_channels = 128;
+    std::vector<float> input_data(max_channels * width * height);
+    std::vector<float> output_data(max_channels * width * height);
+    std::vector<float> softmax_data(width * height);
+#endif
     for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
@@ -119,15 +288,31 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
             }
         }
     }
+#ifndef CAFFE
+    // 96 22 5 5
+    convolve<5, 22, 96>(input_data, conv1_w, conv1_b, output_data);
+    batchnorm(output_data, 96, bn1_w1, bn1_w2, bn1_w3, input_data);
+    // 128 96 3 3
+    convolve<3, 96, 128>(input_data, conv2_w, conv2_b, output_data);
+    batchnorm(output_data, 128, bn2_w1, bn2_w2, bn2_w3, input_data);
+    // 32 128 3 3
+    convolve<3, 128, 32>(input_data, conv3_w, conv3_b, output_data);
+    batchnorm(output_data, 32, bn3_w1, bn3_w2, bn3_w3, input_data);
+    // 32 32 3 3
+    convolve<3, 32, 32>(input_data, conv4_w, conv4_b, output_data);
+    batchnorm(output_data, 32, bn4_w1, bn4_w2, bn4_w3, input_data);
+    // 1 32 3 3
+    convolve<3, 32, 1>(input_data, conv5_w, conv5_b, output_data);
+    softmax(output_data, softmax_data);
 
+    std::vector<float>& outputs = softmax_data;
+#else
     net->Forward();
-
     Blob<float>* output_layer = net->output_blobs()[0];
     const float* begin = output_layer->cpu_data();
     const float* end = begin + output_layer->channels();
     auto outputs = std::vector<float>(begin, end);
-    float maxout = 0.0f;
-    int maxvtx = -1;
+#endif
     int idx = 0;
 
     std::vector<std::string> display_map;
@@ -143,10 +328,6 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
         int x = idx % 19;
         int y = idx / 19;
         int vtx = state->board.get_vertex(x, y);
-        if (val > maxout) {
-            maxout = val;
-            maxvtx = vtx;
-        }
         if (state->board.get_square(vtx) == FastBoard::EMPTY) {
             result.push_back(std::make_pair(val, vtx));
         }
@@ -168,13 +349,10 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
         tried++;
     }
 
-    std::string move = state->board.move_to_text(maxvtx);
-    myprintf("move: %s max index: %d value: %f\n", move.c_str(), maxvtx, maxout);
-
     return result;
 }
 
-void Network::gather_features(FastState * state, NNPlanes & planes, bool rotate) {
+void Network::gather_features(FastState * state, NNPlanes & planes) {
     planes.resize(22);
     BoardPlane& empt_color = planes[0];
     BoardPlane& move_color = planes[1];
@@ -199,18 +377,11 @@ void Network::gather_features(FastState * state, NNPlanes & planes, bool rotate)
     BoardPlane& ladder     = planes[20];
     BoardPlane& komove     = planes[21];
 
-    // Every position in a random rotation/symmetry
-    int symmetry = Random::get_Rng()->randint(8);
-
     int tomove = state->get_to_move();
     // collect white, black occupation planes
     for (int j = 0; j < 19; j++) {
         for(int i = 0; i < 19; i++) {
             int vtx = state->board.get_vertex(i, j);
-            //Needs to rotate board input, or planes will be nonsense
-            //if (rotate) {
-            //    vtx = state->board.rotate_vertex(vtx, symmetry);
-            //}
             FastBoard::square_t color =
                 state->board.get_square(vtx);
             int idx = j * 19 + i;
@@ -360,7 +531,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 }
 
                 if (moveseen && move != FastBoard::PASS) {
-                    gather_features(state, position.second, true);
+                    gather_features(state, position.second);
                     data.push_back(position);
                 } else if (move != FastBoard::PASS) {
                     myprintf("Mainline move not found: %d\n", move);
@@ -387,30 +558,39 @@ skipnext:
     std::cout << "done." << std::endl;
 }
 
-void Network::train_network(TrainVector& data) {
-    nn << convolutional_layer<relu>   (19, 19, 5, 10,  8, padding::same)
-       << convolutional_layer<relu>   (19, 19, 3,  8,  8, padding::same)
-       << convolutional_layer<relu>   (19, 19, 3,  8,  8, padding::same)
-       << convolutional_layer<softmax>(19, 19, 3,  8,  1, padding::same);
+int Network::rotate_nn_idx(int vertex, int symmetry) {
+    assert(vertex >= 0 && vertex < 19*19);
+    assert(symmetry >= 0 && symmetry < 8);
+    int x = vertex % 19;
+    int y = vertex / 19;
+    int newx;
+    int newy;
 
-    size_t total_weights = 0;
-    for (size_t i = 0; i < nn.depth(); i++) {
-        vec_t& weight = nn[i]->weight();
-        vec_t& bias = nn[i]->bias();
-        std::cout << "#layer:" << i << "\n";
-        std::cout << "layer type:" << nn[i]->layer_type() << "\n";
-        std::cout << "input:" << nn[i]->in_size() << "(" << nn[i]->in_shape() << ")\n";
-        std::cout << "output:" << nn[i]->out_size() << "(" << nn[i]->out_shape() << ")\n";
-        std::cout << "weights: " << weight.size() << " bias: " << bias.size() << std::endl;
-        total_weights += weight.size();
+    if (symmetry >= 4) {
+        std::swap(x, y);
+        symmetry -= 4;
     }
-    std::cout << total_weights << " weights to train." << std::endl;
 
-    std::vector<vec_t> train_data;
-    std::vector<vec_t> test_data;
-    std::vector<label_t> train_label;
-    std::vector<label_t> test_label;
+    if (symmetry == 0) {
+        newx = x;
+        newy = y;
+    } else if (symmetry == 1) {
+        newx = x;
+        newy = 19 - y - 1;
+    } else if (symmetry == 2) {
+        newx = 19 - x - 1;
+        newy = y;
+    } else if (symmetry == 3) {
+        newx = 19 - x - 1;
+        newy = 19 - y - 1;
+    }
 
+    int newvtx = (newy * 19) + newx;
+    assert(newvtx >= 0 && newvtx < 19*19);
+    return newvtx;
+}
+
+void Network::train_network(TrainVector& data) {
     size_t data_size = data.size();
     size_t traincut = (data_size * 96) / 100;
     size_t data_pos = 0;
@@ -418,17 +598,18 @@ void Network::train_network(TrainVector& data) {
     size_t train_pos = 0;
     size_t test_pos = 0;
 
-    {
-        boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
-        std::string dbTrainName("leela_train");
-        train_db->Open(dbTrainName.c_str(), caffe::db::NEW);
-        boost::scoped_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
+    boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
+    std::string dbTrainName("leela_train");
+    train_db->Open(dbTrainName.c_str(), caffe::db::NEW);
+    boost::scoped_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
 
-        boost::scoped_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
-        std::string dbTestName("leela_test");
-        test_db->Open(dbTestName.c_str(), caffe::db::NEW);
-        boost::scoped_ptr<caffe::db::Transaction> test_txn(test_db->NewTransaction());
+    boost::scoped_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
+    std::string dbTestName("leela_test");
+    test_db->Open(dbTestName.c_str(), caffe::db::NEW);
+    boost::scoped_ptr<caffe::db::Transaction> test_txn(test_db->NewTransaction());
 
+    // Every position in every rotation/symmetry
+    for (int symmetry = 0; symmetry < 8; ++symmetry) {
         for (auto it = data.begin(); it != data.end(); ++it) {
             TrainPosition& position = *it;
             int move = position.first;
@@ -437,11 +618,13 @@ void Network::train_network(TrainVector& data) {
             datum.set_channels(22);
             datum.set_height(19);
             datum.set_width(19);
-            datum.set_label((label_t)move);
-
+            // store (rotated) move
+            datum.set_label(rotate_nn_idx(move, symmetry));
+            // stpre (rotated) bitmaps
             for (size_t p = 0; p < nnplanes.size(); p++) {
                 for (size_t b = 0; b < nnplanes[p].size(); b++) {
-                    datum.add_float_data((float)nnplanes[p][b]);
+                    int idx = rotate_nn_idx(b, symmetry);
+                    datum.add_float_data((float)nnplanes[p][idx]);
                 }
             }
             std::string out;
@@ -453,7 +636,8 @@ void Network::train_network(TrainVector& data) {
                 ss << test_pos;
                 test_pos++;
                 test_txn->Put(ss.str(), out);
-                if (test_pos % 1000 == 0) {
+                if (test_pos % 10000 == 0) {
+                    std::cout << "t";
                     test_txn->Commit();
                     test_txn.reset(test_db->NewTransaction());
                 }
@@ -462,79 +646,19 @@ void Network::train_network(TrainVector& data) {
                 ss << train_pos;
                 train_pos++;
                 train_txn->Put(ss.str(), out);
-                if (train_pos % 1000 == 0) {
+                if (train_pos % 10000 == 0) {
+                    std::cout << symmetry;
                     train_txn->Commit();
                     train_txn.reset(train_db->NewTransaction());
                 }
             }
         }
-        train_txn->Commit();
-        test_txn->Commit();
     }
+    train_txn->Commit();
+    test_txn->Commit();
+
     std::cout << train_pos << " training positions." << std::endl;
     std::cout << test_pos << " testing positions." << std::endl;
-    return;
-
-    data_pos = 0;
-    for (auto it = data.begin(); it != data.end(); ++it) {
-        TrainPosition& position = *it;
-        int move = position.first;
-        NNPlanes& nnplanes = position.second;
-        vec_t vec;
-        vec.resize(nnplanes.size() * nnplanes[0].size());
-        int idx = 0;
-        for (size_t p = 0; p < nnplanes.size(); p++) {
-            for (size_t b = 0; b < nnplanes[p].size(); b++) {
-                vec[idx++] = nnplanes[p][b];
-            }
-        }
-        data_pos++;
-        if (data_pos > traincut) {
-            test_data.push_back(vec);
-            test_label.push_back((label_t) move);
-        } else {
-            train_data.push_back(vec);
-            train_label.push_back((label_t) move);
-        }
-    }
-    data.clear();
-    std::cout << train_data.size() << " training positions." << std::endl;
-    std::cout << test_data.size() << " testing positions." << std::endl;
-
-    progress_display disp(train_data.size());
-    timer t;
-    int minibatch_size = 128;
-    nn.optimizer().alpha = 0.1;
-
-    // test&save for each epoch
-    int epoch = 0;
-
-    auto on_enumerate_epoch = [&]() {
-       std::cout << std::endl << t.elapsed() << "s elapsed." << std::endl;
-       timer t2;
-       result res = nn.test(test_data, test_label);
-       std::cout << std::endl << t2.elapsed() << "s elapsed for test, "
-                 << (test_data.size() / t2.elapsed()) << " pos/s." << std::endl;
-       std::cout << "e=" << epoch << ", a=" << nn.optimizer().alpha << ", " << res.num_success
-                 << "/" << res.num_total
-                 << " ( " << res.num_success*100.0f/res.num_total << "%)"
-                 << std::endl;
-       std::ofstream ofs (("epoch_" + std::to_string(epoch++) + ".txt").c_str());
-       ofs << nn;
-
-       nn.optimizer().alpha *= 0.85; // decay learning rate
-       nn.optimizer().alpha = std::max((tiny_cnn::float_t)0.00001, nn.optimizer().alpha);
-       disp.restart(train_data.size());
-       t.restart();
-    };
-
-    auto on_enumerate_minibatch = [&]() {
-        disp += minibatch_size;
-    };
-
-    nn.train(train_data, train_label, minibatch_size, 50,
-             on_enumerate_minibatch,
-             on_enumerate_epoch);
 }
 
 void Network::autotune_from_file(std::string filename) {

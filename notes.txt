@@ -1,0 +1,2 @@
+- Ensemble with shallower but wider filters
+- Ensemble with smaller net trained on 5p+ players
