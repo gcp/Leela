@@ -218,8 +218,8 @@ void batchnorm(std::vector<float>& input,
                std::vector<float>& output)
 {
     // fixed for 19x19
-    const int width = 19;
-    const int height = 19;
+    constexpr int width = 19;
+    constexpr int height = 19;
 
     assert(channels == W1);
 
@@ -244,11 +244,17 @@ void softmax(std::vector<float>& input,
 
     float alpha = *std::max_element(input.begin(), input.end());
 
+    std::vector<float> helper(output.size());
+
     for (size_t i = 0; i < output.size(); i++) {
-        float numer = std::exp(input[i] - alpha);
+        helper[i] = std::exp(input[i] - alpha);
+    }
+
+    for (size_t i = 0; i < output.size(); i++) {
+        float numer = helper[i];
         float denom = 0.0f;
-        for (size_t j = 0; j < input.size(); j++) {
-            denom += std::exp(input[j] - alpha);
+        for (size_t j = 0; j < output.size(); j++) {
+            denom += helper[j];
         }
         output[i] = numer / denom;
     }
