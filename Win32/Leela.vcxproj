@@ -186,6 +186,8 @@
     <ClCompile Include="..\Leela.cpp" />
     <ClCompile Include="..\Matcher.cpp" />
     <ClCompile Include="..\MCOTable.cpp" />
+    <ClCompile Include="..\Network.cpp" />
+    <ClCompile Include="..\NN.cpp" />
     <ClCompile Include="..\Playout.cpp" />
     <ClCompile Include="..\PNNode.cpp" />
     <ClCompile Include="..\PNSearch.cpp" />

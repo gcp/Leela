@@ -22,6 +22,7 @@
 
 /* Features */
 #define USE_NETS
+//#define USE_CAFFE
 //#define USE_SEARCH
 //#define USE_PONDER
 //#define USE_SMP

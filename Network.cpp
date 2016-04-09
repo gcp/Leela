@@ -12,10 +12,14 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/format.hpp>
 
+#ifdef USE_CAFFE
 #include <caffe/proto/caffe.pb.h>
 #include <caffe/util/db.hpp>
 #include <caffe/util/io.hpp>
 #include <caffe/blob.hpp>
+
+using namespace caffe;
+#endif
 
 #include "SGFTree.h"
 #include "SGFParser.h"
@@ -25,9 +29,8 @@
 #include "Network.h"
 
 using namespace Utils;
-using namespace caffe;
 
-Network* Network::s_net = nullptr;
+Network* Network::s_Net = nullptr;
 
 extern std::tr1::array<float, 52800> conv1_w;
 extern std::tr1::array<float, 96> conv1_b;
@@ -53,11 +56,11 @@ extern std::tr1::array<float, 288> conv5_w;
 extern std::tr1::array<float, 1> conv5_b;
 
 Network * Network::get_Network(void) {
-    if (!s_net) {
-        s_net = new Network();
-        s_net->initialize();
+    if (!s_Net) {
+        s_Net = new Network();
+        s_Net->initialize();
     }
-    return s_net;
+    return s_Net;
 }
 
 void Network::benchmark(FastState * state) {
@@ -77,6 +80,7 @@ void Network::benchmark(FastState * state) {
 }
 
 void Network::initialize(void) {
+#ifdef USE_CAFFE
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::CPU);
 
@@ -130,6 +134,7 @@ void Network::initialize(void) {
     out.close();
 #endif
     myprintf("%d total DCNN weights\n", total_weights);
+#endif
 }
 
 template<int filter_size, int channels, int outputs,
@@ -268,7 +273,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     NNPlanes planes;
     gather_features(state, planes);
 
-#ifndef xCAFFE
+#ifdef USE_CAFFE
     Blob<float>* input_layer = net->input_blobs()[0];
     int channels = input_layer->channels();
     int width = input_layer->width();
@@ -293,7 +298,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
             }
         }
     }
-#ifdef xCAFFE
+#ifndef USE_CAFFE
     // 96 22 5 5
     convolve<5, 22, 96>(input_data, conv1_w, conv1_b, output_data);
     batchnorm(output_data, 96, bn1_w1, bn1_w2, bn1_w3, input_data);
@@ -604,6 +609,7 @@ int Network::rotate_nn_idx(int vertex, int symmetry) {
 void Network::train_network(TrainVector& data,
                             size_t& total_train_pos,
                             size_t& total_test_pos) {
+#ifdef USE_CAFFE
     size_t data_size = data.size();
     size_t traincut = (data_size * 96) / 100;
 
@@ -680,9 +686,11 @@ void Network::train_network(TrainVector& data,
     total_test_pos += test_pos;
 
     std::cout << std::endl;
+#endif
 }
 
 void Network::autotune_from_file(std::string filename) {
+#ifdef USE_CAFFE
     {
         boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
         std::string dbTrainName("leela_train");
@@ -691,7 +699,7 @@ void Network::autotune_from_file(std::string filename) {
         std::string dbTestName("leela_test");
         test_db->Open(dbTestName.c_str(), caffe::db::NEW);
     }
-
+#endif
     TrainVector data;
     gather_traindata(filename, data);
 }

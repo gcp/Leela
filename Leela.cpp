@@ -5,7 +5,9 @@
 #include <iostream>
 #include <memory>
 #ifdef USE_NETS
+#ifdef USE_CAFFE
 #include <glog/logging.h>
+#endif
 #include "Network.h"
 #endif
 
@@ -25,7 +27,9 @@ int main (int argc, char *argv[]) {
     std::string input;
 
 #ifdef USE_NETS
+#ifdef USE_CAFFE
     ::google::InitGoogleLogging(argv[0]);
+#endif
     Network::get_Network();
 #endif
 
