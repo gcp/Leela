@@ -80,8 +80,8 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::CPU);
 
-    net.reset(new Net<float>("model_4289.txt", TEST));
-    net->CopyTrainedLayersFrom("model_4289.caffemodel");
+    net.reset(new Net<float>("model_4320.txt", TEST));
+    net->CopyTrainedLayersFrom("model_4320.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         net->num_inputs(), net->num_outputs());
@@ -245,7 +245,6 @@ void softmax(std::vector<float>& input,
     float alpha = *std::max_element(input.begin(), input.end());
 
     std::vector<float> helper(output.size());
-
     for (size_t i = 0; i < output.size(); i++) {
         helper[i] = std::exp(input[i] - alpha);
     }
@@ -269,7 +268,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     NNPlanes planes;
     gather_features(state, planes);
 
-#ifdef CAFFE
+#ifndef xCAFFE
     Blob<float>* input_layer = net->input_blobs()[0];
     int channels = input_layer->channels();
     int width = input_layer->width();
@@ -294,7 +293,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
             }
         }
     }
-#ifndef CAFFE
+#ifdef xCAFFE
     // 96 22 5 5
     convolve<5, 22, 96>(input_data, conv1_w, conv1_b, output_data);
     batchnorm(output_data, 96, bn1_w1, bn1_w2, bn1_w3, input_data);
@@ -484,6 +483,9 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
     int gametotal = games.size();
     int gamecount = 0;
 
+    size_t train_pos = 0;
+    size_t test_pos = 0;
+
     myprintf("Total games in file: %d\n", gametotal);
 
     while (gamecount < gametotal) {
@@ -552,16 +554,27 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
 skipnext:
         gamecount++;
         if (gamecount % 100 == 0) {
-            myprintf("Game %d, %3d moves, %d positions\n", gamecount,
-                     movecount, data.size());
+            myprintf("Game %d, %d total positions", gamecount, data.size());
+            if (gamecount % 40000 == 0) {
+                std::cout << "...shuffling training data...";
+                std::random_shuffle(data.begin(), data.end());
+                std::cout << "writing: ";
+                train_network(data, train_pos, test_pos);
+            } else {
+                std::cout << std::endl;
+            }
         }
     }
 
-    myprintf("Gathering pass done.\n");
-
     std::cout << "Shuffling training data...";
     std::random_shuffle(data.begin(), data.end());
-    std::cout << "done." << std::endl;
+    std::cout << "writing: ";
+    train_network(data, train_pos, test_pos);
+
+    std::cout << train_pos << " training positions." << std::endl;
+    std::cout << test_pos << " testing positions." << std::endl;
+
+    myprintf("Gathering pass done.\n");
 }
 
 int Network::rotate_nn_idx(int vertex, int symmetry) {
@@ -596,26 +609,27 @@ int Network::rotate_nn_idx(int vertex, int symmetry) {
     return newvtx;
 }
 
-void Network::train_network(TrainVector& data) {
+void Network::train_network(TrainVector& data,
+                            size_t& total_train_pos,
+                            size_t& total_test_pos) {
     size_t data_size = data.size();
     size_t traincut = (data_size * 96) / 100;
-    size_t data_pos = 0;
 
     size_t train_pos = 0;
     size_t test_pos = 0;
 
     boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
     std::string dbTrainName("leela_train");
-    train_db->Open(dbTrainName.c_str(), caffe::db::NEW);
-    boost::scoped_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
-
+    train_db->Open(dbTrainName.c_str(), caffe::db::WRITE);
     boost::scoped_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
     std::string dbTestName("leela_test");
-    test_db->Open(dbTestName.c_str(), caffe::db::NEW);
+    test_db->Open(dbTestName.c_str(), caffe::db::WRITE);
+
+    boost::scoped_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
     boost::scoped_ptr<caffe::db::Transaction> test_txn(test_db->NewTransaction());
 
-    // Every position in every rotation/symmetry
-    for (int symmetry = 0; symmetry < 8; ++symmetry) {
+   for (int xsymmetry = 0; xsymmetry < 2; ++xsymmetry) {
+        size_t data_pos = 0;
         for (auto it = data.begin(); it != data.end(); ++it) {
             TrainPosition& position = *it;
             int move = position.first;
@@ -624,6 +638,11 @@ void Network::train_network(TrainVector& data) {
             datum.set_channels(22);
             datum.set_height(19);
             datum.set_width(19);
+            // check whether to rotate the position
+            int symmetry = xsymmetry;
+            if (xsymmetry == 1) {
+                symmetry = Random::get_Rng()->randint(7) + 1;
+            }
             // store (rotated) move
             datum.set_label(rotate_nn_idx(move, symmetry));
             // stpre (rotated) bitmaps
@@ -660,18 +679,28 @@ void Network::train_network(TrainVector& data) {
             }
         }
     }
+    data.clear();
+
     train_txn->Commit();
     test_txn->Commit();
 
-    std::cout << train_pos << " training positions." << std::endl;
-    std::cout << test_pos << " testing positions." << std::endl;
+    total_train_pos += train_pos;
+    total_test_pos += test_pos;
+
+    std::cout << std::endl;
 }
 
 void Network::autotune_from_file(std::string filename) {
+    {
+        boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
+        std::string dbTrainName("leela_train");
+        train_db->Open(dbTrainName.c_str(), caffe::db::NEW);
+        boost::scoped_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
+        std::string dbTestName("leela_test");
+        test_db->Open(dbTestName.c_str(), caffe::db::NEW);
+    }
+
     TrainVector data;
-
     gather_traindata(filename, data);
-
-    train_network(data);
 }
 #endif

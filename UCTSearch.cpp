@@ -659,7 +659,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         myprintf("Stripped %d illegal move(s).\n", stripped_moves);
     }
     // Add passing at a very low but non-zero weight
-    filter_moves.push_back(std::make_pair(0.0001f, FastBoard::PASS));
+    filter_moves.push_back(std::make_pair(0.0001f, +FastBoard::PASS));
 #endif
     m_rootstate.stop_clock(color);
 

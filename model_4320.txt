@@ -1,0 +1,221 @@
+name: "LeelaNet"
+layer {
+  name: "data"
+  type: "Input"
+  top: "data"
+  input_param { shape: { dim: 1 dim: 22 dim: 19 dim: 19 } }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  # input -> output
+  bottom: "data"
+  top: "conv1"
+  convolution_param {
+    engine: CAFFE
+    num_output: 96
+    kernel_size: 5
+    pad: 2
+    stride: 1
+  }
+}
+
+layer {
+  name: "relu1"
+  type: "ReLU"
+  relu_param {
+    engine: CAFFE
+  }
+  # in-place
+  bottom: "conv1"
+  top: "conv1"
+}
+
+layer {
+  name: "bn1"
+  type: "BatchNorm"
+  bottom: "conv1"
+  top: "bn1"
+  batch_norm_param {
+    use_global_stats: true
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+}
+
+layer {
+  name: "conv2"
+  type: "Convolution"
+  # input -> output
+  bottom: "bn1"
+  top: "conv2"
+  convolution_param {
+    engine: CAFFE
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+  }
+}
+
+layer {
+  name: "relu2"
+  type:  "ReLU"
+  relu_param {
+    engine: CAFFE
+  }
+  # in-place
+  bottom: "conv2"
+  top: "conv2"
+}
+
+layer {
+  name: "bn2"
+  type: "BatchNorm"
+  bottom: "conv2"
+  top: "bn2"
+  batch_norm_param {
+    use_global_stats: true
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+}
+
+layer {
+  name: "conv3"
+  type: "Convolution"
+  # input -> output
+  bottom: "bn2"
+  top: "conv3"
+  convolution_param {
+    engine: CAFFE
+    num_output: 32
+    kernel_size: 3
+    pad: 1
+    stride: 1
+  }
+}
+
+layer {
+  name: "relu3"
+  type: "ReLU"
+  relu_param {
+    engine: CAFFE
+  }
+  # in-place
+  bottom: "conv3"
+  top: "conv3"
+}
+
+layer {
+  name: "bn3"
+  type: "BatchNorm"
+  bottom: "conv3"
+  top: "bn3"
+  batch_norm_param {
+    use_global_stats: true
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+}
+
+layer {
+  name: "conv4"
+  type: "Convolution"
+  # input -> output
+  bottom: "bn3"
+  top: "conv4"
+  convolution_param {
+    engine: CAFFE
+    num_output: 32
+    kernel_size: 3
+    pad: 1
+    stride: 1
+  }
+}
+
+layer {
+  name: "relu4"
+  type: "ReLU"
+  relu_param {
+    engine: CAFFE
+  }
+  # in-place
+  bottom: "conv4"
+  top: "conv4"
+}
+
+layer {
+  name: "bn4"
+  type: "BatchNorm"
+  bottom: "conv4"
+  top: "bn4"
+  batch_norm_param {
+    use_global_stats: true
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+}
+
+layer {
+  name: "conv5"
+  type: "Convolution"
+  # input -> output
+  bottom: "bn4"
+  top: "conv5"
+  convolution_param {
+    engine: CAFFE
+    num_output: 1
+    kernel_size: 3 
+    pad: 1
+    stride: 1
+  }
+}
+
+layer {
+  name: "flatten"
+  type: "Flatten"
+  bottom: "conv5"
+  top: "flatten"
+}
+
+layer {
+  name: "loss"
+  type: "Softmax"
+  softmax_param {
+    engine: CAFFE
+  }
+  # input
+  bottom: "flatten"
+  # output
+  top: "loss"
+}
