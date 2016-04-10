@@ -55,6 +55,12 @@ extern float bn4_w3;
 extern std::tr1::array<float, 288> conv5_w;
 extern std::tr1::array<float, 1> conv5_b;
 
+std::tr1::array<float, 52800>  conv1_w_reorder;
+std::tr1::array<float, 110592> conv2_w_reorder;
+std::tr1::array<float, 36864>  conv3_w_reorder;
+std::tr1::array<float, 9216>   conv4_w_reorder;
+std::tr1::array<float, 288>    conv5_w_reorder;
+
 Network * Network::get_Network(void) {
     if (!s_Net) {
         s_Net = new Network();
@@ -64,7 +70,7 @@ Network * Network::get_Network(void) {
 }
 
 void Network::benchmark(FastState * state) {
-    static const int BENCH_AMOUNT = 1000;
+    static const int BENCH_AMOUNT = 200;
     Time start;
 
     for (int loop = 0; loop < BENCH_AMOUNT; loop++) {
@@ -79,7 +85,40 @@ void Network::benchmark(FastState * state) {
              (int)((float)BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
 }
 
+// original: output x channels x filter
+// causes (channels x filter) jumps
+// out_c_offset[o * out_mult] += in * filter[o * filt_out_mult];
+// we want
+// out_c_offset[o * out_mult] += in * filter[o];
+// which is channels x filter x output
+template<unsigned int outputs,
+         unsigned int channels,
+         unsigned int filter_size,
+         unsigned int W>
+void reorder_weights(std::tr1::array<float, W>& in,
+                     std::tr1::array<float, W>& out) {
+    constexpr unsigned int filter_len = filter_size * filter_size;
+    for (unsigned int o = 0; o < outputs; o++) {
+        for (unsigned int c = 0; c < channels; c++) {
+            for (unsigned int f = 0; f < filter_len; f++) {
+                out[(c * filter_len + f) * outputs + o] =
+                 in[(o * channels + c) * filter_len + f];
+            }
+        }
+    }
+}
+
 void Network::initialize(void) {
+    // 96 22 5 5
+    reorder_weights<96, 22, 5>(conv1_w, conv1_w_reorder);
+    // 128 96 3 3
+    reorder_weights<128, 96, 3>(conv2_w, conv2_w_reorder);
+    //32 128 3 3 (36864)
+    reorder_weights<32, 128, 3>(conv3_w, conv3_w_reorder);
+    //32 32 3 3 (9216)
+    reorder_weights<32, 32, 3>(conv4_w, conv4_w_reorder);
+    //1 32 3 3 (288)
+    reorder_weights<1, 32, 3>(conv5_w, conv5_w_reorder);
 #ifdef USE_CAFFE
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::CPU);
@@ -137,7 +176,8 @@ void Network::initialize(void) {
 #endif
 }
 
-template<int filter_size, int channels, int outputs,
+template<unsigned int filter_size,
+         unsigned int channels, unsigned int outputs,
          unsigned long W, unsigned long B>
 void convolve(std::vector<float>& input,
               std::tr1::array<float, W>& weights,
@@ -153,66 +193,88 @@ void convolve(std::vector<float>& input,
     constexpr int pad = (filter_size / 2) + 1;
     constexpr int extent = pad - 1;
 
-    for (unsigned int o = 0; o < outputs; o++) {
-        for (unsigned int oh = 0; oh < height; oh++) {
-            for (unsigned int ow = 0; ow < width; ow++) {
-                // accumulator
-                float val = 0.0f;
+    constexpr unsigned int filter_len = filter_size * filter_size;
 
-                int fwstart = ow - extent;
-                int fwend   = ow + extent;
-                int fhstart = oh - extent;
-                int fhend   = oh + extent;
+    // we'll write out output channels consecutively
+    // and rearrange when done
+    std::tr1::array<float, width * height * outputs> tmp_out;
 
-                if (fwstart >= 0 && fwend < width
-                    && fhstart >= 0 && fhend < height) {
-                    for (unsigned int c = 0; c < channels; c++) {
-                        // reset filter start (e.g 96 22 5 5)
-                        unsigned int fidx = (o * channels + c) * filter_size * filter_size;
-                        for (unsigned int i = 0; i < filter_size; i++) {
-                            for (unsigned int j = 0; j < filter_size; j++) {
-                                unsigned int ch = fhstart + i;
-                                unsigned int cw = fwstart + j;
-                                val +=
-                                    input[(c * height + ch) * width + cw]
-                                    *
-                                    weights[fidx++];
+    // clear used part of output buffer
+    // but set bias right away
+    for (unsigned int h = 0; h < height; h++) {
+        for (unsigned int w = 0; w < width; w++) {
+            float * bias_out  = &tmp_out[(h * width + w) * outputs];
+            for (unsigned int o = 0; o < outputs; o++) {
+                bias_out[o] = biases[o];
+            }
+        }
+    }
+
+    for (unsigned int c = 0; c < channels; c++) {
+        float const * ch_filter = &weights[c * filter_len * outputs];
+        for (unsigned int ch = 0; ch < height; ch++) {
+            int fhstart = ch - extent;
+            int fhend   = ch + extent;
+            for (unsigned int cw = 0; cw < width; cw++) {
+                int fwstart = cw - extent;
+                int fwend   = cw + extent;
+
+                float * out_c_offset = &tmp_out[(ch * width + cw) * outputs];
+                float const * filter = ch_filter;
+
+                if (fhstart >= 0 && fhend < height
+                    && fwstart >= 0 && fwend < width) {
+                    float const * in = &input[(c * height + fhstart) * width + fwstart];
+                    for (unsigned int u = 0; u < filter_size; u++) {
+                        for (unsigned int v = 0; v < filter_size; v++) {
+                            for (unsigned int o = 0; o < outputs; o++) {
+                                out_c_offset[o] += *in * filter[o];
                             }
+                            in++;
+                            filter += outputs;
                         }
+                        in += 19 - filter_size;
                     }
-                } else {
-                    for (unsigned int c = 0; c < channels; c++) {
-                        // reset filter start (e.g 96 22 5 5)
-                        unsigned int fidx = (o * channels + c) * filter_size * filter_size;
-                        for (int ch = fhstart; ch <= fhend; ch++) {
-                            for (int cw = fwstart; cw <= fwend; cw++) {
-                                // "zero padding"
-                                if (ch < 0 || ch >= height) {
-                                    fidx++;
-                                    continue;
-                                }
-                                if (cw < 0 || cw >= width) {
-                                    fidx++;
-                                    continue;
-                                }
-                                val +=
-                                    input[(c * height + ch) * width + cw]
-                                    *
-                                    weights[fidx++];
+                }
+                else {
+                    for (int fh = fhstart; fh <= fhend; fh++) {
+                        for (int fw = fwstart; fw <= fwend; fw++) {
+                            // "zero padding"
+                            if ((unsigned)fh >= height) {
+                                filter += outputs;
+                                continue;
                             }
+                            if ((unsigned)fw >= width) {
+                                filter += outputs;
+                                continue;
+                            }
+
+                            const float in = input[(c * height + fh) * width + fw];
+
+                            for (unsigned int o = 0; o < outputs; o++) {
+                                out_c_offset[o] += in * filter[o];
+                            }
+                            filter += outputs;
                         }
                     }
                 }
+            }
+        }
+    }
 
-                val += biases[o];
+    auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
 
-                // ReLU
-                val = (val > 0.0f) ? val : 0.0f;
-                output[(o * height + oh) * width + ow] = val;
+    // re-gather output data
+    for (unsigned int o = 0; o < outputs; o++) {
+        for (unsigned int h = 0; h < height; h++) {
+            for (unsigned int w = 0; w < width; w++) {
+                output[(o * height + h) * width + w] =
+                    lambda_ReLU(tmp_out[(h * width + w) * outputs + o]);
             }
         }
     }
 }
+
 
 template<unsigned long W1>
 void batchnorm(std::vector<float>& input,
@@ -223,22 +285,21 @@ void batchnorm(std::vector<float>& input,
                std::vector<float>& output)
 {
     // fixed for 19x19
-    constexpr int width = 19;
-    constexpr int height = 19;
+    constexpr unsigned int width = 19;
+    constexpr unsigned int height = 19;
+    constexpr unsigned int board_size = width * height;
 
     assert(channels == W1);
 
-    for (int c = 0; c < channels; ++c) {
+    for (unsigned int c = 0; c < channels; ++c) {
         float mean = means[c] / scale;
         float variance = variances[c] / scale;
-        float stddiv = sqrtf(variance);
-        for (int h = 0; h < height; ++h) {
-            for (int w = 0; w < width; ++w) {
-                float val = input[(c * height + h) * width + w];
-                val -= mean;
-                val /= stddiv;
-                output[(c * height + h) * width + w] = val;
-            }
+        float scale_stddiv = 1.0f / sqrtf(variance);
+
+        float * out = &output[c * board_size];
+        float const * in  = &input[c * board_size];
+        for (unsigned int b = 0; b < board_size; b++) {
+            out[b] = scale_stddiv * (in[b] - mean);
         }
     }
 }
@@ -300,19 +361,19 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     }
 #ifndef USE_CAFFE
     // 96 22 5 5
-    convolve<5, 22, 96>(input_data, conv1_w, conv1_b, output_data);
+    convolve<5, 22, 96>(input_data, conv1_w_reorder, conv1_b, output_data);
     batchnorm(output_data, 96, bn1_w1, bn1_w2, bn1_w3, input_data);
     // 128 96 3 3
-    convolve<3, 96, 128>(input_data, conv2_w, conv2_b, output_data);
+    convolve<3, 96, 128>(input_data, conv2_w_reorder, conv2_b, output_data);
     batchnorm(output_data, 128, bn2_w1, bn2_w2, bn2_w3, input_data);
     // 32 128 3 3
-    convolve<3, 128, 32>(input_data, conv3_w, conv3_b, output_data);
+    convolve<3, 128, 32>(input_data, conv3_w_reorder, conv3_b, output_data);
     batchnorm(output_data, 32, bn3_w1, bn3_w2, bn3_w3, input_data);
     // 32 32 3 3
-    convolve<3, 32, 32>(input_data, conv4_w, conv4_b, output_data);
+    convolve<3, 32, 32>(input_data, conv4_w_reorder, conv4_b, output_data);
     batchnorm(output_data, 32, bn4_w1, bn4_w2, bn4_w3, input_data);
     // 1 32 3 3
-    convolve<3, 32, 1>(input_data, conv5_w, conv5_b, output_data);
+    convolve<3, 32, 1>(input_data, conv5_w_reorder, conv5_b, output_data);
     softmax(output_data, softmax_data);
 
     std::vector<float>& outputs = softmax_data;
