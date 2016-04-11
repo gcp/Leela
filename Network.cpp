@@ -55,11 +55,16 @@ extern float bn4_w3;
 extern std::tr1::array<float, 288> conv5_w;
 extern std::tr1::array<float, 1> conv5_b;
 
-std::tr1::array<float, 52800>  conv1_w_reorder;
-std::tr1::array<float, 110592> conv2_w_reorder;
-std::tr1::array<float, 36864>  conv3_w_reorder;
-std::tr1::array<float, 9216>   conv4_w_reorder;
-std::tr1::array<float, 288>    conv5_w_reorder;
+alignas(32) std::tr1::array<float, 52800>  conv1_w_reorder;
+alignas(32) std::tr1::array<float, 110592> conv2_w_reorder;
+alignas(32) std::tr1::array<float, 36864>  conv3_w_reorder;
+alignas(32) std::tr1::array<float, 9216>   conv4_w_reorder;
+alignas(32) std::tr1::array<float, 288>    conv5_w_reorder;
+
+template<class T>
+bool is_aligned(T* ptr, size_t alignment) {
+    return (uintptr_t(ptr) & (alignment - 1)) == 0;
+}
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -91,10 +96,10 @@ void Network::benchmark(FastState * state) {
 // we want
 // out_c_offset[o * out_mult] += in * filter[o];
 // which is channels x filter x output
-template<unsigned int outputs,
-         unsigned int channels,
-         unsigned int filter_size,
-         unsigned int W>
+template<unsigned long outputs,
+         unsigned long channels,
+         unsigned long filter_size,
+         unsigned long W>
 void reorder_weights(std::tr1::array<float, W>& in,
                      std::tr1::array<float, W>& out) {
     constexpr unsigned int filter_len = filter_size * filter_size;
@@ -197,7 +202,7 @@ void convolve(std::vector<float>& input,
 
     // we'll write out output channels consecutively
     // and rearrange when done
-    std::tr1::array<float, width * height * outputs> tmp_out;
+    alignas(32) std::array<float, width * height * outputs> tmp_out;
 
     // clear used part of output buffer
     // but set bias right away
@@ -219,8 +224,20 @@ void convolve(std::vector<float>& input,
                 int fwstart = cw - extent;
                 int fwend   = cw + extent;
 
-                float * out_c_offset = &tmp_out[(ch * width + cw) * outputs];
-                float const * filter = ch_filter;
+                float * out_c_offset;
+                float const * filter;
+
+                // vectorizable?
+                if (outputs >= 32 && (outputs % 32 == 0)) {
+                    out_c_offset = (float*) __builtin_assume_aligned(&tmp_out[(ch * width + cw) * outputs], 32);
+                    filter = (float*)__builtin_assume_aligned(ch_filter, 32);
+
+                    assert(is_aligned(out_c_offset, 32));
+                    assert(is_aligned(filter, 32));
+                } else {
+                    out_c_offset = &tmp_out[(ch * width + cw) * outputs];
+                    filter = ch_filter;
+                }
 
                 if (fhstart >= 0 && fhend < height
                     && fwstart >= 0 && fwend < width) {
@@ -278,7 +295,7 @@ void convolve(std::vector<float>& input,
 
 template<unsigned long W1>
 void batchnorm(std::vector<float>& input,
-               int channels,
+               unsigned int channels,
                std::tr1::array<float, W1>& means,
                std::tr1::array<float, W1>& variances,
                float scale,

@@ -55,6 +55,9 @@ deps = $(sources:%.cpp=%.d)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
+Network.o: Network.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-lto -c -o $@ $<
+
 leela: $(objects)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
 
