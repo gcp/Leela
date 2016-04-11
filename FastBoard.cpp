@@ -93,7 +93,8 @@ int FastBoard::rotate_vertex(int vertex, int symmetry) {
     } else if (symmetry == 6) {
         newx = y;
         newy = m_boardsize - x - 1;
-    } else if (symmetry == 7) {
+    } else  {
+        assert(symmetry == 7);
         newx = m_boardsize - y - 1;
         newy = m_boardsize - x - 1;
     }

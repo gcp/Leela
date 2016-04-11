@@ -657,7 +657,8 @@ int Network::rotate_nn_idx(int vertex, int symmetry) {
     } else if (symmetry == 2) {
         newx = 19 - x - 1;
         newy = y;
-    } else if (symmetry == 3) {
+    } else {
+        assert(symmetry == 3);
         newx = 19 - x - 1;
         newy = 19 - y - 1;
     }
