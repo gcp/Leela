@@ -554,15 +554,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
 skipnext:
         gamecount++;
         if (gamecount % 100 == 0) {
-            myprintf("Game %d, %d total positions", gamecount, data.size());
-            if (gamecount % 40000 == 0) {
-                std::cout << "...shuffling training data...";
-                std::random_shuffle(data.begin(), data.end());
-                std::cout << "writing: ";
-                train_network(data, train_pos, test_pos);
-            } else {
-                std::cout << std::endl;
-            }
+            myprintf("Game %d, %d total positions\n", gamecount, data.size());
         }
     }
 
