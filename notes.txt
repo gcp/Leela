@@ -1,6 +1,7 @@
 - Ensemble with shallower but wider filters
 - Ensemble with smaller net trained on 5p+ players
 
+- Skip in if 0.0
 
 32889856 training positions.
 1370412 testing positions.

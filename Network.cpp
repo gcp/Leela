@@ -75,7 +75,7 @@ Network * Network::get_Network(void) {
 }
 
 void Network::benchmark(FastState * state) {
-    static const int BENCH_AMOUNT = 200;
+    static const int BENCH_AMOUNT = 500;
     Time start;
 
     for (int loop = 0; loop < BENCH_AMOUNT; loop++) {
