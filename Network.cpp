@@ -61,6 +61,14 @@ alignas(32) std::tr1::array<float, 36864>  conv3_w_reorder;
 alignas(32) std::tr1::array<float, 9216>   conv4_w_reorder;
 alignas(32) std::tr1::array<float, 288>    conv5_w_reorder;
 
+#ifdef _MSC_VER
+#define ASSUME_ALIGNED(p, n) \
+__assume((reinterpret_cast<std::size_t>(p) & ((n) - 1)) == 0)
+#else
+#define ASSUME_ALIGNED(p, n) \
+(p) = static_cast<__typeof__(p)>(__builtin_assume_aligned((p), (n)))
+#endif
+
 template<class T>
 bool is_aligned(T* ptr, size_t alignment) {
     return (uintptr_t(ptr) & (alignment - 1)) == 0;
@@ -229,8 +237,11 @@ void convolve(std::vector<float>& input,
 
                 // vectorizable?
                 if (outputs >= 32 && (outputs % 32 == 0)) {
-                    out_c_offset = (float*) __builtin_assume_aligned(&tmp_out[(ch * width + cw) * outputs], 32);
-                    filter = (float*)__builtin_assume_aligned(ch_filter, 32);
+                    out_c_offset = &tmp_out[(ch * width + cw) * outputs];
+                    filter = ch_filter;
+
+                    ASSUME_ALIGNED(out_c_offset, 32);
+                    ASSUME_ALIGNED(filter, 32);
 
                     assert(is_aligned(out_c_offset, 32));
                     assert(is_aligned(filter, 32));
@@ -252,8 +263,7 @@ void convolve(std::vector<float>& input,
                         }
                         in += 19 - filter_size;
                     }
-                }
-                else {
+                } else {
                     for (int fh = fhstart; fh <= fhend; fh++) {
                         for (int fw = fwstart; fw <= fwend; fw++) {
                             // "zero padding"
