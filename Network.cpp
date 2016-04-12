@@ -292,11 +292,16 @@ void convolve(std::vector<float>& input,
     auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
 
     // re-gather output data
-    for (unsigned int o = 0; o < outputs; o++) {
-        for (unsigned int h = 0; h < height; h++) {
-            for (unsigned int w = 0; w < width; w++) {
-                output[(o * height + h) * width + w] =
-                    lambda_ReLU(tmp_out[(h * width + w) * outputs + o]);
+    for (unsigned int h = 0; h < height; h++) {
+        for (unsigned int w = 0; w < width; w++) {
+            for (unsigned int o = 0; o < outputs; o++) {
+                if (outputs > 1) {
+                    output[(o * height + h) * width + w] =
+                        lambda_ReLU(tmp_out[(h * width + w) * outputs + o]);
+                } else {
+                    output[(o * height + h) * width + w] =
+                        tmp_out[(h * width + w) * outputs + o];
+                }
             }
         }
     }
