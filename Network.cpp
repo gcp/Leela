@@ -335,7 +335,8 @@ void softmax(std::vector<float>& input,
              std::vector<float>& output) {
     assert(&input != &output);
 
-    float alpha = *std::max_element(input.begin(), input.end());
+    float alpha = *std::max_element(input.begin(),
+                                    input.begin() + output.size());
 
     std::vector<float> helper(output.size());
     for (size_t i = 0; i < output.size(); i++) {
