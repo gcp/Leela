@@ -350,10 +350,12 @@ void convolve_blas(std::vector<float>& input,
 
     auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
 
-    for (unsigned int o = 0; o < outputs; o++) {
-        for (unsigned int b = 0; b < spatial_out; b++) {
-            output[(o * spatial_out) + b] =
-                lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
+    if (outputs > 1) {
+        for (unsigned int o = 0; o < outputs; o++) {
+            for (unsigned int b = 0; b < spatial_out; b++) {
+                output[(o * spatial_out) + b] =
+                    lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
+            }
         }
     }
 }
