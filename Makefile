@@ -28,14 +28,16 @@ asan:
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
 		leela
 
-LIBS = -lpthread -lboost_thread -lboost_system -lboost_filesystem
-LIBS += -lcaffe -lprotobuf -lglog
+LIBS = -lpthread -lboost_thread -lboost_system
+#LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
+LIBS += -lopenblas
 
 CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include
 CAFFE_LIB = $(CAFFE_BASE)/lib
 CXXFLAGS += -I$(CAFFE_INC) -I/usr/local/cuda/include
 LDFLAGS  += -L$(CAFFE_LIB)
+#LDFLAGS  += -L/opt/intel/mkl/lib/intel64/
 
 CXXFLAGS += -I.
 CPPFLAGS += -MD -MP

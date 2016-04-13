@@ -20,6 +20,10 @@
 
 using namespace caffe;
 #endif
+#ifdef USE_BLAS
+#include <openblas/cblas.h>
+#include "Im2Col.h"
+#endif
 
 #include "SGFTree.h"
 #include "SGFParser.h"
@@ -55,24 +59,15 @@ extern float bn4_w3;
 extern std::tr1::array<float, 288> conv5_w;
 extern std::tr1::array<float, 1> conv5_b;
 
+#ifndef USE_CAFFE
+#ifndef USE_BLAS
 alignas(32) std::tr1::array<float, 52800>  conv1_w_reorder;
 alignas(32) std::tr1::array<float, 110592> conv2_w_reorder;
 alignas(32) std::tr1::array<float, 36864>  conv3_w_reorder;
 alignas(32) std::tr1::array<float, 9216>   conv4_w_reorder;
 alignas(32) std::tr1::array<float, 288>    conv5_w_reorder;
-
-#ifdef _MSC_VER
-#define ASSUME_ALIGNED(p, n) \
-__assume((reinterpret_cast<std::size_t>(p) & ((n) - 1)) == 0)
-#else
-#define ASSUME_ALIGNED(p, n) \
-(p) = static_cast<__typeof__(p)>(__builtin_assume_aligned((p), (n)))
 #endif
-
-template<class T>
-bool is_aligned(T* ptr, size_t alignment) {
-    return (uintptr_t(ptr) & (alignment - 1)) == 0;
-}
+#endif
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -83,7 +78,7 @@ Network * Network::get_Network(void) {
 }
 
 void Network::benchmark(FastState * state) {
-    static const int BENCH_AMOUNT = 500;
+    static const int BENCH_AMOUNT = 1000;
     Time start;
 
     for (int loop = 0; loop < BENCH_AMOUNT; loop++) {
@@ -122,6 +117,12 @@ void reorder_weights(std::tr1::array<float, W>& in,
 }
 
 void Network::initialize(void) {
+#ifdef USE_BLAS
+    openblas_set_num_threads(1);
+    std::cout << "BLAS Core: " << openblas_get_corename() << std::endl;
+#endif
+#ifndef USE_BLAS
+#ifndef USE_CAFFE
     // 96 22 5 5
     reorder_weights<96, 22, 5>(conv1_w, conv1_w_reorder);
     // 128 96 3 3
@@ -132,6 +133,8 @@ void Network::initialize(void) {
     reorder_weights<32, 32, 3>(conv4_w, conv4_w_reorder);
     //1 32 3 3 (288)
     reorder_weights<1, 32, 3>(conv5_w, conv5_w_reorder);
+#endif
+#endif
 #ifdef USE_CAFFE
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::CPU);
@@ -189,6 +192,7 @@ void Network::initialize(void) {
 #endif
 }
 
+#ifndef USE_BLAS
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          unsigned long W, unsigned long B>
@@ -202,9 +206,9 @@ void convolve(std::vector<float>& input,
     constexpr int width = 19;
     constexpr int height = 19;
 
-    // size 5 = mid 3
-    constexpr int pad = (filter_size / 2) + 1;
-    constexpr int extent = pad - 1;
+    // size 5 = mid 3, extent 2
+    constexpr int mid = (filter_size / 2) + 1;
+    constexpr int extent = mid - 1;
 
     constexpr unsigned int filter_len = filter_size * filter_size;
 
@@ -306,7 +310,54 @@ void convolve(std::vector<float>& input,
         }
     }
 }
+#else
+template<unsigned int filter_size,
+         unsigned int channels, unsigned int outputs,
+         unsigned long W, unsigned long B>
+void convolve_blas(std::vector<float>& input,
+                   std::tr1::array<float, W>& weights,
+                   std::tr1::array<float, B>& biases,
+                   std::vector<float>& output) {
+    // fixed for 19x19
+    constexpr unsigned int width = 19;
+    constexpr unsigned int height = 19;
+    constexpr unsigned int spatial_out = width * height;
 
+    constexpr unsigned int filter_len = filter_size * filter_size;
+    constexpr unsigned int filter_dim = filter_len * channels;
+
+    std::vector<float> col(filter_dim * width * height);
+    im2col<channels, filter_size>(input, col);
+
+    // Weight shape (output, input, filter_size, filter_size)
+    // 96 22 5 5
+    // outputs[96,19x19] = weights[96,22x9] x col[22x9,19x19]
+    // C←αAB + βC
+    // M Number of rows in matrices A and C.
+    // N Number of columns in matrices B and C.
+    // K Number of columns in matrix A; number of rows in matrix B.
+    // lda The size of the first dimention of matrix A; if you are
+    // passing a matrix A[m][n], the value should be m.
+    //    cblas_sgemm(CblasRowMajor, TransA, TransB, M, N, K, alpha, A, lda, B,
+    //                ldb, beta, C, N);
+
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                // M        N            K
+                outputs, spatial_out, filter_dim,
+                1.0f, &weights[0], filter_dim,
+                &col[0], spatial_out,
+                0.0f, &output[0], spatial_out);
+
+    auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
+
+    for (unsigned int o = 0; o < outputs; o++) {
+        for (unsigned int b = 0; b < spatial_out; b++) {
+            output[(o * spatial_out) + b] =
+                lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
+        }
+    }
+}
+#endif
 
 template<unsigned long W1>
 void batchnorm(std::vector<float>& input,
@@ -393,6 +444,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
         }
     }
 #ifndef USE_CAFFE
+#ifndef USE_BLAS
     // 96 22 5 5
     convolve<5, 22, 96>(input_data, conv1_w_reorder, conv1_b, output_data);
     batchnorm(output_data, 96, bn1_w1, bn1_w2, bn1_w3, input_data);
@@ -410,7 +462,28 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     softmax(output_data, softmax_data);
 
     std::vector<float>& outputs = softmax_data;
-#else
+#endif
+#endif
+#ifdef USE_BLAS
+    // 96 22 5 5
+    convolve_blas<5, 22, 96>(input_data, conv1_w, conv1_b, output_data);
+    batchnorm(output_data, 96, bn1_w1, bn1_w2, bn1_w3, input_data);
+    // 128 96 3 3
+    convolve_blas<3, 96, 128>(input_data, conv2_w, conv2_b, output_data);
+    batchnorm(output_data, 128, bn2_w1, bn2_w2, bn2_w3, input_data);
+    // 32 128 3 3
+    convolve_blas<3, 128, 32>(input_data, conv3_w, conv3_b, output_data);
+    batchnorm(output_data, 32, bn3_w1, bn3_w2, bn3_w3, input_data);
+    // 32 32 3 3
+    convolve_blas<3, 32, 32>(input_data, conv4_w, conv4_b, output_data);
+    batchnorm(output_data, 32, bn4_w1, bn4_w2, bn4_w3, input_data);
+    // 1 32 3 3
+    convolve_blas<3, 32, 1>(input_data, conv5_w, conv5_b, output_data);
+    softmax(output_data, softmax_data);
+
+    std::vector<float>& outputs = softmax_data;
+#endif
+#ifdef USE_CAFFE
     net->Forward();
     Blob<float>* output_layer = net->output_blobs()[0];
     const float* begin = output_layer->cpu_data();
