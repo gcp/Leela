@@ -27,20 +27,38 @@ const std::tr1::array<FastBoard::square_t, 4> FastBoard::s_cinvert = {
 int FastBoard::get_boardsize(void) {
     return m_boardsize;
 }
-    
+
 int FastBoard::get_vertex(int x, int y) {
     assert(x >= 0 && x < MAXBOARDSIZE);
     assert(y >= 0 && y < MAXBOARDSIZE);
     assert(x >= 0 && x < m_boardsize);
     assert(y >= 0 && y < m_boardsize);
-    
-    int vertex = ((y + 1) * (get_boardsize() + 2)) + (x + 1);        
-    
+
+    int vertex = ((y + 1) * (get_boardsize() + 2)) + (x + 1);
+
     assert(vertex >= 0 && vertex < m_maxsq);
-    
+
     return vertex;
-}    
-   
+}
+
+std::pair<int, int> FastBoard::get_xy(int vertex) {
+    std::pair<int, int> xy;
+
+    //int vertex = ((y + 1) * (get_boardsize() + 2)) + (x + 1);
+    int x = (vertex % (get_boardsize() + 2)) - 1;
+    int y = (vertex / (get_boardsize() + 2)) - 1;
+
+    assert(x >= 0 && x < get_boardsize());
+    assert(y >= 0 && y < get_boardsize());
+
+    xy.first  = x;
+    xy.second = y;
+
+    assert(get_vertex(x, y) == vertex);
+
+    return xy;
+}
+
 FastBoard::square_t FastBoard::get_square(int vertex) {
     assert(vertex >= 0 && vertex < MAXSQ);
     assert(vertex >= 0 && vertex < m_maxsq);    
@@ -2059,22 +2077,6 @@ int FastBoard::string_size(int vertex) {
     assert(m_square[vertex] == WHITE || m_square[vertex] == BLACK);
       
     return m_stones[m_parent[vertex]];
-}
-
-std::pair<int, int> FastBoard::get_xy(int vertex) {
-    std::pair<int, int> xy;
-
-    //int vertex = ((y + 1) * (get_boardsize() + 2)) + (x + 1);  
-    int x = (vertex % (get_boardsize() + 2)) - 1;
-    int y = (vertex / (get_boardsize() + 2)) - 1;
-
-    assert(x >= 0 && x < get_boardsize());
-    assert(y >= 0 && y < get_boardsize());
-
-    xy.first  = x;
-    xy.second = y;
-
-    return xy;
 }
 
 int FastBoard::minimum_elib_count(int color, int vertex) {

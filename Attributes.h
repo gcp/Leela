@@ -33,8 +33,6 @@ private:
 class FastAttributes : public BaseAttributes {
 public:               
     void get_from_move(FastState * state, 
-                       std::vector<int> & territory,
-                       std::vector<int> & moyo, 
                        int move);    
     uint64 get_pattern(void);    
     bool attribute_enabled(int idx);    

@@ -25,8 +25,6 @@ int BaseAttributes::border_distance(std::pair<int, int> xy, int bsize) {
 }
 
 void FastAttributes::get_from_move(FastState * state, 
-                               std::vector<int> & territory,
-                               std::vector<int> & moyo,
                                int vtx) {
     m_present.reset();
 
