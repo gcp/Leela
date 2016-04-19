@@ -31,6 +31,7 @@ asan:
 LIBS = -lpthread -lboost_thread -lboost_system
 #LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
 LIBS += -lopenblas
+#LIBS += -lmkl_rt
 
 CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include
