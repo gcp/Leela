@@ -149,7 +149,7 @@ void reorder_weights(std::tr1::array<float, W>& in,
 void Network::initialize(void) {
 #ifdef USE_BLAS
     openblas_set_num_threads(1);
-    std::cout << "BLAS Core: " << openblas_get_corename() << std::endl;
+    std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
 #endif
 #ifndef USE_BLAS
 #ifndef USE_CAFFE
