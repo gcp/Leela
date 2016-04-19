@@ -785,7 +785,7 @@ skipnext:
     myprintf("Gathering pass done.\n");
 }
 
-int Network::rotate_nn_idx(int vertex, int symmetry) {
+int Network::rotate_nn_idx(const int vertex, int symmetry) {
     assert(vertex >= 0 && vertex < 19*19);
     assert(symmetry >= 0 && symmetry < 8);
     int x = vertex % 19;
@@ -838,28 +838,42 @@ void Network::train_network(TrainVector& data,
     boost::scoped_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
     boost::scoped_ptr<caffe::db::Transaction> test_txn(test_db->NewTransaction());
 
-   for (int xsymmetry = 0; xsymmetry < 2; ++xsymmetry) {
+    for (int pass = 0; pass < 2; pass++) {
         size_t data_pos = 0;
         for (auto it = data.begin(); it != data.end(); ++it) {
             TrainPosition& position = *it;
             int move = position.first;
             NNPlanes& nnplanes = position.second;
+
             caffe::Datum datum;
             datum.set_channels(22);
             datum.set_height(19);
             datum.set_width(19);
             // check whether to rotate the position
-            int symmetry = xsymmetry;
-            if (xsymmetry == 1) {
-                symmetry = Random::get_Rng()->randint(7) + 1;
+            int symmetry;
+            if (pass == 0) {
+                symmetry = Random::get_Rng()->randint(4);
+            } else if (pass == 1) {
+                symmetry = Random::get_Rng()->randint(4) + 4;
             }
             // store (rotated) move
-            datum.set_label(rotate_nn_idx(move, symmetry));
-            // stpre (rotated) bitmaps
+            int rot_move = rotate_nn_idx(move, symmetry);
+            datum.set_label(rot_move);
+            // set (rotated) bitmaps
             for (size_t p = 0; p < nnplanes.size(); p++) {
+                BoardPlane tmp;
                 for (size_t b = 0; b < nnplanes[p].size(); b++) {
-                    int idx = rotate_nn_idx(b, symmetry);
-                    datum.add_float_data((float)nnplanes[p][idx]);
+                    float val = nnplanes[p][b];
+                    int rot_idx = rotate_nn_idx((int)b, symmetry);
+                    tmp[rot_idx] = val;
+                }
+                if (p == 0) {
+                    assert(tmp[rot_move] == true);
+                } else if (p == 1 || p == 2) {
+                    assert(tmp[rot_move] == false);
+                }
+                for (size_t b = 0; b < tmp.size(); b++) {
+                    datum.add_float_data((float)tmp[b]);
                 }
             }
             std::string out;

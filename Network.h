@@ -35,7 +35,7 @@ private:
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
     static void gather_features(FastState * state, NNPlanes & planes);
-    static int rotate_nn_idx(int vertex, int symmetry);
+    static int rotate_nn_idx(const int vertex, int symmetry);
 
     static Network* s_Net;
 };
