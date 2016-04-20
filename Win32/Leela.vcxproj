@@ -76,8 +76,8 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\boost\boost_1_60_0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\boost\boost_1_60_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Projects\OpenBLAS\dist\include;C:\boost\boost_1_60_0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Projects\OpenBLAS\dist\lib;C:\boost\boost_1_60_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
