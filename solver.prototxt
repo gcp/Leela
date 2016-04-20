@@ -5,11 +5,11 @@ net: "train-test.prototxt"
 
 # test_iter specifies how many forward passes the test should carry out.
 # 128 * 105 per test
-test_iter: 800
+test_iter: 40
 
 # Carry out testing every n training iterations.
 # 20000 * 128 = full pass per test
-test_interval: 20000
+test_interval: 1000
 
 # The base learning rate, momentum and the weight decay of the network.
 momentum: 0.95
@@ -30,7 +30,7 @@ lr_policy: "fixed"
 
 # Display every n iterations
 # 1.28M pos
-display: 10000
+display: 1000
 
 # The total number of iterations
 # 100 * 100
