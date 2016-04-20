@@ -137,8 +137,10 @@ int TimeControl::max_time_for_move(int color) {
             } else {
                 assert(m_byperiods);
                 // Just pretend we have a flat time remaining.
-                int remaining = m_byotime * m_periods_left[color];
+                int remaining = m_byotime * (m_periods_left[color] - 1);
                 timealloc = (remaining - BUFFER_CENTISECS) / m_moves_expected;
+                // Add back the guaranteed extra seconds
+                timealloc += m_byotime - BUFFER_CENTISECS;
             }
         } else {
             /*
