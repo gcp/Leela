@@ -22,6 +22,7 @@ public:
     void set_boardsize(int boardsize);
     void display_times();
     int get_remaining_time(int color);
+    void reset_clocks();
 
 private:
     int m_maintime;

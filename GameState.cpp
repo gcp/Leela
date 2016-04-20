@@ -14,26 +14,25 @@
 #include "Utils.h"
 
 void GameState::init_game(int size, float komi) {        
-    
+
     KoState::init_game(size, komi);
-        
+
     game_history.clear();        
-    game_history.push_back(*this); 
-    
-    TimeControl tmp(size);
-    m_timecontrol = tmp;
-        
+    game_history.push_back(*this);
+
+    m_timecontrol.set_boardsize(board.get_boardsize());
+    m_timecontrol.reset_clocks();
+
     return;
 };
 
 void GameState::reset_game() {
     KoState::reset_game();
-      
+
     game_history.clear();
     game_history.push_back(*this);
-    
-    TimeControl tmp(board.get_boardsize());
-    m_timecontrol = tmp;
+
+    m_timecontrol.reset_clocks();
 }
 
 bool GameState::forward_move(void) {

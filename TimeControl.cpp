@@ -11,6 +11,11 @@ TimeControl::TimeControl(int boardsize, int maintime, int byotime,
       m_byostones(byostones),
       m_byoperiods(byoperiods) {
 
+    reset_clocks();
+    set_boardsize(boardsize);
+}
+
+void TimeControl::reset_clocks() {
     m_remaining_time[0] = m_maintime;
     m_remaining_time[1] = m_maintime;
     m_stones_left[0] = m_byostones;
@@ -19,8 +24,6 @@ TimeControl::TimeControl(int boardsize, int maintime, int byotime,
     m_periods_left[1] = m_byoperiods;
     m_inbyo[0] = m_maintime <= 0;
     m_inbyo[1] = m_maintime <= 0;
-
-    set_boardsize(boardsize);
 }
 
 void TimeControl::start(int color) {
@@ -104,9 +107,9 @@ void TimeControl::display_times() {
 
 int TimeControl::max_time_for_move(int color) {
     /*
-        always keep a 5 second margin for net hiccups
+        always keep a 2 second margin for net hiccups
     */
-    static const int BUFFER_CENTISECS = 300;
+    static const int BUFFER_CENTISECS = 200;
 
     int timealloc = 0;
 
@@ -145,11 +148,15 @@ int TimeControl::max_time_for_move(int color) {
                 int byo_extra = m_byotime / m_byostones;
                 int total_time = m_remaining_time[color] + byo_extra;
                 timealloc = (total_time - BUFFER_CENTISECS) / m_moves_expected;
+                // Add back the guaranteed extra seconds
+                timealloc += byo_extra - BUFFER_CENTISECS;
             } else {
                 assert(m_byoperiods);
                 int byo_extra = m_byotime * (m_periods_left[color] - 1);
                 int total_time = m_remaining_time[color] + byo_extra;
                 timealloc = (total_time - BUFFER_CENTISECS) / m_moves_expected;
+                // Add back the guaranteed extra seconds
+                timealloc += m_byotime - BUFFER_CENTISECS;
             }
         }
     }
