@@ -179,3 +179,7 @@ void TimeControl::set_boardsize(int boardsize) {
     // was: bs^2 / 4 and then later 1 / z  * (3 / 2)
     m_moves_expected = (boardsize * boardsize) / 6;
 }
+
+int TimeControl::get_remaining_time(int color) {
+    return m_remaining_time[color];
+}
