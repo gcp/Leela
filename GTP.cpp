@@ -47,7 +47,9 @@ const std::string GTP::s_commands[] = {
     "fixed_handicap",
     "place_free_handicap",
     "set_free_handicap",
-    "loadsgf",    
+    "loadsgf",
+    "kgs-chat",
+    "kgs-time_settings",
     ""
 };
 
@@ -348,17 +350,17 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::istringstream cmdstream(command);
         std::string tmp;
         int maintime, byotime, byostones;
-        
+
         cmdstream >> tmp >> maintime >> byotime >> byostones;
-                
-        if (!cmdstream.fail()) {                
-            // convert to centiseconds and set                
-            game.set_timecontrol(maintime * 100, byotime * 100, byostones);
-            
-            gtp_printf(id, "");    
+
+        if (!cmdstream.fail()) {
+            // convert to centiseconds and set
+            game.set_timecontrol(maintime * 100, byotime * 100, byostones, 0);
+
+            gtp_printf(id, "");
         } else {
             gtp_fail_printf(id, "syntax not understood");
-        }    
+        }
         return true;
     } else if (command.find("time_left") == 0) {        
         std::istringstream cmdstream(command);
@@ -377,12 +379,12 @@ bool GTP::execute(GameState & game, std::string xinput) {
             } else {
                 gtp_fail_printf(id, "Color in time adjust not understood.\n");
                 return 1;
-            }                                      
-                                          
+            }
+
             game.adjust_time(icolor, time * 100, stones);
-            
-            gtp_printf(id, "");    
-            
+
+            gtp_printf(id, "");
+
 #ifdef USE_PONDER
             // KGS sends this after our move
             // now start pondering
@@ -495,6 +497,54 @@ bool GTP::execute(GameState & game, std::string xinput) {
         game = sgftree->get_mainline(movenum);
         
         gtp_printf(id, "");
+        return true;
+    } else if (command.find("kgs-chat") == 0) {
+        // kgs-chat (game|private) Name Message
+        std::istringstream cmdstream(command);
+        std::string tmp;
+
+        cmdstream >> tmp; // eat kgs-chat
+        cmdstream >> tmp; // eat game|private
+        cmdstream >> tmp; // eat player name
+        do {
+            cmdstream >> tmp; // eat message
+        } while (!cmdstream.fail());
+
+        gtp_fail_printf(id, "I'm a go bot, not a chat bot.");
+        return true;
+    } else if (command.find("kgs-time_settings") == 0) {
+        // none, absolute, byoyomi, or canadian
+        std::istringstream cmdstream(command);
+        std::string tmp;
+        std::string tc_type;
+        int maintime, byotime, byostones, byoperiods;
+
+        cmdstream >> tmp >> tc_type;
+
+        if (tc_type.find("none") != std::string::npos) {
+            // 30 mins
+            game.set_timecontrol(30 * 60 * 100, 0, 0, 0);
+        } else if (tc_type.find("absolute") != std::string::npos) {
+            cmdstream >> maintime;
+            game.set_timecontrol(maintime * 100, 0, 0, 0);
+        } else if (tc_type.find("canadian") != std::string::npos) {
+            cmdstream >> maintime >> byotime >> byostones;
+            // convert to centiseconds and set
+            game.set_timecontrol(maintime * 100, byotime * 100, byostones, 0);
+        } else if (tc_type.find("byoyomi") != std::string::npos) {
+            // KGS style Fischer clock
+            cmdstream >> maintime >> byotime >> byoperiods;
+            game.set_timecontrol(maintime * 100, byotime * 100, 0, byoperiods);
+        } else {
+            gtp_fail_printf(id, "syntax not understood");
+            return true;
+        }
+
+        if (!cmdstream.fail()) {
+            gtp_printf(id, "");
+        } else {
+            gtp_fail_printf(id, "syntax not understood");
+        }
         return true;
     } else if (command.find("tune") == 0) {
         std::istringstream cmdstream(command);

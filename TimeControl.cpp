@@ -4,16 +4,22 @@
 
 using namespace Utils;
 
-TimeControl::TimeControl(int boardsize, int maintime, int byotime, int byostones)
-: m_maintime(maintime), m_byotime(byotime), m_byostones(byostones) {
+TimeControl::TimeControl(int boardsize, int maintime, int byotime,
+                         int byostones, int byoperiods)
+    : m_maintime(maintime),
+      m_byotime(byotime),
+      m_byostones(byostones),
+      m_byoperiods(byoperiods) {
 
     m_remaining_time[0] = m_maintime;
     m_remaining_time[1] = m_maintime;
     m_stones_left[0] = m_byostones;
     m_stones_left[1] = m_byostones;
-    m_inbyo[0] = false;
-    m_inbyo[1] = false;
-    
+    m_periods_left[0] = m_byoperiods;
+    m_periods_left[1] = m_byoperiods;
+    m_inbyo[0] = m_maintime <= 0;
+    m_inbyo[1] = m_maintime <= 0;
+
     set_boardsize(boardsize);
 }
 
@@ -24,39 +30,40 @@ void TimeControl::start(int color) {
 void TimeControl::stop(int color) {
     Time stop;
     int elapsed = Time::timediff(m_times[color], stop);
-    
-    assert(elapsed >= 0);    
-    
+
+    assert(elapsed >= 0);
+
     m_remaining_time[color] -= elapsed;
-    
+
     if (m_inbyo[color]) {
-        m_stones_left[color]--;                
+        if (m_byostones) {
+            m_stones_left[color]--;
+        } else if (m_byoperiods) {
+            if (elapsed > m_byotime) {
+                m_periods_left[color]--;
+            }
+        }
     }
-    
+
     /*
-        time up, entering byo yomi 
+        time up, entering byo yomi
     */
     if (!m_inbyo[color] && m_remaining_time[color] <= 0) {
         m_remaining_time[color] = m_byotime;
         m_stones_left[color] = m_byostones;
+        m_periods_left[color] = m_byoperiods;
         m_inbyo[color] = true;
-    } else if (m_inbyo[color] && m_stones_left[color] <= 0) {
-        m_remaining_time[color] = m_byotime;        
+    } else if (m_inbyo[color] && m_byostones && m_stones_left[color] <= 0) {
+        // reset byoyomi time and stones
+        m_remaining_time[color] = m_byotime;
         m_stones_left[color] = m_byostones;
-    }           
-}
-
-bool TimeControl::time_forfeit(int color) {
-
-    if (m_inbyo[color] && m_remaining_time[color] < 0) {
-        return true;   
+    } else if (m_inbyo[color] && m_byoperiods) {
+        m_remaining_time[color] = m_byotime;
     }
-    
-    return false;
 }
 
 void TimeControl::display_times() {
-    {        
+    {
         int rem = m_remaining_time[0] / 100;  /* centiseconds to seconds */
         int hours = rem / (60 * 60);
         rem = rem % (60 * 60);
@@ -65,7 +72,12 @@ void TimeControl::display_times() {
         int seconds = rem;
         myprintf("Black time: %02d:%02d:%02d", hours, minutes, seconds);
         if (m_inbyo[0]) {
-            myprintf(", %d stones left", m_stones_left[0]);
+            if (m_byostones) {
+                myprintf(", %d stones left", m_stones_left[0]);
+            } else if (m_byoperiods) {
+                myprintf(", %d period(s) of %d seconds left",
+                         m_periods_left[0], m_byotime / 100);
+            }
         }
         myprintf("\n");
     }
@@ -78,7 +90,12 @@ void TimeControl::display_times() {
         int seconds = rem;
         myprintf("White time: %02d:%02d:%02d", hours, minutes, seconds);
         if (m_inbyo[1]) {
-            myprintf(", %d stones left", m_stones_left[1]);
+            if (m_byostones) {
+                myprintf(", %d stones left", m_stones_left[1]);
+            } else if (m_byoperiods) {
+                myprintf(", %d period(s) of %d seconds left",
+                         m_periods_left[1], m_byotime / 100);
+            }
         }
         myprintf("\n");
     }
@@ -87,53 +104,78 @@ void TimeControl::display_times() {
 
 int TimeControl::max_time_for_move(int color) {
     /*
-        always keep a 5 second margin
-    */        
-    static const int BUFFER_CENTISECS = 500;    
-    
-    /*
-        no byo yomi, easiest
+        always keep a 5 second margin for net hiccups
     */
-    if (m_byotime == 0) {    
-        return (((m_remaining_time[color] - BUFFER_CENTISECS) / m_moves_expected) * 3) / 2;  
+    static const int BUFFER_CENTISECS = 300;
+
+    int timealloc = 0;
+
+    /*
+        no byo yomi (absolute), easiest
+    */
+    if (m_byotime == 0) {
+        timealloc = (m_remaining_time[color] - BUFFER_CENTISECS)
+                    / m_moves_expected;
+    } else if (m_byotime != 0) {
+        /*
+          no periods or stones set means
+          infinite time = 1 month
+        */
+        if (m_byostones == 0 && m_byoperiods == 0) {
+            return 31 * 24 * 60 * 60 * 100;
+        }
+
+        /*
+          byo yomi and in byo yomi
+        */
+        if (m_inbyo[color]) {
+            if (m_byostones) {
+                timealloc = (m_remaining_time[color] - BUFFER_CENTISECS) / m_byostones;
+            } else {
+                assert(m_byperiods);
+                // Just pretend we have a flat time remaining.
+                int remaining = m_byotime * m_periods_left[color];
+                timealloc = (remaining - BUFFER_CENTISECS) / m_moves_expected;
+            }
+        } else {
+            /*
+              byo yomi time but not in byo yomi yet
+            */
+            if (m_byostones) {
+                int byo_extra = m_byotime / m_byostones;
+                int total_time = m_remaining_time[color] + byo_extra;
+                timealloc = (total_time - BUFFER_CENTISECS) / m_moves_expected;
+            } else {
+                assert(m_byoperiods);
+                int byo_extra = m_byotime * (m_periods_left[color] - 1);
+                int total_time = m_remaining_time[color] + byo_extra;
+                timealloc = (total_time - BUFFER_CENTISECS) / m_moves_expected;
+            }
+        }
     }
-    
-    /*
-        infinite time = 1 month
-    */        
-    if (m_byostones == 0) {
-        return 31 * 24 * 60 * 60 * 100;
-    }
-    
-    /*
-        byo yomi and in byo yomi
-    */        
-    if (m_inbyo[color]) {
-        return (m_remaining_time[color] - BUFFER_CENTISECS) / m_byostones;
-    }       
-    
-    /*
-        byo yomi time but not in byo yomi yet
-    */        
-    int byo_extra = m_byotime / m_byostones;
-    int total_time = m_remaining_time[color] + byo_extra;    
-    
-    return (total_time - BUFFER_CENTISECS) / m_moves_expected;    
+
+    timealloc = std::max<int>(timealloc, 0);
+    timealloc = std::min<int>(timealloc, m_remaining_time[color]);
+    return timealloc;
 }
 
 void TimeControl::adjust_time(int color, int time, int stones) {
     m_remaining_time[color] = time;
-    m_stones_left[color] = stones;
+    if (stones) {
+        m_inbyo[color] = true;
+    }
+    if (m_byostones) {
+        m_stones_left[color] = stones;
+    } else {
+        // KGS extension
+        assert(m_byoperiods);
+        m_periods_left[color] = stones;
+    }
 }
 
 void TimeControl::set_boardsize(int boardsize) {
-    m_moves_expected = (boardsize * boardsize) / 4;
-}
-
-int TimeControl::get_maintime() {
-    return m_maintime / 100;
-}
-
-int TimeControl::get_remaining_time(int color) {
-    return m_remaining_time[color];
+    // Note this is constant as we play, so it's fair
+    // to underestimate quite a bit.
+    // was: bs^2 / 4 and then later 1 / z  * (3 / 2)
+    m_moves_expected = (boardsize * boardsize) / 6;
 }

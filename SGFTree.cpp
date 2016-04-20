@@ -294,7 +294,6 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
     std::string res;
     
     float komi = state->get_komi();
-    //int timecontrol = state->get_timecontrol()->get_maintime();
     int size = state->board.get_boardsize();
     
     res.append("(;GM[1]FF[4]RU[Chinese]");

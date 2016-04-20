@@ -158,9 +158,11 @@ TimeControl * GameState::get_timecontrol() {
     return &m_timecontrol;
 }
 
-void GameState::set_timecontrol(int maintime, int byotime, int byostones) {
-    TimeControl timecontrol(board.get_boardsize(), maintime, byotime, byostones);
-    
+void GameState::set_timecontrol(int maintime, int byotime,
+                                int byostones, int byoperiods) {
+    TimeControl timecontrol(board.get_boardsize(), maintime, byotime,
+                            byostones, byoperiods);
+
     m_timecontrol = timecontrol;
 }
 
@@ -176,7 +178,7 @@ void GameState::anchor_game_history(void) {
     // handicap moves don't count in game history
     m_movenum = 0;
     game_history.clear();
-    game_history.push_back(*this); 
+    game_history.push_back(*this);
 }
 
 void GameState::trim_game_history(int lastmove) {

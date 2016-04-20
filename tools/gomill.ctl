@@ -15,7 +15,7 @@ players = {
                            ],
 			   environ={
 				'OPENBLAS_NUM_THREADS':'1',
-				'OPENBLAS_CORETYPE':'Steamroller',
+				'OPENBLAS_CORETYPE':'Haswell',
 			   },
                     ),
     'leela-mcts050' : Player("./leela-050mcts gtp ",
@@ -25,6 +25,7 @@ players = {
                     ),
 }
 
+alternating = True
 board_size = 19
 komi = 7.5
 
