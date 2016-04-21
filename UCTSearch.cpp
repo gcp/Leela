@@ -330,7 +330,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         // were we going to pass?
         if (bestmove == FastBoard::PASS) {
             UCTNode * nopass = m_root.get_nopass_child();
-            
+
             if (nopass != NULL) {
                 myprintf("Preferring not to pass.\n");
                 bestmove = nopass->get_move();
@@ -344,25 +344,38 @@ int UCTSearch::get_best_move(passflag_t passflag) {
             }
         }
     } else {
+        // Opponents last move was passing
         if (m_rootstate.get_last_move() == FastBoard::PASS) {
-            if (m_root.get_pass_child() != NULL) {
-                if (m_root.get_pass_child()->get_visits() > 100) {
-                    float passscore = m_root.get_pass_child()->get_winrate(color);
-                    
-                    // is passing a winning move?
-                    if (passscore > 0.90f) {                    
-                        // is passing within 5% of the best move?                                   
-                        if (bestscore - passscore < 0.05f) {
-                            myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n", 
-                                      passscore * 100.0f, bestscore * 100.0f);
-                            bestmove = FastBoard::PASS;                
-                        }
+            if (m_root.get_pass_child() != NULL
+                && m_root.get_pass_child()->get_visits() > 100) {
+                float passscore = m_root.get_pass_child()->get_winrate(color);
+
+                // is passing a winning move?
+                if (passscore > 0.90f) {
+                    // is passing within 5% of the best move?
+                    if (bestscore - passscore < 0.05f) {
+                        myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n",
+                                    passscore * 100.0f, bestscore * 100.0f);
+                        bestmove = FastBoard::PASS;
                     }
-                }            
+                }
+            } else {
+                // We didn't consider passing. Should we have and
+                // end the game immediately?
+                float score = m_rootstate.final_score();
+                // do we lose by passing?
+                if ((score > 0.0f && color == FastBoard::WHITE)
+                    ||
+                    (score < 0.0f && color == FastBoard::BLACK)) {
+                    myprintf("Passing loses, I'll play on\n");
+                } else {
+                    myprintf("Passing wins, I'll pass out\n");
+                    bestmove = FastBoard::PASS;
+                }
             }
         }
         // either by forcing or coincidence passing is
-        // on top...check whether passing loses instantly        
+        // on top...check whether passing loses instantly
         if (bestmove == FastBoard::PASS) {
             // do full count including dead stones
             float score = m_rootstate.final_score();
@@ -373,7 +386,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
                 myprintf("Passing loses :-(\n");
                 // find a valid non-pass move
                 UCTNode * nopass = m_root.get_nopass_child();
-            
+
                 if (nopass != NULL) {
                     myprintf("Avoiding pass because it loses.\n");
                     bestmove = nopass->get_move();
@@ -388,9 +401,9 @@ int UCTSearch::get_best_move(passflag_t passflag) {
             } else {
                 myprintf("Passing wins :-)\n");
             }
-        }    
-    } 
-    
+        }
+    }
+
     // if we aren't passing, should we consider resigning?
     if (bestmove != FastBoard::PASS) {
         // resigning allowed
@@ -398,15 +411,15 @@ int UCTSearch::get_best_move(passflag_t passflag) {
             size_t movetresh= (m_rootstate.board.get_boardsize()
                                 * m_rootstate.board.get_boardsize()) / 3;
             // bad score and visited enough
-            if (bestscore < 0.10f 
-                && visits > 90 
+            if (bestscore < 0.10f
+                && visits > 90
                 && m_rootstate.m_movenum > movetresh) {
                 myprintf("Score looks bad. Resigning.\n");
-                bestmove = FastBoard::RESIGN;    
+                bestmove = FastBoard::RESIGN;
             }
         }
     }
-       
+
     return bestmove;
 }
 
