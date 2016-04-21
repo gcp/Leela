@@ -9,6 +9,9 @@
 #include <glog/logging.h>
 #endif
 #include "Network.h"
+#ifdef USE_OPENCL
+#include "OpenCL.h"
+#endif
 #endif
 
 #include "Zobrist.h"
@@ -55,6 +58,7 @@ int main (int argc, char *argv[]) {
 
     AttribScores::get_attribscores();
     Matcher::get_Matcher();
+    OpenCL::get_OpenCL();
 
     std::unique_ptr<GameState> maingame(new GameState);
 
