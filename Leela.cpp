@@ -58,7 +58,9 @@ int main (int argc, char *argv[]) {
 
     AttribScores::get_attribscores();
     Matcher::get_Matcher();
+#ifdef USE_OPENCL
     OpenCL::get_OpenCL();
+#endif
 
     std::unique_ptr<GameState> maingame(new GameState);
 

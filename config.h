@@ -21,8 +21,9 @@
 #define PROGRAM_VERSION "0.5.0"
 
 /* Features */
-#define USE_NETS
+//#define USE_NETS
 //#define USE_BLAS
+//#define USE_OPENCL
 //#define USE_CAFFE
 #define USE_SEARCH
 //#define USE_PONDER
