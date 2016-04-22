@@ -30,7 +30,8 @@ asan:
 
 LIBS = -lpthread -lboost_thread -lboost_system
 #LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
-LIBS += -lopenblas
+#LIBS += -lopenblas
+LIBS += -lOpenCL
 #LIBS += -lmkl_rt
 
 CAFFE_BASE = /usr/local
@@ -48,7 +49,7 @@ sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
 	  GameState.cpp Leela.cpp PNNode.cpp SGFParser.cpp Timing.cpp \
 	  Utils.cpp FastBoard.cpp Genetic.cpp Matcher.cpp PNSearch.cpp \
 	  SGFTree.cpp TTable.cpp Zobrist.cpp FastState.cpp GTP.cpp \
-	  MCOTable.cpp Random.cpp SMP.cpp UCTNode.cpp NN.cpp
+	  MCOTable.cpp Random.cpp SMP.cpp UCTNode.cpp NN.cpp OpenCL.cpp
 
 objects = $(sources:.cpp=.o)
 deps = $(sources:%.cpp=%.d)

@@ -24,6 +24,9 @@ using namespace caffe;
 #include <openblas/cblas.h>
 #include "Im2Col.h"
 #endif
+#ifdef USE_OPENCL
+#include "OpenCL.h"
+#endif
 
 #include "SGFTree.h"
 #include "SGFParser.h"
@@ -147,12 +150,16 @@ void reorder_weights(std::tr1::array<float, W>& in,
 }
 
 void Network::initialize(void) {
+#ifdef USE_OPENCL
+    OpenCL::get_OpenCL();
+#endif
 #ifdef USE_BLAS
     openblas_set_num_threads(1);
     std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
 #endif
 #ifndef USE_BLAS
 #ifndef USE_CAFFE
+#ifndef USE_OPENCL
     reorder_weights< 96,  22, 5>(conv1_w, conv1_w_reorder);
     reorder_weights<160,  96, 3>(conv2_w, conv2_w_reorder);
     reorder_weights<128, 160, 3>(conv3_w, conv3_w_reorder);
@@ -163,6 +170,7 @@ void Network::initialize(void) {
     reorder_weights< 64,  96, 3>(conv8_w, conv8_w_reorder);
     reorder_weights< 64,  64, 3>(conv9_w, conv9_w_reorder);
     reorder_weights<  1,  64, 3>(conv10_w, conv10_w_reorder);
+#endif
 #endif
 #endif
 #ifdef USE_CAFFE
@@ -228,6 +236,23 @@ void Network::initialize(void) {
 }
 
 #ifndef USE_BLAS
+#ifdef USE_OPENCL
+template<unsigned int filter_size,
+         unsigned int channels, unsigned int outputs,
+         unsigned long W, unsigned long B>
+void convolve(std::vector<float>& input,
+              std::tr1::array<float, W>& weights,
+              std::tr1::array<float, B>& biases,
+              std::vector<float>& output) {
+    OpenCL::get_OpenCL()->convolve(filter_size,
+                                   channels,
+                                   outputs,
+                                   &input[0],
+                                   &output[0],
+                                   &weights[0],
+                                   &biases[0]);
+}
+#else
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          unsigned long W, unsigned long B>
@@ -345,6 +370,7 @@ void convolve(std::vector<float>& input,
         }
     }
 }
+#endif
 #else
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
@@ -479,6 +505,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     }
 #ifndef USE_CAFFE
 #ifndef USE_BLAS
+#ifndef USE_OPENCL
     convolve<5,  22,  96>(input_data, conv1_w_reorder, conv1_b, output_data);
     batchnorm<96>(output_data, bn1_w1, bn1_w2, bn1_w3, input_data);
     convolve<3,  96, 160>(input_data, conv2_w_reorder, conv2_b, output_data);
@@ -503,7 +530,8 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     std::vector<float>& outputs = softmax_data;
 #endif
 #endif
-#ifdef USE_BLAS
+#endif
+#if defined(USE_BLAS) || defined(USE_OPENCL)
     convolve<5,  22,  96>(input_data, conv1_w, conv1_b, output_data);
     batchnorm<96>(output_data, bn1_w1, bn1_w2, bn1_w3, input_data);
     convolve<3,  96, 160>(input_data, conv2_w, conv2_b, output_data);
