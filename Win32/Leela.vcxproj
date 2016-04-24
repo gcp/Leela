@@ -110,6 +110,12 @@
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalDependencies>libopenblas.dll.a;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>Copy /Y "$(SolutionDir)\..\*.cl" "$(TargetDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying OpenCL kernels</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -135,6 +141,12 @@
       <AdditionalDependencies>libopenblas.dll.a;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
+    <PostBuildEvent>
+      <Command>Copy /Y "$(SolutionDir)\..\*.cl" "$(TargetDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying OpenCL kernels</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
@@ -243,6 +255,11 @@
     <ClInclude Include="..\Weights.h" />
     <ClInclude Include="..\WeightsMatcher.h" />
     <ClInclude Include="..\Zobrist.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\convolve_kernel.cl">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

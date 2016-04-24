@@ -580,8 +580,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     m_run = true;
 #ifdef USE_SMP
-    int cpus = SMP::get_num_cpus();
-    //int cpus = 4;
+    //int cpus = SMP::get_num_cpus();
+    int cpus = 4;
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
@@ -711,8 +711,8 @@ void UCTSearch::ponder() {
 #ifdef USE_SEARCH
     m_run = true;
 #ifdef USE_SMP
-    int cpus = SMP::get_num_cpus();
-    //int cpus = 4;     
+    //int cpus = SMP::get_num_cpus();
+    int cpus = 4;     
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));

@@ -17,14 +17,14 @@
 /* Hard limits */
 
 #define PROGRAM_NAME "Leela"
-//#define VERSION         "0.4.0. I will resign when I am lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I am won. You can download a free version at http://www.sjeng.org/leela"
-#define PROGRAM_VERSION "0.5.1"
+#define PROGRAM_VERSION "0.5.1. I will resign when I am lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I am won. You can download me for free at https://sjeng.org/leela"
+//#define PROGRAM_VERSION "0.5.1"
 
 /* Features */
 #define USE_NETS
 //#define USE_BLAS
-#define USE_OPENCL
 //#define USE_CAFFE
+#define USE_OPENCL
 //#define USE_SEARCH
 //#define USE_PONDER
 //#define USE_SMP

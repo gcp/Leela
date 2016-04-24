@@ -47,8 +47,7 @@ const std::string GTP::s_commands[] = {
     "fixed_handicap",
     "place_free_handicap",
     "set_free_handicap",
-    "loadsgf",
-    "kgs-chat",
+    "loadsgf",    
     "kgs-time_settings",
     ""
 };

@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 #include "Utils.h"
 #include "OpenCL.h"
@@ -171,7 +172,7 @@ void OpenCL::initialize(void) {
                       << d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>()
                       << " CU" << std::endl;
 
-            if (d.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU) {
+            if (d.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU) {
                 if (opencl_version > best_version) {
                     best_version = opencl_version;
                     best_platform = p;
@@ -189,9 +190,10 @@ void OpenCL::initialize(void) {
     cl::Platform::setDefault(best_platform);
     std::cerr << "Selected " << best_platform.getInfo<CL_PLATFORM_NAME>()
               << std::endl;
-    std::cerr << "Selected " << best_device.getInfo<CL_DEVICE_NAME>()
+    std::cerr << "Selected " << trim(best_device.getInfo<CL_DEVICE_NAME>())
               << std::endl;
-    std::cerr << "with OpenCL " << best_version << " capability" << std::endl;
+    std::cerr << "with OpenCL " << boost::format("%2.1f") % best_version
+              << " capability" << std::endl;
 
     cl::Context context(best_device);
     cl::Context::setDefault(context);
@@ -205,8 +207,15 @@ void OpenCL::initialize(void) {
                            (std::istreambuf_iterator<char>()));
 
     // Make program of the source code in the context
-    cl::Program program(sourceCode);
+    cl::Program program;
 
+    try {
+        program = cl::Program(sourceCode);
+    } catch (cl::Error &e) {
+        std::cerr << "Error getting kernels: " << e.what() << ": "
+                  << e.err() << std::endl;
+        return;
+    }
     // Build program for these specific devices
     try {
         program.build();

@@ -21,7 +21,7 @@
 using namespace caffe;
 #endif
 #ifdef USE_BLAS
-#include <openblas/cblas.h>
+#include <cblas.h>
 #include "Im2Col.h"
 #endif
 #ifdef USE_OPENCL
