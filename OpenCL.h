@@ -8,22 +8,76 @@
 #define CL_HPP_ENABLE_EXCEPTIONS
 #include <CL/cl2.hpp>
 
+#include <boost/tr1/array.hpp>
+#include <vector>
+
+class Layer {
+    friend class OpenCL;
+private:
+    unsigned int channels{0};
+    unsigned int outputs{0};
+    unsigned int filter_size{0};
+    bool is_batchnorm{false};
+    std::vector<cl::Buffer> weights;
+};
+
 class OpenCL {
 public:
     static OpenCL* get_OpenCL(void);
-    void convolve(int filter_size, int channels, int outputs,
-                  float * input, float * output,
-                  float * weights, float * biases);
+
+    template <unsigned long M, unsigned long V>
+    void push_batchnorm(std::tr1::array<float, M> & means,
+                        std::tr1::array<float, V> & variances,
+                        std::tr1::array<float, 1> & scale) {
+        int layer = get_layer_count();
+        push_weights(layer, means);
+        push_weights(layer, variances);
+        push_weights(layer, scale);
+        m_layers[layer].is_batchnorm = true;
+        m_layers[layer].channels = M;
+        m_layers[layer].outputs = M;
+    }
+
+    template <unsigned long W, unsigned long B>
+    void push_convolve(unsigned int filter_size,
+                       std::tr1::array<float, W> & weights,
+                       std::tr1::array<float, B> & biases) {
+        int layer = get_layer_count();
+        push_weights(layer, weights);
+        push_weights(layer, biases);
+        m_layers[layer].outputs = B;
+        m_layers[layer].filter_size = filter_size;
+        m_layers[layer].channels = W / (B * filter_size * filter_size);
+    }
+
+    size_t get_layer_count() {
+        return m_layers.size();
+    }
+
+    void forward(std::vector<float>& input, std::vector<float>& output);
 
 private:
     OpenCL();
     void initialize();
+    template <unsigned long W>
+    void push_weights(int layer, std::tr1::array<float, W> & weights) {
+        add_weights(layer, W, &weights[0]);
+    }
+    void add_weights(int layer, size_t size, float * weights);
+    void convolve(int filter_size, int channels, int outputs,
+                  cl::Buffer& input, cl::Buffer& output,
+                  std::vector<cl::Buffer>& weights);
+    void batchnorm(int outputs, cl::Buffer & input,
+                   cl::Buffer & output, std::vector<cl::Buffer>& weights);
 
     static OpenCL* s_OpenCL;
 
     cl::Kernel m_convolve_kernel;
-    cl::Kernel m_clear_and_bias_kernel;
     cl::Kernel m_merge_kernel;
+    cl::Kernel m_batchnorm_kernel;
+
+    std::vector<Layer> m_layers;
+
     bool m_init_ok{false};
 };
 

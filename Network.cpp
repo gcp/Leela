@@ -151,7 +151,29 @@ void reorder_weights(std::tr1::array<float, W>& in,
 
 void Network::initialize(void) {
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL();
+    std::cerr << "Initializing OpenCL" << std::endl;
+    OpenCL * cl = OpenCL::get_OpenCL();
+    std::cerr << "Transfering weights to GPU..." << std::flush;
+    cl->push_convolve(5, conv1_w, conv1_b);
+    cl->push_batchnorm(bn1_w1, bn1_w2, bn1_w3);
+    cl->push_convolve(3, conv2_w, conv2_b);
+    cl->push_batchnorm(bn2_w1, bn2_w2, bn2_w3);
+    cl->push_convolve(3, conv3_w, conv3_b);
+    cl->push_batchnorm(bn3_w1, bn3_w2, bn3_w3);
+    cl->push_convolve(3, conv4_w, conv4_b);
+    cl->push_batchnorm(bn4_w1, bn4_w2, bn4_w3);
+    cl->push_convolve(3, conv5_w, conv5_b);
+    cl->push_batchnorm(bn5_w1, bn5_w2, bn5_w3);
+    cl->push_convolve(3, conv6_w, conv6_b);
+    cl->push_batchnorm(bn6_w1, bn6_w2, bn6_w3);
+    cl->push_convolve(3, conv7_w, conv7_b);
+    cl->push_batchnorm(bn7_w1, bn7_w2, bn7_w3);
+    cl->push_convolve(3, conv8_w, conv8_b);
+    cl->push_batchnorm(bn8_w1, bn8_w2, bn8_w3);
+    cl->push_convolve(3, conv9_w, conv9_b);
+    cl->push_batchnorm(bn9_w1, bn9_w2, bn9_w3);
+    cl->push_convolve(3, conv10_w, conv10_b);
+    std::cerr << "done" << std::endl;
 #endif
 #ifdef USE_BLAS
     openblas_set_num_threads(1);
@@ -236,23 +258,6 @@ void Network::initialize(void) {
 }
 
 #ifndef USE_BLAS
-#ifdef USE_OPENCL
-template<unsigned int filter_size,
-         unsigned int channels, unsigned int outputs,
-         unsigned long W, unsigned long B>
-void convolve(std::vector<float>& input,
-              std::tr1::array<float, W>& weights,
-              std::tr1::array<float, B>& biases,
-              std::vector<float>& output) {
-    OpenCL::get_OpenCL()->convolve(filter_size,
-                                   channels,
-                                   outputs,
-                                   &input[0],
-                                   &output[0],
-                                   &weights[0],
-                                   &biases[0]);
-}
-#else
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          unsigned long W, unsigned long B>
@@ -370,7 +375,6 @@ void convolve(std::vector<float>& input,
         }
     }
 }
-#endif
 #else
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
@@ -531,7 +535,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
 #endif
 #endif
 #endif
-#if defined(USE_BLAS) || defined(USE_OPENCL)
+#if defined(USE_BLAS)
     convolve<5,  22,  96>(input_data, conv1_w, conv1_b, output_data);
     batchnorm<96>(output_data, bn1_w1, bn1_w2, bn1_w3, input_data);
     convolve<3,  96, 160>(input_data, conv2_w, conv2_b, output_data);
@@ -551,6 +555,12 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     convolve<3,  64,  64>(input_data, conv9_w, conv9_b, output_data);
     batchnorm<64>(output_data, bn9_w1, bn9_w2, bn9_w3, input_data);
     convolve<3,  64,   1>(input_data, conv10_w, conv10_b, output_data);
+    softmax(output_data, softmax_data);
+
+    std::vector<float>& outputs = softmax_data;
+#endif
+#ifdef USE_OPENCL
+    OpenCL::get_OpenCL()->forward(input_data, output_data);
     softmax(output_data, softmax_data);
 
     std::vector<float>& outputs = softmax_data;

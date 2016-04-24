@@ -9,6 +9,7 @@
 #include <fstream>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/tr1/array.hpp>
 
 #include "Utils.h"
 #include "OpenCL.h"
@@ -28,11 +29,90 @@ OpenCL * OpenCL::get_OpenCL(void) {
 OpenCL::OpenCL() {
 }
 
+void OpenCL::add_weights(int layer,
+                         size_t size,
+                         float * weights) {
+    if (layer >= m_layers.size()) {
+        m_layers.push_back(Layer());
+    }
+
+    size_t weightSize = size * sizeof(float);
+
+    cl::Buffer bufferWeights = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
+                                          weightSize, weights);
+
+    m_layers.back().weights.push_back(bufferWeights);
+}
+
+void OpenCL::forward(std::vector<float>& input,
+                     std::vector<float>& output) {
+    size_t inSize = sizeof(float) * input.size();
+    size_t outSize = sizeof(float) * output.size();
+    size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
+
+    cl::Buffer inBuffer = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE
+                                     | CL_MEM_HOST_NO_ACCESS,
+                                     inSize, &input[0]);
+    cl::Buffer tmpBuffer = cl::Buffer(CL_MEM_READ_WRITE
+                                      | CL_MEM_HOST_NO_ACCESS,
+                                      outSize);
+    cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+
+    for (auto & layer : m_layers) {
+        if (layer.is_batchnorm) {
+           batchnorm(layer.outputs,
+                     tmpBuffer,
+                     inBuffer,
+                     layer.weights);
+        } else {
+            // convolution
+            convolve(layer.filter_size,
+                     layer.channels,
+                     layer.outputs,
+                     inBuffer,
+                     tmpBuffer,
+                     layer.weights);
+        }
+    }
+    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    // last layer is always a convolution, so output is in tmp
+    queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
+    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, &output[0]);
+    queue.finish();
+}
+
+void OpenCL::batchnorm(int outputs,
+                       cl::Buffer & bufferInput,
+                       cl::Buffer & bufferOutput,
+                       std::vector<cl::Buffer>& weights) {
+    // fixed for 19x19
+    constexpr int width = 19;
+    constexpr int height = 19;
+
+    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+
+    m_batchnorm_kernel.setArg(0, bufferInput);
+    m_batchnorm_kernel.setArg(1, bufferOutput);
+    m_batchnorm_kernel.setArg(2, weights[0]);
+    m_batchnorm_kernel.setArg(3, weights[1]);
+    m_batchnorm_kernel.setArg(4, weights[2]);
+
+    try {
+        queue.enqueueNDRangeKernel(m_batchnorm_kernel, cl::NullRange,
+                                   cl::NDRange(outputs),
+                                   cl::NullRange);
+    } catch (cl::Error &e) {
+        std::cerr << "Error in convolve: " << e.what() << ": "
+            << e.err() << std::endl;
+        return;
+    }
+
+}
+
 void OpenCL::convolve(int filter_size, int channels, int outputs,
-                      float * input,
-                      float * output,
-                      float * weights,
-                      float * biases) {
+                      cl::Buffer& bufferInput,
+                      cl::Buffer& bufferOutput,
+                      std::vector<cl::Buffer>& weights) {
     // fixed for 19x19
     constexpr int width = 19;
     constexpr int height = 19;
@@ -40,28 +120,18 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     size_t inSize = width * height * channels * sizeof(float);
     size_t outSize = width * height * outputs * sizeof(float);
-    size_t weightSize = filter_len * channels * outputs * sizeof(float);
-    size_t biasSize = outputs * sizeof(float);
 
     // Produce channel * output planes and merge them at the end
     size_t mergeSize = channels * outSize;
 
-    cl::Buffer bufferInput   = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                                          inSize, input);
-    cl::Buffer bufferOutput  = cl::Buffer(CL_MEM_WRITE_ONLY, outSize);
     cl::Buffer bufferMerge   = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
                                           mergeSize);
-
-    cl::Buffer bufferWeights = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                                          weightSize, weights);
-    cl::Buffer bufferBiases  = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                                          biasSize, biases);
 
     cl::CommandQueue queue = cl::CommandQueue::getDefault();
 
     m_convolve_kernel.setArg(0, bufferInput);
     m_convolve_kernel.setArg(1, bufferMerge);
-    m_convolve_kernel.setArg(2, bufferWeights);
+    m_convolve_kernel.setArg(2, weights[0]);
     m_convolve_kernel.setArg(3, filter_size);
 
     size_t workgroup_size = std::min(outputs, 32);
@@ -79,7 +149,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     m_merge_kernel.setArg(0, bufferMerge);
     m_merge_kernel.setArg(1, bufferOutput);
-    m_merge_kernel.setArg(2, bufferBiases);
+    m_merge_kernel.setArg(2, weights[1]);
     m_merge_kernel.setArg(3, channels);
 
     try {
@@ -92,11 +162,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
                   << e.err() << std::endl;
         return;
     }
-
-    queue.enqueueReadBuffer(bufferOutput, CL_FALSE, 0, outSize, output);
-    queue.finish();
 }
-
 
 template<class T>
 static std::string opencl_dev_type_to_string(T type) {
@@ -229,6 +295,7 @@ void OpenCL::initialize(void) {
     // Make kernel
     m_convolve_kernel = cl::Kernel(program, "convolve");
     m_merge_kernel = cl::Kernel(program, "merge");
+    m_batchnorm_kernel = cl::Kernel(program, "batchnorm");
 
     m_init_ok = true;
 }

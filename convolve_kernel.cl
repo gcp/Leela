@@ -99,3 +99,31 @@ __kernel void merge(
         out[o * boardsize + b] = sum;
     }
 }
+
+__kernel void batchnorm(
+						__global const float * in,
+						__global float * out,
+						__constant const float * means,
+						__constant const float * variances,
+						__constant const float * scale) {
+
+    // cl::NDRange global(outputs);
+    const int gx = get_global_id(0);
+
+    const int output = gx;
+    const int outputs = get_global_size(0);
+
+    const unsigned int width = 19;
+    const unsigned int height = 19;
+    const unsigned int board_size = width * height;
+
+	const unsigned int c = output;
+
+    const float mean = means[c] / scale[0];
+    const float variance = variances[c] / scale[0];
+    const float scale_stddiv = 1.0f / sqrt(variance);
+
+    for (unsigned int b = 0; b < board_size; b++) {
+        out[c * board_size + b] = scale_stddiv * (in[c * board_size + b] - mean);
+    }
+}
