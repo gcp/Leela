@@ -131,6 +131,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     size_t channelGroup;
     size_t outputGroup;
+
     // Workgroup things
     channelGroup = 2;
 
@@ -143,8 +144,8 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     // Store the filters locally
     size_t filtSize = outputGroup * channelGroup * filter_len * sizeof(float);
 
-    cl::Buffer bufferMerge    = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                                           mergeSize);
+    cl::Buffer bufferMerge = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                                        mergeSize);
 
 
     cl::CommandQueue queue = cl::CommandQueue::getDefault();
@@ -303,7 +304,7 @@ void OpenCL::initialize(void) {
     }
     // Build program for these specific devices
     try {
-        program.build();
+        program.build("-cl-mad-enable -cl-fast-relaxed-math -cl-no-signed-zeros");
     } catch (cl::Error &e) {
         std::cerr << "Error building: " << std::endl
                   << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault())

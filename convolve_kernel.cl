@@ -1,4 +1,5 @@
-__kernel void convolve(
+__kernel
+void convolve(
                        __global const float * in,
                        __global float * merge,
                        __global const float * weights,
@@ -35,7 +36,7 @@ __kernel void convolve(
         filter_buff[(ly * chan_buff_size + lx) * filter_len + f]
             = weights[(o * channels + c) * filter_len + f];
     }
-    __local const float * filter_offset =
+    __local float * filter_offset =
         &filter_buff[(ly * chan_buff_size + lx) * filter_len];
 
     const unsigned int width = 19;
@@ -55,29 +56,46 @@ __kernel void convolve(
         for (unsigned int cw = 0; cw < width; cw++) {
             int fwstart = cw - extent;
             int fwend   = cw + extent;
-            unsigned int filter_idx = 0;
+            __local float * filter_idx = filter_offset;
             float out = 0.0f;
             // Start filter
-            for (int fh = fhstart; fh <= fhend; fh++) {
-                for (int fw = fwstart; fw <= fwend; fw++) {
-                    // "zero padding"
-                    if ((unsigned)fh >= height) {
-                        filter_idx++;
-                        continue;
-                    }
-                    if ((unsigned)fw >= width) {
-                        filter_idx++;
-                        continue;
-                    }
+            if (fhstart >= 0 && fhend < height
+                && fwstart >= 0 && fwend < width
+                && filter_size == 3) {
+                unsigned int fid = (lx * height + fhstart) * width + fwstart;
+                out += channel_buff[fid              ] * *filter_idx++;
+                out += channel_buff[fid           + 1] * *filter_idx++;
+                out += channel_buff[fid           + 2] * *filter_idx++;
 
-                    float input = channel_buff[(lx * height + fh) * width + fw];
-                    out += input * filter_offset[filter_idx];
+                out += channel_buff[fid + width]       * *filter_idx++;
+                out += channel_buff[fid + width   + 1] * *filter_idx++;
+                out += channel_buff[fid + width   + 2] * *filter_idx++;
 
-                    filter_idx++;
+                out += channel_buff[fid + width*2    ] * *filter_idx++;
+                out += channel_buff[fid + width*2 + 1] * *filter_idx++;
+                out += channel_buff[fid + width*2 + 2] * *filter_idx++;
+            } else {
+                for (int fh = fhstart; fh <= fhend; fh++) {
+                    for (int fw = fwstart; fw <= fwend; fw++) {
+                        // "zero padding"
+                        if ((unsigned)fh >= height) {
+                            filter_idx++;
+                            continue;
+                        }
+                        if ((unsigned)fw >= width) {
+                            filter_idx++;
+                            continue;
+                        }
+
+                        float input = channel_buff[(lx * height + fh) * width + fw];
+                        out += input * (*filter_idx);
+
+                        filter_idx++;
+                    }
                 }
             }
             // End filter
-            merge[((c * outputs + o) * height + ch) * width + cw] = out;
+            merge[((ch * width + cw) * channels + c) * outputs + o] = out;
         }
     }
 }
@@ -88,7 +106,7 @@ __kernel void merge(
                     __constant const float * biases,
                     __private const int channels) {
 
-    // cl::NDRange global(outputs);
+    // cl::NDRange global(outputs, 19*19);
     const int gx = get_global_id(0);
     const int gy = get_global_id(1);
 
@@ -105,21 +123,21 @@ __kernel void merge(
 
     float sum = bias;
     for (unsigned int c = 0; c < channels; c++) {
-        sum += in[(c * outputs + o) * boardsize + b];
+        sum += in[(b * channels + c) * outputs + o];
     }
     // ReLU if outputs > 1 (not last layer)
     if (outputs > 1) {
-        sum = (sum > 0.0f) ? sum : 0.0f;
+        sum = max(sum, 0.0f);
     }
     out[o * boardsize + b] = sum;
 }
 
 __kernel void batchnorm(
-			__global const float * in,
-			__global float * out,
-			__constant const float * means,
-			__constant const float * variances,
-			__constant const float * scale) {
+                        __global const float * in,
+                        __global float * out,
+                        __constant const float * means,
+                        __constant const float * variances,
+                        __constant const float * scale) {
 
     // cl::NDRange global(outputs, 19*19);
     const int gx = get_global_id(0);
