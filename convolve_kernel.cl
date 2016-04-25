@@ -60,20 +60,51 @@ void convolve(
             float out = 0.0f;
             // Start filter
             if (fhstart >= 0 && fhend < height
-                && fwstart >= 0 && fwend < width
-                && filter_size == 3) {
+                && fwstart >= 0 && fwend < width) {
                 unsigned int fid = (lx * height + fhstart) * width + fwstart;
-                out += channel_buff[fid              ] * *filter_idx++;
-                out += channel_buff[fid           + 1] * *filter_idx++;
-                out += channel_buff[fid           + 2] * *filter_idx++;
+                if (filter_size == 3) {
+                    out += channel_buff[fid              ] * *filter_idx++;
+                    out += channel_buff[fid           + 1] * *filter_idx++;
+                    out += channel_buff[fid           + 2] * *filter_idx++;
 
-                out += channel_buff[fid + width]       * *filter_idx++;
-                out += channel_buff[fid + width   + 1] * *filter_idx++;
-                out += channel_buff[fid + width   + 2] * *filter_idx++;
+                    out += channel_buff[fid + width]       * *filter_idx++;
+                    out += channel_buff[fid + width   + 1] * *filter_idx++;
+                    out += channel_buff[fid + width   + 2] * *filter_idx++;
 
-                out += channel_buff[fid + width*2    ] * *filter_idx++;
-                out += channel_buff[fid + width*2 + 1] * *filter_idx++;
-                out += channel_buff[fid + width*2 + 2] * *filter_idx++;
+                    out += channel_buff[fid + width*2    ] * *filter_idx++;
+                    out += channel_buff[fid + width*2 + 1] * *filter_idx++;
+                    out += channel_buff[fid + width*2 + 2] * *filter_idx++;
+                } else if (filter_size == 5) {
+                    out += channel_buff[fid              ] * *filter_idx++;
+                    out += channel_buff[fid           + 1] * *filter_idx++;
+                    out += channel_buff[fid           + 2] * *filter_idx++;
+                    out += channel_buff[fid           + 3] * *filter_idx++;
+                    out += channel_buff[fid           + 4] * *filter_idx++;
+
+                    out += channel_buff[fid + width      ] * *filter_idx++;
+                    out += channel_buff[fid + width   + 1] * *filter_idx++;
+                    out += channel_buff[fid + width   + 2] * *filter_idx++;
+                    out += channel_buff[fid + width   + 3] * *filter_idx++;
+                    out += channel_buff[fid + width   + 4] * *filter_idx++;
+
+                    out += channel_buff[fid + width*2    ] * *filter_idx++;
+                    out += channel_buff[fid + width*2 + 1] * *filter_idx++;
+                    out += channel_buff[fid + width*2 + 2] * *filter_idx++;
+                    out += channel_buff[fid + width*2 + 3] * *filter_idx++;
+                    out += channel_buff[fid + width*2 + 4] * *filter_idx++;
+
+                    out += channel_buff[fid + width*3    ] * *filter_idx++;
+                    out += channel_buff[fid + width*3 + 1] * *filter_idx++;
+                    out += channel_buff[fid + width*3 + 2] * *filter_idx++;
+                    out += channel_buff[fid + width*3 + 3] * *filter_idx++;
+                    out += channel_buff[fid + width*3 + 4] * *filter_idx++;
+
+                    out += channel_buff[fid + width*4    ] * *filter_idx++;
+                    out += channel_buff[fid + width*4 + 1] * *filter_idx++;
+                    out += channel_buff[fid + width*4 + 2] * *filter_idx++;
+                    out += channel_buff[fid + width*4 + 3] * *filter_idx++;
+                    out += channel_buff[fid + width*4 + 4] * *filter_idx++;
+                }
             } else {
                 for (int fh = fhstart; fh <= fhend; fh++) {
                     for (int fw = fwstart; fw <= fwend; fw++) {
@@ -104,14 +135,17 @@ __kernel void merge(
                     __global const float * in,
                     __global float * out,
                     __constant const float * biases,
-                    __private const int channels) {
+                    __private const int channels
+                    /*__local float * partial_sums*/) {
 
-    // cl::NDRange global(outputs, 19*19);
+    // cl::NDRange global(channels, outputs, 19*19);
     const int gx = get_global_id(0);
     const int gy = get_global_id(1);
+    //const int gz = get_global_id(2);
 
     const int output = gx;
     const int b = gy;
+    //const int channels = get_global_size(0);
     const int outputs = get_global_size(0);
 
     const int width = 19;
@@ -120,6 +154,21 @@ __kernel void merge(
 
     const int o = output;
     const float bias = biases[o];
+
+    //const int lid = get_local_id(0);
+    //int group_size = get_local_size(0);
+    //partial_sums[lid] = data[get_global_id(0)];
+    //barrier(CLK_LOCAL_MEM_FENCE);
+
+    //for(int i = group_size/2; i>0; i >>= 1) {
+    //    if(lid < i) {
+    //        partial_sums[lid] += partial_sums[lid + i];
+    //    }
+    //    barrier(CLK_LOCAL_MEM_FENCE);
+    //}
+    //if(lid == 0) {
+    //    output[get_group_id(0)] = dot(partial_sums[0], (float4)(1.0f));
+    //}
 
     float sum = bias;
     for (unsigned int c = 0; c < channels; c++) {

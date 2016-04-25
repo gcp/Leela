@@ -212,7 +212,6 @@
     <ClCompile Include="..\PNNode.cpp" />
     <ClCompile Include="..\PNSearch.cpp" />
     <ClCompile Include="..\Random.cpp" />
-    <ClCompile Include="..\Ruleset.cpp" />
     <ClCompile Include="..\SGFParser.cpp" />
     <ClCompile Include="..\SGFTree.cpp" />
     <ClCompile Include="..\SMP.cpp" />
