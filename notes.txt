@@ -3,5 +3,7 @@
 
 - Skip in if 0.0
 
+- more likely to try self-atrai if mutual atari (and limit size of sa group?)
+
 32889856 training positions.
 1370412 testing positions.

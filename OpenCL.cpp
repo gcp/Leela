@@ -1,4 +1,5 @@
 #include "config.h"
+#ifdef USE_OPENCL
 
 #include <cstdio>
 #include <cstdlib>
@@ -317,3 +318,4 @@ void OpenCL::initialize(void) {
 
     m_init_ok = true;
 }
+#endif
