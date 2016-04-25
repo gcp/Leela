@@ -88,6 +88,7 @@ void OpenCL::batchnorm(int outputs,
     // fixed for 19x19
     constexpr int width = 19;
     constexpr int height = 19;
+    constexpr int boardsize = width * height;
 
     cl::CommandQueue queue = cl::CommandQueue::getDefault();
 
@@ -99,7 +100,7 @@ void OpenCL::batchnorm(int outputs,
 
     try {
         queue.enqueueNDRangeKernel(m_batchnorm_kernel, cl::NullRange,
-                                   cl::NDRange(outputs),
+                                   cl::NDRange(outputs, boardsize),
                                    cl::NullRange);
     } catch (cl::Error &e) {
         std::cerr << "Error in convolve: " << e.what() << ": "
@@ -124,8 +125,26 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     // Produce channel * output planes and merge them at the end
     size_t mergeSize = channels * outSize;
 
-    cl::Buffer bufferMerge   = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                                          mergeSize);
+    // Every input channel is this big
+    size_t chanSize = width * height * sizeof(float);
+
+    size_t channelGroup;
+    size_t outputGroup;
+    // Workgroup things
+    channelGroup = 2;
+
+    if (outputs % 64 == 0) {
+        outputGroup = 64;
+    } else {
+        outputGroup = std::min(outputs, 32);
+    }
+
+    // Store the filters locally
+    size_t filtSize = outputGroup * channelGroup * filter_len * sizeof(float);
+
+    cl::Buffer bufferMerge    = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                                           mergeSize);
+
 
     cl::CommandQueue queue = cl::CommandQueue::getDefault();
 
@@ -133,14 +152,13 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_convolve_kernel.setArg(1, bufferMerge);
     m_convolve_kernel.setArg(2, weights[0]);
     m_convolve_kernel.setArg(3, filter_size);
-
-    size_t workgroup_size = std::min(outputs, 32);
+    m_convolve_kernel.setArg(4, cl::Local(chanSize * channelGroup));
+    m_convolve_kernel.setArg(5, cl::Local(filtSize));
 
     try {
         queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
                                    cl::NDRange(channels, outputs),
-                                   cl::NullRange
-                                   /*cl::NDRange(2, workgroup_size)*/);
+                                   cl::NDRange(channelGroup, outputGroup));
     } catch (cl::Error &e) {
         std::cerr << "Error in convolve: " << e.what() << ": "
                   << e.err() << std::endl;
@@ -154,7 +172,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     try {
         queue.enqueueNDRangeKernel(m_merge_kernel, cl::NullRange,
-                                   cl::NDRange(outputs),
+                                   cl::NDRange(outputs, 361),
                                    cl::NullRange
                                    /*cl::NDRange(1)*/);
     } catch (cl::Error &e) {

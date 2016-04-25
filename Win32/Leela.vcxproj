@@ -257,9 +257,10 @@
     <ClInclude Include="..\Zobrist.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\convolve_kernel.cl">
+    <CustomBuild Include="..\convolve_kernel.cl">
       <DeploymentContent>true</DeploymentContent>
-    </None>
+      <FileType>Document</FileType>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
