@@ -171,7 +171,6 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_merge_kernel.setArg(1, bufferOutput);
     m_merge_kernel.setArg(2, weights[1]);
     m_merge_kernel.setArg(3, channels);
-    //m_merge_kernel.setArg(4, cl::Local(channels * sizeof(float)));
 
     try {
         queue.enqueueNDRangeKernel(m_merge_kernel, cl::NullRange,

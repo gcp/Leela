@@ -44,9 +44,11 @@ void convolve(
     const unsigned int board_size = width * height;
 
     // Copy the input channels locally
-    for (unsigned int b = 0; b < board_size; b++) {
-        channel_buff[lx * board_size + b] = in[(c * board_size) + b];
-    }
+    //if (ly == 0) {
+        for (unsigned int b = 0; b < board_size; b++) {
+            channel_buff[lx * board_size + b] = in[(c * board_size) + b];
+        }
+    //}
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -126,7 +128,7 @@ void convolve(
                 }
             }
             // End filter
-            merge[((ch * width + cw) * channels + c) * outputs + o] = out;
+            merge[((c * height + ch) * width + cw) * outputs + o] = out;
         }
     }
 }
@@ -135,17 +137,14 @@ __kernel void merge(
                     __global const float * in,
                     __global float * out,
                     __constant const float * biases,
-                    __private const int channels
-                    /*__local float * partial_sums*/) {
+                    __private const int channels) {
 
-    // cl::NDRange global(channels, outputs, 19*19);
+    // cl::NDRange global(outputs, 19*19);
     const int gx = get_global_id(0);
     const int gy = get_global_id(1);
-    //const int gz = get_global_id(2);
 
     const int output = gx;
     const int b = gy;
-    //const int channels = get_global_size(0);
     const int outputs = get_global_size(0);
 
     const int width = 19;
@@ -155,24 +154,9 @@ __kernel void merge(
     const int o = output;
     const float bias = biases[o];
 
-    //const int lid = get_local_id(0);
-    //int group_size = get_local_size(0);
-    //partial_sums[lid] = data[get_global_id(0)];
-    //barrier(CLK_LOCAL_MEM_FENCE);
-
-    //for(int i = group_size/2; i>0; i >>= 1) {
-    //    if(lid < i) {
-    //        partial_sums[lid] += partial_sums[lid + i];
-    //    }
-    //    barrier(CLK_LOCAL_MEM_FENCE);
-    //}
-    //if(lid == 0) {
-    //    output[get_group_id(0)] = dot(partial_sums[0], (float4)(1.0f));
-    //}
-
     float sum = bias;
     for (unsigned int c = 0; c < channels; c++) {
-        sum += in[(b * channels + c) * outputs + o];
+        sum += in[(c * boardsize + b) * outputs + o];
     }
     // ReLU if outputs > 1 (not last layer)
     if (outputs > 1) {
