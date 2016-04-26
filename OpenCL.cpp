@@ -131,22 +131,22 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     size_t channelGroup;
     size_t outputGroup;
+    size_t rowGroup;
+    size_t waveFronts;
 
     // Workgroup things
     channelGroup = 2;
-
-    if (outputs % 64 == 0) {
-        outputGroup = 64;
-    } else {
-        outputGroup = std::min(outputs, 32);
-    }
+    rowGroup = 1;
+    outputGroup = std::min(outputs, 32);
 
     // Store the filters locally
     size_t filtSize = outputGroup * channelGroup * filter_len * sizeof(float);
 
+    // Copy the rows locally
+    size_t stripSize = filter_size * width * sizeof(float);
+
     cl::Buffer bufferMerge = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
                                         mergeSize);
-
 
     cl::CommandQueue queue = cl::CommandQueue::getDefault();
 
@@ -154,13 +154,13 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_convolve_kernel.setArg(1, bufferMerge);
     m_convolve_kernel.setArg(2, weights[0]);
     m_convolve_kernel.setArg(3, filter_size);
-    m_convolve_kernel.setArg(4, cl::Local(chanSize * channelGroup));
+    m_convolve_kernel.setArg(4, cl::Local(stripSize * channelGroup));
     m_convolve_kernel.setArg(5, cl::Local(filtSize));
 
     try {
         queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
-                                   cl::NDRange(channels, outputs),
-                                   cl::NDRange(channelGroup, outputGroup));
+                                   cl::NDRange(channels, outputs, 19),
+                                   cl::NDRange(channelGroup, outputGroup, rowGroup));
     } catch (cl::Error &e) {
         std::cerr << "Error in convolve: " << e.what() << ": "
                   << e.err() << std::endl;
