@@ -19,7 +19,6 @@ void convolve(
     // cl::NDRange local(2, (1->32), 1);
     const unsigned int lx = get_local_id(0);
     const unsigned int ly = get_local_id(1);
-    const unsigned int lz = get_local_id(2);
 
     const unsigned int chan_buff_size = get_local_size(0);
 
@@ -34,15 +33,14 @@ void convolve(
 
     const unsigned int width = 19;
     const unsigned int height = 19;
-    const unsigned int board_size = width * height;
     const unsigned int strip_size = filter_size * width;
 
     // Copy the input channels (strips) locally
-    if (ly == 0 && lz == 0) {
+    if (ly == 0) {
         // strip-row
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
-            if ((unsigned)in_row > height) {
+            if ((unsigned)in_row >= height) {
                 for (unsigned int w = 0; w < width; w++) {
                     channel_buff[(lx * filter_size + srow) * width + w] = 0.0f;
                 }

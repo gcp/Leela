@@ -154,7 +154,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_convolve_kernel.setArg(1, bufferMerge);
     m_convolve_kernel.setArg(2, weights[0]);
     m_convolve_kernel.setArg(3, filter_size);
-    m_convolve_kernel.setArg(4, cl::Local(stripSize * channelGroup));
+    m_convolve_kernel.setArg(4, cl::Local(stripSize * channelGroup * rowGroup));
     m_convolve_kernel.setArg(5, cl::Local(filtSize));
 
     try {
@@ -175,7 +175,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     try {
         queue.enqueueNDRangeKernel(m_merge_kernel, cl::NullRange,
                                    cl::NDRange(outputs, 361),
-                                   cl::NDRange(8, 19));
+                                   cl::NDRange(std::min(8, outputs), 19));
     } catch (cl::Error &e) {
         std::cerr << "Error in merge: " << e.what() << ": "
                   << e.err() << std::endl;
