@@ -13,8 +13,7 @@ void convolve5(
     const unsigned int row = get_global_id(2);  // row
 
     const unsigned int channels = get_global_size(0);
-    const unsigned int outputs = get_global_size(1);
-    const unsigned int rows = get_global_size(2);
+    const unsigned int outputs  = get_global_size(1);
 
     // cl::NDRange local(2, (1->32), 1);
     const unsigned int lx = get_local_id(0);
@@ -37,7 +36,7 @@ void convolve5(
     const unsigned int strip_size = filter_size * width;
 
     // Copy the input channels (strips) locally
-    if (ly == 0) {
+    if (outputs < 19 && ly == 0) {
         // strip-row
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
@@ -52,6 +51,16 @@ void convolve5(
                 }
             }
         }
+    } else if (ly < 19) {
+        // Every thread copies a column
+        for (unsigned int srow = 0; srow < filter_size; srow++) {
+            int in_row = row - extent + srow;
+            float val = 0.0f;
+            if ((unsigned)in_row < height) {
+                val = in[(c * height + in_row) * width + ly];
+            }
+            channel_buff[(lx * filter_size + srow) * width + ly] = val;
+        }
     }
 
     __private float filter_buff[25];
@@ -64,16 +73,15 @@ void convolve5(
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    unsigned int ch = row; // row by row
     for (unsigned int cw = 0; cw < width; cw++) {
         int fwstart = cw - extent;
         int fwend   = cw + extent;
         const float * filter_idx = filter_buff;
-        float out = 0.0f;
+        float out;
         // Start filter
         if (fwstart >= 0 && fwend < width) {
             unsigned int fid = lx * strip_size + fwstart;
-            out += channel_buff[fid              ] * *filter_idx++;
+            out  = channel_buff[fid              ] * *filter_idx++;
             out += channel_buff[fid           + 1] * *filter_idx++;
             out += channel_buff[fid           + 2] * *filter_idx++;
             out += channel_buff[fid           + 3] * *filter_idx++;
@@ -103,6 +111,7 @@ void convolve5(
             out += channel_buff[fid + width*4 + 3] * *filter_idx++;
             out += channel_buff[fid + width*4 + 4] * *filter_idx++;
         } else {
+            out = 0.0f;
             for (unsigned int fh = 0; fh < filter_size; fh++) {
                 for (int fw = fwstart; fw <= fwend; fw++) {
                     // "zero padding"
@@ -136,7 +145,7 @@ void convolve5(
                 val += merge_buff[ly * 8 + 6];
                 val += merge_buff[ly * 8 + 7];
             }
-            merge[(((c>>chan_shift) * height + ch) * width + cw) * outputs + o] = val;
+            merge[(((c>>chan_shift) * height + row) * width + cw) * outputs + o] = val;
         }
     }
 }
@@ -156,8 +165,7 @@ void convolve3(
     const unsigned int row = get_global_id(2);  // row
 
     const unsigned int channels = get_global_size(0);
-    const unsigned int outputs = get_global_size(1);
-    const unsigned int rows = get_global_size(2);
+    const unsigned int outputs  = get_global_size(1);
 
     // cl::NDRange local(2, (1->32), 1);
     const unsigned int lx = get_local_id(0);
@@ -180,7 +188,7 @@ void convolve3(
     const unsigned int strip_size = filter_size * width;
 
     // Copy the input channels (strips) locally
-    if (ly == 0) {
+    if (outputs < 19 && ly == 0) {
         // strip-row
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
@@ -195,6 +203,16 @@ void convolve3(
                 }
             }
         }
+    } else if (ly < 19) {
+        // Every thread copies a column
+        for (unsigned int srow = 0; srow < filter_size; srow++) {
+            int in_row = row - extent + srow;
+            float val = 0.0f;
+            if ((unsigned)in_row < height) {
+                val = in[(c * height + in_row) * width + ly];
+            }
+            channel_buff[(lx * filter_size + srow) * width + ly] = val;
+        }
     }
 
     __private float filter_buff[9];
@@ -207,16 +225,15 @@ void convolve3(
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    unsigned int ch = row; // row by row
     for (unsigned int cw = 0; cw < width; cw++) {
         int fwstart = cw - extent;
         int fwend   = cw + extent;
         const float * filter_idx = filter_buff;
-        float out = 0.0f;
+        float out;
         // Start filter
         if (fwstart >= 0 && fwend < width) {
             unsigned int fid = lx * strip_size + fwstart;
-            out += channel_buff[fid              ] * *filter_idx++;
+            out  = channel_buff[fid              ] * *filter_idx++;
             out += channel_buff[fid           + 1] * *filter_idx++;
             out += channel_buff[fid           + 2] * *filter_idx++;
 
@@ -228,18 +245,16 @@ void convolve3(
             out += channel_buff[fid + width*2 + 1] * *filter_idx++;
             out += channel_buff[fid + width*2 + 2] * *filter_idx++;
         } else {
-            for (unsigned int fh = 0; fh < filter_size; fh++) {
-                for (int fw = fwstart; fw <= fwend; fw++) {
-                    // "zero padding"
-                    if ((unsigned)fw >= width) {
-                        filter_idx++;
-                        continue;
-                    }
-
+            out = 0.0f;
+            for (int fw = fwstart; fw <= fwend; fw++) {
+                // "zero padding"
+                if ((unsigned)fw >= width) {
+                    filter_idx += filter_size;
+                    continue;
+                }
+                for (unsigned int fh = 0; fh < filter_size; fh++) {
                     float input = channel_buff[(lx * filter_size + fh) * width + fw];
-                    out += input * (*filter_idx);
-
-                    filter_idx++;
+                    out += input * *filter_idx++;
                 }
             }
         }
@@ -261,7 +276,7 @@ void convolve3(
                 val += merge_buff[ly * 8 + 6];
                 val += merge_buff[ly * 8 + 7];
             }
-            merge[(((c>>chan_shift) * height + ch) * width + cw) * outputs + o] = val;
+            merge[(((c>>chan_shift) * height + row) * width + cw) * outputs + o] = val;
         }
     }
 }

@@ -139,7 +139,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     }
 
     // Workgroup things
-    outputGroup = std::min(outputs, 16);
+    outputGroup = std::min(outputs, 32);
     /*int maxShift = (int)std::floor(std::log2(256 / outputGroup));
     int channelShift = 0;
     do {
@@ -178,7 +178,6 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_convolve_kernel.setArg(1, bufferMerge);
     m_convolve_kernel.setArg(2, weights[0]);
     m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
-    //m_convolve_kernel.setArg(5, cl::Local(filtSize));
     m_convolve_kernel.setArg(4, cl::Local(channelGroup * outputGroup * sizeof(float)));
     m_convolve_kernel.setArg(5, channelShift);
 
