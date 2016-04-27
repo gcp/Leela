@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <cmath>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/tr1/array.hpp>
@@ -121,10 +122,6 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     unsigned int filter_len = filter_size * filter_size;
 
     size_t inSize = width * height * channels * sizeof(float);
-    size_t outSize = width * height * outputs * sizeof(float);
-
-    // Produce channel * output planes and merge them at the end
-    size_t mergeSize = channels * outSize;
 
     // Every input channel is this big
     size_t chanSize = width * height * sizeof(float);
@@ -135,9 +132,29 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     size_t waveFronts;
 
     // Workgroup things
-    channelGroup = 2;
-    rowGroup = 1;
     outputGroup = std::min(outputs, 32);
+    /*int maxShift = (int)std::floor(std::log2(256 / outputGroup));
+    int channelShift = 0;
+    do {
+        channelShift++;
+        if (channelShift >= maxShift) break;
+    } while (channels % (1 << (channelShift + 1)) == 0);
+    channelGroup = 1 << channelShift;*/
+    int channelShift;
+    if (channels %  8 == 0) {
+        channelGroup = 8;
+        channelShift = 3;
+    } else {
+        channelGroup = 2;
+        channelShift = 1;
+    }
+    rowGroup = 1;
+
+    // Total output size after reducing
+    size_t outSize = width * height * outputs * sizeof(float);
+
+    // Produce channel * output planes and merge them at the end
+    size_t mergeSize = (channels >> channelShift) * outSize;
 
     // Store the filters locally
     size_t filtSize = outputGroup * channelGroup * filter_len * sizeof(float);
@@ -156,6 +173,8 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_convolve_kernel.setArg(3, filter_size);
     m_convolve_kernel.setArg(4, cl::Local(stripSize * channelGroup * rowGroup));
     m_convolve_kernel.setArg(5, cl::Local(filtSize));
+    m_convolve_kernel.setArg(6, cl::Local(channelGroup * outputGroup * sizeof(float)));
+    m_convolve_kernel.setArg(7, channelShift);
 
     try {
         queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
@@ -170,7 +189,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_merge_kernel.setArg(0, bufferMerge);
     m_merge_kernel.setArg(1, bufferOutput);
     m_merge_kernel.setArg(2, weights[1]);
-    m_merge_kernel.setArg(3, channels);
+    m_merge_kernel.setArg(3, channels >> channelShift);
 
     try {
         queue.enqueueNDRangeKernel(m_merge_kernel, cl::NullRange,

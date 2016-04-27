@@ -5,7 +5,9 @@ void convolve(
                        __global const float * weights,
                        __private int filter_size,
                        __local float * channel_buff,
-                       __local float * filter_buff) {
+                       __local float * filter_buff,
+                       __local float * merge_buff,
+                       __private int chan_shift) {
 
     // cl::NDRange global(channels, outputs, row);
     const unsigned int c   = get_global_id(0);  // channel
@@ -133,7 +135,25 @@ void convolve(
             }
         }
         // End filter
-        merge[((c * height + ch) * width + cw) * outputs + o] = out;
+        merge_buff[ly * chan_buff_size + lx] = out;
+        barrier(CLK_LOCAL_MEM_FENCE);
+        if (lx == 0) {
+            float val;
+            if (chan_buff_size == 2) {
+                val  = merge_buff[ly * 2 + 0];
+                val += merge_buff[ly * 2 + 1];
+            } else {
+                val  = merge_buff[ly * 8 + 0];
+                val += merge_buff[ly * 8 + 1];
+                val += merge_buff[ly * 8 + 2];
+                val += merge_buff[ly * 8 + 3];
+                val += merge_buff[ly * 8 + 4];
+                val += merge_buff[ly * 8 + 5];
+                val += merge_buff[ly * 8 + 6];
+                val += merge_buff[ly * 8 + 7];
+            }
+            merge[(((c>>chan_shift) * height + ch) * width + cw) * outputs + o] = val;
+        }
     }
 }
 
