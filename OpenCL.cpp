@@ -167,7 +167,12 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     size_t filtSize = outputGroup * channelGroup * filter_len * sizeof(float);
 
     // Copy the rows locally
-    size_t stripSize = filter_size * width * sizeof(float);
+    size_t stripSize;
+    if (filter_size == 3) {
+        stripSize = filter_size * (width + (filter_size - 1)) * sizeof(float);
+    } else {
+        stripSize = filter_size * width * sizeof(float);
+    }
 
     cl::Buffer bufferMerge = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
                                         mergeSize);

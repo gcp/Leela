@@ -112,18 +112,15 @@ void convolve5(
             out += channel_buff[fid + width*4 + 4] * *filter_idx++;
         } else {
             out = 0.0f;
-            for (unsigned int fh = 0; fh < filter_size; fh++) {
-                for (int fw = fwstart; fw <= fwend; fw++) {
-                    // "zero padding"
-                    if ((unsigned)fw >= width) {
-                        filter_idx++;
-                        continue;
-                    }
-
+            for (int fw = fwstart; fw <= fwend; fw++) {
+                // "zero padding"
+                if ((unsigned)fw >= width) {
+                    filter_idx += filter_size;
+                    continue;
+                }
+                for (unsigned int fh = 0; fh < filter_size; fh++) {
                     float input = channel_buff[(lx * filter_size + fh) * width + fw];
-                    out += input * (*filter_idx);
-
-                    filter_idx++;
+                    out += input * *filter_idx++;
                 }
             }
         }
@@ -173,34 +170,35 @@ void convolve3(
 
     const unsigned int chan_buff_size = get_local_size(0);
 
+    const unsigned int width = 19;
+    const unsigned int height = 19;
+
     const unsigned int filter_size = 3;
     const unsigned int filter_len = filter_size * filter_size;
     const unsigned int mid = (filter_size / 2) + 1;
     const unsigned int extent = mid - 1;
+    const unsigned int pad_width = width + filter_size - 1;
 
     // input = channels * height * width
     // output = outputs * height * width
     // weights = output * channels * filter
     // merge = channels * outputs * height * width
 
-    const unsigned int width = 19;
-    const unsigned int height = 19;
-    const unsigned int strip_size = filter_size * width;
+    const unsigned int strip_size = filter_size * pad_width;
 
     // Copy the input channels (strips) locally
     if (outputs < 19 && ly == 0) {
         // strip-row
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
-            if ((unsigned)in_row >= height) {
-                for (unsigned int w = 0; w < width; w++) {
-                    channel_buff[(lx * filter_size + srow) * width + w] = 0.0f;
+            channel_buff[(lx * filter_size + srow) * pad_width + 0]             = 0.0f;
+            channel_buff[(lx * filter_size + srow) * pad_width + pad_width - 1] = 0.0f;
+            for (unsigned int w = 0; w < width; w++) {
+                float val = 0.0f;
+                if ((unsigned)in_row < height) {
+                    val = in[(c * height + in_row) * width + w];
                 }
-            } else {
-                for (unsigned int w = 0; w < width; w++) {
-                    channel_buff[(lx * filter_size + srow) * width + w] =
-                        in[(c * height + in_row) * width + w];
-                }
+                channel_buff[(lx * filter_size + srow) * pad_width + w + extent] = val;
             }
         }
     } else if (ly < 19) {
@@ -211,7 +209,11 @@ void convolve3(
             if ((unsigned)in_row < height) {
                 val = in[(c * height + in_row) * width + ly];
             }
-            channel_buff[(lx * filter_size + srow) * width + ly] = val;
+            channel_buff[(lx * filter_size + srow) * pad_width + ly + extent] = val;
+            if (ly == 0) {
+                channel_buff[(lx * filter_size + srow) * pad_width + 0]             = 0.0f;
+                channel_buff[(lx * filter_size + srow) * pad_width + pad_width - 1] = 0.0f;
+            }
         }
     }
 
@@ -226,38 +228,20 @@ void convolve3(
     barrier(CLK_LOCAL_MEM_FENCE);
 
     for (unsigned int cw = 0; cw < width; cw++) {
-        int fwstart = cw - extent;
-        int fwend   = cw + extent;
-        const float * filter_idx = filter_buff;
+        unsigned int fid = lx * strip_size + cw;
         float out;
         // Start filter
-        if (fwstart >= 0 && fwend < width) {
-            unsigned int fid = lx * strip_size + fwstart;
-            out  = channel_buff[fid              ] * *filter_idx++;
-            out += channel_buff[fid           + 1] * *filter_idx++;
-            out += channel_buff[fid           + 2] * *filter_idx++;
+        out  = channel_buff[fid                  ] * filter_buff[0];
+        out += channel_buff[fid               + 1] * filter_buff[1];
+        out += channel_buff[fid               + 2] * filter_buff[2];
 
-            out += channel_buff[fid + width]       * *filter_idx++;
-            out += channel_buff[fid + width   + 1] * *filter_idx++;
-            out += channel_buff[fid + width   + 2] * *filter_idx++;
+        out += channel_buff[fid + pad_width      ] * filter_buff[3];
+        out += channel_buff[fid + pad_width   + 1] * filter_buff[4];
+        out += channel_buff[fid + pad_width   + 2] * filter_buff[5];
 
-            out += channel_buff[fid + width*2    ] * *filter_idx++;
-            out += channel_buff[fid + width*2 + 1] * *filter_idx++;
-            out += channel_buff[fid + width*2 + 2] * *filter_idx++;
-        } else {
-            out = 0.0f;
-            for (int fw = fwstart; fw <= fwend; fw++) {
-                // "zero padding"
-                if ((unsigned)fw >= width) {
-                    filter_idx += filter_size;
-                    continue;
-                }
-                for (unsigned int fh = 0; fh < filter_size; fh++) {
-                    float input = channel_buff[(lx * filter_size + fh) * width + fw];
-                    out += input * *filter_idx++;
-                }
-            }
-        }
+        out += channel_buff[fid + pad_width*2    ] * filter_buff[6];
+        out += channel_buff[fid + pad_width*2 + 1] * filter_buff[7];
+        out += channel_buff[fid + pad_width*2 + 2] * filter_buff[8];
         // End filter
         merge_buff[ly * chan_buff_size + lx] = out;
         barrier(CLK_LOCAL_MEM_FENCE);
