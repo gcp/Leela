@@ -131,8 +131,15 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     size_t rowGroup;
     size_t waveFronts;
 
+    cl::Kernel m_convolve_kernel;
+    if (filter_size == 3) {
+        m_convolve_kernel = m_convolve3_kernel;
+    } else {
+        m_convolve_kernel = m_convolve5_kernel;
+    }
+
     // Workgroup things
-    outputGroup = std::min(outputs, 32);
+    outputGroup = std::min(outputs, 16);
     /*int maxShift = (int)std::floor(std::log2(256 / outputGroup));
     int channelShift = 0;
     do {
@@ -170,11 +177,10 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_convolve_kernel.setArg(0, bufferInput);
     m_convolve_kernel.setArg(1, bufferMerge);
     m_convolve_kernel.setArg(2, weights[0]);
-    m_convolve_kernel.setArg(3, filter_size);
-    m_convolve_kernel.setArg(4, cl::Local(stripSize * channelGroup * rowGroup));
-    m_convolve_kernel.setArg(5, cl::Local(filtSize));
-    m_convolve_kernel.setArg(6, cl::Local(channelGroup * outputGroup * sizeof(float)));
-    m_convolve_kernel.setArg(7, channelShift);
+    m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
+    //m_convolve_kernel.setArg(5, cl::Local(filtSize));
+    m_convolve_kernel.setArg(4, cl::Local(channelGroup * outputGroup * sizeof(float)));
+    m_convolve_kernel.setArg(5, channelShift);
 
     try {
         queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
@@ -331,7 +337,8 @@ void OpenCL::initialize(void) {
     }
 
     // Make kernel
-    m_convolve_kernel = cl::Kernel(program, "convolve");
+    m_convolve3_kernel = cl::Kernel(program, "convolve3");
+    m_convolve5_kernel = cl::Kernel(program, "convolve5");
     m_merge_kernel = cl::Kernel(program, "merge");
     m_batchnorm_kernel = cl::Kernel(program, "batchnorm");
 
