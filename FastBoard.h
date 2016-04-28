@@ -79,6 +79,7 @@ public:
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
     std::pair<int, int> nbr_criticality(int color, int vertex);
+    int enemy_atari_size(int color, int vertex);
     int count_pliberties(const int i);
     int count_rliberties(const int i);
     bool check_losing_ladder(const int color, const int vtx, int branching = 0);

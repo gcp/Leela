@@ -2095,6 +2095,22 @@ int FastBoard::minimum_elib_count(int color, int vertex) {
     return minlib;
 }
 
+int FastBoard::enemy_atari_size(const int color, const int vertex) {
+    int atari_size = 0;
+
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        if (m_square[ai] == !color) {
+            int lc = m_libs[m_parent[ai]];
+            if (lc <= 2) {
+                atari_size = std::max(string_size(ai), atari_size);
+            }
+        }
+    }
+
+    return atari_size;
+}
+
 // returns our lowest liberties, enemies lowest liberties
 // 8 is the maximum
 std::pair<int, int> FastBoard::nbr_criticality(int color, int vertex) {    
