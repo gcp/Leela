@@ -4,7 +4,7 @@ void convolve5(
                __global float * merge,
                __global const float * weights,
                __local float * channel_buff,
-               __local float * merge_buff,
+               __local float * row_buff,
                __private int chan_shift) {
 
     // cl::NDRange global(channels, outputs, row);
@@ -126,24 +126,55 @@ void convolve5(
             }
         }
         // End filter
-        merge_buff[ly * chan_buff_size + lx] = out;
-        barrier(CLK_LOCAL_MEM_FENCE);
+        row_buff[(ly * chan_buff_size + lx) * width + cw] = out;
+    }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    // lx = channels 2 or 8, ly = outputs 32
+    // repurpose the lx threads over columns now
+    // row_buff[32, 8|2]
+    if (chan_buff_size == 2) {
+        float val;
+        // 1-18
+        for (unsigned int cw = 0; cw + 1 < width; cw += 2) {
+            // lx = 0 and 1 //
+            val  = row_buff[(ly * 2 + 0) * width + cw + lx];
+            val += row_buff[(ly * 2 + 1) * width + cw + lx];
+            merge[(((c >> chan_shift) * height + row) * width + cw + lx) * outputs + o] = val;
+        }
+        // 19th
         if (lx == 0) {
-            float val;
-            if (chan_buff_size == 2) {
-                val  = merge_buff[ly * 2 + 0];
-                val += merge_buff[ly * 2 + 1];
-            } else {
-                val  = merge_buff[ly * 8 + 0];
-                val += merge_buff[ly * 8 + 1];
-                val += merge_buff[ly * 8 + 2];
-                val += merge_buff[ly * 8 + 3];
-                val += merge_buff[ly * 8 + 4];
-                val += merge_buff[ly * 8 + 5];
-                val += merge_buff[ly * 8 + 6];
-                val += merge_buff[ly * 8 + 7];
-            }
-            merge[(((c>>chan_shift) * height + row) * width + cw) * outputs + o] = val;
+            val  = row_buff[(ly * 2 + 0) * width + 18];
+            val += row_buff[(ly * 2 + 1) * width + 18];
+            merge[(((c >> chan_shift) * height + row) * width + 18) * outputs + o] = val;
+        }
+    } else {
+        float val;
+        // 1-16
+        for (unsigned int cw = 0; cw + 7 < width; cw += 8) {
+            // lx = 0 and 1 //
+            val  = row_buff[(ly * 8 + 0) * width + cw + lx];
+            val += row_buff[(ly * 8 + 1) * width + cw + lx];
+            val += row_buff[(ly * 8 + 2) * width + cw + lx];
+            val += row_buff[(ly * 8 + 3) * width + cw + lx];
+            val += row_buff[(ly * 8 + 4) * width + cw + lx];
+            val += row_buff[(ly * 8 + 5) * width + cw + lx];
+            val += row_buff[(ly * 8 + 6) * width + cw + lx];
+            val += row_buff[(ly * 8 + 7) * width + cw + lx];
+            merge[(((c >> chan_shift) * height + row) * width + cw + lx) * outputs + o] = val;
+        }
+        // 16th till 19
+        if (lx < 3) {
+            val  = row_buff[(ly * 8 + 0) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 1) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 2) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 3) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 4) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 5) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 6) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 7) * width + 16 + lx];
+            merge[(((c >> chan_shift) * height + row) * width + 16 + lx) * outputs + o] = val;
         }
     }
 }
@@ -154,7 +185,7 @@ void convolve3(
                __global float * merge,
                __global const float * weights,
                __local float * channel_buff,
-               __local float * merge_buff,
+               __local float * row_buff,
                __private int chan_shift) {
 
     // cl::NDRange global(channels, outputs, row);
@@ -240,24 +271,55 @@ void convolve3(
         out += channel_buff[fid + pad_width*2 + 1] * filter_buff[7];
         out += channel_buff[fid + pad_width*2 + 2] * filter_buff[8];
         // End filter
-        merge_buff[ly * chan_buff_size + lx] = out;
-        barrier(CLK_LOCAL_MEM_FENCE);
+        row_buff[(ly * chan_buff_size + lx) * width + cw] = out;
+    }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    // lx = channels 2 or 8, ly = outputs 32
+    // repurpose the lx threads over columns now
+    // row_buff[32, 8|2]
+    if (chan_buff_size == 2) {
+        float val;
+        // 1-18
+        for (unsigned int cw = 0; cw + 1 < width; cw += 2) {
+            // lx = 0 and 1 //
+            val  = row_buff[(ly * 2 + 0) * width + cw + lx];
+            val += row_buff[(ly * 2 + 1) * width + cw + lx];
+            merge[(((c >> chan_shift) * height + row) * width + cw + lx) * outputs + o] = val;
+        }
+        // 19th
         if (lx == 0) {
-            float val;
-            if (chan_buff_size == 2) {
-                val  = merge_buff[ly * 2 + 0];
-                val += merge_buff[ly * 2 + 1];
-            } else {
-                val  = merge_buff[ly * 8 + 0];
-                val += merge_buff[ly * 8 + 1];
-                val += merge_buff[ly * 8 + 2];
-                val += merge_buff[ly * 8 + 3];
-                val += merge_buff[ly * 8 + 4];
-                val += merge_buff[ly * 8 + 5];
-                val += merge_buff[ly * 8 + 6];
-                val += merge_buff[ly * 8 + 7];
-            }
-            merge[(((c>>chan_shift) * height + row) * width + cw) * outputs + o] = val;
+            val  = row_buff[(ly * 2 + 0) * width + 18];
+            val += row_buff[(ly * 2 + 1) * width + 18];
+            merge[(((c >> chan_shift) * height + row) * width + 18) * outputs + o] = val;
+        }
+    } else {
+        float val;
+        // 1-16
+        for (unsigned int cw = 0; cw + 7 < width; cw += 8) {
+            // lx = 0 and 1 //
+            val  = row_buff[(ly * 8 + 0) * width + cw + lx];
+            val += row_buff[(ly * 8 + 1) * width + cw + lx];
+            val += row_buff[(ly * 8 + 2) * width + cw + lx];
+            val += row_buff[(ly * 8 + 3) * width + cw + lx];
+            val += row_buff[(ly * 8 + 4) * width + cw + lx];
+            val += row_buff[(ly * 8 + 5) * width + cw + lx];
+            val += row_buff[(ly * 8 + 6) * width + cw + lx];
+            val += row_buff[(ly * 8 + 7) * width + cw + lx];
+            merge[(((c >> chan_shift) * height + row) * width + cw + lx) * outputs + o] = val;
+        }
+        // 16th till 19
+        if (lx < 3) {
+            val  = row_buff[(ly * 8 + 0) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 1) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 2) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 3) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 4) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 5) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 6) * width + 16 + lx];
+            val += row_buff[(ly * 8 + 7) * width + 16 + lx];
+            merge[(((c >> chan_shift) * height + row) * width + 16 + lx) * outputs + o] = val;
         }
     }
 }

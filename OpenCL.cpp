@@ -174,6 +174,9 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         stripSize = filter_size * width * sizeof(float);
     }
 
+    // Row buffer
+    size_t rowSize = channelGroup * outputGroup * width * sizeof(float);
+
     cl::Buffer bufferMerge = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
                                         mergeSize);
 
@@ -183,7 +186,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_convolve_kernel.setArg(1, bufferMerge);
     m_convolve_kernel.setArg(2, weights[0]);
     m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
-    m_convolve_kernel.setArg(4, cl::Local(channelGroup * outputGroup * sizeof(float)));
+    m_convolve_kernel.setArg(4, cl::Local(rowSize));
     m_convolve_kernel.setArg(5, channelShift);
 
     try {
