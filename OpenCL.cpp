@@ -148,7 +148,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     } while (channels % (1 << (channelShift + 1)) == 0);
     channelGroup = 1 << channelShift;*/
     int channelShift;
-    if (channels %  8 == 0) {
+    if (channels % 8 == 0) {
         channelGroup = 8;
         channelShift = 3;
     } else {

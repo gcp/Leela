@@ -112,13 +112,14 @@ void convolve5(
             out += channel_buff[fid + width*4 + 4] * *filter_idx++;
         } else {
             out = 0.0f;
-            for (int fw = fwstart; fw <= fwend; fw++) {
-                // "zero padding"
-                if ((unsigned)fw >= width) {
-                    filter_idx += filter_size;
-                    continue;
-                }
-                for (unsigned int fh = 0; fh < filter_size; fh++) {
+            for (unsigned int fh = 0; fh < filter_size; fh++) {
+                for (int fw = fwstart; fw <= fwend; fw++) {
+                    // "zero padding"
+                    if ((unsigned)fw >= width) {
+                        filter_idx++;
+                        continue;
+                    }
+
                     float input = channel_buff[(lx * filter_size + fh) * width + fw];
                     out += input * *filter_idx++;
                 }
