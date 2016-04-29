@@ -51,7 +51,7 @@ void convolve5(
                 }
             }
         }
-    } else if (ly < 19) {
+    } else if (outputs >= 19 && ly < 19) {
         // Every thread copies a column
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
@@ -201,6 +201,7 @@ void convolve3(
     const unsigned int ly = get_local_id(1);
 
     const unsigned int chan_buff_size = get_local_size(0);
+    const unsigned int out_buff_size  = get_local_size(1);
 
     const unsigned int width = 19;
     const unsigned int height = 19;
@@ -233,7 +234,7 @@ void convolve3(
                 channel_buff[(lx * filter_size + srow) * pad_width + w + extent] = val;
             }
         }
-    } else if (ly < 21) {
+    } else if (outputs >= 21 && ly < 21) {
         // Every thread copies a column
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
@@ -255,6 +256,8 @@ void convolve3(
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
+    unsigned int out_lane = 0;
+    unsigned int out_cw   = 0;
     for (unsigned int cw = 0; cw < width; cw++) {
         unsigned int fid = lx * strip_size + cw;
         float out;
@@ -271,55 +274,38 @@ void convolve3(
         out += channel_buff[fid + pad_width*2 + 1] * filter_buff[7];
         out += channel_buff[fid + pad_width*2 + 2] * filter_buff[8];
         // End filter
-        row_buff[(ly * chan_buff_size + lx) * width + cw] = out;
-    }
+        row_buff[(ly * chan_buff_size + lx) * 9 + out_lane] = out;
+        out_lane++;
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+        // Row buffer full or last lane?
+        if ((out_lane == chan_buff_size || (cw == width - 1))
+             && (lx < out_lane)) {
+            barrier(CLK_LOCAL_MEM_FENCE);
 
-    // lx = channels 2 or 8, ly = outputs 32
-    // repurpose the lx threads over columns now
-    // row_buff[32, 8|2]
-    if (chan_buff_size == 2) {
-        float val;
-        // 1-18
-        for (unsigned int cw = 0; cw + 1 < width; cw += 2) {
-            // lx = 0 and 1 //
-            val  = row_buff[(ly * 2 + 0) * width + cw + lx];
-            val += row_buff[(ly * 2 + 1) * width + cw + lx];
-            merge[(((c >> chan_shift) * height + row) * width + cw + lx) * outputs + o] = val;
-        }
-        // 19th
-        if (lx == 0) {
-            val  = row_buff[(ly * 2 + 0) * width + 18];
-            val += row_buff[(ly * 2 + 1) * width + 18];
-            merge[(((c >> chan_shift) * height + row) * width + 18) * outputs + o] = val;
-        }
-    } else {
-        float val;
-        // 1-16
-        for (unsigned int cw = 0; cw + 7 < width; cw += 8) {
-            // lx = 0 and 1 //
-            val  = row_buff[(ly * 8 + 0) * width + cw + lx];
-            val += row_buff[(ly * 8 + 1) * width + cw + lx];
-            val += row_buff[(ly * 8 + 2) * width + cw + lx];
-            val += row_buff[(ly * 8 + 3) * width + cw + lx];
-            val += row_buff[(ly * 8 + 4) * width + cw + lx];
-            val += row_buff[(ly * 8 + 5) * width + cw + lx];
-            val += row_buff[(ly * 8 + 6) * width + cw + lx];
-            val += row_buff[(ly * 8 + 7) * width + cw + lx];
-            merge[(((c >> chan_shift) * height + row) * width + cw + lx) * outputs + o] = val;
-        }
-        // 16th till 19
-        if (lx < 3) {
-            val  = row_buff[(ly * 8 + 0) * width + 16 + lx];
-            val += row_buff[(ly * 8 + 1) * width + 16 + lx];
-            val += row_buff[(ly * 8 + 2) * width + 16 + lx];
-            val += row_buff[(ly * 8 + 3) * width + 16 + lx];
-            val += row_buff[(ly * 8 + 4) * width + 16 + lx];
-            val += row_buff[(ly * 8 + 5) * width + 16 + lx];
-            val += row_buff[(ly * 8 + 6) * width + 16 + lx];
-            val += row_buff[(ly * 8 + 7) * width + 16 + lx];
-            merge[(((c >> chan_shift) * height + row) * width + 16 + lx) * outputs + o] = val;
+            // lx = channels 2 or 8, ly = outputs 32
+            // repurpose the lx threads over columns now
+            // row_buff[32, 8|2]
+            float val;
+            if (chan_buff_size == 2) {
+                // 1-18
+                // lx = 0 and 1 //
+                val  = row_buff[(ly * 2 + 0) * 3 + lx];
+                val += row_buff[(ly * 2 + 1) * 3 + lx];
+            } else {
+            // 1-16
+                // lx = 0 and 1 //
+                val  = row_buff[(ly * 8 + 0) * 9 + lx];
+                val += row_buff[(ly * 8 + 1) * 9 + lx];
+                val += row_buff[(ly * 8 + 2) * 9 + lx];
+                val += row_buff[(ly * 8 + 3) * 9 + lx];
+                val += row_buff[(ly * 8 + 4) * 9 + lx];
+                val += row_buff[(ly * 8 + 5) * 9 + lx];
+                val += row_buff[(ly * 8 + 6) * 9 + lx];
+                val += row_buff[(ly * 8 + 7) * 9 + lx];
+            }
+            merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
+            out_cw  += chan_buff_size;
+            out_lane = 0;
         }
     }
 }
