@@ -188,7 +188,7 @@ void convolve3(
     const unsigned int strip_size = filter_size * pad_width;
 
     // Copy the input channels (strips) locally
-    if (outputs < 19 && ly == 0) {
+    if (outputs < 21 && ly == 0) {
         // strip-row
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
@@ -202,19 +202,15 @@ void convolve3(
                 channel_buff[(lx * filter_size + srow) * pad_width + w + extent] = val;
             }
         }
-    } else if (ly < 19) {
+    } else if (ly < 21) {
         // Every thread copies a column
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
             float val = 0.0f;
-            if ((unsigned)in_row < height) {
-                val = in[(c * height + in_row) * width + ly];
+            if ((unsigned)in_row < height && ly >= 1 && ly <= 19) {
+                val = in[(c * height + in_row) * width + ly - 1];
             }
-            channel_buff[(lx * filter_size + srow) * pad_width + ly + extent] = val;
-            if (ly == 0) {
-                channel_buff[(lx * filter_size + srow) * pad_width + 0]             = 0.0f;
-                channel_buff[(lx * filter_size + srow) * pad_width + pad_width - 1] = 0.0f;
-            }
+            channel_buff[(lx * filter_size + srow) * pad_width + ly] = val;
         }
     }
 
