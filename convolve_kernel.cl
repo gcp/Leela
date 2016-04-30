@@ -21,6 +21,7 @@ void convolve5(
     const unsigned int ly = get_local_id(1);
 
     const unsigned int chan_buff_size = get_local_size(0);
+    const unsigned int out_buff_size  = get_local_size(1);
 
     const unsigned int filter_size = 5;
     const unsigned int filter_len = filter_size * filter_size;
@@ -37,7 +38,7 @@ void convolve5(
     const unsigned int strip_size = filter_size * width;
 
     // Copy the input channels (strips) locally
-    if (outputs < 19 && ly == 0) {
+    if (out_buff_size < 19 && ly == 0) {
         // strip-row
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
@@ -52,7 +53,7 @@ void convolve5(
                 }
             }
         }
-    } else if (outputs >= 19 && ly < 19) {
+    } else if (out_buff_size >= 19 && ly < 19) {
         // Every thread copies a column
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
@@ -181,6 +182,7 @@ void convolve3(
     const unsigned int ly = get_local_id(1);
 
     const unsigned int chan_buff_size = get_local_size(0);
+    const unsigned int out_buff_size  = get_local_size(1);
 
     const unsigned int width = 19;
     const unsigned int height = 19;
@@ -199,7 +201,7 @@ void convolve3(
     const unsigned int strip_size = filter_size * pad_width;
 
     // Copy the input channels (strips) locally
-    if (outputs < 21 && ly == 0) {
+    if (out_buff_size < 21 && ly == 0) {
         // strip-row
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
@@ -213,7 +215,7 @@ void convolve3(
                 channel_buff[(lx * filter_size + srow) * pad_width + w + extent] = val;
             }
         }
-    } else if (outputs >= 21 && ly < 21) {
+    } else if (out_buff_size >= 21 && ly < 21) {
         // Every thread copies a column
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
