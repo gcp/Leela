@@ -144,7 +144,19 @@ void SGFTree::populate_states(void) {
         std::istringstream strm(size);
         float komi;
         strm >> komi;
+        int handicap = m_state.get_handicap();
         m_state.init_game(m_state.board.get_boardsize(), komi);
+        m_state.set_handicap(handicap);
+    }
+
+    // handicap
+    it = m_properties.find("HA");
+    if (it != m_properties.end()) {
+        std::string size = it->second;
+        std::istringstream strm(size);
+        float handicap;
+        strm >> handicap;
+        m_state.set_handicap((int)handicap);
     }
 
     // handicap stone    

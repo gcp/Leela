@@ -615,7 +615,7 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
 }
 
 void Network::gather_features(FastState * state, NNPlanes & planes) {
-    planes.resize(22);
+    planes.resize(24);
     BoardPlane& empt_color = planes[0];
     BoardPlane& move_color = planes[1];
     BoardPlane& othr_color = planes[2];
@@ -627,17 +627,19 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
     BoardPlane& libs_2_e   = planes[8];
     BoardPlane& libs_3_e   = planes[9];
     BoardPlane& libs_4p_e  = planes[10];
-    BoardPlane& lastmoves  = planes[11];
-    BoardPlane& after_1    = planes[12];
-    BoardPlane& after_2    = planes[13];
-    BoardPlane& after_3    = planes[14];
-    BoardPlane& after_4p   = planes[15];
-    BoardPlane& after_1_e  = planes[16];
-    BoardPlane& after_2_e  = planes[17];
-    BoardPlane& after_3_e  = planes[18];
-    BoardPlane& after_4p_e = planes[19];
-    BoardPlane& ladder     = planes[20];
-    BoardPlane& komove     = planes[21];
+    BoardPlane& after_1    = planes[11];
+    BoardPlane& after_2    = planes[12];
+    BoardPlane& after_3    = planes[13];
+    BoardPlane& after_4p   = planes[14];
+    BoardPlane& after_1_e  = planes[15];
+    BoardPlane& after_2_e  = planes[16];
+    BoardPlane& after_3_e  = planes[17];
+    BoardPlane& after_4p_e = planes[18];
+    BoardPlane& ladder     = planes[19];
+    BoardPlane& komove     = planes[20];
+    BoardPlane& movehist1  = planes[21];
+    BoardPlane& movehist2  = planes[22];
+    BoardPlane& handicap   = planes[23];
 
     int tomove = state->get_to_move();
     // collect white, black occupation planes
@@ -720,11 +722,11 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
     if (state->get_last_move() > 0) {
         std::pair<int, int> lastmove = state->board.get_xy(state->get_last_move());
         int idx = lastmove.second * 19 + lastmove.first;
-        lastmoves[idx] = true;
+        movehist1[idx] = true;
         if (state->get_prevlast_move() > 0) {
             std::pair<int, int> prevlast = state->board.get_xy(state->get_prevlast_move());
             int idxp = prevlast.second * 19 + prevlast.first;
-            lastmoves[idxp] = true;
+            movehist2[idxp] = true;
         }
     }
 
@@ -732,6 +734,11 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
         std::pair<int, int> kosq = state->board.get_xy(state->get_komove());
         int idx = kosq.second * 19 + kosq.first;
         komove[idx] = true;
+    }
+
+    if (std::fabs(state->get_komi()) <= 0.5f
+        || state->get_handicap() != 0) {
+        handicap.set();
     }
 }
 
@@ -887,7 +894,7 @@ void Network::train_network(TrainVector& data,
             NNPlanes& nnplanes = position.second;
 
             caffe::Datum datum;
-            datum.set_channels(22);
+            datum.set_channels(nnplanes.size());
             datum.set_height(19);
             datum.set_width(19);
             // check whether to rotate the position

@@ -16,10 +16,10 @@
 // Move attributes
 class Network {
 public:
-    typedef std::bitset<19*19> BoardPlane;
-    typedef std::vector<BoardPlane> NNPlanes;
-    typedef std::pair<int, NNPlanes> TrainPosition;
-    typedef std::vector<TrainPosition> TrainVector;
+    using BoardPlane = std::bitset<19*19>;
+    using NNPlanes = std::vector<BoardPlane>;
+    using TrainPosition = std::pair<int, NNPlanes>;
+    using TrainVector = std::vector<TrainPosition>;
 
     std::vector<std::pair<float, int>> get_scored_moves(FastState * state);
     void initialize();
