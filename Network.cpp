@@ -8,6 +8,7 @@
 #include <fstream>
 #include <memory>
 #include <cmath>
+#include <array>
 #include <boost/utility.hpp>
 #include <boost/tr1/array.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -22,7 +23,8 @@
 using namespace caffe;
 #endif
 #ifdef USE_BLAS
-#include <cblas.h>
+//#include <cblas.h>
+#include <Accelerate.h>
 #include "Im2Col.h"
 #endif
 #ifdef USE_OPENCL
@@ -892,7 +894,8 @@ void Network::train_network(TrainVector& data,
             int symmetry;
             if (pass == 0) {
                 symmetry = Random::get_Rng()->randint(4);
-            } else if (pass == 1) {
+            } else {
+                assert(pass == 1);
                 symmetry = Random::get_Rng()->randint(4) + 4;
             }
             // store (rotated) move
