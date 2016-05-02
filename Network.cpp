@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <cmath>
 #include <boost/utility.hpp>
 #include <boost/tr1/array.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -441,7 +442,7 @@ void batchnorm(std::vector<float>& input,
     for (unsigned int c = 0; c < channels; ++c) {
         float mean = means[c] / scale[0];
         float variance = variances[c] / scale[0];
-        float scale_stddiv = 1.0f / sqrtf(variance);
+        float scale_stddiv = 1.0f / std::sqrtf(variance);
 
         float * out = &output[c * board_size];
         float const * in  = &input[c * board_size];

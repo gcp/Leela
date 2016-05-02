@@ -306,9 +306,9 @@ void OpenCL::initialize(void) {
     }
 
     cl::Platform::setDefault(best_platform);
-    std::cerr << "Selected " << best_platform.getInfo<CL_PLATFORM_NAME>()
+    std::cerr << "Selected platform: " << best_platform.getInfo<CL_PLATFORM_NAME>()
               << std::endl;
-    std::cerr << "Selected " << trim(best_device.getInfo<CL_DEVICE_NAME>())
+    std::cerr << "Selected device: " << trim(best_device.getInfo<CL_DEVICE_NAME>())
               << std::endl;
     std::cerr << "with OpenCL " << boost::format("%2.1f") % best_version
               << " capability" << std::endl;
