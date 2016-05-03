@@ -367,3 +367,29 @@ layer {
   # output
   top: "accuracy"
 }
+
+layer {
+  name: "accuracy2"
+  type: "Accuracy"
+  # input
+  bottom: "flatten_o2"
+  bottom: "label_move2_m"
+  include {
+    phase: TEST
+  }
+  # output
+  top: "accuracy2"
+}
+
+layer {
+  name: "accuracy3"
+  type: "Accuracy"
+  # input
+  bottom: "flatten_o3"
+  bottom: "label_move3_m"
+  include {
+    phase: TEST
+  }
+  # output
+  top: "accuracy3"
+}
