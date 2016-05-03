@@ -493,7 +493,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::unique_ptr<SGFTree> sgftree(new SGFTree);
         
         sgftree->load_from_file(filename);                
-        game = sgftree->get_mainline(movenum);
+        game = sgftree->follow_mainline_state(movenum);
         
         gtp_printf(id, "");
         return true;

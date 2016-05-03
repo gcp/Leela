@@ -7,6 +7,7 @@
 #include <list>
 #include <bitset>
 #include <memory>
+#include <array>
 #ifdef USE_CAFFE
 #include <caffe/caffe.hpp>
 #endif
@@ -18,7 +19,8 @@ class Network {
 public:
     using BoardPlane = std::bitset<19*19>;
     using NNPlanes = std::vector<BoardPlane>;
-    using TrainPosition = std::pair<int, NNPlanes>;
+    using PredMoves = std::array<int, 3>;
+    using TrainPosition = std::pair<PredMoves, NNPlanes>;
     using TrainVector = std::vector<TrainPosition>;
 
     std::vector<std::pair<float, int>> get_scored_moves(FastState * state);

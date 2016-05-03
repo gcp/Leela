@@ -3,14 +3,14 @@ layer {
   type: "Data"
   name: "data"
   # outputs
-  top: "data"
-  top: "label"
+  top: "data_unsliced"
+  top: "label_move1"
   include {
     phase: TRAIN
   }
   data_param {
     source: "leela_train"
-    batch_size: 128
+    batch_size: 64
     backend: LEVELDB
   }
 }
@@ -19,15 +19,29 @@ layer {
   type: "Data"
   name: "data"
   # outputs
-  top: "data"
-  top: "label"
+  top: "data_unsliced"
+  top: "label_move1"
   include {
     phase: TEST
   }
   data_param {
     source: "leela_test"
-    batch_size: 128
+    batch_size: 64
     backend: LEVELDB
+  }
+}
+
+layer {
+  name: "slicer_label"
+  type: "Slice"
+  bottom: "data_unsliced"
+  top: "data"
+  top: "label_move2"
+  top: "label_move3"
+  slice_param {
+    axis: 1
+    slice_point: 24
+    slice_point: 25
   }
 }
 
@@ -226,7 +240,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 1
+    num_output: 3
     kernel_size: 3
     pad: 1
     stride: 1
@@ -240,28 +254,113 @@ layer {
 }
 
 layer {
-  name: "flatten"
-  type: "Flatten"
+  name: "slicer_output"
+  type: "Slice"
   bottom: "conv5"
-  top: "flatten"
+  top: "conv5_o1"
+  top: "conv5_o2"
+  top: "conv5_o3"
+  slice_param {
+    axis: 1
+    slice_point: 1
+    slice_point: 2
+  }
+}
+
+layer {
+  name: "flatten_o1"
+  type: "Flatten"
+  bottom: "conv5_o1"
+  top: "flatten_o1"
+}
+
+layer {
+  name: "flatten_o2"
+  type: "Flatten"
+  bottom: "conv5_o2"
+  top: "flatten_o2"
+}
+
+layer {
+  name: "flatten_o3"
+  type: "Flatten"
+  bottom: "conv5_o3"
+  top: "flatten_o3"
+}
+
+layer {
+  name: "flatten_l2"
+  type: "Flatten"
+  bottom: "label_move2"
+  top: "label_move2_f"
+  flatten_param {
+    axis: 1
+  }
+}
+
+layer {
+  name: "argmax_l2"
+  type: "ArgMax"
+  bottom: "label_move2_f"
+  top: "label_move2_m"
+}
+
+layer {
+  name: "flatten_l3"
+  type: "Flatten"
+  bottom: "label_move3"
+  top: "label_move3_f"
+  flatten_param {
+    axis: 1
+  }
+}
+
+layer {
+  name: "argmax_l3"
+  type: "ArgMax"
+  bottom: "label_move3_f"
+  top: "label_move3_m"
 }
 
 layer {
   name: "loss"
   type: "SoftmaxWithLoss"
   # input
-  bottom: "flatten"
-  bottom: "label"
+  bottom: "flatten_o1"
+  bottom: "label_move1"
   # output
   top: "loss"
+  loss_weight: 0.5
+}
+
+layer {
+  name: "loss_2"
+  type: "SoftmaxWithLoss"
+  # input
+  bottom: "flatten_o2"
+  bottom: "label_move2_m"
+  # output
+  top: "loss_2"
+  loss_weight: 0.3
+}
+
+layer {
+  name: "loss_3"
+  type: "SoftmaxWithLoss"
+  # input
+  bottom: "flatten_o3"
+  bottom: "label_move3_m"
+  # output
+  top: "loss_3"
+  loss_weight: 0.2
 }
 
 layer {
   name: "accuracy"
   type: "Accuracy"
   # input
-  bottom: "flatten"
-  bottom: "label"
+  bottom: "flatten_o1"
+  bottom: "label_move1"
   include {
     phase: TEST
   }

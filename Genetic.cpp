@@ -274,7 +274,7 @@ void Genetic::genetic_split(std::string filename) {
         int counter = movecount - 7 - 1;
         bool written = false;
         
-        GameState game = sgftree->get_mainline();
+        GameState game = sgftree->follow_mainline_state();
         
         while (counter > 7 && !written) {                        
             for (int i = 0; i < 7; i++) {

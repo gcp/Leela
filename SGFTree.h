@@ -11,15 +11,16 @@
 class SGFTree {
 public:
     static const int EOT = 0;               // End-Of-Tree marker
-    
+
     SGFTree();
 
     KoState * get_state();
     KoState * get_state_from_mainline(unsigned int movenum = 999);
-    GameState get_mainline(unsigned int movenum = 999);
+    GameState follow_mainline_state(unsigned int movenum = 999);
+    std::vector<int> get_mainline();
     void load_from_file(std::string filename, int index = 0); 
     void load_from_string(std::string gamebuff);
-    
+
     int count_mainline_moves(void);
 
     void add_property(std::string property, std::string value); 
