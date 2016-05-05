@@ -444,7 +444,7 @@ void batchnorm(std::vector<float>& input,
     for (unsigned int c = 0; c < channels; ++c) {
         float mean = means[c] / scale[0];
         float variance = variances[c] / scale[0];
-        float scale_stddiv = 1.0f / std::sqrtf(variance);
+        float scale_stddiv = 1.0f / std::sqrt(variance);
 
         float * out = &output[c * board_size];
         float const * in  = &input[c * board_size];
