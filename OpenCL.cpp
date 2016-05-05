@@ -103,7 +103,7 @@ void OpenCL::batchnorm(int outputs,
     try {
         queue.enqueueNDRangeKernel(m_batchnorm_kernel, cl::NullRange,
                                    cl::NDRange(outputs, boardsize),
-                                   cl::NullRange);
+                                   cl::NDRange(std::min(8, outputs), 19));
     } catch (cl::Error &e) {
         std::cerr << "Error in convolve: " << e.what() << ": "
             << e.err() << std::endl;
@@ -119,6 +119,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     // fixed for 19x19
     constexpr int width = 19;
     constexpr int height = 19;
+    constexpr int boardsize = width * height;
     unsigned int filter_len = filter_size * filter_size;
 
     size_t inSize = width * height * channels * sizeof(float);
@@ -207,7 +208,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     try {
         queue.enqueueNDRangeKernel(m_merge_kernel, cl::NullRange,
-                                   cl::NDRange(outputs, 361),
+                                   cl::NDRange(outputs, boardsize),
                                    cl::NDRange(std::min(8, outputs), 19));
     } catch (cl::Error &e) {
         std::cerr << "Error in merge: " << e.what() << ": "
