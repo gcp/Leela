@@ -7,6 +7,8 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <cmath>
+#include <array>
 #include <boost/utility.hpp>
 #include <boost/tr1/array.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -21,7 +23,8 @@
 using namespace caffe;
 #endif
 #ifdef USE_BLAS
-#include <cblas.h>
+//#include <cblas.h>
+#include <Accelerate.h>
 #include "Im2Col.h"
 #endif
 #ifdef USE_OPENCL
@@ -441,7 +444,7 @@ void batchnorm(std::vector<float>& input,
     for (unsigned int c = 0; c < channels; ++c) {
         float mean = means[c] / scale[0];
         float variance = variances[c] / scale[0];
-        float scale_stddiv = 1.0f / sqrtf(variance);
+        float scale_stddiv = 1.0f / std::sqrtf(variance);
 
         float * out = &output[c * board_size];
         float const * in  = &input[c * board_size];
@@ -891,7 +894,8 @@ void Network::train_network(TrainVector& data,
             int symmetry;
             if (pass == 0) {
                 symmetry = Random::get_Rng()->randint(4);
-            } else if (pass == 1) {
+            } else {
+                assert(pass == 1);
                 symmetry = Random::get_Rng()->randint(4) + 4;
             }
             // store (rotated) move

@@ -131,6 +131,13 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     size_t rowGroup;
     size_t waveFronts;
 
+    cl::Kernel m_convolve_kernel;
+    if (filter_size == 3) {
+        m_convolve_kernel = m_convolve3_kernel;
+    } else {
+        m_convolve_kernel = m_convolve5_kernel;
+    }
+
     // Workgroup things
     outputGroup = std::min(outputs, 32);
     /*int maxShift = (int)std::floor(std::log2(256 / outputGroup));
@@ -141,7 +148,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     } while (channels % (1 << (channelShift + 1)) == 0);
     channelGroup = 1 << channelShift;*/
     int channelShift;
-    if (channels %  8 == 0) {
+    if (channels % 8 == 0) {
         channelGroup = 8;
         channelShift = 3;
     } else {
@@ -160,7 +167,15 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     size_t filtSize = outputGroup * channelGroup * filter_len * sizeof(float);
 
     // Copy the rows locally
-    size_t stripSize = filter_size * width * sizeof(float);
+    size_t stripSize;
+    if (filter_size == 3) {
+        stripSize = filter_size * (width + (filter_size - 1)) * sizeof(float);
+    } else {
+        stripSize = filter_size * width * sizeof(float);
+    }
+
+    size_t rowBuffer = std::min<size_t>(channelGroup, 7);
+    size_t rowSize = channelGroup * outputGroup * rowBuffer * sizeof(float);
 
     cl::Buffer bufferMerge = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
                                         mergeSize);
@@ -170,11 +185,10 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     m_convolve_kernel.setArg(0, bufferInput);
     m_convolve_kernel.setArg(1, bufferMerge);
     m_convolve_kernel.setArg(2, weights[0]);
-    m_convolve_kernel.setArg(3, filter_size);
-    m_convolve_kernel.setArg(4, cl::Local(stripSize * channelGroup * rowGroup));
-    m_convolve_kernel.setArg(5, cl::Local(filtSize));
-    m_convolve_kernel.setArg(6, cl::Local(channelGroup * outputGroup * sizeof(float)));
-    m_convolve_kernel.setArg(7, channelShift);
+    m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
+    m_convolve_kernel.setArg(4, channelShift);
+    m_convolve_kernel.setArg(5, cl::Local(rowSize));
+    m_convolve_kernel.setArg(6, rowBuffer);
 
     try {
         queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
@@ -292,9 +306,9 @@ void OpenCL::initialize(void) {
     }
 
     cl::Platform::setDefault(best_platform);
-    std::cerr << "Selected " << best_platform.getInfo<CL_PLATFORM_NAME>()
+    std::cerr << "Selected platform: " << best_platform.getInfo<CL_PLATFORM_NAME>()
               << std::endl;
-    std::cerr << "Selected " << trim(best_device.getInfo<CL_DEVICE_NAME>())
+    std::cerr << "Selected device: " << trim(best_device.getInfo<CL_DEVICE_NAME>())
               << std::endl;
     std::cerr << "with OpenCL " << boost::format("%2.1f") % best_version
               << " capability" << std::endl;
@@ -331,7 +345,8 @@ void OpenCL::initialize(void) {
     }
 
     // Make kernel
-    m_convolve_kernel = cl::Kernel(program, "convolve");
+    m_convolve3_kernel = cl::Kernel(program, "convolve3");
+    m_convolve5_kernel = cl::Kernel(program, "convolve5");
     m_merge_kernel = cl::Kernel(program, "merge");
     m_batchnorm_kernel = cl::Kernel(program, "batchnorm");
 

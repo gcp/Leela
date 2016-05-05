@@ -5,5 +5,8 @@
 
 - more likely to try self-atrai if mutual atari (and limit size of sa group?)
 
+- expand lastmoves into 2 planes
+- handicap plane
+
 32889856 training positions.
 1370412 testing positions.

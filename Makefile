@@ -31,13 +31,16 @@ asan:
 LIBS = -lpthread -lboost_thread -lboost_system
 #LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
 #LIBS += -lopenblas
-LIBS += -lOpenCL
+#LIBS += -lOpenCL
+LIBS += -framework Accelerate
+#LIBS += -framework OpenCL
 #LIBS += -lmkl_rt
 
 CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include
 CAFFE_LIB = $(CAFFE_BASE)/lib
 CXXFLAGS += -I$(CAFFE_INC) -I/usr/local/cuda/include
+CXXFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Headers
 LDFLAGS  += -L$(CAFFE_LIB)
 #LDFLAGS  += -L/opt/intel/mkl/lib/intel64/
 
@@ -45,7 +48,7 @@ CXXFLAGS += -I.
 CPPFLAGS += -MD -MP
 
 sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
-	  Ruleset.cpp TimeControl.cpp UCTSearch.cpp Attributes.cpp \
+	  TimeControl.cpp UCTSearch.cpp Attributes.cpp \
 	  GameState.cpp Leela.cpp PNNode.cpp SGFParser.cpp Timing.cpp \
 	  Utils.cpp FastBoard.cpp Genetic.cpp Matcher.cpp PNSearch.cpp \
 	  SGFTree.cpp TTable.cpp Zobrist.cpp FastState.cpp GTP.cpp \

@@ -72,7 +72,8 @@ private:
 
     static OpenCL* s_OpenCL;
 
-    cl::Kernel m_convolve_kernel;
+    cl::Kernel m_convolve3_kernel;
+    cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;
     cl::Kernel m_batchnorm_kernel;
 
