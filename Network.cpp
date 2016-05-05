@@ -616,30 +616,30 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
 
 void Network::gather_features(FastState * state, NNPlanes & planes) {
     planes.resize(24);
-    BoardPlane& empt_color = planes[0];
-    BoardPlane& move_color = planes[1];
-    BoardPlane& othr_color = planes[2];
-    BoardPlane& libs_1     = planes[3];
-    BoardPlane& libs_2     = planes[4];
-    BoardPlane& libs_3     = planes[5];
-    BoardPlane& libs_4p    = planes[6];
-    BoardPlane& libs_1_e   = planes[7];
-    BoardPlane& libs_2_e   = planes[8];
-    BoardPlane& libs_3_e   = planes[9];
-    BoardPlane& libs_4p_e  = planes[10];
-    BoardPlane& after_1    = planes[11];
-    BoardPlane& after_2    = planes[12];
-    BoardPlane& after_3    = planes[13];
-    BoardPlane& after_4p   = planes[14];
-    BoardPlane& after_1_e  = planes[15];
-    BoardPlane& after_2_e  = planes[16];
-    BoardPlane& after_3_e  = planes[17];
-    BoardPlane& after_4p_e = planes[18];
-    BoardPlane& ladder     = planes[19];
-    BoardPlane& komove     = planes[20];
-    BoardPlane& movehist1  = planes[21];
-    BoardPlane& movehist2  = planes[22];
-    BoardPlane& has_komi   = planes[23];
+    BoardPlane& empt_color   = planes[0];
+    BoardPlane& move_color   = planes[1];
+    BoardPlane& othr_color   = planes[2];
+    BoardPlane& libs_1       = planes[3];
+    BoardPlane& libs_2       = planes[4];
+    BoardPlane& libs_3       = planes[5];
+    BoardPlane& libs_4p      = planes[6];
+    BoardPlane& libs_1_e     = planes[7];
+    BoardPlane& libs_2_e     = planes[8];
+    BoardPlane& libs_3_e     = planes[9];
+    BoardPlane& libs_4p_e    = planes[10];
+    BoardPlane& after_1      = planes[11];
+    BoardPlane& after_2      = planes[12];
+    BoardPlane& after_3      = planes[13];
+    BoardPlane& after_4p     = planes[14];
+    BoardPlane& after_1_e    = planes[15];
+    BoardPlane& after_2_e    = planes[16];
+    BoardPlane& after_3_e    = planes[17];
+    BoardPlane& after_4p_e   = planes[18];
+    BoardPlane& ladder       = planes[19];
+    BoardPlane& komove       = planes[20];
+    BoardPlane& movehist1    = planes[21];
+    BoardPlane& movehist2    = planes[22];
+    BoardPlane& has_komi     = planes[23];
 
     bool white_has_komi = true;
     if (std::fabs(state->get_komi()) <= 0.5f
