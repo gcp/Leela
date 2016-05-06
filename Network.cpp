@@ -440,10 +440,12 @@ void batchnorm(std::vector<float>& input,
     constexpr unsigned int width = 19;
     constexpr unsigned int height = 19;
     constexpr unsigned int board_size = width * height;
+    constexpr float epsilon = 1e-5;
 
     for (unsigned int c = 0; c < channels; ++c) {
         float mean = means[c] / scale[0];
         float variance = variances[c] / scale[0];
+        variance += epsilon;
         float scale_stddiv = 1.0f / std::sqrt(variance);
 
         float * out = &output[c * board_size];
