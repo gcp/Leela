@@ -9,6 +9,7 @@
 #include <CL/cl2.hpp>
 
 #include <boost/tr1/array.hpp>
+#include <boost/thread/tss.hpp>
 #include <vector>
 
 class Layer {
@@ -21,9 +22,20 @@ private:
     std::vector<cl::Buffer> weights;
 };
 
+class ThreadData {
+    friend class OpenCL;
+private:
+    cl::CommandQueue m_commandqueue;
+    cl::Kernel m_convolve3_kernel;
+    cl::Kernel m_convolve5_kernel;
+    cl::Kernel m_merge_kernel;
+    cl::Kernel m_batchnorm_kernel;
+};
+
 class OpenCL {
 public:
     static OpenCL* get_OpenCL(void);
+    void thread_init(void);
 
     template <unsigned long M, unsigned long V>
     void push_batchnorm(std::tr1::array<float, M> & means,
@@ -71,13 +83,9 @@ private:
                    cl::Buffer & output, std::vector<cl::Buffer>& weights);
 
     static OpenCL* s_OpenCL;
-
-    cl::Kernel m_convolve3_kernel;
-    cl::Kernel m_convolve5_kernel;
-    cl::Kernel m_merge_kernel;
-    cl::Kernel m_batchnorm_kernel;
-
+    boost::thread_specific_ptr<ThreadData> thread_data;
     std::vector<Layer> m_layers;
+    cl::Program m_program;
 
     bool m_init_ok{false};
 };

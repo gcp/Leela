@@ -16,6 +16,9 @@
 #include "MCOTable.h"
 #ifdef USE_NETS
 #include "Network.h"
+#ifdef USE_OPENCL
+#include "OpenCL.h"
+#endif
 #endif
 
 using namespace Utils;
@@ -502,7 +505,8 @@ bool UCTSearch::is_running() {
     return m_run;
 }
 
-void UCTWorker::operator()() {    
+void UCTWorker::operator()() {
+    OpenCL::get_OpenCL()->thread_init();
     do {
         KoState currstate = m_rootstate;
         m_search->play_simulation(currstate, m_root); 
@@ -580,8 +584,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     m_run = true;
 #ifdef USE_SMP
-    //int cpus = SMP::get_num_cpus();
-    int cpus = 4;
+    int cpus = SMP::get_num_cpus();
+    //int cpus = 4;
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
@@ -711,8 +715,8 @@ void UCTSearch::ponder() {
 #ifdef USE_SEARCH
     m_run = true;
 #ifdef USE_SMP
-    //int cpus = SMP::get_num_cpus();
-    int cpus = 4;     
+    int cpus = SMP::get_num_cpus();
+    //int cpus = 4;
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));

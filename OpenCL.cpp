@@ -28,7 +28,24 @@ OpenCL * OpenCL::get_OpenCL(void) {
     return s_OpenCL;
 }
 
-OpenCL::OpenCL() {
+OpenCL::OpenCL(void) {
+}
+
+void OpenCL::thread_init() {
+    if (!thread_data.get()) {
+        auto data = new ThreadData;
+
+        // Make kernels
+        data->m_convolve3_kernel = cl::Kernel(m_program, "convolve3");
+        data->m_convolve5_kernel = cl::Kernel(m_program, "convolve5");
+        data->m_merge_kernel = cl::Kernel(m_program, "merge");
+        data->m_batchnorm_kernel = cl::Kernel(m_program, "batchnorm");
+
+        data->m_commandqueue = cl::CommandQueue(cl::Context::getDefault(),
+            cl::Device::getDefault());
+
+        thread_data.reset(data);
+    }
 }
 
 void OpenCL::add_weights(int layer,
@@ -76,7 +93,7 @@ void OpenCL::forward(std::vector<float>& input,
                      layer.weights);
         }
     }
-    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
     // last layer is always a convolution, so output is in tmp
     queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, &output[0]);
@@ -92,16 +109,18 @@ void OpenCL::batchnorm(int outputs,
     constexpr int height = 19;
     constexpr int boardsize = width * height;
 
-    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
 
-    m_batchnorm_kernel.setArg(0, bufferInput);
-    m_batchnorm_kernel.setArg(1, bufferOutput);
-    m_batchnorm_kernel.setArg(2, weights[0]);
-    m_batchnorm_kernel.setArg(3, weights[1]);
-    m_batchnorm_kernel.setArg(4, weights[2]);
+    cl::Kernel batchnorm_kernel = thread_data.get()->m_batchnorm_kernel;
+
+    batchnorm_kernel.setArg(0, bufferInput);
+    batchnorm_kernel.setArg(1, bufferOutput);
+    batchnorm_kernel.setArg(2, weights[0]);
+    batchnorm_kernel.setArg(3, weights[1]);
+    batchnorm_kernel.setArg(4, weights[2]);
 
     try {
-        queue.enqueueNDRangeKernel(m_batchnorm_kernel, cl::NullRange,
+        queue.enqueueNDRangeKernel(batchnorm_kernel, cl::NullRange,
                                    cl::NDRange(outputs, boardsize),
                                    cl::NDRange(std::min(8, outputs), 19));
     } catch (cl::Error &e) {
@@ -134,9 +153,9 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     cl::Kernel m_convolve_kernel;
     if (filter_size == 3) {
-        m_convolve_kernel = m_convolve3_kernel;
+        m_convolve_kernel = thread_data.get()->m_convolve3_kernel;
     } else {
-        m_convolve_kernel = m_convolve5_kernel;
+        m_convolve_kernel = thread_data.get()->m_convolve5_kernel;
     }
 
     // Workgroup things
@@ -181,7 +200,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     cl::Buffer bufferMerge = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
                                         mergeSize);
 
-    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
 
     m_convolve_kernel.setArg(0, bufferInput);
     m_convolve_kernel.setArg(1, bufferMerge);
@@ -201,13 +220,15 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         return;
     }
 
-    m_merge_kernel.setArg(0, bufferMerge);
-    m_merge_kernel.setArg(1, bufferOutput);
-    m_merge_kernel.setArg(2, weights[1]);
-    m_merge_kernel.setArg(3, channels >> channelShift);
+    cl::Kernel merge_kernel = thread_data.get()->m_merge_kernel;
+
+    merge_kernel.setArg(0, bufferMerge);
+    merge_kernel.setArg(1, bufferOutput);
+    merge_kernel.setArg(2, weights[1]);
+    merge_kernel.setArg(3, channels >> channelShift);
 
     try {
-        queue.enqueueNDRangeKernel(m_merge_kernel, cl::NullRange,
+        queue.enqueueNDRangeKernel(merge_kernel, cl::NullRange,
                                    cl::NDRange(outputs, boardsize),
                                    cl::NDRange(std::min(8, outputs), 19));
     } catch (cl::Error &e) {
@@ -318,18 +339,14 @@ void OpenCL::initialize(void) {
     cl::Context::setDefault(context);
     cl::Device::setDefault(best_device);
 
-    cl::CommandQueue::setDefault(cl::CommandQueue(context, best_device));
-
     // Read source file
     std::ifstream sourceFile("convolve_kernel.cl", std::ifstream::in);
     std::string sourceCode(std::istreambuf_iterator<char>(sourceFile),
                            (std::istreambuf_iterator<char>()));
 
     // Make program of the source code in the context
-    cl::Program program;
-
     try {
-        program = cl::Program(sourceCode);
+        m_program = cl::Program(sourceCode);
     } catch (cl::Error &e) {
         std::cerr << "Error getting kernels: " << e.what() << ": "
                   << e.err() << std::endl;
@@ -337,19 +354,15 @@ void OpenCL::initialize(void) {
     }
     // Build program for these specific devices
     try {
-        program.build("-cl-mad-enable -cl-fast-relaxed-math -cl-no-signed-zeros");
+        m_program.build("-cl-mad-enable -cl-fast-relaxed-math -cl-no-signed-zeros");
     } catch (cl::Error &e) {
         std::cerr << "Error building: " << std::endl
-                  << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault())
+                  << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault())
                   << std::endl;
         return;
     }
 
-    // Make kernel
-    m_convolve3_kernel = cl::Kernel(program, "convolve3");
-    m_convolve5_kernel = cl::Kernel(program, "convolve5");
-    m_merge_kernel = cl::Kernel(program, "merge");
-    m_batchnorm_kernel = cl::Kernel(program, "batchnorm");
+    thread_init();
 
     m_init_ok = true;
 }

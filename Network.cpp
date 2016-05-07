@@ -478,8 +478,8 @@ void softmax(std::vector<float>& input,
     }
 }
 
-std::vector<Network::net_scored_move> Network::get_scored_moves(FastState * state) {
-    std::vector<net_scored_move> result;
+std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
+    std::vector<scored_node> result;
     if (state->board.get_boardsize() != 19) {
         return result;
     }
@@ -590,12 +590,12 @@ std::vector<Network::net_scored_move> Network::get_scored_moves(FastState * stat
     }
     std::stable_sort(result.rbegin(), result.rend());
 
-    show_heatmap(state, result);
+    //show_heatmap(state, result);
 
     return result;
 }
 
-void Network::show_heatmap(FastState * state, std::vector<net_scored_move>& moves) {
+void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
     int idx = 0;
 
     std::vector<std::string> display_map;
@@ -605,8 +605,8 @@ void Network::show_heatmap(FastState * state, std::vector<net_scored_move>& move
         for (unsigned int x = 0; x < 19; x++) {
             int vtx = state->board.get_vertex(x, y);
 
-            auto item = std::find_if(moves.begin(), moves.end(),
-                [&vtx](net_scored_move const & item) {
+            auto item = std::find_if(moves.cbegin(), moves.cend(),
+                [&vtx](scored_node const & item) {
                 return item.second == vtx;
             });
 

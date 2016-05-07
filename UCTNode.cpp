@@ -17,6 +17,9 @@
 #include "UCTSearch.h"
 #include "Utils.h"
 #include "Matcher.h"
+#ifdef USE_NETS
+#include "Network.h"
+#endif
 
 using namespace Utils;
 
@@ -51,57 +54,65 @@ SMP::Mutex & UCTNode::get_mutex() {
     return m_nodemutex;
 }
 
-int UCTNode::create_children(FastState & state, bool scorepass) {   
+int UCTNode::create_children(FastState & state, bool scorepass) {
     // acquire the lock
-    SMP::Lock lock(get_mutex());    
+    SMP::Lock lock(get_mutex());
     // check whether somebody beat us to it
-    if (has_children()) {        
+    if (has_children()) {
         return 0;
-    }                      
-    
-    FastBoard & board = state.board;      
+    }
 
+    FastBoard & board = state.board;
+
+#ifdef USE_NETS
+    std::vector<Network::scored_node> nodelist;
+
+    if (state.get_passes() < 2) {
+        nodelist = Network::get_Network()->get_scored_moves(&state);
+        nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
+    }
+#else
     typedef std::pair<float, int> scored_node;
     std::vector<scored_node> nodelist;
     std::vector<int> territory = state.board.influence();
     std::vector<int> moyo = state.board.moyo();
 
-    if (state.get_passes() < 2) {             
-        for (int i = 0; i < board.get_empty(); i++) {  
+    if (state.get_passes() < 2) {
+        for (int i = 0; i < board.get_empty(); i++) {
             int vertex = board.get_empty_vertex(i);
-            
-            assert(board.get_square(vertex) == FastBoard::EMPTY);             
-            
-            // add and score a node        
+
+            assert(board.get_square(vertex) == FastBoard::EMPTY);
+
+            // add and score a node
             if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
                 if (!board.is_suicide(vertex, board.get_to_move())) {
                     float score = state.score_move(territory, moyo, vertex);
                     nodelist.push_back(std::make_pair(score, vertex));
                 }
             }
-        }      
-            
-        float passscore;    
-        if (scorepass) {                
-            passscore = state.score_move(territory, moyo, FastBoard::PASS);                
+        }
+
+        float passscore;
+        if (scorepass) {
+            passscore = state.score_move(territory, moyo, FastBoard::PASS);
         } else {
             passscore = 0;
         }
-        nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));        
-    }    
-    
+        nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
+    }
+#endif
+
     // sort (this will reverse scores, but linking is backwards too)
-    std::stable_sort(nodelist.begin(), nodelist.end());        
-    
+    std::stable_sort(nodelist.begin(), nodelist.end());
+
     // link the nodes together, we only really link the last few
-    std::vector<scored_node>::const_iterator it; 
     const int maxchilds = 35;   // about 35 -> 4M visits
     int childrenseen = 0;
     int childrenadded = 0;
-    int totalchildren = nodelist.size();       
-        
-    for (it = nodelist.begin(); it != nodelist.end(); ++it) {        
-        if (totalchildren - childrenseen <= maxchilds) {                        
+    int totalchildren = nodelist.size();
+
+    for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
+        if (totalchildren - childrenseen <= maxchilds) {
             UCTNode * vtx = new UCTNode(it->second, it->first);
 	    if (it->second != FastBoard::PASS) {
 	        // atari giving
@@ -114,10 +125,10 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
 	        }
 	    }
             link_child(vtx);
-            childrenadded++;                        
-        } 
+            childrenadded++;
+        }
         childrenseen++;
-    }          
+    }
 
     return childrenadded;
 }
