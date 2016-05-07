@@ -506,7 +506,9 @@ bool UCTSearch::is_running() {
 }
 
 void UCTWorker::operator()() {
+#ifdef USE_OPENCL
     OpenCL::get_OpenCL()->thread_init();
+#endif
     do {
         KoState currstate = m_rootstate;
         m_search->play_simulation(currstate, m_root); 
