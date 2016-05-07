@@ -236,6 +236,7 @@
     <ClInclude Include="..\KoState.h" />
     <ClInclude Include="..\Matcher.h" />
     <ClInclude Include="..\MCOTable.h" />
+    <ClInclude Include="..\Network.h" />
     <ClInclude Include="..\OpenCL.h" />
     <ClInclude Include="..\Playout.h" />
     <ClInclude Include="..\PNNode.h" />

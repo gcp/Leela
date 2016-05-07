@@ -478,8 +478,8 @@ void softmax(std::vector<float>& input,
     }
 }
 
-std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) {
-    std::vector<std::pair<float, int>> result;
+std::vector<Network::net_scored_move> Network::get_scored_moves(FastState * state) {
+    std::vector<net_scored_move> result;
     if (state->board.get_boardsize() != 19) {
         return result;
     }
@@ -579,16 +579,8 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
 #endif
     int idx = 0;
 
-    std::vector<std::string> display_map;
-    std::string line;
-
     for (auto it = outputs.begin(); it != outputs.end(); ++it, ++idx) {
         float val = *it;
-        line += boost::str(boost::format("%3d ") % int(val * 1000));
-        if (idx % 19 == 18) {
-            display_map.push_back(line);
-            line.clear();
-        }
         int x = idx % 19;
         int y = idx / 19;
         int vtx = state->board.get_vertex(x, y);
@@ -598,22 +590,51 @@ std::vector<std::pair<float, int>> Network::get_scored_moves(FastState * state) 
     }
     std::stable_sort(result.rbegin(), result.rend());
 
+    show_heatmap(state, result);
+
+    return result;
+}
+
+void Network::show_heatmap(FastState * state, std::vector<net_scored_move>& moves) {
+    int idx = 0;
+
+    std::vector<std::string> display_map;
+    std::string line;
+
+    for (unsigned int y = 0; y < 19; y++) {
+        for (unsigned int x = 0; x < 19; x++) {
+            int vtx = state->board.get_vertex(x, y);
+
+            auto item = std::find_if(moves.begin(), moves.end(),
+                [&vtx](net_scored_move const & item) {
+                return item.second == vtx;
+            });
+
+            float score = item->first;
+            assert(vtx == item->second);
+
+            line += boost::str(boost::format("%3d ") % int(score * 1000));
+            if (x == 18) {
+                display_map.push_back(line);
+                line.clear();
+            }
+        }
+    }
+
     for (int i = display_map.size() - 1; i >= 0; --i) {
         std::cerr << display_map[i] << std::endl;
     }
 
     float cum = 0.0f;
     size_t tried = 0;
-    while (cum < 0.85f && tried < result.size()) {
-        if (result[tried].first < 0.01f) break;
-        std::cerr << boost::format("%1.3f (") % result[tried].first
-                  << state->board.move_to_text(result[tried].second)
-                  << ")" << std::endl;
-        cum += result[tried].first;
+    while (cum < 0.85f && tried < moves.size()) {
+        if (moves[tried].first < 0.01f) break;
+        std::cerr << boost::format("%1.3f (") % moves[tried].first
+            << state->board.move_to_text(moves[tried].second)
+            << ")" << std::endl;
+        cum += moves[tried].first;
         tried++;
     }
-
-    return result;
 }
 
 void Network::gather_features(FastState * state, NNPlanes & planes) {

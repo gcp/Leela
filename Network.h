@@ -21,9 +21,12 @@ public:
     typedef std::pair<int, NNPlanes> TrainPosition;
     typedef std::vector<TrainPosition> TrainVector;
 
-    std::vector<std::pair<float, int>> get_scored_moves(FastState * state);
+    using net_scored_move = std::pair<float, int>;
+
+    std::vector<net_scored_move> get_scored_moves(FastState * state);
     void initialize();
     void benchmark(FastState * state);
+    void show_heatmap(FastState * state, std::vector<net_scored_move>& moves);
     void autotune_from_file(std::string filename);
     static Network* get_Network(void);
 
