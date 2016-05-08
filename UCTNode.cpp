@@ -110,22 +110,26 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
     int childrenseen = 0;
     int childrenadded = 0;
     int totalchildren = nodelist.size();
+    if (totalchildren == 0) return 0;
+    float best_probability = nodelist.back().first;
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
-        if (totalchildren - childrenseen <= maxchilds) {
-            UCTNode * vtx = new UCTNode(it->second, it->first);
-	    if (it->second != FastBoard::PASS) {
-	        // atari giving
-	        // was == 2, == 1
-	        if (state.board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
-                    vtx->set_extend(5);
-	        }
-	        if (state.board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
-                    vtx->set_extend(5);
-	        }
-	    }
-            link_child(vtx);
-            childrenadded++;
+        if (it->first * 10.0f >= best_probability) {
+            if (totalchildren - childrenseen <= maxchilds) {
+                UCTNode * vtx = new UCTNode(it->second, it->first);
+                if (it->second != FastBoard::PASS) {
+                    // atari giving
+                // was == 2, == 1
+                    if (state.board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
+                        vtx->set_extend(20);
+                    }
+                    if (state.board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
+                        vtx->set_extend(20);
+                    }
+                }
+                link_child(vtx);
+                childrenadded++;
+            }
         }
         childrenseen++;
     }
@@ -249,7 +253,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;    
     float best_value = -1000.0f;                                
 
-    int childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
+    //int childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
     int parentvisits      = 1;   // avoid logparent being illegal
 
     SMP::Lock lock(get_mutex());
@@ -260,7 +264,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
     while (child != NULL && !child->valid()) {
         child = child->m_nextsibling;
     }
-    while (child != NULL && childcount < childbound) {                        
+    while (child != NULL) {                        
         parentvisits      += child->get_visits();        
         child = child->m_nextsibling;                   
         // make sure we are at a valid successor        
@@ -278,7 +282,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
     while (child != NULL && !child->valid()) {
         child = child->m_nextsibling;
     }
-    while (child != NULL && childcount < childbound) {
+    while (child != NULL) {
         float value;
         float uctvalue;                                                             
         float patternbonus;                   
@@ -291,10 +295,10 @@ UCTNode* UCTNode::uct_select_child(int color) {
                 //float uct = 0.15f * sqrtf(childrate);
                 
                 uctvalue = winrate;// + uct;  
-                patternbonus = sqrtf((child->get_score() * 0.005f) / child->get_visits());
+                patternbonus = sqrtf((child->get_score()) / child->get_visits());
             } else {
                 uctvalue = 1.1f;                                                                                
-                patternbonus = sqrtf(child->get_score() * 0.005f);
+                patternbonus = sqrtf(child->get_score());
             }                                                    
             
             // RAVE part                                                                                
@@ -308,7 +312,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
         } else {
             /// XXX: can't happen due to priors
             assert(false);                        
-            patternbonus = (child->get_score() * 0.01f);            
+            patternbonus = child->get_score();            
             value = 1.1f;  
         }                
                         

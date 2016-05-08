@@ -241,7 +241,7 @@ sub final_score {
 sub timeset {
 	my $self = shift;
 	
-	GTP::exec_cmd($self->{in}, $self->{out}, "time_settings 180 0 0");
+	GTP::exec_cmd($self->{in}, $self->{out}, "time_settings 300 0 0");
 	
 	return;
 }
