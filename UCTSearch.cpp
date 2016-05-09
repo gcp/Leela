@@ -103,50 +103,50 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     // sort children, put best move on top
     m_root.sort_children(color);
 
-    UCTNode * bestnode = parent.get_first_child();   
-    
+    UCTNode * bestnode = parent.get_first_child();
+
     if (bestnode->first_visit()) {
         return;
-    }    
+    }
 
     int movecount = 0;
     UCTNode * node = bestnode;
-    
-    while (node != NULL) {            
-        if (++movecount > 6) break;            
-        
+
+    while (node != NULL) {
+        if (++movecount > 6) break;
+
         std::string tmp = state.move_to_text(node->get_move());
-        
-        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) PV: %s ", 
-                  tmp.c_str(), 
-                  node->get_visits(), 
+
+        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: %s ",
+                  tmp.c_str(),
+                  node->get_visits(),
                   node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                   node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
+                  node->get_score() * 100.0f,
                   node->get_ravevisits(),
                   tmp.c_str());
-        
-        
-        GameState tmpstate = state;  
-        
-        tmpstate.play_move(node->get_move());                
-        myprintf(get_pv(tmpstate, *node).c_str()); 
-                              
-        myprintf("\n");   
-        
-        node = node->get_sibling();                                                                       
-    }     
-        
+
+        GameState tmpstate = state;
+
+        tmpstate.play_move(node->get_move());
+        myprintf(get_pv(tmpstate, *node).c_str());
+
+        myprintf("\n");
+
+        node = node->get_sibling();
+    }
+
     std::string tmp = state.move_to_text(bestnode->get_move());
     myprintf("====================================\n"
-             "%d visits, score %5.2f%% (from %5.2f%%) PV: ",   
-             bestnode->get_visits(), 
+             "%d visits, score %5.2f%% (from %5.2f%%) PV: ",
+             bestnode->get_visits(),
              bestnode->get_visits() > 0 ? bestnode->get_winrate(color)*100.0f : 0.0f,
-             parent.get_winrate(color) * 100.0f,             
-             tmp.c_str());    
-                      
-    GameState tmpstate = state;                                
-    myprintf(get_pv(tmpstate, parent).c_str()); 
-                          
+             parent.get_winrate(color) * 100.0f,
+             tmp.c_str());
+
+    GameState tmpstate = state;
+    myprintf(get_pv(tmpstate, parent).c_str());
+
     myprintf("\n");
 }
 
@@ -172,7 +172,8 @@ bool UCTSearch::allow_early_exit() {
     UCTNode * second = first->get_sibling();    
     if (second != NULL) {
         if (second->first_visit()) {
-            return false;
+            // Stil not visited? Seems unlikely to happen then.
+            return true;
         }
     } else {
         // We have a first move, but no sibling, after

@@ -110,35 +110,31 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
         nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
     }
 #endif
-
     // sort (this will reverse scores, but linking is backwards too)
     std::stable_sort(nodelist.begin(), nodelist.end());
 
     // link the nodes together, we only really link the last few
     const int maxchilds = 35;   // about 35 -> 4M visits
-    int childrenseen = 0;
     int childrenadded = 0;
+    int childrenseen = 0;
     int totalchildren = nodelist.size();
     if (totalchildren == 0) return 0;
-    float best_probability = nodelist.back().first;
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
-        if (it->first * 10.0f >= best_probability) {
-            if (totalchildren - childrenseen <= maxchilds) {
-                UCTNode * vtx = new UCTNode(it->second, it->first);
-                if (it->second != FastBoard::PASS) {
-                    // atari giving
-                    // was == 2, == 1
-                    if (state.board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
-                        vtx->set_extend(UCTSearch::MATURE_TRESHOLD / 3);
-                    }
-                    if (state.board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
-                        vtx->set_extend(UCTSearch::MATURE_TRESHOLD / 3);
-                    }
+        if (totalchildren - childrenseen <= maxchilds) {
+            UCTNode * vtx = new UCTNode(it->second, it->first);
+            if (it->second != FastBoard::PASS) {
+                // atari giving
+                // was == 2, == 1
+                if (state.board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
+                    vtx->set_extend(UCTSearch::MATURE_TRESHOLD / 3);
                 }
-                link_child(vtx);
-                childrenadded++;
+                if (state.board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
+                    vtx->set_extend(UCTSearch::MATURE_TRESHOLD / 3);
+                }
             }
+            link_child(vtx);
+            childrenadded++;
         }
         childrenseen++;
     }
@@ -258,88 +254,104 @@ int UCTNode::do_extend() const {
     return m_extend;
 }
 
-UCTNode* UCTNode::uct_select_child(int color) {                                   
-    UCTNode * best = NULL;    
-    float best_value = -1000.0f;                                
-
-    //int childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
+UCTNode* UCTNode::uct_select_child(int color) {
+    UCTNode * best = NULL;
+    float best_value = -1000.0f;
+#ifdef USE_NETS
+    int childbound = 35;
+    float best_probability = 0.0f;
+#else
+    int childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
+#endif
     int parentvisits      = 1;   // avoid logparent being illegal
 
     SMP::Lock lock(get_mutex());
 
     int childcount = 0;
     UCTNode * child = m_firstchild;
-    // make sure we are at a valid successor        
+    // make sure we are at a valid successor
     while (child != NULL && !child->valid()) {
         child = child->m_nextsibling;
     }
-    while (child != NULL) {                        
-        parentvisits      += child->get_visits();        
-        child = child->m_nextsibling;                   
-        // make sure we are at a valid successor        
+    while (child != NULL && childcount < childbound) {
+        parentvisits      += child->get_visits();
+        child = child->m_nextsibling;
+        // make sure we are at a valid successor
         while (child != NULL && !child->valid()) {
             child = child->m_nextsibling;
-        }        
+        }
         childcount++;
     }
 
     //float logparent = logf((float)parentvisits) / logf(3.0f);
 
     childcount = 0;
-    child = m_firstchild;            
-    // make sure we are at a valid successor        
+    child = m_firstchild;
+    // make sure we are at a valid successor
     while (child != NULL && !child->valid()) {
         child = child->m_nextsibling;
     }
-    while (child != NULL) {
+#ifdef USE_NETS
+    // first move
+    if (child != NULL) {
+        best_probability = child->get_score();
+    }
+#endif
+    while (child != NULL && childcount < childbound) {
         float value;
-        float uctvalue;                                                             
-        float patternbonus;                   
+        float uctvalue;
+        float patternbonus;
 
-        if (child->get_ravevisits() > 0) {        
+#ifdef USE_NETS
+        if (child->get_score() * 10.0f < best_probability) {
+            break;
+        }
+#endif
+
+        if (child->get_ravevisits() > 0) {
             if (!child->first_visit()) {
                 // UCT part
-                float winrate   = child->get_winrate(color);     
-                //float childrate = logparent / child->get_visits();                                                                                                        
+                float winrate   = child->get_winrate(color);
+                //float childrate = logparent / child->get_visits();
                 //float uct = 0.15f * sqrtf(childrate);
-                
+
                 uctvalue = winrate;// + uct;  
                 patternbonus = sqrtf((child->get_score()) / child->get_visits());
             } else {
-                uctvalue = 1.1f;                                                                                
+                uctvalue = 1.1f;
                 patternbonus = sqrtf(child->get_score());
-            }                                                    
-            
-            // RAVE part                                                                                
-            float ravewinrate = child->get_raverate();            
-            float ravevalue = ravewinrate + patternbonus;             
+            }
+
+            // RAVE part
+            float ravewinrate = child->get_raverate();
+            float ravevalue = ravewinrate + patternbonus;
             float beta = std::max(0.0, 1.0 - log(1.0 + child->get_visits()) / 11.0);
-               
+
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
-            
+
             assert(value > -1000.0f);
         } else {
             /// XXX: can't happen due to priors
-            assert(false);                        
-            patternbonus = child->get_score();            
-            value = 1.1f;  
-        }                
-                        
+            assert(false);
+            patternbonus = child->get_score();
+            value = 1.1f;
+        }
+
         if (value > best_value) {
             best_value = value;
             best = child;
-        }                        
-        
-        child = child->m_nextsibling;     
-        // make sure we are at a valid successor        
+        }
+
+        child = child->m_nextsibling;
+        // make sure we are at a valid successor
         while (child != NULL && !child->valid()) {
             child = child->m_nextsibling;
         }
         childcount++;
-    }           
-    
-    assert(best != NULL);         
-    
+    }
+
+    assert(best != NULL);
+
     return best;
 }
 
@@ -422,6 +434,7 @@ void UCTNode::sort_children(int color) {
     }        
     
     // reverse sort, because list reconstruction is backwards
+    // XXX can be combined?
     std::stable_sort(tmp.begin(), tmp.end(), NodeComp(maxvisits));        
     std::reverse(tmp.begin(), tmp.end());
     
