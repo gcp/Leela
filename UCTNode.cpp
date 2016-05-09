@@ -65,10 +65,19 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
     FastBoard & board = state.board;
 
 #ifdef USE_NETS
+    std::vector<Network::scored_node> raw_netlist;
     std::vector<Network::scored_node> nodelist;
 
     if (state.get_passes() < 2) {
-        nodelist = Network::get_Network()->get_scored_moves(&state);
+        raw_netlist = Network::get_Network()->get_scored_moves(&state);
+        for (auto it = raw_netlist.begin(); it != raw_netlist.end(); ++it) {
+            int vertex = it->second;
+            if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
+                if (!board.is_suicide(vertex, board.get_to_move())) {
+                    nodelist.push_back(*it);
+                }
+            }
+        }
         nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
     }
 #else
@@ -119,12 +128,12 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
                 UCTNode * vtx = new UCTNode(it->second, it->first);
                 if (it->second != FastBoard::PASS) {
                     // atari giving
-                // was == 2, == 1
+                    // was == 2, == 1
                     if (state.board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
-                        vtx->set_extend(20);
+                        vtx->set_extend(UCTSearch::MATURE_TRESHOLD / 3);
                     }
                     if (state.board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
-                        vtx->set_extend(20);
+                        vtx->set_extend(UCTSearch::MATURE_TRESHOLD / 3);
                     }
                 }
                 link_child(vtx);

@@ -589,7 +589,6 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
             result.push_back(std::make_pair(val, vtx));
         }
     }
-    std::stable_sort(result.rbegin(), result.rend());
 
     //show_heatmap(state, result);
 
@@ -597,8 +596,6 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
 }
 
 void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
-    int idx = 0;
-
     std::vector<std::string> display_map;
     std::string line;
 
@@ -625,6 +622,8 @@ void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
     for (int i = display_map.size() - 1; i >= 0; --i) {
         std::cerr << display_map[i] << std::endl;
     }
+
+    std::stable_sort(moves.rbegin(), moves.rend());
 
     float cum = 0.0f;
     size_t tried = 0;
