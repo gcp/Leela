@@ -87,6 +87,7 @@ private:
     std::vector<Layer> m_layers;
     cl::Program m_program;
 
+    int m_wavefront_size{0};
     bool m_init_ok{false};
 };
 

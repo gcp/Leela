@@ -131,6 +131,10 @@ void OpenCL::batchnorm(int outputs,
 
 }
 
+static int rounddown_pow2(int val) {
+    return (int)std::floor(std::log2(val));
+}
+
 void OpenCL::convolve(int filter_size, int channels, int outputs,
                       cl::Buffer& bufferInput,
                       cl::Buffer& bufferOutput,
@@ -158,15 +162,6 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         m_convolve_kernel = thread_data.get()->m_convolve5_kernel;
     }
 
-    // Workgroup things
-    outputGroup = std::min(outputs, 32);
-    /*int maxShift = (int)std::floor(std::log2(256 / outputGroup));
-    int channelShift = 0;
-    do {
-        channelShift++;
-        if (channelShift >= maxShift) break;
-    } while (channels % (1 << (channelShift + 1)) == 0);
-    channelGroup = 1 << channelShift;*/
     int channelShift;
     if (channels % 8 == 0) {
         channelGroup = 8;
@@ -176,6 +171,12 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         channelShift = 1;
     }
     rowGroup = 1;
+    // Workgroup things
+    if (m_wavefront_size >= 64) {
+        outputGroup = std::min(outputs, 32);
+    } else {
+        outputGroup = std::min(outputs, 1 << rounddown_pow2(m_wavefront_size / 2));
+    }
 
     // Total output size after reducing
     size_t outSize = width * height * outputs * sizeof(float);
@@ -363,6 +364,11 @@ void OpenCL::initialize(void) {
     }
 
     thread_init();
+
+    m_wavefront_size =
+        thread_data.get()->m_convolve3_kernel.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(
+            best_device);
+    std::cerr << "Wavefront/Warp size: " << m_wavefront_size << std::endl;
 
     m_init_ok = true;
 }
