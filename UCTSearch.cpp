@@ -175,7 +175,9 @@ bool UCTSearch::allow_early_exit() {
             return false;
         }
     } else {
-        return false;
+        // We have a first move, but no sibling, after
+        // already searching half the time
+        return true;
     }
     
     double n1 = first->get_visits();
