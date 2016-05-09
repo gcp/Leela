@@ -113,13 +113,13 @@ void OpenCL::batchnorm(int outputs,
 
     cl::Kernel batchnorm_kernel = thread_data.get()->m_batchnorm_kernel;
 
-    batchnorm_kernel.setArg(0, bufferInput);
-    batchnorm_kernel.setArg(1, bufferOutput);
-    batchnorm_kernel.setArg(2, weights[0]);
-    batchnorm_kernel.setArg(3, weights[1]);
-    batchnorm_kernel.setArg(4, weights[2]);
-
     try {
+        batchnorm_kernel.setArg(0, bufferInput);
+        batchnorm_kernel.setArg(1, bufferOutput);
+        batchnorm_kernel.setArg(2, weights[0]);
+        batchnorm_kernel.setArg(3, weights[1]);
+        batchnorm_kernel.setArg(4, weights[2]);
+
         queue.enqueueNDRangeKernel(batchnorm_kernel, cl::NullRange,
                                    cl::NDRange(outputs, boardsize),
                                    cl::NDRange(std::min(8, outputs), 19));
@@ -194,7 +194,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         stripSize = filter_size * width * sizeof(float);
     }
 
-    size_t rowBuffer = std::min<size_t>(channelGroup, 7);
+    int rowBuffer = std::min<int>(channelGroup, 7);
     size_t rowSize = channelGroup * outputGroup * rowBuffer * sizeof(float);
 
     cl::Buffer bufferMerge = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
@@ -202,15 +202,15 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     cl::CommandQueue queue = thread_data.get()->m_commandqueue;
 
-    m_convolve_kernel.setArg(0, bufferInput);
-    m_convolve_kernel.setArg(1, bufferMerge);
-    m_convolve_kernel.setArg(2, weights[0]);
-    m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
-    m_convolve_kernel.setArg(4, channelShift);
-    m_convolve_kernel.setArg(5, cl::Local(rowSize));
-    m_convolve_kernel.setArg(6, rowBuffer);
-
     try {
+        m_convolve_kernel.setArg(0, bufferInput);
+        m_convolve_kernel.setArg(1, bufferMerge);
+        m_convolve_kernel.setArg(2, weights[0]);
+        m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
+        m_convolve_kernel.setArg(4, channelShift);
+        m_convolve_kernel.setArg(5, cl::Local(rowSize));
+        m_convolve_kernel.setArg(6, rowBuffer);
+
         queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
                                    cl::NDRange(channels, outputs, 19),
                                    cl::NDRange(channelGroup, outputGroup, rowGroup));
@@ -222,12 +222,12 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     cl::Kernel merge_kernel = thread_data.get()->m_merge_kernel;
 
-    merge_kernel.setArg(0, bufferMerge);
-    merge_kernel.setArg(1, bufferOutput);
-    merge_kernel.setArg(2, weights[1]);
-    merge_kernel.setArg(3, channels >> channelShift);
-
     try {
+        merge_kernel.setArg(0, bufferMerge);
+        merge_kernel.setArg(1, bufferOutput);
+        merge_kernel.setArg(2, weights[1]);
+        merge_kernel.setArg(3, channels >> channelShift);
+
         queue.enqueueNDRangeKernel(merge_kernel, cl::NullRange,
                                    cl::NDRange(outputs, boardsize),
                                    cl::NDRange(std::min(8, outputs), 19));
