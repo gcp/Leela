@@ -122,8 +122,8 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
                   node->get_visits(),
                   node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                   node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
-                  node->get_score() * 100.0f,
                   node->get_ravevisits(),
+                  node->get_score() * 100.0f,
                   tmp.c_str());
 
         GameState tmpstate = state;
