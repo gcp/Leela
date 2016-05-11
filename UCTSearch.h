@@ -20,12 +20,12 @@ public:
     static const passflag_t NORMAL   = 0;
     static const passflag_t NOPASS   = 1 << 0;
     static const passflag_t NORESIGN = 1 << 1;
-    
+
     /*
         Don't expand children until at least this many
         visits happened.
     */
-    static const int MATURE_TRESHOLD = 300;
+    static const int MATURE_TRESHOLD = 500;
 
     /*
         Maximum size of the tree in memory.

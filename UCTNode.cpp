@@ -303,7 +303,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
         float patternbonus;
 
 #ifdef USE_NETS
-        if (child->get_score() * 10.0f < best_probability) {
+        if (child->get_score() * 5.0f < best_probability) {
             break;
         }
 #endif
