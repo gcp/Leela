@@ -10,11 +10,11 @@
 #endif
 
 namespace SMP {
-    int get_num_cpus();      
+    int get_num_cpus();
 
     class Mutex {
-    public:         
-        Mutex();   
+    public:
+        Mutex();
         ~Mutex();
         friend class Lock;
     private:
@@ -30,9 +30,10 @@ namespace SMP {
     class Lock {
     public:
         explicit Lock(Mutex & m);
-        ~Lock();        
+        ~Lock();
+        void unlock();
     private:
-        Mutex * m_mutex;    
+        Mutex * m_mutex;
     };
 }
 

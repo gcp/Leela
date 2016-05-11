@@ -18,7 +18,7 @@
 
 #define PROGRAM_NAME "Leela"
 //#define PROGRAM_VERSION "0.5.1. I will resign when I am lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I am won. You can download me for free at https://sjeng.org/leela"
-#define PROGRAM_VERSION "0.6.0g"
+#define PROGRAM_VERSION "0.6.1 a"
 
 /* Features */
 #define USE_NETS

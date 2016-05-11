@@ -315,10 +315,6 @@ float FastState::calculate_mc_score(void) {
     return board.final_mc_score(m_komi + m_handicap);
 }
 
-float FastState::percentual_area_score() {
-    return board.percentual_area_score(m_komi + m_handicap);
-}
-
 int FastState::get_last_move(void) {
     return m_lastmove;
 }

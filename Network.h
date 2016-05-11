@@ -7,6 +7,10 @@
 #include <list>
 #include <bitset>
 #include <memory>
+#ifdef USE_OPENCL
+#include <boost/atomic.hpp>
+class UCTNode;
+#endif
 #ifdef USE_CAFFE
 #include <caffe/caffe.hpp>
 #endif
@@ -23,7 +27,14 @@ public:
 
     using scored_node = std::pair<float, int>;
 
+    static const int CHANNELS = 22;
+    static const int MAX_CHANNELS = 160;
+
     std::vector<scored_node> get_scored_moves(FastState * state);
+#ifdef USE_OPENCL
+    void async_scored_moves(boost::atomic<int> * nodecount,
+                            FastState * state, UCTNode * node);
+#endif
     void initialize();
     void benchmark(FastState * state);
     void show_heatmap(FastState * state, std::vector<scored_node>& moves);

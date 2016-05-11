@@ -41,7 +41,7 @@ SMP::Lock::Lock(Mutex & m) {
 #endif
 }
 
-SMP::Lock::~Lock() {
+void SMP::Lock::unlock() {
 #ifdef USE_SMP
 #ifdef WIN32
     m_mutex->m_lock = 0;
@@ -49,6 +49,10 @@ SMP::Lock::~Lock() {
     pthread_spin_unlock(&m_mutex->m_lock);
 #endif
 #endif
+}
+
+SMP::Lock::~Lock() {
+    unlock();
 }
 
 int SMP::get_num_cpus() {

@@ -23,7 +23,6 @@ public:
     void run(FastState & state, bool resigning = true);
     float get_score();
     float get_territory();
-    void set_final_score(float score);
     bool passthrough(int color, int vertex);
 private:
     bool m_run;

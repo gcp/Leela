@@ -30,6 +30,7 @@ using namespace caffe;
 #endif
 #ifdef USE_OPENCL
 #include "OpenCL.h"
+#include "UCTNode.h"
 #endif
 
 #include "SGFTree.h"
@@ -479,6 +480,90 @@ void softmax(std::vector<float>& input,
     }
 }
 
+#ifdef USE_OPENCL
+class CallbackData {
+public:
+    boost::atomic<int> * m_nodecount;
+    FastState m_state;
+    UCTNode * m_node;
+    boost::atomic<bool> * m_thread_result_outstanding;
+    std::vector<float> m_output_data;
+    std::vector<float> m_input_data;
+};
+
+static void CL_CALLBACK forward_cb(cl_event event, cl_int status, void* data) {
+    CallbackData * cb_data = static_cast<CallbackData*>(data);
+
+    // Mark the kernels as available
+    *cb_data->m_thread_result_outstanding = false;
+
+    const int width = 19;
+    const int height = 19;
+    std::vector<float> softmax_data(width * height);
+    softmax(cb_data->m_output_data, softmax_data);
+    std::vector<float>& outputs = softmax_data;
+
+    int idx = 0;
+    std::vector<Network::scored_node> result;
+
+    for (auto it = outputs.begin(); it != outputs.end(); ++it, ++idx) {
+        float val = *it;
+        int x = idx % 19;
+        int y = idx / 19;
+        int vtx = cb_data->m_state.board.get_vertex(x, y);
+        if (cb_data->m_state.board.get_square(vtx) == FastBoard::EMPTY) {
+            result.push_back(std::make_pair(val, vtx));
+        }
+    }
+
+    cb_data->m_node->expansion_cb(cb_data->m_nodecount, cb_data->m_state,
+                                  result);
+
+    delete cb_data;
+}
+
+void Network::async_scored_moves(boost::atomic<int> * nodecount,
+                                 FastState * state,
+                                 UCTNode * node) {
+    if (state->board.get_boardsize() != 19) {
+        return;
+    }
+
+    CallbackData * cb_data = new CallbackData();
+
+    NNPlanes planes;
+    gather_features(state, planes);
+
+    const int channels = CHANNELS;
+    const int width = 19;
+    const int height = 19;
+    const int max_channels = MAX_CHANNELS;
+
+    cb_data->m_nodecount = nodecount;
+    cb_data->m_state = *state;
+    cb_data->m_node = node;
+    cb_data->m_input_data.resize(max_channels * 19 * 19);
+    cb_data->m_output_data.resize(max_channels * 19 * 19);
+    cb_data->m_thread_result_outstanding =
+        OpenCL::get_OpenCL()->get_thread_result_outstanding();
+
+    for (int c = 0; c < channels; ++c) {
+        for (int h = 0; h < height; ++h) {
+            for (int w = 0; w < width; ++w) {
+                cb_data->m_input_data[(c * height + h) * width + w] =
+                    (float)planes[c][h * 19 + w];
+            }
+        }
+    }
+
+    void * data = static_cast<void*>(cb_data);
+
+    OpenCL::get_OpenCL()->forward_async(cb_data->m_input_data,
+                                        cb_data->m_output_data,
+                                        &forward_cb, data);
+}
+#endif
+
 std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
     std::vector<scored_node> result;
     if (state->board.get_boardsize() != 19) {
@@ -498,10 +583,10 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
     assert(height == state->board.get_boardsize());
     float* input_data = input_layer->mutable_cpu_data();
 #else
-    const int channels = 22;
+    const int channels = CHANNELS;
     const int width = 19;
     const int height = 19;
-    const int max_channels = 160;
+    const int max_channels = MAX_CHANNELS;
     std::vector<float> input_data(max_channels * width * height);
     std::vector<float> output_data(max_channels * width * height);
     std::vector<float> softmax_data(width * height);

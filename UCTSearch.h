@@ -4,6 +4,7 @@
 #include <memory>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
+#include <boost/atomic.hpp>
 
 #include "GameState.h"
 #include "UCTNode.h"
@@ -25,7 +26,7 @@ public:
         Don't expand children until at least this many
         visits happened.
     */
-    static const int MATURE_TRESHOLD = 300;
+    static const int MATURE_TRESHOLD = 15;
 
     /*
         Maximum size of the tree in memory.
@@ -56,15 +57,15 @@ private:
 
     GameState & m_rootstate;
     UCTNode m_root;
-    int m_nodes;
+    boost::atomic<int> m_nodes;
+    boost::atomic<bool> m_run;
     int m_maxvisits;
     float m_score;
-    bool m_run;
 
     // For external control
     bool m_hasrunflag;
-    bool * m_runflag;        
-    
+    bool * m_runflag;
+
     // Special modes
     bool m_analyzing;
     bool m_quiet;

@@ -5,10 +5,15 @@
 
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/atomic.hpp>
 
 #include "SMP.h"
 #include "GameState.h"
 #include "Playout.h"
+#include "Network.h"
+#ifdef USE_OPENCL
+#include "Network.h"
+#endif
 
 class UCTNode {
 public:
@@ -21,11 +26,20 @@ public:
     float get_winrate(int tomove) const;
     float get_raverate() const;
     double get_blackwins() const;
-    int create_children(FastState & state, bool scorepass = false);
+    void create_children(boost::atomic<int> & nodecount,
+                         FastState & state, bool at_root = false);
+#ifdef USE_OPENCL
+    void expansion_cb(boost::atomic<int> * nodecount,
+                      FastState & state,
+                      std::vector<Network::scored_node> raw_netlist);
+#endif
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
     void invalidate();
     bool valid();
+    bool should_expand() {
+        return m_visits > m_expand_cnt;
+    }
     int get_move() const;
     int get_visits() const;
     int get_ravevisits() const;
@@ -35,7 +49,7 @@ public:
     void set_move(int move);
     void set_visits(int visits);
     void set_blackwins(double wins);
-    void set_extend(int runs);
+    void set_expand_cnt(int runs);
     void update(Playout & gameresult, int color);
     void updateRAVE(Playout & playout, int color);
     UCTNode* uct_select_child(int color);
@@ -47,8 +61,10 @@ public:
     SMP::Mutex & get_mutex();
 
 private:
-
     void link_child(UCTNode * newchild);
+    void link_nodelist(boost::atomic<int> & nodecount,
+                       FastState & state,
+                       std::vector<Network::scored_node> nodes);
 
     // Tree data
     UCTNode* m_firstchild;
@@ -66,7 +82,8 @@ private:
     // alive (superko)
     bool m_valid;
     // extend node
-    int m_extend;
+    int m_expand_cnt;
+    bool m_is_expanding;
     // mutex
     SMP::Mutex m_nodemutex;
 };

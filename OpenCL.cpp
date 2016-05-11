@@ -31,6 +31,14 @@ OpenCL * OpenCL::get_OpenCL(void) {
 OpenCL::OpenCL(void) {
 }
 
+bool OpenCL::thread_can_issue() {
+    return !thread_data.get()->m_result_outstanding;
+}
+
+boost::atomic<bool> * OpenCL::get_thread_result_outstanding() {
+    return &thread_data.get()->m_result_outstanding;
+}
+
 void OpenCL::thread_init() {
     if (!thread_data.get()) {
         auto data = new ThreadData;
@@ -63,8 +71,51 @@ void OpenCL::add_weights(int layer,
     m_layers.back().weights.push_back(bufferWeights);
 }
 
+void OpenCL::forward_async(std::vector<float>& input, std::vector<float>& output,
+    void (CL_CALLBACK * pfn_notify) (cl_event event, cl_int command_exec_status, void * user_data),
+    void * data) {
+    thread_data.get()->m_result_outstanding = true;
+    size_t inSize = sizeof(float) * input.size();
+    size_t outSize = sizeof(float) * output.size();
+    size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
+
+    cl::Buffer inBuffer = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE
+        | CL_MEM_HOST_NO_ACCESS,
+        inSize, &input[0]);
+    cl::Buffer tmpBuffer = cl::Buffer(CL_MEM_READ_WRITE
+        | CL_MEM_HOST_NO_ACCESS,
+        outSize);
+    cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+
+    for (auto & layer : m_layers) {
+        if (layer.is_batchnorm) {
+            batchnorm(layer.outputs,
+                tmpBuffer,
+                inBuffer,
+                layer.weights);
+        } else {
+            // convolution
+            convolve(layer.filter_size,
+                layer.channels,
+                layer.outputs,
+                inBuffer,
+                tmpBuffer,
+                layer.weights);
+        }
+    }
+
+    cl::Event callbackEvent;
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
+    // last layer is always a convolution, so output is in tmp
+    queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
+    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, &output[0],
+                            nullptr, &callbackEvent);
+    callbackEvent.setCallback(CL_COMPLETE, pfn_notify, data);
+}
+
 void OpenCL::forward(std::vector<float>& input,
                      std::vector<float>& output) {
+    thread_data.get()->m_result_outstanding = true;
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
@@ -98,6 +149,7 @@ void OpenCL::forward(std::vector<float>& input,
     queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, &output[0]);
     queue.finish();
+    thread_data.get()->m_result_outstanding = false;
 }
 
 void OpenCL::batchnorm(int outputs,

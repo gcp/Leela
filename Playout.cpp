@@ -31,49 +31,44 @@ float Playout::get_territory() {
     return m_territory;
 }
 
-void Playout::set_final_score(float score) {
-    m_run = true;
-    m_score = score;
-}
-
 void Playout::run(FastState & state, bool resigning) {
-    assert(!m_run);        
+    assert(!m_run);
 
     const int boardsize = state.board.get_boardsize();
-        
+
     const int resign = (boardsize * boardsize) / 3;
-    const int playoutlen = (boardsize * boardsize) * 2;        
-    
+    const int playoutlen = (boardsize * boardsize) * 2;
+
     int counter = 0;
-    
-    // do the main loop        
-    do {                                    
+
+    // do the main loop
+    while (state.get_passes() < 2
+        && state.get_movenum() < playoutlen
+        && (!resigning || abs(state.estimate_mc_score()) < resign)) {
         int vtx = state.play_random_move();
 
         if (counter < 30 && vtx != FastBoard::PASS) {
             int color = !state.get_to_move();
-                        
+
             if (!m_sq[!color][vtx]) {
                 m_sq[color][vtx] = true;
-            }                
-        }           
-        
-        counter++;                 
-    } while (state.get_passes() < 2 
-             && state.get_movenum() < playoutlen
-             && (!resigning || abs(state.estimate_mc_score()) < resign));
+            }
+        }
+
+        counter++;
+    }
 
     // get ownership info
     bitboard_t blackowns;
 
     for (int i = 0; i < boardsize; i++) {
         for (int j = 0; j < boardsize; j++) {
-            int vtx = state.board.get_vertex(i, j);            
+            int vtx = state.board.get_vertex(i, j);
             if (state.board.get_square(vtx) == FastBoard::BLACK) {
-                blackowns[vtx] = true;                
+                blackowns[vtx] = true;
             } else if (state.board.get_square(vtx) == FastBoard::EMPTY) {
                 if (state.board.is_eye(FastBoard::BLACK, vtx)) {
-                    blackowns[vtx] = true;                       
+                    blackowns[vtx] = true;
                 }
             }
         }

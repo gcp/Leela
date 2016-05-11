@@ -34,7 +34,6 @@ public:
     
     float calculate_mc_score();
     int estimate_mc_score();
-    float percentual_area_score();
     float final_score();
     std::vector<int> final_score_map();
     std::vector<bool> mark_dead();

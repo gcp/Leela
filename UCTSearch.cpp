@@ -43,54 +43,52 @@ void UCTSearch::set_runflag(bool * flag) {
 Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     const int color = currstate.get_to_move();
     const uint64 hash = currstate.board.get_hash();
-    Playout noderesult;  
-        
-    TTable::get_TT()->sync(hash, node);        
+    Playout noderesult;
+
+    TTable::get_TT()->sync(hash, node);
 
     bool has_children = node->has_children();
 
-    if (has_children == false && node->get_visits() <= node->do_extend()) {           
-        noderesult.run(currstate);                
-    } else {                
-        if (has_children == false && m_nodes < MAX_TREE_SIZE) {                
-            m_nodes += node->create_children(currstate);
-        }        
-                
-        if (node->has_children() == true) {                        
-            UCTNode * next = node->uct_select_child(color); 
-            
+    if (has_children == false && !node->should_expand()) {
+        noderesult.run(currstate);
+    } else {
+        if (has_children == false && m_nodes < MAX_TREE_SIZE) {
+             node->create_children(m_nodes, currstate);
+        }
+
+        if (node->has_children() == true) {
+            UCTNode * next = node->uct_select_child(color);
+
             if (next != NULL) {
-                int move = next->get_move();            
-                
-                if (move != FastBoard::PASS) {                
+                int move = next->get_move();
+
+                if (move != FastBoard::PASS) {
                     currstate.play_move(move);
-                    
-                    if (!currstate.superko()) {                    
-                        noderesult = play_simulation(currstate, next);                                        
-                    } else {                                            
-                        next->invalidate();                       
-                        noderesult.run(currstate);                         
-                    }                
-                } else {                
-                    currstate.play_pass();                
-                    noderesult = play_simulation(currstate, next);                
-                }       
+
+                    if (!currstate.superko()) {
+                        noderesult = play_simulation(currstate, next);
+                    } else {
+                        next->invalidate();
+                        noderesult.run(currstate);
+                    }
+                } else {
+                    currstate.play_pass();
+                    noderesult = play_simulation(currstate, next);
+                }
             } else {
                 noderesult.run(currstate);
             }
-            
-            node->updateRAVE(noderesult, color);                        
-        } else if (m_nodes >= MAX_TREE_SIZE) {
+
+            node->updateRAVE(noderesult, color);
+        } else {
             noderesult.run(currstate);
-        } else {                     
-            noderesult.set_final_score(currstate.percentual_area_score()); 
-        }        
-    }             
-      
-    node->update(noderesult, !color);    
-    TTable::get_TT()->update(hash, node);    
-    
-    return noderesult;  
+        }
+    }
+
+    node->update(noderesult, !color);
+    TTable::get_TT()->update(hash, node);
+
+    return noderesult;
 }
 
 void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
@@ -514,8 +512,8 @@ void UCTWorker::operator()() {
 #endif
     do {
         KoState currstate = m_rootstate;
-        m_search->play_simulation(currstate, m_root); 
-    } while(m_search->is_running()); 
+        m_search->play_simulation(currstate, m_root);
+    } while(m_search->is_running());
 }
 
 float UCTSearch::get_score() {
@@ -590,7 +588,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 #ifdef USE_SEARCH
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)
-    m_nodes += m_root.create_children(m_rootstate, true);
+    m_root.create_children(m_nodes, m_rootstate, true);
     m_root.kill_superkos(m_rootstate);
 
     m_run = true;
