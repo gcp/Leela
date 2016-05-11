@@ -150,6 +150,35 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     myprintf("\n");
 }
 
+bool UCTSearch::easy_move() {
+#ifdef USE_NETS
+    if (m_rootstate.get_last_move() == FastBoard::PASS) {
+        return false;
+    }
+
+    float best_probability = 0.0f;
+
+    // do we have statistics on the moves?
+    UCTNode * first = m_root.get_first_child();
+    if (first != NULL) {
+        best_probability = first->get_score();
+    } else {
+        return false;
+    }
+
+    UCTNode * second = first->get_sibling();
+    if (second != NULL) {
+        float second_probability = second->get_score();
+        if (second_probability * 5.0f < best_probability) {
+            return true;
+        }
+    } else {
+        return true;
+    }
+#endif
+    return false;
+}
+
 bool UCTSearch::allow_early_exit() {    
     int color = m_rootstate.board.get_to_move();    
     
@@ -530,7 +559,6 @@ int UCTSearch::think(int color, passflag_t passflag) {
     Time start;
     int time_for_move;
 
-
     if (!m_analyzing) {
         m_rootstate.get_timecontrol()->set_boardsize(m_rootstate.board.get_boardsize());
         time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
@@ -593,6 +621,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_nodes += m_root.create_children(m_rootstate, true);
     m_root.kill_superkos(m_rootstate);
 
+    bool easy_move_flag = easy_move();
+
     m_run = true;
 #ifdef USE_SMP
     int cpus = SMP::get_num_cpus();
@@ -607,8 +637,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int last_update = 0;
     do {
         KoState currstate = m_rootstate;
-                
-        play_simulation(currstate, &m_root);                   
+
+        play_simulation(currstate, &m_root);
 
         Time elapsed;
         int centiseconds_elapsed = Time::timediff(start, elapsed);
@@ -637,9 +667,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
         }   
         //if (iterations++ > max_iterations) {
         //    keeprunning = false;
-        //}     
-    } while(keeprunning);
-    
+        //}
+    } while(keeprunning && (!easy_move_flag || m_analyzing));
+
     // stop the search
     m_run = false;
 #ifdef USE_SMP
