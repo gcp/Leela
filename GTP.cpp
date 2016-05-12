@@ -47,7 +47,7 @@ const std::string GTP::s_commands[] = {
     "fixed_handicap",
     "place_free_handicap",
     "set_free_handicap",
-    "loadsgf",    
+    "loadsgf",
     "kgs-time_settings",
     ""
 };
@@ -83,9 +83,16 @@ std::string GTP::get_life_list(GameState & game, bool live) {
     return result;                    
 }
 
-bool GTP::execute(GameState & game, std::string xinput) {            
+bool GTP::execute(GameState & game, std::string xinput) {
     std::string input;
-                    
+
+    bool transform_lowercase = true;
+
+    // Required on Unixy systems
+    if (xinput.find("loadsgf") != std::string::npos) {
+        transform_lowercase = false;
+    }
+
     /* eat empty lines, simple preprocessing, lower case */
     for (unsigned int tmp = 0; tmp < xinput.size(); tmp++) {
         if (xinput[tmp] == 9) {
@@ -94,11 +101,14 @@ bool GTP::execute(GameState & game, std::string xinput) {
 	        || (xinput[tmp] >= 11 && xinput[tmp] <= 31)
 	        || xinput[tmp] == 127) {
 	       continue;
-        } else {        
-            input += std::tolower(xinput[tmp]);
-            //input += xinput[tmp];
-        }            
-        
+        } else {
+            if (transform_lowercase) {
+                input += std::tolower(xinput[tmp]);
+            } else {
+                input += xinput[tmp];
+            }
+        }
+
         // eat multi whitespace
         if (input.size() > 1) {
             if (std::isspace(input[input.size() - 2]) &&
@@ -106,11 +116,11 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 input.resize(input.size() - 1);
             }
         }
-    }    
-    
-    std::string command;    
+    }
+
+    std::string command;
     int id = -1;
-    
+
     if (input == "") {
         return true;
     } else if (input == "exit") {
@@ -118,7 +128,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (input == "#") {
         return true;
-    } else if (std::isdigit(input[0])) {        
+    } else if (std::isdigit(input[0])) {
         std::istringstream strm(input);
         char spacer;
         strm >> id;
@@ -127,7 +137,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
     } else {
         command = input;
     }
-    
+
     /* process commands */
     if (command == "protocol_version") {
         gtp_printf(id, "%d", GTP_VERSION);
