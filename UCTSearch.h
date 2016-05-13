@@ -25,7 +25,11 @@ public:
         Don't expand children until at least this many
         visits happened.
     */
+#ifdef USE_NETS
     static const int MATURE_TRESHOLD = 500;
+#else
+    static const int MATURE_TRESHOLD = 15;
+#endif
 
     /*
         Maximum size of the tree in memory.
