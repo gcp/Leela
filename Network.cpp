@@ -23,9 +23,12 @@
 using namespace caffe;
 #endif
 #ifdef USE_BLAS
+#ifdef __APPLE__
+#include <Accelerate.h>
+#else
 #include <openblas/cblas.h>
 //#include <cblas.h>
-//#include <Accelerate.h>
+#endif
 #include "Im2Col.h"
 #endif
 #ifdef USE_OPENCL
@@ -180,8 +183,10 @@ void Network::initialize(void) {
     std::cerr << "done" << std::endl;
 #endif
 #ifdef USE_BLAS
+#ifndef __APPLE__
     openblas_set_num_threads(1);
     std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
+#endif
 #endif
 #ifndef USE_BLAS
 #ifndef USE_CAFFE
