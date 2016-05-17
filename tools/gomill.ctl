@@ -1,6 +1,6 @@
 competition_type = 'playoff'
 
-record_games = False
+record_games = True
 stderr_to_log = True
 
 players = {
@@ -23,6 +23,7 @@ players = {
 				"time_settings 600 0 0",
                            ],
                     ),
+    'pachi' : Player("./pachi -t _600 pondering=0", cwd="~/git/pachi"),
 }
 
 alternating = True
