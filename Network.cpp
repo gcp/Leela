@@ -506,14 +506,13 @@ std::vector<Network::scored_node> Network::get_scored_moves(
             for (size_t i = 0; i < sum_res.size(); i++) {
                 assert(result[i].second == sum_res[i].second);
                 result[i].first += sum_res[i].first;
-                std::cerr << result[i].first - sum_res[i].first << " ";
             }
         }
         std::for_each(result.begin(), result.end(),
                       [](scored_node & sn){ sn.first /= 8.0f; });
     }
 
-    show_heatmap(state, result);
+    //show_heatmap(state, result);
 
     return result;
 }
@@ -613,9 +612,7 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
     const float* end = begin + output_layer->channels();
     auto outputs = std::vector<float>(begin, end);
 #endif
-    int idx = 0;
-
-    for (int idx = 0; idx < outputs.size(); idx++) {
+    for (size_t idx = 0; idx < outputs.size(); idx++) {
         int rot_idx = rev_rotate_nn_idx(idx, rotation);
         float val = outputs[rot_idx];
         int x = idx % 19;
