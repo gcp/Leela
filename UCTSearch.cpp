@@ -681,7 +681,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
 #else
     // Pure NN player
     // Not all net_moves vertices are legal
-    auto net_moves = Network::get_Network()->get_scored_moves(&m_rootstate);
+    auto net_moves = Network::get_Network()->get_scored_moves(&m_rootstate,
+        Network::AVERAGE_ALL);
     auto gen_moves = m_rootstate.generate_moves(color);
     std::vector<std::pair<float, int>> filter_moves;
 

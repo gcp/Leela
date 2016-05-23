@@ -69,7 +69,8 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
     std::vector<Network::scored_node> nodelist;
 
     if (state.get_passes() < 2) {
-        raw_netlist = Network::get_Network()->get_scored_moves(&state);
+        raw_netlist = Network::get_Network()->get_scored_moves(
+            &state, Network::Ensemble::RANDOM_ROTATION);
         for (auto it = raw_netlist.begin(); it != raw_netlist.end(); ++it) {
             int vertex = it->second;
             if (vertex != state.m_komove && board.no_eye_fill(vertex)) {

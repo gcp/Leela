@@ -122,7 +122,7 @@ void Network::benchmark(FastState * state) {
     Time start;
 
     for (int loop = 0; loop < BENCH_AMOUNT; loop++) {
-        auto vec = get_scored_moves(state);
+        auto vec = get_scored_moves(state, Ensemble::DIRECT);
     }
 
     Time end;
@@ -484,7 +484,8 @@ void softmax(std::vector<float>& input,
     }
 }
 
-std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
+std::vector<Network::scored_node> Network::get_scored_moves(
+    FastState * state, Ensemble ensemble) {
     std::vector<scored_node> result;
     if (state->board.get_boardsize() != 19) {
         return result;
@@ -493,6 +494,33 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
     NNPlanes planes;
     gather_features(state, planes);
 
+    if (ensemble == DIRECT) {
+        result = get_scored_moves_internal(state, planes, 0);
+    } else if (ensemble == RANDOM_ROTATION) {
+        int rotation = Random::get_Rng()->randint(8);
+        result = get_scored_moves_internal(state, planes, rotation);
+    } else if (ensemble == AVERAGE_ALL) {
+        result = get_scored_moves_internal(state, planes, 0);
+        for (int r = 1; r < 8; r++) {
+            auto sum_res = get_scored_moves_internal(state, planes, r);
+            for (size_t i = 0; i < sum_res.size(); i++) {
+                assert(result[i].second == sum_res[i].second);
+                result[i].first += sum_res[i].first;
+                std::cerr << result[i].first - sum_res[i].first << " ";
+            }
+        }
+        std::for_each(result.begin(), result.end(),
+                      [](scored_node & sn){ sn.first /= 8.0f; });
+    }
+
+    show_heatmap(state, result);
+
+    return result;
+}
+
+std::vector<Network::scored_node> Network::get_scored_moves_internal(
+    FastState * state, NNPlanes & planes, int rotation) {
+    std::vector<scored_node> result;
 #ifdef USE_CAFFE
     Blob<float>* input_layer = net->input_blobs()[0];
     int channels = input_layer->channels();
@@ -514,7 +542,9 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
     for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
-                input_data[(c * height + h) * width + w] = (float)planes[c][h * 19 + w];
+                int vtx = rotate_nn_idx(h * 19 + w, rotation);
+                input_data[(c * height + h) * width + w] =
+                    (float)planes[c][vtx];
             }
         }
     }
@@ -585,8 +615,9 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
 #endif
     int idx = 0;
 
-    for (auto it = outputs.begin(); it != outputs.end(); ++it, ++idx) {
-        float val = *it;
+    for (int idx = 0; idx < outputs.size(); idx++) {
+        int rot_idx = rev_rotate_nn_idx(idx, rotation);
+        float val = outputs[rot_idx];
         int x = idx % 19;
         int y = idx / 19;
         int vtx = state->board.get_vertex(x, y);
@@ -594,8 +625,6 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
             result.push_back(std::make_pair(val, vtx));
         }
     }
-
-    //show_heatmap(state, result);
 
     return result;
 }
@@ -613,8 +642,12 @@ void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
                 return item.second == vtx;
             });
 
-            float score = item->first;
-            assert(vtx == item->second);
+            float score = 0.0f;
+            // Non-empty squares won't be scored
+            if (item != moves.end()) {
+                score = item->first;
+                assert(vtx == item->second);
+            }
 
             line += boost::str(boost::format("%3d ") % int(score * 1000));
             if (x == 18) {
@@ -852,6 +885,13 @@ skipnext:
     std::cout << test_pos << " testing positions." << std::endl;
 
     myprintf("Gathering pass done.\n");
+}
+
+int Network::rev_rotate_nn_idx(const int vertex, int symmetry) {
+    static const int invert[] = {0, 1, 2, 3, 4, 6, 5, 7};
+    assert(rotate_nn_idx(rotate_nn_idx(vertex, symmetry), invert[symmetry])
+           == vertex);
+    return rotate_nn_idx(vertex, invert[symmetry]);
 }
 
 int Network::rotate_nn_idx(const int vertex, int symmetry) {

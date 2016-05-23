@@ -30,7 +30,6 @@ public:
 #else
     static const int MATURE_TRESHOLD = 15;
 #endif
-
     /*
         Maximum size of the tree in memory.
     */        
