@@ -54,7 +54,7 @@ SMP::Mutex & UCTNode::get_mutex() {
     return m_nodemutex;
 }
 
-int UCTNode::create_children(FastState & state, bool scorepass) {
+int UCTNode::create_children(FastState & state, bool isroot) {
     // acquire the lock
     SMP::Lock lock(get_mutex());
     // check whether somebody beat us to it
@@ -70,7 +70,8 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
 
     if (state.get_passes() < 2) {
         raw_netlist = Network::get_Network()->get_scored_moves(
-            &state, Network::Ensemble::RANDOM_ROTATION);
+          &state, (isroot ? Network::Ensemble::AVERAGE_ALL :
+                            Network::Ensemble::RANDOM_ROTATION));
         for (auto it = raw_netlist.begin(); it != raw_netlist.end(); ++it) {
             int vertex = it->second;
             if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
@@ -103,7 +104,7 @@ int UCTNode::create_children(FastState & state, bool scorepass) {
         }
 
         float passscore;
-        if (scorepass) {
+        if (isroot) {
             passscore = state.score_move(territory, moyo, FastBoard::PASS);
         } else {
             passscore = 0;
