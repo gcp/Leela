@@ -26,7 +26,11 @@ public:
         visits happened.
     */
 #ifdef USE_NETS
-    static const int MATURE_TRESHOLD = 500;
+#ifdef USE_OPENCL
+    static const int MATURE_TRESHOLD = 75;
+#else
+    static const int MATURE_TRESHOLD = 250;
+#endif
 #else
     static const int MATURE_TRESHOLD = 15;
 #endif

@@ -26,8 +26,8 @@ using namespace caffe;
 #ifdef __APPLE__
 #include <Accelerate.h>
 #else
-#include <openblas/cblas.h>
-//#include <cblas.h>
+//#include <openblas/cblas.h>
+#include <cblas.h>
 #endif
 #include "Im2Col.h"
 #endif
