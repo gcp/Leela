@@ -33,6 +33,7 @@ public:
     void show_heatmap(FastState * state, std::vector<scored_node>& moves);
     void autotune_from_file(std::string filename);
     static Network* get_Network(void);
+    std::string get_backend();
 
 private:
 #ifdef USE_CAFFE

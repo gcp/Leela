@@ -4,6 +4,7 @@
 #include <memory>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
+#include <boost/atomic.hpp>
 
 #include "GameState.h"
 #include "UCTNode.h"
@@ -41,7 +42,7 @@ public:
     int think(int color, passflag_t passflag = NORMAL);
     void set_visit_limit(int visits);
     void set_use_nets(bool usenets);
-    void set_runflag(bool * flag);
+    void set_runflag(boost::atomic<bool> * flag);
     void set_analyzing(bool flag);
     void set_quiet(bool flag);
     void ponder();
@@ -70,7 +71,7 @@ private:
 
     // For external control
     bool m_hasrunflag;
-    bool * m_runflag;
+    boost::atomic<bool> * m_runflag;
 
     // Special modes
     bool m_use_nets;

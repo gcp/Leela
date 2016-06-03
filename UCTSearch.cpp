@@ -29,22 +29,25 @@ UCTSearch::UCTSearch(GameState & g)
   m_score(0.0f),
   m_hasrunflag(false),
   m_runflag(NULL),
-#ifdef USE_NETS
-  m_use_nets(true),
-#else
-  m_use_nets(false),
-#endif
   m_analyzing(false),
   m_quiet(false) {
+#ifdef USE_NETS
+    set_use_nets(true);
+#else
+    set_use_nets(false),
+#endif
 }
 
-void UCTSearch::set_runflag(bool * flag) {
+void UCTSearch::set_runflag(boost::atomic<bool> * flag) {
     m_runflag = flag;
     m_hasrunflag = true;
 }
 
 void UCTSearch::set_use_nets(bool flag) {
     m_use_nets = flag;
+    if (m_rootstate.board.get_boardsize() != 19) {
+        m_use_nets = false;
+    }
 }
 
 Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
@@ -559,6 +562,9 @@ float UCTSearch::get_score() {
 }
 
 int UCTSearch::think(int color, passflag_t passflag) {
+#ifdef USE_OPENCL
+    OpenCL::get_OpenCL()->thread_init();
+#endif
     // set side to move
     m_rootstate.board.set_to_move(color);
 
@@ -625,7 +631,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 #ifdef USE_SEARCH
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)
-    m_nodes += m_root.create_children(m_rootstate, true);
+    m_nodes += m_root.create_children(m_rootstate, m_use_nets, true);
     m_root.kill_superkos(m_rootstate);
 
     bool easy_move_flag = easy_move();

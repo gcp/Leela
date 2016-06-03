@@ -10,6 +10,7 @@
 
 #include <boost/tr1/array.hpp>
 #include <boost/thread/tss.hpp>
+#include <string>
 #include <vector>
 
 class Layer {
@@ -67,6 +68,7 @@ public:
     }
 
     void forward(std::vector<float>& input, std::vector<float>& output);
+    std::string get_device_name();
 
 private:
     OpenCL();

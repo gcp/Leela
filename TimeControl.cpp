@@ -175,9 +175,8 @@ void TimeControl::adjust_time(int color, int time, int stones) {
     }
     if (m_byostones) {
         m_stones_left[color] = stones;
-    } else {
+    } else if (m_byoperiods) {
         // KGS extension
-        assert(m_byoperiods);
         m_periods_left[color] = stones;
     }
 }

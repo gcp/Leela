@@ -1035,3 +1035,13 @@ void Network::autotune_from_file(std::string filename) {
     TrainVector data;
     gather_traindata(filename, data);
 }
+
+std::string Network::get_backend() {
+#ifdef USE_BLAS
+    return std::string("BLAS core: " + std::string(openblas_get_corename()));
+#elif defined(USE_OPENCL)
+    return OpenCL::get_OpenCL()->get_device_name();
+#else
+    return std::string("Leela native convolution")
+#endif
+}
