@@ -267,6 +267,8 @@ void OpenCL::initialize(void) {
     float best_version = 0.0f;
     cl::Platform best_platform;
     cl::Device best_device;
+    std::string best_vendor;
+    int best_score = 0;
     bool found_device = false;
 
     std::cerr << "Detected " << platforms.size()
@@ -313,13 +315,22 @@ void OpenCL::initialize(void) {
                       << d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>()
                       << " CU" << std::endl;
 
-            if (d.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU) {
-                if (opencl_version > best_version) {
-                    best_version = opencl_version;
-                    best_platform = p;
-                    best_device = d;
-                    found_device = true;
-                }
+            // assign score, try to find best device
+            int this_score = 0;
+            std::string this_vendor = d.getInfo<CL_DEVICE_VENDOR>();
+            this_score += 1000 * boost::icontains(this_vendor, "advanced micro devices");
+            this_score += 1000 * boost::icontains(this_vendor, "nvidia");
+            this_score +=  500 * boost::icontains(this_vendor, "intel");
+            this_score +=  100 * (d.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_GPU);
+            this_score +=  opencl_version * 10;
+            std::cerr << "Device score:  " << this_score << std::endl;
+
+            if (this_score > best_score) {
+                best_version = opencl_version;
+                best_platform = p;
+                best_device = d;
+                best_score = this_score;
+                found_device = true;
             }
         }
     }

@@ -14,14 +14,16 @@ class UCTNode {
 public:
     typedef boost::tuple<float, int, UCTNode*> sortnode_t;
 
-    UCTNode(int vertex, float score);
+    UCTNode(int vertex, float score, int expand_treshold);
     ~UCTNode();
     bool first_visit() const;
     bool has_children() const;
     float get_winrate(int tomove) const;
     float get_raverate() const;
     double get_blackwins() const;
-    int create_children(FastState & state, bool isroot = false);
+    int create_children(FastState & state,
+                        bool use_nets,
+                        bool is_root = false);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
     void invalidate();
@@ -38,7 +40,7 @@ public:
     void set_extend(int runs);
     void update(Playout & gameresult, int color);
     void updateRAVE(Playout & playout, int color);
-    UCTNode* uct_select_child(int color);
+    UCTNode* uct_select_child(int color, bool use_nets);
     UCTNode* get_first_child();
     UCTNode* get_pass_child();
     UCTNode* get_nopass_child();

@@ -25,35 +25,34 @@ public:
         Don't expand children until at least this many
         visits happened.
     */
-#ifdef USE_NETS
 #ifdef USE_OPENCL
-    static const int MATURE_TRESHOLD = 75;
+    static constexpr int MCNN_MATURE_TRESHOLD = 75;
 #else
-    static const int MATURE_TRESHOLD = 250;
+    static constexpr int MCNN_MATURE_TRESHOLD = 250;
 #endif
-#else
-    static const int MATURE_TRESHOLD = 15;
-#endif
+    static constexpr int MCTS_MATURE_TRESHOLD = 15;
+
     /*
         Maximum size of the tree in memory.
-    */        
+    */
     static const int MAX_TREE_SIZE = 10000000;
-    
+
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
-    void set_visit_limit(int visits);    
+    void set_visit_limit(int visits);
+    void set_use_nets(bool usenets);
     void set_runflag(bool * flag);
     void set_analyzing(bool flag);
     void set_quiet(bool flag);
-    void ponder();        
-    bool is_running();      
-    Playout play_simulation(KoState & currstate, UCTNode * const node);    
+    void ponder();
+    bool is_running();
+    Playout play_simulation(KoState & currstate, UCTNode * const node);
     float get_score();
-    
+
 private:             
     void dump_stats(GameState & state, UCTNode & parent);    
     std::string get_pv(GameState & state, UCTNode & parent);
-    void dump_thinking();        
+    void dump_thinking();
     void dump_analysis();
     void dump_order2(void);
     int get_best_move(passflag_t passflag);
@@ -71,9 +70,10 @@ private:
 
     // For external control
     bool m_hasrunflag;
-    bool * m_runflag;        
-    
+    bool * m_runflag;
+
     // Special modes
+    bool m_use_nets;
     bool m_analyzing;
     bool m_quiet;
 };

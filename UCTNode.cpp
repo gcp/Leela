@@ -17,15 +17,13 @@
 #include "UCTSearch.h"
 #include "Utils.h"
 #include "Matcher.h"
-#ifdef USE_NETS
 #include "Network.h"
-#endif
 
 using namespace Utils;
 
-UCTNode::UCTNode(int vertex, float score)
+UCTNode::UCTNode(int vertex, float score, int expand_treshold)
     : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
-      m_valid(true), m_extend(UCTSearch::MATURE_TRESHOLD) {
+      m_valid(true), m_extend(expand_treshold) {
     m_ravevisits = 20;
     m_ravestmwins = 10.0;
 }
@@ -54,7 +52,8 @@ SMP::Mutex & UCTNode::get_mutex() {
     return m_nodemutex;
 }
 
-int UCTNode::create_children(FastState & state, bool isroot) {
+int UCTNode::create_children(FastState & state, bool use_nets,
+                                                bool is_root) {
     // acquire the lock
     SMP::Lock lock(get_mutex());
     // check whether somebody beat us to it
@@ -63,55 +62,53 @@ int UCTNode::create_children(FastState & state, bool isroot) {
     }
 
     FastBoard & board = state.board;
-
-#ifdef USE_NETS
-    std::vector<Network::scored_node> raw_netlist;
     std::vector<Network::scored_node> nodelist;
 
-    if (state.get_passes() < 2) {
-        raw_netlist = Network::get_Network()->get_scored_moves(
-          &state, (isroot ? Network::Ensemble::AVERAGE_ALL :
-                            Network::Ensemble::RANDOM_ROTATION));
-        for (auto it = raw_netlist.begin(); it != raw_netlist.end(); ++it) {
-            int vertex = it->second;
-            if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
-                if (!board.is_suicide(vertex, board.get_to_move())) {
-                    nodelist.push_back(*it);
+    if (use_nets) {
+        std::vector<Network::scored_node> raw_netlist;
+
+        if (state.get_passes() < 2) {
+            raw_netlist = Network::get_Network()->get_scored_moves(
+              &state, (is_root ? Network::Ensemble::AVERAGE_ALL :
+                                 Network::Ensemble::RANDOM_ROTATION));
+            for (auto it = raw_netlist.begin(); it != raw_netlist.end(); ++it) {
+                int vertex = it->second;
+                if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
+                    if (!board.is_suicide(vertex, board.get_to_move())) {
+                        nodelist.push_back(*it);
+                    }
                 }
             }
+            nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
         }
-        nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
-    }
-#else
-    typedef std::pair<float, int> scored_node;
-    std::vector<scored_node> nodelist;
-    std::vector<int> territory = state.board.influence();
-    std::vector<int> moyo = state.board.moyo();
+    } else {
+        std::vector<int> territory = state.board.influence();
+        std::vector<int> moyo = state.board.moyo();
 
-    if (state.get_passes() < 2) {
-        for (int i = 0; i < board.get_empty(); i++) {
-            int vertex = board.get_empty_vertex(i);
+        if (state.get_passes() < 2) {
+            for (int i = 0; i < board.get_empty(); i++) {
+                int vertex = board.get_empty_vertex(i);
 
-            assert(board.get_square(vertex) == FastBoard::EMPTY);
+                assert(board.get_square(vertex) == FastBoard::EMPTY);
 
-            // add and score a node
-            if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
-                if (!board.is_suicide(vertex, board.get_to_move())) {
-                    float score = state.score_move(territory, moyo, vertex);
-                    nodelist.push_back(std::make_pair(score, vertex));
+                // add and score a node
+                if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
+                    if (!board.is_suicide(vertex, board.get_to_move())) {
+                        float score = state.score_move(territory, moyo, vertex);
+                        nodelist.push_back(std::make_pair(score, vertex));
+                    }
                 }
             }
-        }
 
-        float passscore;
-        if (isroot) {
-            passscore = state.score_move(territory, moyo, FastBoard::PASS);
-        } else {
-            passscore = 0;
+            float passscore;
+            if (is_root) {
+                passscore = state.score_move(territory, moyo, FastBoard::PASS);
+            } else {
+                passscore = 0;
+            }
+            nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
         }
-        nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
     }
-#endif
     // sort (this will reverse scores, but linking is backwards too)
     std::stable_sort(nodelist.begin(), nodelist.end());
 
@@ -122,17 +119,22 @@ int UCTNode::create_children(FastState & state, bool isroot) {
     int totalchildren = nodelist.size();
     if (totalchildren == 0) return 0;
 
+    int expand_treshold = UCTSearch::MCTS_MATURE_TRESHOLD;
+    if (use_nets) {
+        expand_treshold = UCTSearch::MCNN_MATURE_TRESHOLD;
+    }
+
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         if (totalchildren - childrenseen <= maxchilds) {
-            UCTNode * vtx = new UCTNode(it->second, it->first);
+            UCTNode * vtx = new UCTNode(it->second, it->first, expand_treshold);
             if (it->second != FastBoard::PASS) {
                 // atari giving
                 // was == 2, == 1
                 if (state.board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
-                    vtx->set_extend(UCTSearch::MATURE_TRESHOLD / 3);
+                    vtx->set_extend(expand_treshold / 3);
                 }
                 if (state.board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
-                    vtx->set_extend(UCTSearch::MATURE_TRESHOLD / 3);
+                    vtx->set_extend(expand_treshold / 3);
                 }
             }
             link_child(vtx);
@@ -256,37 +258,40 @@ int UCTNode::do_extend() const {
     return m_extend;
 }
 
-UCTNode* UCTNode::uct_select_child(int color) {
+UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     UCTNode * best = NULL;
     float best_value = -1000.0f;
-#ifdef USE_NETS
-    int childbound = 35;
+    int childbound;
+    int parentvisits = 1; // XXX: this can be 0 now that we sqrt
     float best_probability = 0.0f;
-    int parentvisits       = 1; // XXX: this can be 0 now that we sqrt
-#else
-    int childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
-#endif
+    if (use_nets) {
+        childbound = 35;
+    } else {
+        childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
+    }
     SMP::Lock lock(get_mutex());
 
     int childcount = 0;
     UCTNode * child = m_firstchild;
-#ifdef USE_NETS
-    // make sure we are at a valid successor
-    while (child != NULL && !child->valid()) {
-        child = child->m_nextsibling;
-    }
-    while (child != NULL && childcount < childbound) {
-        parentvisits      += child->get_visits();
-        child = child->m_nextsibling;
+
+    // count parentvisits
+    float numerator;
+    if (use_nets) {
         // make sure we are at a valid successor
         while (child != NULL && !child->valid()) {
             child = child->m_nextsibling;
         }
-        childcount++;
+        while (child != NULL && childcount < childbound) {
+            parentvisits      += child->get_visits();
+            child = child->m_nextsibling;
+            // make sure we are at a valid successor
+            while (child != NULL && !child->valid()) {
+                child = child->m_nextsibling;
+            }
+            childcount++;
+        }
+        numerator = std::sqrt((float)parentvisits);
     }
-
-    float numerator = std::sqrt((float)parentvisits);
-#endif
 
     childcount = 0;
     child = m_firstchild;
@@ -294,56 +299,57 @@ UCTNode* UCTNode::uct_select_child(int color) {
     while (child != NULL && !child->valid()) {
         child = child->m_nextsibling;
     }
-#ifdef USE_NETS
-    // first move
-    if (child != NULL) {
-        best_probability = child->get_score();
+    if (use_nets) {
+        // first move
+        if (child != NULL) {
+            best_probability = child->get_score();
+        }
     }
-#endif
     while (child != NULL && childcount < childbound) {
         float value;
-#ifdef USE_NETS
-        if (child->get_score() * 5.0f < best_probability) {
-            break;
-        }
 
-        float c_puct = 2.0f;
+        if (use_nets) {
+            if (child->get_score() * 5.0f < best_probability) {
+                break;
+            }
 
-        if (!child->first_visit()) {
-            // "UCT" part
-            float winrate = child->get_winrate(color);
-            float psa = child->get_score();
-            float denom = 1.0f + child->get_visits();
+            float c_puct = 2.0f;
 
-            value = winrate + c_puct * psa * (numerator / denom);
+            if (!child->first_visit()) {
+                // "UCT" part
+                float winrate = child->get_winrate(color);
+                float psa = child->get_score();
+                float denom = 1.0f + child->get_visits();
+
+                value = winrate + c_puct * psa * (numerator / denom);
+            } else {
+                float winrate = 1.0f;
+                float psa = child->get_score();
+                float denom = 1.0f;
+
+                value = winrate + c_puct * psa * (numerator / denom);
+            }
         } else {
-            float winrate = 1.0f;
-            float psa = child->get_score();
-            float denom = 1.0f;
+            float uctvalue;
+            float patternbonus;
+            assert(child->get_ravevisits() > 0);
+            if (!child->first_visit()) {
+                // "UCT" part
+                float winrate = child->get_winrate(color);
+                uctvalue = winrate;
+                patternbonus = sqrtf((child->get_score() * 0.005f) / child->get_visits());
+            } else {
+                uctvalue = 1.1f;
+                patternbonus = sqrtf(child->get_score() * 0.005f);
+            }
 
-            value = winrate + c_puct * psa * (numerator / denom);
+            // RAVE part
+            float ravewinrate = child->get_raverate();
+            float ravevalue = ravewinrate + patternbonus;
+            float beta = std::max(0.0, 1.0 - log(1.0 + child->get_visits()) / 11.0);
+
+            value = beta * ravevalue + (1.0f - beta) * uctvalue;
         }
-#else
-        float uctvalue;
-        float patternbonus;
-        assert(child->get_ravevisits() > 0);
-        if (!child->first_visit()) {
-            // "UCT" part
-            float winrate = child->get_winrate(color);
-            uctvalue = winrate;
-            patternbonus = sqrtf((child->get_score() * 0.005f) / child->get_visits());
-        } else {
-            uctvalue = 1.1f;
-            patternbonus = sqrtf(child->get_score() * 0.005f);
-        }
-
-        // RAVE part
-        float ravewinrate = child->get_raverate();
-        float ravevalue = ravewinrate + patternbonus;
-        float beta = std::max(0.0, 1.0 - log(1.0 + child->get_visits()) / 11.0);
-
-        value = beta * ravevalue + (1.0f - beta) * uctvalue;
-#endif
         assert(value > -1000.0f);
 
         if (value > best_value) {
@@ -389,13 +395,13 @@ public:
         }            
         
         // first check: are playouts comparable and sufficient?
-        // then winrate counts        
+        // then winrate counts
 
-        if (a.get<1>() > UCTSearch::MATURE_TRESHOLD 
-            && b.get<1>() > UCTSearch::MATURE_TRESHOLD
+        if (a.get<1>() > UCTSearch::MCTS_MATURE_TRESHOLD
+            && b.get<1>() > UCTSearch::MCTS_MATURE_TRESHOLD
             && a.get<1>() * 2 > m_maxvisits
             && b.get<1>() * 2 > m_maxvisits) {
-        
+
             if (a.get<0>() == b.get<0>()) {
                 if (a.get<1> ()> b.get<1>()) {
                     return true;

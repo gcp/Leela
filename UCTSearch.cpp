@@ -14,23 +14,26 @@
 #include "Utils.h"
 #include "TTable.h"
 #include "MCOTable.h"
-#ifdef USE_NETS
 #include "Network.h"
 #ifdef USE_OPENCL
 #include "OpenCL.h"
-#endif
 #endif
 
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
 : m_rootstate(g),
-  m_root(FastBoard::PASS, 0.0f),
+  m_root(FastBoard::PASS, 0.0f, 1),
   m_nodes(0),
   m_maxvisits(INT_MAX),
   m_score(0.0f),
   m_hasrunflag(false),
   m_runflag(NULL),
+#ifdef USE_NETS
+  m_use_nets(true),
+#else
+  m_use_nets(false),
+#endif
   m_analyzing(false),
   m_quiet(false) {
 }
@@ -38,6 +41,10 @@ UCTSearch::UCTSearch(GameState & g)
 void UCTSearch::set_runflag(bool * flag) {
     m_runflag = flag;
     m_hasrunflag = true;
+}
+
+void UCTSearch::set_use_nets(bool flag) {
+    m_use_nets = flag;
 }
 
 Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
@@ -52,13 +59,13 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     if (has_children == false && node->get_visits() <= node->do_extend()) {           
         noderesult.run(currstate);                
     } else {                
-        if (has_children == false && m_nodes < MAX_TREE_SIZE) {                
-            m_nodes += node->create_children(currstate);
-        }        
-                
-        if (node->has_children() == true) {                        
-            UCTNode * next = node->uct_select_child(color); 
-            
+        if (has_children == false && m_nodes < MAX_TREE_SIZE) {
+            m_nodes += node->create_children(currstate, m_use_nets);
+        }
+
+        if (node->has_children() == true) {
+            UCTNode * next = node->uct_select_child(color, m_use_nets);
+
             if (next != NULL) {
                 int move = next->get_move();            
                 
@@ -151,31 +158,31 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 }
 
 bool UCTSearch::easy_move() {
-#ifdef USE_NETS
-    if (m_rootstate.get_last_move() == FastBoard::PASS) {
-        return false;
-    }
+    if (m_use_nets) {
+        if (m_rootstate.get_last_move() == FastBoard::PASS) {
+            return false;
+        }
 
-    float best_probability = 0.0f;
+        float best_probability = 0.0f;
 
-    // do we have statistics on the moves?
-    UCTNode * first = m_root.get_first_child();
-    if (first != NULL) {
-        best_probability = first->get_score();
-    } else {
-        return false;
-    }
+        // do we have statistics on the moves?
+        UCTNode * first = m_root.get_first_child();
+        if (first != NULL) {
+            best_probability = first->get_score();
+        } else {
+            return false;
+        }
 
-    UCTNode * second = first->get_sibling();
-    if (second != NULL) {
-        float second_probability = second->get_score();
-        if (second_probability * 5.0f < best_probability) {
+        UCTNode * second = first->get_sibling();
+        if (second != NULL) {
+            float second_probability = second->get_score();
+            if (second_probability * 5.0f < best_probability) {
+                return true;
+            }
+        } else {
             return true;
         }
-    } else {
-        return true;
     }
-#endif
     return false;
 }
 
@@ -487,28 +494,28 @@ std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
     if (!parent.has_children()) {
         return std::string();
     }
-    
-    parent.sort_children(state.get_to_move());                    
-        
-    UCTNode * bestchild = parent.get_first_child();    
-    
-    if (bestchild->get_visits() <= MATURE_TRESHOLD) {
+
+    parent.sort_children(state.get_to_move());
+
+    UCTNode * bestchild = parent.get_first_child();
+
+    if (!bestchild->has_children()) { // XXX remove me??
         return std::string();
     }
-    
+
     int bestmove = bestchild->get_move();
-                   
-    std::string tmp = state.move_to_text(bestmove);    
-    
+
+    std::string tmp = state.move_to_text(bestmove);
+
     std::string res(tmp);
-    res.append(" ");    
-    
-    state.play_move(bestmove);    
-    
+    res.append(" ");
+
+    state.play_move(bestmove);
+
     std::string next = get_pv(state, *bestchild);
-    
+
     res.append(next);
-    
+
     return res;
 }
 

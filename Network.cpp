@@ -1,5 +1,4 @@
 #include "config.h"
-#ifdef USE_NETS
 #include <algorithm>
 #include <cassert>
 #include <list>
@@ -1036,4 +1035,3 @@ void Network::autotune_from_file(std::string filename) {
     TrainVector data;
     gather_traindata(filename, data);
 }
-#endif
