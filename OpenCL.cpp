@@ -704,9 +704,9 @@ void OpenCL::initialize(void) {
     cl::Device::setDefault(best_device);
 
     // Read source file
-    std::ifstream sourceFile("convolve_kernel.cl", std::ifstream::in);
-    std::string sourceCode(std::istreambuf_iterator<char>(sourceFile),
-                           (std::istreambuf_iterator<char>()));
+    //std::ifstream sourceFile("convolve_kernel.cl", std::ifstream::in);
+    //std::string sourceCode(std::istreambuf_iterator<char>(sourceFile),
+    //                       (std::istreambuf_iterator<char>()));
 
     // Make program of the source code in the context
     try {
@@ -743,7 +743,7 @@ std::string OpenCL::get_device_name() {
     ss << "OpenCL: ";
     ss << device.getInfo<CL_DEVICE_VENDOR>() << " ";
     ss << device.getInfo<CL_DEVICE_NAME>() << " @ ";
-    ss << device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz";
+    ss << device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "MHz";
 
     return ss.str();
 }

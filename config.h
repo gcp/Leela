@@ -26,7 +26,6 @@
 //#define USE_CAFFE
 //#define USE_OPENCL
 #define USE_SEARCH
-#define USE_PONDER
 #define USE_SMP
 
 /* Integer types */

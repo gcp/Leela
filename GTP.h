@@ -4,13 +4,16 @@
 #include <string>
 #include "GameState.h"
 
+extern bool allow_pondering;
+extern int num_threads;
+
 class GTP {
-public:                        
+public:
     static bool execute(GameState &game, std::string xinput);
-private:        
+private:
     static const int GTP_VERSION = 2;
-    
-    static std::string get_life_list(GameState & game, bool live);    
+
+    static std::string get_life_list(GameState & game, bool live);
     static const std::string s_commands[];
 };
 

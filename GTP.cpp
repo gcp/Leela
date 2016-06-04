@@ -267,13 +267,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 std::string vertex = game.move_to_text(move);            
                 gtp_printf(id, "%s", vertex.c_str());
             }
-#ifdef USE_PONDER
-            // now start pondering
-            if (game.get_last_move() != FastBoard::RESIGN) {
-                std::unique_ptr<UCTSearch> search(new UCTSearch(game));
-                search->ponder();
-            }                
-#endif            
+            if (allow_pondering) {
+                // now start pondering
+                if (game.get_last_move() != FastBoard::RESIGN) {
+                    std::unique_ptr<UCTSearch> search(new UCTSearch(game));
+                    search->ponder();
+                }
+            }
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
@@ -394,14 +394,14 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
             gtp_printf(id, "");
 
-#ifdef USE_PONDER
-            // KGS sends this after our move
-            // now start pondering
-            if (game.get_last_move() != FastBoard::RESIGN) {            
-                std::unique_ptr<UCTSearch> search(new UCTSearch(game));
-                search->ponder();
-            }                
-#endif            
+            if (allow_pondering) {
+                // KGS sends this after our move
+                // now start pondering
+                if (game.get_last_move() != FastBoard::RESIGN) {
+                    std::unique_ptr<UCTSearch> search(new UCTSearch(game));
+                    search->ponder();
+                }
+            }
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }    

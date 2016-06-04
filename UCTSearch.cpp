@@ -15,6 +15,7 @@
 #include "TTable.h"
 #include "MCOTable.h"
 #include "Network.h"
+#include "GTP.h"
 #ifdef USE_OPENCL
 #include "OpenCL.h"
 #endif
@@ -638,7 +639,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     m_run = true;
 #ifdef USE_SMP
-    int cpus = SMP::get_num_cpus();
+    int cpus = num_threads;
     //int cpus = 4;
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
@@ -765,7 +766,7 @@ void UCTSearch::ponder() {
 #ifdef USE_SEARCH
     m_run = true;
 #ifdef USE_SMP
-    int cpus = SMP::get_num_cpus();
+    int cpus = num_threads;
     //int cpus = 4;
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
