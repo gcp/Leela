@@ -4,8 +4,10 @@
 #include <string>
 #include "GameState.h"
 
-extern bool allow_pondering;
-extern int num_threads;
+extern bool cfg_allow_pondering;
+extern int cfg_num_threads;
+extern int cfg_max_playouts;
+extern bool cfg_enable_nets;
 
 class GTP {
 public:

@@ -511,7 +511,7 @@ std::vector<Network::scored_node> Network::get_scored_moves(
                       [](scored_node & sn){ sn.first /= 8.0f; });
     }
 
-    //show_heatmap(state, result);
+    // show_heatmap(state, result);
 
     return result;
 }

@@ -21,12 +21,17 @@
 #define PROGRAM_VERSION "0.6.2"
 
 /* Features */
-#define USE_NETS
 #define USE_BLAS
 //#define USE_CAFFE
 //#define USE_OPENCL
 #define USE_SEARCH
-#define USE_SMP
+
+// OpenBLAS limitation
+#ifdef USE_BLAS
+#define MAX_CPUS 32
+#else
+#define MAX_CPUS 128
+#endif
 
 /* Integer types */
 

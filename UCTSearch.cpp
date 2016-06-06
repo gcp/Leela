@@ -26,17 +26,13 @@ UCTSearch::UCTSearch(GameState & g)
 : m_rootstate(g),
   m_root(FastBoard::PASS, 0.0f, 1),
   m_nodes(0),
-  m_maxvisits(INT_MAX),
   m_score(0.0f),
   m_hasrunflag(false),
   m_runflag(NULL),
   m_analyzing(false),
   m_quiet(false) {
-#ifdef USE_NETS
-    set_use_nets(true);
-#else
-    set_use_nets(false),
-#endif
+  set_use_nets(cfg_enable_nets);
+  set_playout_limit(cfg_max_playouts);
 }
 
 void UCTSearch::set_runflag(boost::atomic<bool> * flag) {
@@ -638,14 +634,13 @@ int UCTSearch::think(int color, passflag_t passflag) {
     bool easy_move_flag = easy_move();
 
     m_run = true;
-#ifdef USE_SMP
-    int cpus = num_threads;
-    //int cpus = 4;
+
+    int cpus = cfg_num_threads;
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
     }
-#endif
+
     bool keeprunning = true;
     int iterations = 0;
     int last_update = 0;
@@ -661,34 +656,29 @@ int UCTSearch::think(int color, passflag_t passflag) {
         // check if we should still search
         if (!m_analyzing) {
             if (centiseconds_elapsed - last_update > 250) {
-                last_update = centiseconds_elapsed;                                                   
+                last_update = centiseconds_elapsed;
 		dump_analysis();
-            }  
-            keeprunning = (centiseconds_elapsed < time_for_move 
-                           && m_root.get_visits() < m_maxvisits
+            }
+            keeprunning = (centiseconds_elapsed < time_for_move
                            && (!m_hasrunflag || (*m_runflag)));
-                                       
-            // check for early exit                           
+            keeprunning &= (iterations++ < m_maxplayouts);
+
+            // check for early exit
             if (keeprunning && ((iterations & 127) == 0) && centiseconds_elapsed > time_for_move/2) {
-                keeprunning = !allow_early_exit();    
-            }                           
+                keeprunning = !allow_early_exit();
+            }
         } else {
             if (centiseconds_elapsed - last_update > 100) {
-                last_update = centiseconds_elapsed;            
-                dump_analysis();                        
-            }  
+                last_update = centiseconds_elapsed;
+                dump_analysis();
+            }
             keeprunning = (!m_hasrunflag || (*m_runflag));
-        }   
-        //if (iterations++ > max_iterations) {
-        //    keeprunning = false;
-        //}
+        }
     } while(keeprunning && (!easy_move_flag || m_analyzing));
 
     // stop the search
     m_run = false;
-#ifdef USE_SMP
     tg.join_all();
-#endif
     if (!m_root.has_children()) {
         return FastBoard::PASS;
     }
@@ -765,24 +755,19 @@ void UCTSearch::ponder() {
 
 #ifdef USE_SEARCH
     m_run = true;
-#ifdef USE_SMP
-    int cpus = num_threads;
-    //int cpus = 4;
+    int cpus = cfg_num_threads;
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
     }
-#endif    
     do {
-        KoState currstate = m_rootstate;                
-        play_simulation(currstate, &m_root);                             
-    } while(!Utils::input_pending() && (!m_hasrunflag || (*m_runflag)));  
-           
+        KoState currstate = m_rootstate;
+        play_simulation(currstate, &m_root);
+    } while(!Utils::input_pending() && (!m_hasrunflag || (*m_runflag)));
+
     // stop the search
     m_run = false;
-#ifdef USE_SMP
     tg.join_all();
-#endif
     // display search info        
     myprintf("\n");
     dump_stats(m_rootstate, m_root);                  
@@ -791,11 +776,11 @@ void UCTSearch::ponder() {
 #endif
 }
 
-void UCTSearch::set_visit_limit(int visits) {
-    if (visits == 0) {
-        m_maxvisits = INT_MAX;
+void UCTSearch::set_playout_limit(int playouts) {
+    if (playouts == 0) {
+        m_maxplayouts = INT_MAX;
     } else {
-        m_maxvisits = visits;
+        m_maxplayouts = playouts;
     }
 }
 

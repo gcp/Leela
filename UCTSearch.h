@@ -40,7 +40,7 @@ public:
 
     UCTSearch(GameState & g);
     int think(int color, passflag_t passflag = NORMAL);
-    void set_visit_limit(int visits);
+    void set_playout_limit(int playouts);
     void set_use_nets(bool usenets);
     void set_runflag(boost::atomic<bool> * flag);
     void set_analyzing(bool flag);
@@ -65,7 +65,7 @@ private:
     GameState & m_rootstate;
     UCTNode m_root;
     int m_nodes;
-    int m_maxvisits;
+    int m_maxplayouts;
     float m_score;
     bool m_run;
 

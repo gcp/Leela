@@ -16,11 +16,15 @@
 #include "AttribScores.h"
 #include "Genetic.h"
 #include "PNSearch.h"
-#ifdef USE_NETS
 #include "Network.h"
-#endif
 
 using namespace Utils;
+
+// Configuration flags, set by Leela.cpp
+bool cfg_allow_pondering;
+int cfg_num_threads;
+int cfg_max_playouts;
+bool cfg_enable_nets;
 
 const std::string GTP::s_commands[] = {
     "protocol_version",
@@ -267,7 +271,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 std::string vertex = game.move_to_text(move);            
                 gtp_printf(id, "%s", vertex.c_str());
             }
-            if (allow_pondering) {
+            if (cfg_allow_pondering) {
                 // now start pondering
                 if (game.get_last_move() != FastBoard::RESIGN) {
                     std::unique_ptr<UCTSearch> search(new UCTSearch(game));
@@ -394,7 +398,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
             gtp_printf(id, "");
 
-            if (allow_pondering) {
+            if (cfg_allow_pondering) {
                 // KGS sends this after our move
                 // now start pondering
                 if (game.get_last_move() != FastBoard::RESIGN) {
@@ -411,9 +415,9 @@ bool GTP::execute(GameState & game, std::string xinput) {
             std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
             int move = search->think(game.get_to_move(), UCTSearch::NORMAL);
-            game.play_move(move);  
+            game.play_move(move);
             game.display_state();
-                              
+
         } while (game.get_passes() < 2);
 
         return true;
@@ -596,7 +600,6 @@ bool GTP::execute(GameState & game, std::string xinput) {
         gtp_printf(id, "");
         return true;
     }  else if (command.find("nettune") == 0) {
-#ifdef USE_NETS
         std::istringstream cmdstream(command);
         std::string tmp, filename;
 
@@ -605,21 +608,16 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
         std::unique_ptr<Network> network(new Network);
         network->autotune_from_file(filename);
-#endif
         gtp_printf(id, "");
         return true;
     } else if (command.find("netbench") == 0) {
-#ifdef USE_NETS
         Network::get_Network()->benchmark(&game);
-#endif
         gtp_printf(id, "");
         return true;
 
     } else if (command.find("predict") == 0) {
-#ifdef USE_NETS
         auto vec = Network::get_Network()->get_scored_moves(
             &game, Network::Ensemble::AVERAGE_ALL);
-#endif
         gtp_printf(id, "");
         return true;
     }
