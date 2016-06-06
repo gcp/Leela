@@ -23,7 +23,12 @@ players = {
 				"time_settings 600 0 0",
                            ],
                     ),
-    'pachi' : Player("./pachi -t _600 pondering=0", cwd="~/git/pachi"),
+    'pachi' : Player("./pachi -t _900 threads=2,pondering=0,max_tree_size=3072 -f book2.dat", cwd="~/git/pachi"),
+    'Leela_0.6.2' : Player("./leela_062_linux_x64 --threads 2 --noponder --gtp",
+                           startup_gtp_commands=[
+				"time_settings 900 0 0",
+                           ],
+     )
 }
 
 alternating = True
@@ -31,6 +36,6 @@ board_size = 19
 komi = 7.5
 
 matchups = [
-	Matchup('leela-mcts050', 'leela-dcnn2',
+	Matchup('pachi', 'Leela_0.6.2',
                 scorer='players', number_of_games=1000),
 ]
