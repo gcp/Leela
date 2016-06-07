@@ -113,6 +113,12 @@ std::vector<uint64> FullBoard::get_rotated_hashes(void) {
     return result;
 }
 
+uint64 FullBoard::get_canonical_hash(void) {
+    std::vector<uint64> hashes = get_rotated_hashes();
+    std::sort(hashes.begin(), hashes.end());
+    return hashes[0];
+}
+
 uint64 FullBoard::get_hash(void) {
     return hash;
 }

@@ -17,6 +17,7 @@
 #include "Genetic.h"
 #include "PNSearch.h"
 #include "Network.h"
+#include "Book.h"
 
 using namespace Utils;
 
@@ -620,8 +621,17 @@ bool GTP::execute(GameState & game, std::string xinput) {
             &game, Network::Ensemble::AVERAGE_ALL);
         gtp_printf(id, "");
         return true;
+    } else if (command.find("bookgen") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp, filename;
+
+        cmdstream >> tmp;   // eat bookgen
+        cmdstream >> filename;
+
+        Book::bookgen_from_file(filename);
+        return true;
     }
 
     gtp_fail_printf(id, "unknown command");
-    return true;    
+    return true;
 }

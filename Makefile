@@ -48,7 +48,7 @@ CXXFLAGS += -I.
 CPPFLAGS += -MD -MP
 
 sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
-	  TimeControl.cpp UCTSearch.cpp Attributes.cpp \
+	  TimeControl.cpp UCTSearch.cpp Attributes.cpp Book.cpp \
 	  GameState.cpp Leela.cpp PNNode.cpp SGFParser.cpp Timing.cpp \
 	  Utils.cpp FastBoard.cpp Genetic.cpp Matcher.cpp PNSearch.cpp \
 	  SGFTree.cpp TTable.cpp Zobrist.cpp FastState.cpp GTP.cpp \

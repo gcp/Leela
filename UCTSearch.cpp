@@ -16,6 +16,7 @@
 #include "MCOTable.h"
 #include "Network.h"
 #include "GTP.h"
+#include "Book.h"
 #ifdef USE_OPENCL
 #include "OpenCL.h"
 #endif
@@ -559,6 +560,9 @@ float UCTSearch::get_score() {
 }
 
 int UCTSearch::think(int color, passflag_t passflag) {
+    // Start counting time for us
+    m_rootstate.start_clock(color);
+
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->thread_init();
 #endif
@@ -571,48 +575,22 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     if (!m_analyzing) {
         m_rootstate.get_timecontrol()->set_boardsize(m_rootstate.board.get_boardsize());
-        time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
+        time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);
 
         GUIprintf("Thinking at most %.1f seconds...", time_for_move/100.0f);
 
 #ifdef USE_SEARCH
-        // book moves
-        if (m_rootstate.get_handicap() == 0) {
-            if (m_rootstate.board.get_ko_hash() == 0xF64DA7066702B027ULL) {
-                int rm = Random::get_Rng()->randint(2);
-                if (rm == 0) {
-                    return 60;  // e5
-                } else if (rm == 1) {
-                    return 71;  // e6
-                }
-            } else if (m_rootstate.board.get_ko_hash() == 0xF6760A0D837545EBULL) {
-                if (Random::get_Rng()->randint(2) == 0) {
-                    return 82; // e7
-                } else {
-                    return 81; // d7
-                }
-            } else if (m_rootstate.board.get_ko_hash() == 0x15D007FEE8E91047ULL) {
-                int rm = Random::get_Rng()->randint(3);
-                if (rm == 0) {
-                    return 352; // r3
-                } else if (rm == 1) {
-                    return 373; // c4
-                } else {
-                    return 374; // d4
-                }
+        if (m_rootstate.get_movenum() < 30) {
+            int bookmove = Book::get_book_move(m_rootstate);
+            if (bookmove != FastBoard::PASS) {
+                return bookmove;
             }
         }
 #endif
     } else {
         time_for_move = INT_MAX;
-                
         GUIprintf("Thinking...");
     }
-    
-    //XXX: testing    
-    //int max_iterations = 10000;
-                 
-    m_rootstate.start_clock(color);   
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();
@@ -657,7 +635,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         if (!m_analyzing) {
             if (centiseconds_elapsed - last_update > 250) {
                 last_update = centiseconds_elapsed;
-		dump_analysis();
+                dump_analysis();
             }
             keeprunning = (centiseconds_elapsed < time_for_move
                            && (!m_hasrunflag || (*m_runflag)));
