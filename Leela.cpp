@@ -99,9 +99,12 @@ int main (int argc, char *argv[]) {
     setbuf(stdin, NULL);
 #endif
 
+    // Use deterministic random numbers for hashing
     std::unique_ptr<Random> rng(new Random(5489UL));
     Zobrist::init_zobrist(*rng);
 
+    // Now seed with something more random
+    rng.reset(new Random());
     AttribScores::get_attribscores();
     Matcher::get_Matcher();
     Network::get_Network();

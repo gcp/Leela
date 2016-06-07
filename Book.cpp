@@ -58,11 +58,11 @@ void Book::bookgen_from_file(std::string filename) {
                 break;
             }
 
-            uint64 hash = state->board.get_canonical_hash();
+            uint64 canon_hash = state->board.get_canonical_hash();
 
-            auto it = hash_book.find(hash);
+            auto it = hash_book.find(canon_hash);
             if (it == hash_book.end()) {
-                hash_book.insert(std::make_pair(hash, 1));
+                hash_book.insert(std::make_pair(canon_hash, 1));
             } else {
                 it->second++;
             }
@@ -84,7 +84,7 @@ void Book::bookgen_from_file(std::string filename) {
     std::map<uint64, int> filtered_book;
 
     for(auto it = hash_book.begin(); it != hash_book.end(); ++it) {
-        if (it->second >= 6) {
+        if (it->second >= 10) {
             filtered_book.insert(*it);
         }
     }
@@ -109,24 +109,39 @@ void Book::bookgen_from_file(std::string filename) {
 int Book::get_book_move(FastState & state) {
     auto moves = state.generate_moves(state.board.get_to_move());
     std::vector<std::pair<int, int>> candidate_moves;
+    std::vector<std::pair<int, int>> display_moves;
 
     int cumul = 0;
 
     for (auto mit = moves.begin(); mit != moves.end(); ++mit) {
         FastState currstate = state;
 
-        currstate.play_move(*mit);
-        uint64 hash = currstate.board.get_canonical_hash();
+        if (*mit != FastBoard::PASS) {
+            currstate.play_move(*mit);
+            uint64 hash = currstate.board.get_canonical_hash();
 
-        auto bid = book_data.find(hash);
-        if (bid != book_data.end()) {
-            cumul += bid->second;
-            candidate_moves.push_back(std::make_pair(*mit, cumul));
+            auto bid = book_data.find(hash);
+            if (bid != book_data.end()) {
+                cumul += bid->second;
+                candidate_moves.push_back(std::make_pair(*mit, cumul));
+#ifdef DUMP_BOOK
+                display_moves.push_back(std::make_pair(bid->second, *mit));
+#endif
+            }
         }
     }
 
+#ifdef DUMP_BOOK
+    std::sort(display_moves.rbegin(), display_moves.rend());
+    for (int i = 0; i < display_moves.size(); i++) {
+        std::cerr << display_moves[i].first << " "
+                  << state.move_to_text(display_moves[i].second) << std::endl;
+    }
+#endif
+
     int pick = Random::get_Rng()->randint32(cumul);
     size_t candidate_count = candidate_moves.size();
+
     if (candidate_count > 0) {
         std::cerr << boost::format("%d book moves, %d total positions")
                                    % candidate_count % cumul
