@@ -14,30 +14,38 @@
 #include "Utils.h"
 #include "TTable.h"
 #include "MCOTable.h"
-#ifdef USE_NETS
 #include "Network.h"
+#include "GTP.h"
+#include "Book.h"
 #ifdef USE_OPENCL
 #include "OpenCL.h"
-#endif
 #endif
 
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
 : m_rootstate(g),
-  m_root(FastBoard::PASS, 0.0f),
+  m_root(FastBoard::PASS, 0.0f, 1),
   m_nodes(0),
-  m_maxvisits(INT_MAX),
   m_score(0.0f),
   m_hasrunflag(false),
   m_runflag(NULL),
   m_analyzing(false),
   m_quiet(false) {
+  set_use_nets(cfg_enable_nets);
+  set_playout_limit(cfg_max_playouts);
 }
 
-void UCTSearch::set_runflag(bool * flag) {
+void UCTSearch::set_runflag(boost::atomic<bool> * flag) {
     m_runflag = flag;
     m_hasrunflag = true;
+}
+
+void UCTSearch::set_use_nets(bool flag) {
+    m_use_nets = flag;
+    if (m_rootstate.board.get_boardsize() != 19) {
+        m_use_nets = false;
+    }
 }
 
 Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
@@ -47,44 +55,41 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
 
     TTable::get_TT()->sync(hash, node);
 
-    bool has_children = node->has_children();
+    if (!node->has_children()
+        && node->should_expand()
+        && m_nodes < MAX_TREE_SIZE) {
+        node->create_children(m_nodes, currstate, m_use_nets, false);
+    }
 
-    if (has_children == false && !node->should_expand()) {
-        noderesult.run(currstate);
-    } else {
-        if (has_children == false && m_nodes < MAX_TREE_SIZE) {
-             node->create_children(m_nodes, currstate);
-        }
+    if (node->has_children()) {
+        UCTNode * next = node->uct_select_child(color, m_use_nets);
 
-        if (node->has_children() == true) {
-            UCTNode * next = node->uct_select_child(color);
+        if (next != NULL) {
+            int move = next->get_move();
 
-            if (next != NULL) {
-                int move = next->get_move();
+            if (move != FastBoard::PASS) {
+                currstate.play_move(move);
 
-                if (move != FastBoard::PASS) {
-                    currstate.play_move(move);
-
-                    if (!currstate.superko()) {
-                        noderesult = play_simulation(currstate, next);
-                    } else {
-                        next->invalidate();
-                        noderesult.run(currstate);
-                    }
-                } else {
-                    currstate.play_pass();
+                if (!currstate.superko()) {
                     noderesult = play_simulation(currstate, next);
+                } else {
+                    next->invalidate();
+                    noderesult.run(currstate);
                 }
             } else {
-                noderesult.run(currstate);
+                currstate.play_pass();
+                noderesult = play_simulation(currstate, next);
             }
-
-            node->updateRAVE(noderesult, color);
         } else {
             noderesult.run(currstate);
         }
+
+        node->updateRAVE(noderesult, color);
+    } else {
+        noderesult.run(currstate);
     }
 
+    // XXX: updateRAVE color reversal
     node->update(noderesult, !color);
     TTable::get_TT()->update(hash, node);
 
@@ -146,6 +151,35 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     myprintf(get_pv(tmpstate, parent).c_str());
 
     myprintf("\n");
+}
+
+bool UCTSearch::easy_move() {
+    if (m_use_nets) {
+        if (m_rootstate.get_last_move() == FastBoard::PASS) {
+            return false;
+        }
+
+        float best_probability = 0.0f;
+
+        // do we have statistics on the moves?
+        UCTNode * first = m_root.get_first_child();
+        if (first != NULL) {
+            best_probability = first->get_score();
+        } else {
+            return false;
+        }
+
+        UCTNode * second = first->get_sibling();
+        if (second != NULL) {
+            float second_probability = second->get_score();
+            if (second_probability * 5.0f < best_probability) {
+                return true;
+            }
+        } else {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool UCTSearch::allow_early_exit() {    
@@ -456,28 +490,22 @@ std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
     if (!parent.has_children()) {
         return std::string();
     }
-    
-    parent.sort_children(state.get_to_move());                    
-        
-    UCTNode * bestchild = parent.get_first_child();    
-    
-    if (bestchild->get_visits() <= MATURE_TRESHOLD) {
-        return std::string();
-    }
-    
+
+    parent.sort_children(state.get_to_move());
+
+    UCTNode * bestchild = parent.get_first_child();
     int bestmove = bestchild->get_move();
-                   
-    std::string tmp = state.move_to_text(bestmove);    
-    
+    std::string tmp = state.move_to_text(bestmove);
+
     std::string res(tmp);
-    res.append(" ");    
-    
-    state.play_move(bestmove);    
-    
+    res.append(" ");
+
+    state.play_move(bestmove);
+
     std::string next = get_pv(state, *bestchild);
-    
+
     res.append(next);
-    
+
     return res;
 }
 
@@ -521,6 +549,12 @@ float UCTSearch::get_score() {
 }
 
 int UCTSearch::think(int color, passflag_t passflag) {
+    // Start counting time for us
+    m_rootstate.start_clock(color);
+
+#ifdef USE_OPENCL
+    OpenCL::get_OpenCL()->thread_init();
+#endif
     // set side to move
     m_rootstate.board.set_to_move(color);
 
@@ -528,51 +562,24 @@ int UCTSearch::think(int color, passflag_t passflag) {
     Time start;
     int time_for_move;
 
-
     if (!m_analyzing) {
         m_rootstate.get_timecontrol()->set_boardsize(m_rootstate.board.get_boardsize());
-        time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);       
+        time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);
 
         GUIprintf("Thinking at most %.1f seconds...", time_for_move/100.0f);
 
 #ifdef USE_SEARCH
-        // book moves
-        if (m_rootstate.get_handicap() == 0) {
-            if (m_rootstate.board.get_ko_hash() == 0xF64DA7066702B027ULL) {
-                int rm = Random::get_Rng()->randint(2);
-                if (rm == 0) {
-                    return 60;  // e5
-                } else if (rm == 1) {
-                    return 71;  // e6
-                }
-            } else if (m_rootstate.board.get_ko_hash() == 0xF6760A0D837545EBULL) {
-                if (Random::get_Rng()->randint(2) == 0) {
-                    return 82; // e7
-                } else {
-                    return 81; // d7
-                }
-            } else if (m_rootstate.board.get_ko_hash() == 0x15D007FEE8E91047ULL) {
-                int rm = Random::get_Rng()->randint(3);
-                if (rm == 0) {
-                    return 352; // r3
-                } else if (rm == 1) {
-                    return 373; // c4
-                } else {
-                    return 374; // d4
-                }
+        if (m_rootstate.get_movenum() < 30) {
+            int bookmove = Book::get_book_move(m_rootstate);
+            if (bookmove != FastBoard::PASS) {
+                return bookmove;
             }
         }
 #endif
     } else {
         time_for_move = INT_MAX;
-                
         GUIprintf("Thinking...");
     }
-    
-    //XXX: testing    
-    //int max_iterations = 10000;
-                 
-    m_rootstate.start_clock(color);   
 
     // do some preprocessing for move ordering
     MCOwnerTable::clear();
@@ -588,25 +595,26 @@ int UCTSearch::think(int color, passflag_t passflag) {
 #ifdef USE_SEARCH
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)
-    m_root.create_children(m_nodes, m_rootstate, true);
+    m_root.create_children(m_nodes, m_rootstate, m_use_nets, true);
     m_root.kill_superkos(m_rootstate);
 
+    bool easy_move_flag = easy_move();
+
     m_run = true;
-#ifdef USE_SMP
-    int cpus = SMP::get_num_cpus();
-    //int cpus = 4;
+
+    int cpus = cfg_num_threads;
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
     }
-#endif
+
     bool keeprunning = true;
     int iterations = 0;
     int last_update = 0;
     do {
         KoState currstate = m_rootstate;
-                
-        play_simulation(currstate, &m_root);                   
+
+        play_simulation(currstate, &m_root);
 
         Time elapsed;
         int centiseconds_elapsed = Time::timediff(start, elapsed);
@@ -615,41 +623,37 @@ int UCTSearch::think(int color, passflag_t passflag) {
         // check if we should still search
         if (!m_analyzing) {
             if (centiseconds_elapsed - last_update > 250) {
-                last_update = centiseconds_elapsed;                                                   
-		dump_analysis();
-            }  
-            keeprunning = (centiseconds_elapsed < time_for_move 
-                           && m_root.get_visits() < m_maxvisits
+                last_update = centiseconds_elapsed;
+                dump_analysis();
+            }
+            keeprunning = (centiseconds_elapsed < time_for_move
                            && (!m_hasrunflag || (*m_runflag)));
-                                       
-            // check for early exit                           
+            keeprunning &= (iterations++ < m_maxplayouts);
+
+            // check for early exit
             if (keeprunning && ((iterations & 127) == 0) && centiseconds_elapsed > time_for_move/2) {
-                keeprunning = !allow_early_exit();    
-            }                           
+                keeprunning = !allow_early_exit();
+            }
         } else {
             if (centiseconds_elapsed - last_update > 100) {
-                last_update = centiseconds_elapsed;            
-                dump_analysis();                        
-            }  
+                last_update = centiseconds_elapsed;
+                dump_analysis();
+            }
             keeprunning = (!m_hasrunflag || (*m_runflag));
-        }   
-        //if (iterations++ > max_iterations) {
-        //    keeprunning = false;
-        //}     
-    } while(keeprunning);
-    
+        }
+    } while(keeprunning && (!easy_move_flag || m_analyzing));
+
     // stop the search
     m_run = false;
-#ifdef USE_SMP
     tg.join_all();
-#endif
     if (!m_root.has_children()) {
         return FastBoard::PASS;
     }
 #else
     // Pure NN player
     // Not all net_moves vertices are legal
-    auto net_moves = Network::get_Network()->get_scored_moves(&m_rootstate);
+    auto net_moves = Network::get_Network()->get_scored_moves(&m_rootstate,
+        Network::AVERAGE_ALL);
     auto gen_moves = m_rootstate.generate_moves(color);
     std::vector<std::pair<float, int>> filter_moves;
 
@@ -685,7 +689,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_rootstate.stop_clock(color);
 
 #ifdef USE_SEARCH
-    // display search info        
+    // display search info
     myprintf("\n");
 
     dump_stats(m_rootstate, m_root);
@@ -693,14 +697,14 @@ int UCTSearch::think(int color, passflag_t passflag) {
     Time elapsed;
     int centiseconds_elapsed = Time::timediff(start, elapsed);
     if (centiseconds_elapsed > 0) {
-        myprintf("\n%d visits, %d nodes, %d vps\n\n", 
-                 m_root.get_visits(), 
-                 m_nodes,
-                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));  
-        GUIprintf("%d visits, %d nodes, %d vps",      
-                 m_root.get_visits(), 
-                 m_nodes,
-                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));                                                     
+        myprintf("\n%d visits, %d nodes, %d vps\n\n",
+                 m_root.get_visits(),
+                 (int)m_nodes,
+                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));
+        GUIprintf("%d visits, %d nodes, %d vps",
+                 m_root.get_visits(),
+                  (int)m_nodes,
+                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));
     }
     int bestmove = get_best_move(passflag);
 #else
@@ -718,37 +722,32 @@ void UCTSearch::ponder() {
 
 #ifdef USE_SEARCH
     m_run = true;
-#ifdef USE_SMP
-    int cpus = SMP::get_num_cpus();
-    //int cpus = 4;
+    int cpus = cfg_num_threads;
     boost::thread_group tg;
     for (int i = 1; i < cpus; i++) {
         tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
     }
-#endif    
     do {
-        KoState currstate = m_rootstate;                
-        play_simulation(currstate, &m_root);                             
-    } while(!Utils::input_pending() && (!m_hasrunflag || (*m_runflag)));  
-           
+        KoState currstate = m_rootstate;
+        play_simulation(currstate, &m_root);
+    } while(!Utils::input_pending() && (!m_hasrunflag || (*m_runflag)));
+
     // stop the search
     m_run = false;
-#ifdef USE_SMP
     tg.join_all();
-#endif
-    // display search info        
+    // display search info
     myprintf("\n");
-    dump_stats(m_rootstate, m_root);                  
-               
-    myprintf("\n%d visits, %d nodes\n\n", m_root.get_visits(), m_nodes);
+    dump_stats(m_rootstate, m_root);
+
+    myprintf("\n%d visits, %d nodes\n\n", m_root.get_visits(), (int)m_nodes);
 #endif
 }
 
-void UCTSearch::set_visit_limit(int visits) {
-    if (visits == 0) {
-        m_maxvisits = INT_MAX;
+void UCTSearch::set_playout_limit(int playouts) {
+    if (playouts == 0) {
+        m_maxplayouts = INT_MAX;
     } else {
-        m_maxvisits = visits;
+        m_maxplayouts = playouts;
     }
 }
 

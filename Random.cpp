@@ -10,17 +10,16 @@ Random* Random::get_Rng(void) {
     if (s_rng == 0) {
         s_rng = new Random;
     }
-    
+
     return s_rng;
 }
 
 Random::Random(int seed) {
     if (seed == -1) {
         seedrandom((uint32)time(0));
-        //seedrandom(0);
     } else {
         seedrandom(seed);
-    }        
+    }
 }
 
 // n must be between 1 .. (1<<16) + 1

@@ -12,7 +12,7 @@ gcc32b:
 
 debug:
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -Og -g -std=c++11 -D_CONSOLE' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O0 -g -std=c++11 -D_CONSOLE' \
 		LDFLAGS='$(LDFLAGS) -g' \
 		leela
 
@@ -28,12 +28,12 @@ asan:
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
 		leela
 
-LIBS = -lpthread -lboost_thread -lboost_system
+LIBS = -lpthread -lboost_thread-mt -lboost_system-mt -lboost_program_options-mt
 #LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
 #LIBS += -lopenblas
 #LIBS += -lOpenCL
-LIBS += -framework Accelerate
-#LIBS += -framework OpenCL
+#LIBS += -framework Accelerate
+LIBS += -framework OpenCL
 #LIBS += -lmkl_rt
 
 CAFFE_BASE = /usr/local
@@ -48,7 +48,7 @@ CXXFLAGS += -I.
 CPPFLAGS += -MD -MP
 
 sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
-	  TimeControl.cpp UCTSearch.cpp Attributes.cpp \
+	  TimeControl.cpp UCTSearch.cpp Attributes.cpp Book.cpp \
 	  GameState.cpp Leela.cpp PNNode.cpp SGFParser.cpp Timing.cpp \
 	  Utils.cpp FastBoard.cpp Genetic.cpp Matcher.cpp PNSearch.cpp \
 	  SGFTree.cpp TTable.cpp Zobrist.cpp FastState.cpp GTP.cpp \

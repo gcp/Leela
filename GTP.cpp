@@ -16,11 +16,16 @@
 #include "AttribScores.h"
 #include "Genetic.h"
 #include "PNSearch.h"
-#ifdef USE_NETS
 #include "Network.h"
-#endif
+#include "Book.h"
 
 using namespace Utils;
+
+// Configuration flags, set by Leela.cpp
+bool cfg_allow_pondering;
+int cfg_num_threads;
+int cfg_max_playouts;
+bool cfg_enable_nets;
 
 const std::string GTP::s_commands[] = {
     "protocol_version",
@@ -47,7 +52,7 @@ const std::string GTP::s_commands[] = {
     "fixed_handicap",
     "place_free_handicap",
     "set_free_handicap",
-    "loadsgf",    
+    "loadsgf",
     "kgs-time_settings",
     ""
 };
@@ -83,9 +88,16 @@ std::string GTP::get_life_list(GameState & game, bool live) {
     return result;                    
 }
 
-bool GTP::execute(GameState & game, std::string xinput) {            
+bool GTP::execute(GameState & game, std::string xinput) {
     std::string input;
-                    
+
+    bool transform_lowercase = true;
+
+    // Required on Unixy systems
+    if (xinput.find("loadsgf") != std::string::npos) {
+        transform_lowercase = false;
+    }
+
     /* eat empty lines, simple preprocessing, lower case */
     for (unsigned int tmp = 0; tmp < xinput.size(); tmp++) {
         if (xinput[tmp] == 9) {
@@ -94,11 +106,14 @@ bool GTP::execute(GameState & game, std::string xinput) {
 	        || (xinput[tmp] >= 11 && xinput[tmp] <= 31)
 	        || xinput[tmp] == 127) {
 	       continue;
-        } else {        
-            input += std::tolower(xinput[tmp]);
-            //input += xinput[tmp];
-        }            
-        
+        } else {
+            if (transform_lowercase) {
+                input += std::tolower(xinput[tmp]);
+            } else {
+                input += xinput[tmp];
+            }
+        }
+
         // eat multi whitespace
         if (input.size() > 1) {
             if (std::isspace(input[input.size() - 2]) &&
@@ -106,11 +121,11 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 input.resize(input.size() - 1);
             }
         }
-    }    
-    
-    std::string command;    
+    }
+
+    std::string command;
     int id = -1;
-    
+
     if (input == "") {
         return true;
     } else if (input == "exit") {
@@ -118,7 +133,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (input == "#") {
         return true;
-    } else if (std::isdigit(input[0])) {        
+    } else if (std::isdigit(input[0])) {
         std::istringstream strm(input);
         char spacer;
         strm >> id;
@@ -127,7 +142,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
     } else {
         command = input;
     }
-    
+
     /* process commands */
     if (command == "protocol_version") {
         gtp_printf(id, "%d", GTP_VERSION);
@@ -257,13 +272,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 std::string vertex = game.move_to_text(move);            
                 gtp_printf(id, "%s", vertex.c_str());
             }
-#ifdef USE_PONDER
-            // now start pondering
-            if (game.get_last_move() != FastBoard::RESIGN) {
-                std::unique_ptr<UCTSearch> search(new UCTSearch(game));
-                search->ponder();
-            }                
-#endif            
+            if (cfg_allow_pondering) {
+                // now start pondering
+                if (game.get_last_move() != FastBoard::RESIGN) {
+                    std::unique_ptr<UCTSearch> search(new UCTSearch(game));
+                    search->ponder();
+                }
+            }
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
@@ -384,14 +399,14 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
             gtp_printf(id, "");
 
-#ifdef USE_PONDER
-            // KGS sends this after our move
-            // now start pondering
-            if (game.get_last_move() != FastBoard::RESIGN) {            
-                std::unique_ptr<UCTSearch> search(new UCTSearch(game));
-                search->ponder();
-            }                
-#endif            
+            if (cfg_allow_pondering) {
+                // KGS sends this after our move
+                // now start pondering
+                if (game.get_last_move() != FastBoard::RESIGN) {
+                    std::unique_ptr<UCTSearch> search(new UCTSearch(game));
+                    search->ponder();
+                }
+            }
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }    
@@ -401,9 +416,9 @@ bool GTP::execute(GameState & game, std::string xinput) {
             std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
             int move = search->think(game.get_to_move(), UCTSearch::NORMAL);
-            game.play_move(move);  
+            game.play_move(move);
             game.display_state();
-                              
+
         } while (game.get_passes() < 2);
 
         return true;
@@ -586,7 +601,6 @@ bool GTP::execute(GameState & game, std::string xinput) {
         gtp_printf(id, "");
         return true;
     }  else if (command.find("nettune") == 0) {
-#ifdef USE_NETS
         std::istringstream cmdstream(command);
         std::string tmp, filename;
 
@@ -595,24 +609,29 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
         std::unique_ptr<Network> network(new Network);
         network->autotune_from_file(filename);
-#endif
         gtp_printf(id, "");
         return true;
     } else if (command.find("netbench") == 0) {
-#ifdef USE_NETS
         Network::get_Network()->benchmark(&game);
-#endif
         gtp_printf(id, "");
         return true;
 
     } else if (command.find("predict") == 0) {
-#ifdef USE_NETS
-        auto vec = Network::get_Network()->get_scored_moves(&game);
-#endif
+        auto vec = Network::get_Network()->get_scored_moves(
+            &game, Network::Ensemble::AVERAGE_ALL);
         gtp_printf(id, "");
+        return true;
+    } else if (command.find("bookgen") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp, filename;
+
+        cmdstream >> tmp;   // eat bookgen
+        cmdstream >> filename;
+
+        Book::bookgen_from_file(filename);
         return true;
     }
 
     gtp_fail_printf(id, "unknown command");
-    return true;    
+    return true;
 }

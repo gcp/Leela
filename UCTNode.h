@@ -19,7 +19,7 @@ class UCTNode {
 public:
     typedef boost::tuple<float, int, UCTNode*> sortnode_t;
 
-    UCTNode(int vertex, float score);
+    UCTNode(int vertex, float score, int expand_treshold);
     ~UCTNode();
     bool first_visit() const;
     bool has_children() const;
@@ -27,7 +27,7 @@ public:
     float get_raverate() const;
     double get_blackwins() const;
     void create_children(boost::atomic<int> & nodecount,
-                         FastState & state, bool at_root = false);
+                         FastState & state, bool use_nets, bool at_root);
 #ifdef USE_OPENCL
     void expansion_cb(boost::atomic<int> * nodecount,
                       FastState & state,
@@ -37,9 +37,7 @@ public:
     void delete_child(UCTNode * child);
     void invalidate();
     bool valid();
-    bool should_expand() {
-        return m_visits > m_expand_cnt;
-    }
+    bool should_expand() const;
     int get_move() const;
     int get_visits() const;
     int get_ravevisits() const;
@@ -52,7 +50,7 @@ public:
     void set_expand_cnt(int runs);
     void update(Playout & gameresult, int color);
     void updateRAVE(Playout & playout, int color);
-    UCTNode* uct_select_child(int color);
+    UCTNode* uct_select_child(int color, bool use_nets);
     UCTNode* get_first_child();
     UCTNode* get_pass_child();
     UCTNode* get_nopass_child();
@@ -64,7 +62,8 @@ private:
     void link_child(UCTNode * newchild);
     void link_nodelist(boost::atomic<int> & nodecount,
                        FastState & state,
-                       std::vector<Network::scored_node> nodes);
+                       std::vector<Network::scored_node> nodes,
+                       bool use_nets);
 
     // Tree data
     UCTNode* m_firstchild;

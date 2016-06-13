@@ -20,29 +20,29 @@ public:
 };
 
 class TTable {
-public:    
+public:
     /*
         return the global TT
-    */            
+    */
     static TTable* get_TT(void);
-    
+
     /*
         update corresponding entry
-    */            
-    void update(uint64 hash, const UCTNode * node); 
-    
+    */
+    void update(uint64 hash, const UCTNode * node);
+
     /*
         sync given node with TT
-    */        
+    */
     void sync(uint64 hash, UCTNode * node);
-    
-private:   
-    TTable(int size = 200000);
+
+private:
+    TTable(int size = 500000);
 
     std::vector<TTEntry> m_buckets;
     SMP::Mutex m_mutex;
 
-    static TTable* s_ttable;   
+    static TTable* s_ttable;
 };
 
 #endif

@@ -20,6 +20,9 @@ class UCTNode;
 // Move attributes
 class Network {
 public:
+    enum Ensemble {
+        DIRECT, RANDOM_ROTATION, AVERAGE_ALL
+    };
     typedef std::bitset<19*19> BoardPlane;
     typedef std::vector<BoardPlane> NNPlanes;
     typedef std::pair<int, NNPlanes> TrainPosition;
@@ -27,29 +30,35 @@ public:
 
     using scored_node = std::pair<float, int>;
 
-    static const int CHANNELS = 22;
-    static const int MAX_CHANNELS = 160;
+    std::vector<scored_node> get_scored_moves(FastState * state,
+                                              Ensemble ensemble);
+    static constexpr int CHANNELS = 22;
+    static constexpr int MAX_CHANNELS = 160;
 
-    std::vector<scored_node> get_scored_moves(FastState * state);
 #ifdef USE_OPENCL
     void async_scored_moves(boost::atomic<int> * nodecount,
-                            FastState * state, UCTNode * node);
+                            FastState * state, UCTNode * node,
+                            Ensemble ensemble);
 #endif
     void initialize();
     void benchmark(FastState * state);
-    void show_heatmap(FastState * state, std::vector<scored_node>& moves);
+    static void show_heatmap(FastState * state, std::vector<scored_node>& moves);
     void autotune_from_file(std::string filename);
     static Network* get_Network(void);
+    std::string get_backend();
+    static int rotate_nn_idx(const int vertex, int symmetry);
+    static int rev_rotate_nn_idx(const int vertex, int symmetry);
 
 private:
 #ifdef USE_CAFFE
     std::unique_ptr<caffe::Net<float>> net;
 #endif
 
+    std::vector<scored_node> get_scored_moves_internal(
+        FastState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
     static void gather_features(FastState * state, NNPlanes & planes);
-    static int rotate_nn_idx(const int vertex, int symmetry);
 
     static Network* s_Net;
 };

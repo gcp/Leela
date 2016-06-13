@@ -11,6 +11,7 @@
 #include <boost/tr1/array.hpp>
 #include <boost/thread/tss.hpp>
 #include <boost/atomic.hpp>
+#include <string>
 #include <vector>
 
 class Layer {
@@ -31,11 +32,14 @@ private:
     cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;
     cl::Kernel m_batchnorm_kernel;
+    cl::Event m_complete_event;
     boost::atomic<bool> m_result_outstanding{false};
 };
 
 class OpenCL {
 public:
+    using event_callback =  void (CL_CALLBACK *) (cl_event, cl_int, void *);
+
     static OpenCL* get_OpenCL(void);
     void thread_init(void);
 
@@ -69,10 +73,9 @@ public:
     }
 
     void forward(std::vector<float>& input, std::vector<float>& output);
+    std::string get_device_name();
     void forward_async(std::vector<float>& input, std::vector<float>& output,
-        void (CL_CALLBACK * pfn_notify) (cl_event event, cl_int command_exec_status, void * user_data),
-        void * data
-    );
+                       event_callback cb, void * data);
     bool thread_can_issue();
     boost::atomic<bool> * get_thread_result_outstanding();
 

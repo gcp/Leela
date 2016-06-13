@@ -1,5 +1,4 @@
 #include "config.h"
-#ifdef USE_NETS
 #include <algorithm>
 #include <cassert>
 #include <list>
@@ -23,9 +22,15 @@
 using namespace caffe;
 #endif
 #ifdef USE_BLAS
+#ifdef __APPLE__
+#include <Accelerate.h>
+#else
+#ifdef _WIN32
+#include <cblas.h>
+#else
 #include <openblas/cblas.h>
-//#include <cblas.h>
-//#include <Accelerate.h>
+#endif
+#endif
 #include "Im2Col.h"
 #endif
 #ifdef USE_OPENCL
@@ -120,7 +125,7 @@ void Network::benchmark(FastState * state) {
     Time start;
 
     for (int loop = 0; loop < BENCH_AMOUNT; loop++) {
-        auto vec = get_scored_moves(state);
+        auto vec = get_scored_moves(state, Ensemble::RANDOM_ROTATION);
     }
 
     Time end;
@@ -181,8 +186,10 @@ void Network::initialize(void) {
     std::cerr << "done" << std::endl;
 #endif
 #ifdef USE_BLAS
+#ifndef __APPLE__
     openblas_set_num_threads(1);
     std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
+#endif
 #endif
 #ifndef USE_BLAS
 #ifndef USE_CAFFE
@@ -486,28 +493,32 @@ public:
     boost::atomic<int> * m_nodecount;
     FastState m_state;
     UCTNode * m_node;
+    int m_rotation;
     boost::atomic<bool> * m_thread_result_outstanding;
     std::vector<float> m_output_data;
     std::vector<float> m_input_data;
 };
 
-static void CL_CALLBACK forward_cb(cl_event event, cl_int status, void* data) {
+extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
+                                       void* data) {
     CallbackData * cb_data = static_cast<CallbackData*>(data);
 
     // Mark the kernels as available
+    // XXX: we cannot clean up at the end of a search until
+    // this callback returns
     *cb_data->m_thread_result_outstanding = false;
 
-    const int width = 19;
-    const int height = 19;
+    constexpr int width = 19;
+    constexpr int height = 19;
     std::vector<float> softmax_data(width * height);
     softmax(cb_data->m_output_data, softmax_data);
     std::vector<float>& outputs = softmax_data;
 
-    int idx = 0;
     std::vector<Network::scored_node> result;
 
-    for (auto it = outputs.begin(); it != outputs.end(); ++it, ++idx) {
-        float val = *it;
+    for (size_t idx = 0; idx < outputs.size(); idx++) {
+        int rot_idx = Network::rev_rotate_nn_idx(idx, cb_data->m_rotation);
+        float val = outputs[rot_idx];
         int x = idx % 19;
         int y = idx / 19;
         int vtx = cb_data->m_state.board.get_vertex(x, y);
@@ -515,6 +526,8 @@ static void CL_CALLBACK forward_cb(cl_event event, cl_int status, void* data) {
             result.push_back(std::make_pair(val, vtx));
         }
     }
+
+    Network::show_heatmap(&cb_data->m_state, result);
 
     cb_data->m_node->expansion_cb(cb_data->m_nodecount, cb_data->m_state,
                                   result);
@@ -524,9 +537,19 @@ static void CL_CALLBACK forward_cb(cl_event event, cl_int status, void* data) {
 
 void Network::async_scored_moves(boost::atomic<int> * nodecount,
                                  FastState * state,
-                                 UCTNode * node) {
+                                 UCTNode * node,
+                                 Ensemble ensemble) {
     if (state->board.get_boardsize() != 19) {
         return;
+    }
+
+    assert(ensemble == DIRECT || ensemble == RANDOM_ROTATION);
+    int rotation;
+    if (ensemble == RANDOM_ROTATION) {
+        rotation = Random::get_Rng()->randint(8);
+    } else {
+        assert(ensemble == DIRECT);
+        rotation = 0;
     }
 
     CallbackData * cb_data = new CallbackData();
@@ -534,10 +557,10 @@ void Network::async_scored_moves(boost::atomic<int> * nodecount,
     NNPlanes planes;
     gather_features(state, planes);
 
-    const int channels = CHANNELS;
-    const int width = 19;
-    const int height = 19;
-    const int max_channels = MAX_CHANNELS;
+    constexpr int channels = CHANNELS;
+    constexpr int width = 19;
+    constexpr int height = 19;
+    constexpr int max_channels = MAX_CHANNELS;
 
     cb_data->m_nodecount = nodecount;
     cb_data->m_state = *state;
@@ -546,12 +569,15 @@ void Network::async_scored_moves(boost::atomic<int> * nodecount,
     cb_data->m_output_data.resize(max_channels * 19 * 19);
     cb_data->m_thread_result_outstanding =
         OpenCL::get_OpenCL()->get_thread_result_outstanding();
+    assert(*cb_data->m_thread_result_outstanding == false);
+    cb_data->m_rotation = rotation;
 
     for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
+                int vtx = rotate_nn_idx(h * 19 + w, rotation);
                 cb_data->m_input_data[(c * height + h) * width + w] =
-                    (float)planes[c][h * 19 + w];
+                    (float)planes[c][vtx];
             }
         }
     }
@@ -560,11 +586,13 @@ void Network::async_scored_moves(boost::atomic<int> * nodecount,
 
     OpenCL::get_OpenCL()->forward_async(cb_data->m_input_data,
                                         cb_data->m_output_data,
-                                        &forward_cb, data);
+                                        forward_cb, data);
 }
 #endif
 
-std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
+
+std::vector<Network::scored_node> Network::get_scored_moves(
+    FastState * state, Ensemble ensemble) {
     std::vector<scored_node> result;
     if (state->board.get_boardsize() != 19) {
         return result;
@@ -573,6 +601,34 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
     NNPlanes planes;
     gather_features(state, planes);
 
+    if (ensemble == DIRECT) {
+        result = get_scored_moves_internal(state, planes, 0);
+    } else if (ensemble == RANDOM_ROTATION) {
+        int rotation = Random::get_Rng()->randint(8);
+        result = get_scored_moves_internal(state, planes, rotation);
+    } else if (ensemble == AVERAGE_ALL) {
+        result = get_scored_moves_internal(state, planes, 0);
+        for (int r = 1; r < 8; r++) {
+            auto sum_res = get_scored_moves_internal(state, planes, r);
+            for (size_t i = 0; i < sum_res.size(); i++) {
+                assert(result[i].second == sum_res[i].second);
+                result[i].first += sum_res[i].first;
+            }
+        }
+        std::for_each(result.begin(), result.end(),
+                      [](scored_node & sn){ sn.first /= 8.0f; });
+    }
+
+    if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+        show_heatmap(state, result);
+    }
+
+    return result;
+}
+
+std::vector<Network::scored_node> Network::get_scored_moves_internal(
+    FastState * state, NNPlanes & planes, int rotation) {
+    std::vector<scored_node> result;
 #ifdef USE_CAFFE
     Blob<float>* input_layer = net->input_blobs()[0];
     int channels = input_layer->channels();
@@ -583,10 +639,10 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
     assert(height == state->board.get_boardsize());
     float* input_data = input_layer->mutable_cpu_data();
 #else
-    const int channels = CHANNELS;
-    const int width = 19;
-    const int height = 19;
-    const int max_channels = MAX_CHANNELS;
+    constexpr int channels = CHANNELS;
+    constexpr int width = 19;
+    constexpr int height = 19;
+    constexpr int max_channels = MAX_CHANNELS;
     std::vector<float> input_data(max_channels * width * height);
     std::vector<float> output_data(max_channels * width * height);
     std::vector<float> softmax_data(width * height);
@@ -594,7 +650,9 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
     for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
-                input_data[(c * height + h) * width + w] = (float)planes[c][h * 19 + w];
+                int vtx = rotate_nn_idx(h * 19 + w, rotation);
+                input_data[(c * height + h) * width + w] =
+                    (float)planes[c][vtx];
             }
         }
     }
@@ -663,10 +721,9 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
     const float* end = begin + output_layer->channels();
     auto outputs = std::vector<float>(begin, end);
 #endif
-    int idx = 0;
-
-    for (auto it = outputs.begin(); it != outputs.end(); ++it, ++idx) {
-        float val = *it;
+    for (size_t idx = 0; idx < outputs.size(); idx++) {
+        int rot_idx = rev_rotate_nn_idx(idx, rotation);
+        float val = outputs[rot_idx];
         int x = idx % 19;
         int y = idx / 19;
         int vtx = state->board.get_vertex(x, y);
@@ -674,8 +731,6 @@ std::vector<Network::scored_node> Network::get_scored_moves(FastState * state) {
             result.push_back(std::make_pair(val, vtx));
         }
     }
-
-    //show_heatmap(state, result);
 
     return result;
 }
@@ -693,8 +748,12 @@ void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
                 return item.second == vtx;
             });
 
-            float score = item->first;
-            assert(vtx == item->second);
+            float score = 0.0f;
+            // Non-empty squares won't be scored
+            if (item != moves.end()) {
+                score = item->first;
+                assert(vtx == item->second);
+            }
 
             line += boost::str(boost::format("%3d ") % int(score * 1000));
             if (x == 18) {
@@ -934,6 +993,13 @@ skipnext:
     myprintf("Gathering pass done.\n");
 }
 
+int Network::rev_rotate_nn_idx(const int vertex, int symmetry) {
+    static const int invert[] = {0, 1, 2, 3, 4, 6, 5, 7};
+    assert(rotate_nn_idx(rotate_nn_idx(vertex, symmetry), invert[symmetry])
+           == vertex);
+    return rotate_nn_idx(vertex, invert[symmetry]);
+}
+
 int Network::rotate_nn_idx(const int vertex, int symmetry) {
     assert(vertex >= 0 && vertex < 19*19);
     assert(symmetry >= 0 && symmetry < 8);
@@ -1079,4 +1145,17 @@ void Network::autotune_from_file(std::string filename) {
     TrainVector data;
     gather_traindata(filename, data);
 }
+
+std::string Network::get_backend() {
+#ifdef USE_BLAS
+#ifndef __APPLE__
+    return std::string("BLAS core: " + std::string(openblas_get_corename()));
+#else
+    return std::string("BLAS core: Apple Acclerate");
 #endif
+#elif defined(USE_OPENCL)
+    return OpenCL::get_OpenCL()->get_device_name();
+#else
+    return std::string("Leela native convolution")
+#endif
+}

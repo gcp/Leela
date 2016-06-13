@@ -1,6 +1,6 @@
 competition_type = 'playoff'
 
-record_games = False
+record_games = True
 stderr_to_log = True
 
 players = {
@@ -23,6 +23,17 @@ players = {
 				"time_settings 600 0 0",
                            ],
                     ),
+    'leela-063' : Player("./leela-063 --gtp --threads 2 --noponder ",
+                           startup_gtp_commands=[
+				"time_settings 600 0 0",
+                           ],
+                    ),
+    'pachi' : Player("./pachi -t _600 threads=2,pondering=0,max_tree_size=3072 -f book2.dat", cwd="~/git/pachi"),
+    'Leela_0.6.2' : Player("./leela_062_linux_x64 --threads 2 --noponder --gtp",
+                           startup_gtp_commands=[
+				"time_settings 600 0 0",
+                           ],
+     )
 }
 
 alternating = True
@@ -30,6 +41,8 @@ board_size = 19
 komi = 7.5
 
 matchups = [
-	Matchup('leela-mcts050', 'leela-dcnn2',
+	Matchup('leela-063', 'Leela_0.6.2',
+                scorer='players', number_of_games=1000),
+	Matchup('leela-063', 'pachi',
                 scorer='players', number_of_games=1000),
 ]

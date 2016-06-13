@@ -388,20 +388,20 @@ std::vector<bool> FastState::mark_dead() {
             }
         }        
     }
-    
-    const int LIVE_TRESHOLD = MARKING_RUNS / 5;
-    
+
+    const int LIVE_TRESHOLD = MARKING_RUNS / 2;
+
     for (int i = 0; i < board.get_boardsize(); i++) {
         for (int j = 0; j < board.get_boardsize(); j++) {
             int vertex = board.get_vertex(i, j);
-            
+
             if (survive_count[vertex] < LIVE_TRESHOLD) {
                 dead_group[vertex] = true;
             }
         }
     }
-    
-    return dead_group;    
+
+    return dead_group;
 }
 
 std::vector<int> FastState::final_score_map() {

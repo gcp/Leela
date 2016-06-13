@@ -99,7 +99,7 @@ std::vector<uint64> FullBoard::get_rotated_hashes(void) {
         for (int i = 0; i < m_maxsq; i++) {
             if (m_square[i] != INVAL) {
                 int newi = rotate_vertex(i, sym);
-                res ^= Zobrist::zobrist[m_square[newi]][newi];
+                res ^= Zobrist::zobrist[m_square[i]][newi];
             }
         }
         /* prisoner hashing is rule set dependent */
@@ -111,6 +111,12 @@ std::vector<uint64> FullBoard::get_rotated_hashes(void) {
     }
 
     return result;
+}
+
+uint64 FullBoard::get_canonical_hash(void) {
+    std::vector<uint64> hashes = get_rotated_hashes();
+    std::sort(hashes.begin(), hashes.end());
+    return hashes[0];
 }
 
 uint64 FullBoard::get_hash(void) {
