@@ -78,30 +78,30 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
         // assert(!at_root);
         return;
     }
+#endif
     // Someone else is running the expansion
     if (m_is_expanding) {
         return;
     }
     // We'll be the one queueing this node for expansion, stop others
     m_is_expanding = true;
-#endif
+    lock.unlock();
 
     FastBoard & board = state.board;
     std::vector<Network::scored_node> nodelist;
 
     if (use_nets) {
-        std::vector<Network::scored_node> raw_netlist;
 #ifdef USE_OPENCL
         if (at_root) {
            auto raw_netlist = Network::get_Network()->get_scored_moves(
                &state, Network::Ensemble::AVERAGE_ALL);
-           lock.unlock();
            expansion_cb(&nodecount, state, raw_netlist);
         } else {
             Network::get_Network()->async_scored_moves(
                 &nodecount, &state, this, Network::Ensemble::RANDOM_ROTATION);
         }
 #else
+        std::vector<Network::scored_node> raw_netlist;
         if (state.get_passes() < 2) {
             raw_netlist = Network::get_Network()->get_scored_moves(
               &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
@@ -151,8 +151,6 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
 void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
                            FastState & state,
                            std::vector<Network::scored_node> raw_netlist) {
-    SMP::Lock lock(get_mutex());
-
     FastBoard & board = state.board;
     std::vector<Network::scored_node> nodelist;
 
@@ -190,6 +188,8 @@ void UCTNode::link_nodelist(boost::atomic<int> & nodecount,
     if (use_nets) {
         expand_treshold = UCTSearch::MCNN_MATURE_TRESHOLD;
     }
+
+    SMP::Lock lock(get_mutex());
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         if (totalchildren - childrenseen <= maxchilds) {
