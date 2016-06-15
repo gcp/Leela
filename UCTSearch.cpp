@@ -542,6 +542,9 @@ void UCTWorker::operator()() {
         KoState currstate = m_rootstate;
         m_search->play_simulation(currstate, m_root);
     } while(m_search->is_running());
+#ifdef USE_OPENCL
+    OpenCL::get_OpenCL()->join_outstanding_cb();
+#endif
 }
 
 float UCTSearch::get_score() {
@@ -645,6 +648,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // stop the search
     m_run = false;
+#ifdef USE_OPENCL
+    OpenCL::get_OpenCL()->join_outstanding_cb();
+#endif
     tg.join_all();
     if (!m_root.has_children()) {
         return FastBoard::PASS;
@@ -734,6 +740,9 @@ void UCTSearch::ponder() {
 
     // stop the search
     m_run = false;
+#ifdef USE_OPENCL
+    OpenCL::get_OpenCL()->join_outstanding_cb();
+#endif
     tg.join_all();
     // display search info
     myprintf("\n");

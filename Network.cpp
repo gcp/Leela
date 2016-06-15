@@ -506,6 +506,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     // Mark the kernels as available
     // XXX: we cannot clean up at the end of a search until
     // this callback returns
+    // 4290
     *cb_data->m_thread_result_outstanding = false;
 
     constexpr int width = 19;
@@ -527,7 +528,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
         }
     }
 
-    Network::show_heatmap(&cb_data->m_state, result);
+    // Network::show_heatmap(&cb_data->m_state, result);
 
     cb_data->m_node->expansion_cb(cb_data->m_nodecount, cb_data->m_state,
                                   result);
@@ -619,9 +620,9 @@ std::vector<Network::scored_node> Network::get_scored_moves(
                       [](scored_node & sn){ sn.first /= 8.0f; });
     }
 
-    if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-        show_heatmap(state, result);
-    }
+    // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+    //    show_heatmap(state, result);
+    // }
 
     return result;
 }

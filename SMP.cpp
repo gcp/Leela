@@ -1,6 +1,8 @@
 #include "config.h"
 #include "SMP.h"
 
+#include <boost/thread.hpp>
+
 SMP::Mutex::Mutex() {
     m_lock = false;
 }
@@ -22,11 +24,5 @@ SMP::Lock::~Lock() {
 }
 
 int SMP::get_num_cpus() {
-#ifdef WIN32
-    SYSTEM_INFO sysinfo;
-    GetSystemInfo(&sysinfo);
-    return sysinfo.dwNumberOfProcessors;
-#else
-    return sysconf(_SC_NPROCESSORS_ONLN);
-#endif
+    return boost::thread::hardware_concurrency();
 }

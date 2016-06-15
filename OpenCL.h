@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include "SMP.h"
+
 class Layer {
     friend class OpenCL;
 private:
@@ -32,7 +34,6 @@ private:
     cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;
     cl::Kernel m_batchnorm_kernel;
-    cl::Event m_complete_event;
     boost::atomic<bool> m_result_outstanding{false};
 };
 
@@ -77,6 +78,7 @@ public:
     void forward_async(std::vector<float>& input, std::vector<float>& output,
                        event_callback cb, void * data);
     bool thread_can_issue();
+    void join_outstanding_cb();
     boost::atomic<bool> * get_thread_result_outstanding();
 
 private:
@@ -100,6 +102,9 @@ private:
 
     int m_wavefront_size{0};
     bool m_init_ok{false};
+
+    // Keep track of all async/cb threads we dispatch
+    boost::atomic<int> m_cb_outstanding{0};
 };
 
 #endif
