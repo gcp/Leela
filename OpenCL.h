@@ -34,6 +34,7 @@ private:
     cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;
     cl::Kernel m_batchnorm_kernel;
+    cl::Event m_complete_event;
     boost::atomic<bool> m_result_outstanding{false};
 };
 
@@ -78,6 +79,7 @@ public:
     void forward_async(std::vector<float>& input, std::vector<float>& output,
                        event_callback cb, void * data);
     bool thread_can_issue();
+    void callback_finished();
     void join_outstanding_cb();
     boost::atomic<bool> * get_thread_result_outstanding();
 

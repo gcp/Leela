@@ -504,9 +504,6 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     CallbackData * cb_data = static_cast<CallbackData*>(data);
 
     // Mark the kernels as available
-    // XXX: we cannot clean up at the end of a search until
-    // this callback returns
-    // 4290
     *cb_data->m_thread_result_outstanding = false;
 
     constexpr int width = 19;
@@ -534,6 +531,11 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
                                   result);
 
     delete cb_data;
+
+    // Reduce the count of things having pointers to UCTNodes
+    // or UCTSearch. We cannot destroy the search till these
+    // have finished.
+    OpenCL::get_OpenCL()->callback_finished();
 }
 
 void Network::async_scored_moves(boost::atomic<int> * nodecount,

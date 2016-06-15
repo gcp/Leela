@@ -406,8 +406,6 @@ void OpenCL::thread_init() {
         data->m_commandqueue = cl::CommandQueue(cl::Context::getDefault(),
             cl::Device::getDefault());
 
-        myprintf("commandqueue: %p\n", &data->m_commandqueue);
-
         thread_data.reset(data);
     }
 }
@@ -460,37 +458,25 @@ void OpenCL::forward_async(std::vector<float>& input,
         }
     }
 
-    cl::CommandQueue * queue = &thread_data.get()->m_commandqueue;
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
+    cl::Event & event = thread_data.get()->m_complete_event;
+
     // last layer is always a convolution, so output is in tmp
-    queue->enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
+    queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
 
     m_cb_outstanding.fetch_add(1, boost::memory_order_release);
-    boost::thread(
-        [this, outBuffer, finalSize, data, cb, queue, &output]() mutable {
-            queue->enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize,
-                                    static_cast<void*>(output.data()));
-            queue->finish();
-            cb(nullptr, CL_COMPLETE, data);
-            this->m_cb_outstanding.fetch_sub(1, boost::memory_order_release);
-        }
-    ).detach();
+    queue.enqueueReadBuffer(outBuffer, CL_TRUE, 0, finalSize,
+                            static_cast<void*>(output.data()),
+                            nullptr, &event);
+    event.setCallback(CL_COMPLETE, cb, data);
+}
+
+void OpenCL::callback_finished() {
+    m_cb_outstanding.fetch_sub(1, boost::memory_order_release);
 }
 
 void OpenCL::join_outstanding_cb() {
-    int outstanding = m_cb_outstanding.load(boost::memory_order_acquire);
-
-    if (outstanding) {
-        std::cerr << outstanding << " OpenCL tasks outstanding, ";
-        Time start;
-        while (m_cb_outstanding.load(boost::memory_order_acquire) > 0);
-        int centiseconds_elapsed = Time::timediff(start, Time());
-        std::cerr << " took " << centiseconds_elapsed/100.0f << "s."
-                  << std::endl;
-    }
-    auto data = thread_data.get();
-
-    myprintf("commandqueue: %p\n", &data->m_commandqueue);
-
+    while (m_cb_outstanding.load(boost::memory_order_acquire) > 0);
 }
 
 void OpenCL::forward(std::vector<float>& input,
@@ -524,11 +510,11 @@ void OpenCL::forward(std::vector<float>& input,
                      layer.weights);
         }
     }
-    cl::CommandQueue * queue = &thread_data.get()->m_commandqueue;
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
     // last layer is always a convolution, so output is in tmp
-    queue->enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
-    queue->enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, &output[0]);
-    queue->finish();
+    queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
+    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, &output[0]);
+    queue.finish();
     thread_data.get()->m_result_outstanding = false;
 }
 
@@ -541,20 +527,20 @@ void OpenCL::batchnorm(int outputs,
     constexpr int height = 19;
     constexpr int boardsize = width * height;
 
-    cl::CommandQueue * queue = &thread_data.get()->m_commandqueue;
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
 
-    cl::Kernel * batchnorm_kernel = &thread_data.get()->m_batchnorm_kernel;
+    cl::Kernel batchnorm_kernel = thread_data.get()->m_batchnorm_kernel;
 
     try {
-        batchnorm_kernel->setArg(0, bufferInput);
-        batchnorm_kernel->setArg(1, bufferOutput);
-        batchnorm_kernel->setArg(2, weights[0]);
-        batchnorm_kernel->setArg(3, weights[1]);
-        batchnorm_kernel->setArg(4, weights[2]);
+        batchnorm_kernel.setArg(0, bufferInput);
+        batchnorm_kernel.setArg(1, bufferOutput);
+        batchnorm_kernel.setArg(2, weights[0]);
+        batchnorm_kernel.setArg(3, weights[1]);
+        batchnorm_kernel.setArg(4, weights[2]);
 
-        queue->enqueueNDRangeKernel(*batchnorm_kernel, cl::NullRange,
-                                    cl::NDRange(outputs, boardsize),
-                                    cl::NDRange(std::min(8, outputs), 19));
+        queue.enqueueNDRangeKernel(batchnorm_kernel, cl::NullRange,
+                                   cl::NDRange(outputs, boardsize),
+                                   cl::NDRange(std::min(8, outputs), 19));
     } catch (cl::Error &e) {
         std::cerr << "Error in convolve: " << e.what() << ": "
             << e.err() << std::endl;
@@ -586,11 +572,11 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     size_t outputGroup;
     size_t rowGroup;
 
-    cl::Kernel * m_convolve_kernel;
+    cl::Kernel m_convolve_kernel;
     if (filter_size == 3) {
-        m_convolve_kernel = &thread_data.get()->m_convolve3_kernel;
+        m_convolve_kernel = thread_data.get()->m_convolve3_kernel;
     } else {
-        m_convolve_kernel = &thread_data.get()->m_convolve5_kernel;
+        m_convolve_kernel = thread_data.get()->m_convolve5_kernel;
     }
 
     int channelShift;
@@ -632,37 +618,37 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     cl::Buffer bufferMerge = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
                                         mergeSize);
 
-    cl::CommandQueue * queue = &thread_data.get()->m_commandqueue;
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
 
     try {
-        m_convolve_kernel->setArg(0, bufferInput);
-        m_convolve_kernel->setArg(1, bufferMerge);
-        m_convolve_kernel->setArg(2, weights[0]);
-        m_convolve_kernel->setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
-        m_convolve_kernel->setArg(4, channelShift);
-        m_convolve_kernel->setArg(5, cl::Local(rowSize));
-        m_convolve_kernel->setArg(6, rowBuffer);
+        m_convolve_kernel.setArg(0, bufferInput);
+        m_convolve_kernel.setArg(1, bufferMerge);
+        m_convolve_kernel.setArg(2, weights[0]);
+        m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
+        m_convolve_kernel.setArg(4, channelShift);
+        m_convolve_kernel.setArg(5, cl::Local(rowSize));
+        m_convolve_kernel.setArg(6, rowBuffer);
 
-        queue->enqueueNDRangeKernel(*m_convolve_kernel, cl::NullRange,
-                                    cl::NDRange(channels, outputs, 19),
-                                    cl::NDRange(channelGroup, outputGroup, rowGroup));
+        queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
+                                   cl::NDRange(channels, outputs, 19),
+                                   cl::NDRange(channelGroup, outputGroup, rowGroup));
     } catch (cl::Error &e) {
         std::cerr << "Error in convolve: " << e.what() << ": "
                   << e.err() << std::endl;
         return;
     }
 
-    cl::Kernel * merge_kernel = &thread_data.get()->m_merge_kernel;
+    cl::Kernel merge_kernel = thread_data.get()->m_merge_kernel;
 
     try {
-        merge_kernel->setArg(0, bufferMerge);
-        merge_kernel->setArg(1, bufferOutput);
-        merge_kernel->setArg(2, weights[1]);
-        merge_kernel->setArg(3, channels >> channelShift);
+        merge_kernel.setArg(0, bufferMerge);
+        merge_kernel.setArg(1, bufferOutput);
+        merge_kernel.setArg(2, weights[1]);
+        merge_kernel.setArg(3, channels >> channelShift);
 
-        queue->enqueueNDRangeKernel(*merge_kernel, cl::NullRange,
-                                    cl::NDRange(outputs, boardsize),
-                                    cl::NDRange(std::min(8, outputs), 19));
+        queue.enqueueNDRangeKernel(merge_kernel, cl::NullRange,
+                                   cl::NDRange(outputs, boardsize),
+                                   cl::NDRange(std::min(8, outputs), 19));
     } catch (cl::Error &e) {
         std::cerr << "Error in merge: " << e.what() << ": "
                   << e.err() << std::endl;
