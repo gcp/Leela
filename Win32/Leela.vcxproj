@@ -195,6 +195,7 @@
   <ItemGroup>
     <ClCompile Include="..\AttribScores.cpp" />
     <ClCompile Include="..\Attributes.cpp" />
+    <ClCompile Include="..\Book.cpp" />
     <ClCompile Include="..\FastBoard.cpp" />
     <ClCompile Include="..\FastState.cpp" />
     <ClCompile Include="..\FullBoard.cpp" />
@@ -226,6 +227,8 @@
   <ItemGroup>
     <ClInclude Include="..\AttribScores.h" />
     <ClInclude Include="..\Attributes.h" />
+    <ClInclude Include="..\Book.h" />
+    <ClInclude Include="..\BookData.h" />
     <ClInclude Include="..\config.h" />
     <ClInclude Include="..\FastBoard.h" />
     <ClInclude Include="..\FastState.h" />

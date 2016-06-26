@@ -21,9 +21,9 @@
 #define PROGRAM_VERSION "0.6.3"
 
 /* Features */
-#define USE_BLAS
+//#define USE_BLAS
 //#define USE_CAFFE
-//#define USE_OPENCL
+#define USE_OPENCL
 #define USE_SEARCH
 
 // OpenBLAS limitation
