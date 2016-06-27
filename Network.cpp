@@ -494,7 +494,7 @@ public:
     FastState m_state;
     UCTNode * m_node;
     int m_rotation;
-    boost::atomic<bool> * m_thread_result_outstanding;
+    boost::atomic<int> * m_thread_results_outstanding;
     std::vector<float> m_output_data;
     std::vector<float> m_input_data;
 };
@@ -504,7 +504,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     CallbackData * cb_data = static_cast<CallbackData*>(data);
 
     // Mark the kernels as available
-    *cb_data->m_thread_result_outstanding = false;
+    cb_data->m_thread_results_outstanding->fetch_sub(1, boost::memory_order_release);
 
     constexpr int width = 19;
     constexpr int height = 19;
@@ -570,9 +570,9 @@ void Network::async_scored_moves(boost::atomic<int> * nodecount,
     cb_data->m_node = node;
     cb_data->m_input_data.resize(max_channels * 19 * 19);
     cb_data->m_output_data.resize(max_channels * 19 * 19);
-    cb_data->m_thread_result_outstanding =
-        OpenCL::get_OpenCL()->get_thread_result_outstanding();
-    assert(*cb_data->m_thread_result_outstanding == false);
+    cb_data->m_thread_results_outstanding =
+        OpenCL::get_OpenCL()->get_thread_results_outstanding();
+    //assert(cb_data->m_thread_result_outstanding.load(boost::memory_order_acquire) == 0);
     cb_data->m_rotation = rotation;
 
     for (int c = 0; c < channels; ++c) {

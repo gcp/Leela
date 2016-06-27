@@ -27,7 +27,7 @@ public:
         visits happened.
     */
 #ifdef USE_OPENCL
-    static constexpr int MCNN_MATURE_TRESHOLD = 75;
+    static constexpr int MCNN_MATURE_TRESHOLD = 30;
 #else
     static constexpr int MCNN_MATURE_TRESHOLD = 250;
 #endif

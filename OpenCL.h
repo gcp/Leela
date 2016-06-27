@@ -35,7 +35,7 @@ private:
     cl::Kernel m_merge_kernel;
     cl::Kernel m_batchnorm_kernel;
     cl::Event m_complete_event;
-    boost::atomic<bool> m_result_outstanding{false};
+    boost::atomic<int> m_results_outstanding{0};
 };
 
 class OpenCL {
@@ -81,7 +81,7 @@ public:
     bool thread_can_issue();
     void callback_finished();
     void join_outstanding_cb();
-    boost::atomic<bool> * get_thread_result_outstanding();
+    boost::atomic<int> * get_thread_results_outstanding();
 
 private:
     OpenCL();

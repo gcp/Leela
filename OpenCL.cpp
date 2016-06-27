@@ -386,11 +386,17 @@ OpenCL::OpenCL(void) {
 }
 
 bool OpenCL::thread_can_issue() {
-    return !thread_data.get()->m_result_outstanding;
+    static int max_queue_size = 0;
+    int current_queue = thread_data.get()->m_results_outstanding;
+    if (current_queue > max_queue_size) {
+        max_queue_size = current_queue;
+        // std::cerr << " qsz: " << max_queue_size << " ";
+    }
+    return current_queue < 2;
 }
 
-boost::atomic<bool> * OpenCL::get_thread_result_outstanding() {
-    return &thread_data.get()->m_result_outstanding;
+boost::atomic<int> * OpenCL::get_thread_results_outstanding() {
+    return &thread_data.get()->m_results_outstanding;
 }
 
 void OpenCL::thread_init() {
@@ -428,7 +434,7 @@ void OpenCL::add_weights(int layer,
 void OpenCL::forward_async(std::vector<float>& input,
                            std::vector<float>& output,
                            event_callback cb, void * data) {
-    thread_data.get()->m_result_outstanding = true;
+    thread_data.get()->m_results_outstanding.fetch_add(1, boost::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
@@ -481,7 +487,7 @@ void OpenCL::join_outstanding_cb() {
 
 void OpenCL::forward(std::vector<float>& input,
                      std::vector<float>& output) {
-    thread_data.get()->m_result_outstanding = true;
+    thread_data.get()->m_results_outstanding.fetch_add(1, boost::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
@@ -515,7 +521,7 @@ void OpenCL::forward(std::vector<float>& input,
     queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, &output[0]);
     queue.finish();
-    thread_data.get()->m_result_outstanding = false;
+    thread_data.get()->m_results_outstanding.fetch_sub(1, boost::memory_order_release);
 }
 
 void OpenCL::batchnorm(int outputs,
