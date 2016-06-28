@@ -483,6 +483,7 @@ void OpenCL::forward_async(std::vector<float>& input,
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize,
                             static_cast<void*>(output.data()),
                             nullptr, &event);
+    //queue.finish();
     event.setCallback(CL_COMPLETE, cb, data);
 }
 

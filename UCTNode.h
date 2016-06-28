@@ -62,7 +62,7 @@ private:
     void link_child(UCTNode * newchild);
     void link_nodelist(boost::atomic<int> & nodecount,
                        FastState & state,
-                       std::vector<Network::scored_node> nodes,
+                       std::vector<Network::scored_node> & nodes,
                        bool use_nets);
 
     // Tree data

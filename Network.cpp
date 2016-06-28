@@ -560,22 +560,20 @@ void Network::async_scored_moves(boost::atomic<int> * nodecount,
     NNPlanes planes;
     gather_features(state, planes);
 
-    constexpr int channels = CHANNELS;
     constexpr int width = 19;
     constexpr int height = 19;
-    constexpr int max_channels = MAX_CHANNELS;
 
     cb_data->m_nodecount = nodecount;
     cb_data->m_state = *state;
     cb_data->m_node = node;
-    cb_data->m_input_data.resize(max_channels * 19 * 19);
-    cb_data->m_output_data.resize(max_channels * 19 * 19);
+    cb_data->m_input_data.resize(Network::MAX_CHANNELS * 19 * 19);
+    cb_data->m_output_data.resize(Network::MAX_CHANNELS * 19 * 19);
     cb_data->m_thread_results_outstanding =
         OpenCL::get_OpenCL()->get_thread_results_outstanding();
     //assert(cb_data->m_thread_result_outstanding.load(boost::memory_order_acquire) == 0);
     cb_data->m_rotation = rotation;
 
-    for (int c = 0; c < channels; ++c) {
+    for (int c = 0; c < Network::CHANNELS; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
                 int vtx = rotate_nn_idx(h * 19 + w, rotation);

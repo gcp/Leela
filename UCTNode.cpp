@@ -170,7 +170,7 @@ void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
 
 void UCTNode::link_nodelist(boost::atomic<int> & nodecount,
                             FastState & state,
-                            std::vector<Network::scored_node> nodelist,
+                            std::vector<Network::scored_node> & nodelist,
                             bool use_nets) {
     FastBoard & board = state.board;
 
