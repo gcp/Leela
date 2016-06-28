@@ -17,6 +17,7 @@
 #include "Utils.h"
 #include "Timing.h"
 #include "OpenCL.h"
+#include "Network.h"
 
 using namespace Utils;
 
@@ -434,10 +435,15 @@ void OpenCL::add_weights(int layer,
 void OpenCL::forward_async(std::vector<float>& input,
                            std::vector<float>& output,
                            event_callback cb, void * data) {
+    constexpr int width = 19;
+    constexpr int height = 19;
+
     thread_data.get()->m_results_outstanding.fetch_add(1, boost::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
+    size_t mergeSize = sizeof(float) * width * height *
+        Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 2);
 
     cl::Buffer inBuffer = cl::Buffer(
         CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
@@ -445,6 +451,8 @@ void OpenCL::forward_async(std::vector<float>& input,
     cl::Buffer tmpBuffer = cl::Buffer(
         CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
         outSize);
+    cl::Buffer mergeBuffer = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+        mergeSize);
     cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
 
     for (auto & layer : m_layers) {
@@ -460,6 +468,7 @@ void OpenCL::forward_async(std::vector<float>& input,
                 layer.outputs,
                 inBuffer,
                 tmpBuffer,
+                mergeBuffer,
                 layer.weights);
         }
     }
@@ -471,7 +480,7 @@ void OpenCL::forward_async(std::vector<float>& input,
     queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
 
     m_cb_outstanding.fetch_add(1, boost::memory_order_release);
-    queue.enqueueReadBuffer(outBuffer, CL_TRUE, 0, finalSize,
+    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize,
                             static_cast<void*>(output.data()),
                             nullptr, &event);
     event.setCallback(CL_COMPLETE, cb, data);
@@ -487,10 +496,15 @@ void OpenCL::join_outstanding_cb() {
 
 void OpenCL::forward(std::vector<float>& input,
                      std::vector<float>& output) {
+    constexpr int width = 19;
+    constexpr int height = 19;
+
     thread_data.get()->m_results_outstanding.fetch_add(1, boost::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
+    size_t mergeSize = sizeof(float) * width * height *
+                       Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 2);
 
     cl::Buffer inBuffer = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE
                                      | CL_MEM_HOST_NO_ACCESS,
@@ -498,6 +512,8 @@ void OpenCL::forward(std::vector<float>& input,
     cl::Buffer tmpBuffer = cl::Buffer(CL_MEM_READ_WRITE
                                       | CL_MEM_HOST_NO_ACCESS,
                                       outSize);
+    cl::Buffer mergeBuffer = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                                        mergeSize);
     cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
 
     for (auto & layer : m_layers) {
@@ -513,6 +529,7 @@ void OpenCL::forward(std::vector<float>& input,
                      layer.outputs,
                      inBuffer,
                      tmpBuffer,
+                     mergeBuffer,
                      layer.weights);
         }
     }
@@ -562,6 +579,7 @@ static int rounddown_pow2(int val) {
 void OpenCL::convolve(int filter_size, int channels, int outputs,
                       cl::Buffer& bufferInput,
                       cl::Buffer& bufferOutput,
+                      cl::Buffer& bufferMerge,
                       std::vector<cl::Buffer>& weights) {
     // fixed for 19x19
     constexpr int width = 19;
@@ -621,8 +639,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     int rowBuffer = std::min<int>(channelGroup, 7);
     size_t rowSize = channelGroup * outputGroup * rowBuffer * sizeof(float);
 
-    cl::Buffer bufferMerge = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                                        mergeSize);
+    assert(mergeSize <= bufferMerge.getInfo<CL_MEM_SIZE>());
 
     cl::CommandQueue queue = thread_data.get()->m_commandqueue;
 

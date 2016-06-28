@@ -92,7 +92,7 @@ private:
     }
     void add_weights(int layer, size_t size, float * weights);
     void convolve(int filter_size, int channels, int outputs,
-                  cl::Buffer& input, cl::Buffer& output,
+                  cl::Buffer& input, cl::Buffer& output, cl::Buffer& merge,
                   std::vector<cl::Buffer>& weights);
     void batchnorm(int outputs, cl::Buffer & input,
                    cl::Buffer & output, std::vector<cl::Buffer>& weights);
