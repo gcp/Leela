@@ -447,7 +447,7 @@ void OpenCL::forward_async(std::vector<float>& input,
 
     cl::Buffer inBuffer = cl::Buffer(
         CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-        inSize, &input[0]);
+        inSize, input.data());
     cl::Buffer tmpBuffer = cl::Buffer(
         CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
         outSize);
@@ -481,7 +481,7 @@ void OpenCL::forward_async(std::vector<float>& input,
 
     m_cb_outstanding.fetch_add(1, boost::memory_order_release);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize,
-                            static_cast<void*>(output.data()),
+                            output.data(),
                             nullptr, &event);
     //queue.finish();
     event.setCallback(CL_COMPLETE, cb, data);
@@ -509,7 +509,7 @@ void OpenCL::forward(std::vector<float>& input,
 
     cl::Buffer inBuffer = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE
                                      | CL_MEM_HOST_NO_ACCESS,
-                                     inSize, &input[0]);
+                                     inSize, input.data());
     cl::Buffer tmpBuffer = cl::Buffer(CL_MEM_READ_WRITE
                                       | CL_MEM_HOST_NO_ACCESS,
                                       outSize);
@@ -537,7 +537,7 @@ void OpenCL::forward(std::vector<float>& input,
     cl::CommandQueue queue = thread_data.get()->m_commandqueue;
     // last layer is always a convolution, so output is in tmp
     queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
-    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, &output[0]);
+    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
     queue.finish();
     thread_data.get()->m_results_outstanding.fetch_sub(1, boost::memory_order_release);
 }

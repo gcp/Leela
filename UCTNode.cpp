@@ -143,14 +143,14 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
         }
     }
 #ifndef USE_OPENCL
-    link_nodelist(nodecount, state, nodelist, use_nets);
+    link_nodelist(nodecount, board, nodelist, use_nets);
 #endif
 }
 
 #ifdef USE_OPENCL
 void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
                            FastState & state,
-                           std::vector<Network::scored_node> raw_netlist) {
+                           std::vector<Network::scored_node> & raw_netlist) {
     FastBoard & board = state.board;
     std::vector<Network::scored_node> nodelist;
 
@@ -164,15 +164,14 @@ void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
     }
     nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
 
-    link_nodelist(*nodecount, state, nodelist, true);
+    link_nodelist(*nodecount, board, nodelist, true);
 }
 #endif
 
 void UCTNode::link_nodelist(boost::atomic<int> & nodecount,
-                            FastState & state,
+                            FastBoard & board,
                             std::vector<Network::scored_node> & nodelist,
                             bool use_nets) {
-    FastBoard & board = state.board;
 
     // sort (this will reverse scores, but linking is backwards too)
     std::stable_sort(nodelist.begin(), nodelist.end());
@@ -197,10 +196,10 @@ void UCTNode::link_nodelist(boost::atomic<int> & nodecount,
             if (it->second != FastBoard::PASS) {
                 // atari giving
                 // was == 2, == 1
-                if (state.board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
+                if (board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
                     vtx->set_expand_cnt(expand_treshold / 3);
                 }
-                if (state.board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
+                if (board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
                     vtx->set_expand_cnt(expand_treshold / 3);
                 }
             }

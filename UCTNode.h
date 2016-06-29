@@ -31,7 +31,7 @@ public:
 #ifdef USE_OPENCL
     void expansion_cb(boost::atomic<int> * nodecount,
                       FastState & state,
-                      std::vector<Network::scored_node> raw_netlist);
+                      std::vector<Network::scored_node> & raw_netlist);
 #endif
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
@@ -61,7 +61,7 @@ public:
 private:
     void link_child(UCTNode * newchild);
     void link_nodelist(boost::atomic<int> & nodecount,
-                       FastState & state,
+                       FastBoard & state,
                        std::vector<Network::scored_node> & nodes,
                        bool use_nets);
 
