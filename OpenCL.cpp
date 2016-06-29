@@ -13,11 +13,18 @@
 #include <boost/format.hpp>
 #include <boost/tr1/array.hpp>
 #include <boost/thread.hpp>
+#include <boost/asio.hpp>
 
 #include "Utils.h"
 #include "Timing.h"
 #include "OpenCL.h"
 #include "Network.h"
+#include "GTP.h"
+
+// Thread pool for async GPU wait
+boost::asio::io_service io_service;
+boost::asio::io_service::work dummy_work(io_service);
+boost::thread_group thread_pool;
 
 using namespace Utils;
 
@@ -473,18 +480,17 @@ void OpenCL::forward_async(std::vector<float>& input,
         }
     }
 
-    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
-    cl::Event & event = thread_data.get()->m_complete_event;
+    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
 
     // last layer is always a convolution, so output is in tmp
     queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
+    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
 
     m_cb_outstanding.fetch_add(1, boost::memory_order_release);
-    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize,
-                            output.data(),
-                            nullptr, &event);
-    //queue.finish();
-    event.setCallback(CL_COMPLETE, cb, data);
+    io_service.post([&queue, cb, data]() {
+        queue.finish();
+        cb(CL_COMPLETE, 0, data);
+    });
 }
 
 void OpenCL::callback_finished() {
@@ -822,6 +828,10 @@ void OpenCL::initialize(void) {
         thread_data.get()->m_convolve3_kernel.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(
             best_device);
     std::cerr << "Wavefront/Warp size: " << m_wavefront_size << std::endl;
+
+    for (size_t i = 0; i < cfg_num_threads; i++) {
+        thread_pool.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
+    }
 
     m_init_ok = true;
 }
