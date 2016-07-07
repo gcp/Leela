@@ -1045,6 +1045,6 @@ std::string Network::get_backend() {
 #elif defined(USE_OPENCL)
     return OpenCL::get_OpenCL()->get_device_name();
 #else
-    return std::string("Leela native convolution")
+    return std::string("Leela native convolution");
 #endif
 }
