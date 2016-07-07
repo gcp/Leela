@@ -276,6 +276,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
 
     // count parentvisits
     float numerator;
+    float cutoff_ratio;
     if (use_nets) {
         // make sure we are at a valid successor
         while (child != NULL && !child->valid()) {
@@ -291,6 +292,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             childcount++;
         }
         numerator = std::sqrt((float)parentvisits);
+        cutoff_ratio = std::max(2.0f, std::log((float)parentvisits));
     }
 
     childcount = 0;
@@ -309,11 +311,12 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
         float value;
 
         if (use_nets) {
-            if (child->get_score() * 5.0f < best_probability) {
+            if (child->get_score() * cutoff_ratio < best_probability) {
                 break;
             }
 
             float c_puct = 2.0f;
+            float c_perbias = 0.02f;
 
             if (!child->first_visit()) {
                 // "UCT" part
@@ -321,13 +324,13 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 float psa = child->get_score();
                 float denom = 1.0f + child->get_visits();
 
-                value = winrate + c_puct * psa * (numerator / denom);
+                value = winrate + c_puct * psa * (numerator / denom) + c_perbias * psa;
             } else {
                 float winrate = 1.0f;
                 float psa = child->get_score();
                 float denom = 1.0f;
 
-                value = winrate + c_puct * psa * (numerator / denom);
+                value = winrate + c_puct * psa * (numerator / denom) + c_perbias + psa;
             }
         } else {
             float uctvalue;
