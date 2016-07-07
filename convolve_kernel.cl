@@ -85,35 +85,35 @@ void convolve5(
         // Start filter
         if (fwstart >= 0 && fwend < width) {
             unsigned int fid = lx * strip_size + fwstart;
-            out  = channel_buff[fid              ] * *filter_idx++;
-            out += channel_buff[fid           + 1] * *filter_idx++;
-            out += channel_buff[fid           + 2] * *filter_idx++;
-            out += channel_buff[fid           + 3] * *filter_idx++;
-            out += channel_buff[fid           + 4] * *filter_idx++;
+            out  = channel_buff[fid              ] * *filter_buff[0];
+            out += channel_buff[fid           + 1] * *filter_buff[1];
+            out += channel_buff[fid           + 2] * *filter_buff[2];
+            out += channel_buff[fid           + 3] * *filter_buff[3];
+            out += channel_buff[fid           + 4] * *filter_buff[4];
 
-            out += channel_buff[fid + width      ] * *filter_idx++;
-            out += channel_buff[fid + width   + 1] * *filter_idx++;
-            out += channel_buff[fid + width   + 2] * *filter_idx++;
-            out += channel_buff[fid + width   + 3] * *filter_idx++;
-            out += channel_buff[fid + width   + 4] * *filter_idx++;
+            out += channel_buff[fid + width      ] * *filter_buff[5];
+            out += channel_buff[fid + width   + 1] * *filter_buff[6];
+            out += channel_buff[fid + width   + 2] * *filter_buff[7];
+            out += channel_buff[fid + width   + 3] * *filter_buff[8];
+            out += channel_buff[fid + width   + 4] * *filter_buff[9];
 
-            out += channel_buff[fid + width*2    ] * *filter_idx++;
-            out += channel_buff[fid + width*2 + 1] * *filter_idx++;
-            out += channel_buff[fid + width*2 + 2] * *filter_idx++;
-            out += channel_buff[fid + width*2 + 3] * *filter_idx++;
-            out += channel_buff[fid + width*2 + 4] * *filter_idx++;
+            out += channel_buff[fid + width*2    ] * *filter_buff[10];
+            out += channel_buff[fid + width*2 + 1] * *filter_buff[11];
+            out += channel_buff[fid + width*2 + 2] * *filter_buff[12];
+            out += channel_buff[fid + width*2 + 3] * *filter_buff[13];
+            out += channel_buff[fid + width*2 + 4] * *filter_buff[14];
 
-            out += channel_buff[fid + width*3    ] * *filter_idx++;
-            out += channel_buff[fid + width*3 + 1] * *filter_idx++;
-            out += channel_buff[fid + width*3 + 2] * *filter_idx++;
-            out += channel_buff[fid + width*3 + 3] * *filter_idx++;
-            out += channel_buff[fid + width*3 + 4] * *filter_idx++;
+            out += channel_buff[fid + width*3    ] * *filter_buff[15];
+            out += channel_buff[fid + width*3 + 1] * *filter_buff[16];
+            out += channel_buff[fid + width*3 + 2] * *filter_buff[17];
+            out += channel_buff[fid + width*3 + 3] * *filter_buff[18];
+            out += channel_buff[fid + width*3 + 4] * *filter_buff[19];
 
-            out += channel_buff[fid + width*4    ] * *filter_idx++;
-            out += channel_buff[fid + width*4 + 1] * *filter_idx++;
-            out += channel_buff[fid + width*4 + 2] * *filter_idx++;
-            out += channel_buff[fid + width*4 + 3] * *filter_idx++;
-            out += channel_buff[fid + width*4 + 4] * *filter_idx++;
+            out += channel_buff[fid + width*4    ] * *filter_buff[20];
+            out += channel_buff[fid + width*4 + 1] * *filter_buff[21];
+            out += channel_buff[fid + width*4 + 2] * *filter_buff[22];
+            out += channel_buff[fid + width*4 + 3] * *filter_buff[23];
+            out += channel_buff[fid + width*4 + 4] * *filter_buff[24];
         } else {
             out = 0.0f;
             for (unsigned int fh = 0; fh < filter_size; fh++) {
