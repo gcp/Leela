@@ -25,13 +25,13 @@ using namespace Utils;
 static std::string sourceCode = R"(
     __kernel
     void convolve5(
-            __global const float * in,
-            __global float * merge,
-            __global const float * weights,
-            __local float * channel_buff,
-            __private const int chan_shift,
-            __local float * row_buff,
-            __private const unsigned int row_buff_size) {
+                   __global const float * in,
+                   __global float * merge,
+                   __global const float * weights,
+                   __local float * channel_buff,
+                   __private const int chan_shift,
+                   __local float * row_buff,
+                   __private const int row_buff_size) {
 
         // cl::NDRange global(channels, outputs, row);
         const unsigned int c   = get_global_id(0);  // channel
@@ -105,41 +105,41 @@ static std::string sourceCode = R"(
         for (unsigned int cw = 0; cw < width; cw++) {
             int fwstart = cw - extent;
             int fwend   = cw + extent;
-            const float * filter_idx = filter_buff;
             float out;
             // Start filter
             if (fwstart >= 0 && fwend < width) {
                 unsigned int fid = lx * strip_size + fwstart;
-                out  = channel_buff[fid              ] * *filter_idx++;
-                out += channel_buff[fid           + 1] * *filter_idx++;
-                out += channel_buff[fid           + 2] * *filter_idx++;
-                out += channel_buff[fid           + 3] * *filter_idx++;
-                out += channel_buff[fid           + 4] * *filter_idx++;
+                out  = channel_buff[fid              ] * filter_buff[0];
+                out += channel_buff[fid           + 1] * filter_buff[1];
+                out += channel_buff[fid           + 2] * filter_buff[2];
+                out += channel_buff[fid           + 3] * filter_buff[3];
+                out += channel_buff[fid           + 4] * filter_buff[4];
 
-                out += channel_buff[fid + width      ] * *filter_idx++;
-                out += channel_buff[fid + width   + 1] * *filter_idx++;
-                out += channel_buff[fid + width   + 2] * *filter_idx++;
-                out += channel_buff[fid + width   + 3] * *filter_idx++;
-                out += channel_buff[fid + width   + 4] * *filter_idx++;
+                out += channel_buff[fid + width      ] * filter_buff[5];
+                out += channel_buff[fid + width   + 1] * filter_buff[6];
+                out += channel_buff[fid + width   + 2] * filter_buff[7];
+                out += channel_buff[fid + width   + 3] * filter_buff[8];
+                out += channel_buff[fid + width   + 4] * filter_buff[9];
 
-                out += channel_buff[fid + width*2    ] * *filter_idx++;
-                out += channel_buff[fid + width*2 + 1] * *filter_idx++;
-                out += channel_buff[fid + width*2 + 2] * *filter_idx++;
-                out += channel_buff[fid + width*2 + 3] * *filter_idx++;
-                out += channel_buff[fid + width*2 + 4] * *filter_idx++;
+                out += channel_buff[fid + width*2    ] * filter_buff[10];
+                out += channel_buff[fid + width*2 + 1] * filter_buff[11];
+                out += channel_buff[fid + width*2 + 2] * filter_buff[12];
+                out += channel_buff[fid + width*2 + 3] * filter_buff[13];
+                out += channel_buff[fid + width*2 + 4] * filter_buff[14];
 
-                out += channel_buff[fid + width*3    ] * *filter_idx++;
-                out += channel_buff[fid + width*3 + 1] * *filter_idx++;
-                out += channel_buff[fid + width*3 + 2] * *filter_idx++;
-                out += channel_buff[fid + width*3 + 3] * *filter_idx++;
-                out += channel_buff[fid + width*3 + 4] * *filter_idx++;
+                out += channel_buff[fid + width*3    ] * filter_buff[15];
+                out += channel_buff[fid + width*3 + 1] * filter_buff[16];
+                out += channel_buff[fid + width*3 + 2] * filter_buff[17];
+                out += channel_buff[fid + width*3 + 3] * filter_buff[18];
+                out += channel_buff[fid + width*3 + 4] * filter_buff[19];
 
-                out += channel_buff[fid + width*4    ] * *filter_idx++;
-                out += channel_buff[fid + width*4 + 1] * *filter_idx++;
-                out += channel_buff[fid + width*4 + 2] * *filter_idx++;
-                out += channel_buff[fid + width*4 + 3] * *filter_idx++;
-                out += channel_buff[fid + width*4 + 4] * *filter_idx++;
+                out += channel_buff[fid + width*4    ] * filter_buff[20];
+                out += channel_buff[fid + width*4 + 1] * filter_buff[21];
+                out += channel_buff[fid + width*4 + 2] * filter_buff[22];
+                out += channel_buff[fid + width*4 + 3] * filter_buff[23];
+                out += channel_buff[fid + width*4 + 4] * filter_buff[24];
             } else {
+                const float * filter_idx = filter_buff;
                 out = 0.0f;
                 for (unsigned int fh = 0; fh < filter_size; fh++) {
                     for (int fw = fwstart; fw <= fwend; fw++) {
@@ -186,13 +186,13 @@ static std::string sourceCode = R"(
 
     __kernel
     void convolve3(
-        __global const float * in,
-        __global float * merge,
-        __global const float * weights,
-        __local float * channel_buff,
-        __private const int chan_shift,
-        __local float * row_buff,
-        __private const unsigned int row_buff_size) {
+                   __global const float * in,
+                   __global float * merge,
+                   __global const float * weights,
+                   __local float * channel_buff,
+                   __private const int chan_shift,
+                   __local float * row_buff,
+                   __private const int row_buff_size) {
 
         // cl::NDRange global(channels, outputs, row);
         const unsigned int c   = get_global_id(0);  // channel
@@ -312,10 +312,10 @@ static std::string sourceCode = R"(
     }
 
     __kernel void merge(
-        __global const float * in,
-        __global float * out,
-        __constant const float * biases,
-        __private const unsigned int channels) {
+                        __global const float * in,
+                        __global float * out,
+                        __constant const float * biases,
+                        __private const int channels) {
 
         // cl::NDRange global(outputs, 19*19);
         const int gx = get_global_id(0);
@@ -336,41 +336,9 @@ static std::string sourceCode = R"(
         for (unsigned int c = 0; c < channels; c++) {
             sum += in[(c * boardsize + b) * outputs + o];
         }
-        // ReLU if outputs > 1 (not last layer)
-        if (outputs > 1) {
-            sum = max(sum, 0.0f);
-        }
+        // ELU
+        sum = sum > 0 ? sum : 1.0f * (exp(sum) - 1.0f);
         out[o * boardsize + b] = sum;
-    }
-
-    __kernel void batchnorm(
-        __global const float * in,
-        __global float * out,
-        __constant const float * means,
-        __constant const float * variances,
-        __constant const float * scale) {
-
-        // cl::NDRange global(outputs, 19*19);
-        const int gx = get_global_id(0);
-        const int gy = get_global_id(1);
-
-        const int output = gx;
-        const int outputs = get_global_size(0);
-
-        const unsigned int width = 19;
-        const unsigned int height = 19;
-        const unsigned int board_size = width * height;
-
-        const unsigned int c = output;
-        const unsigned int b = gy;
-
-        const float epsilon = 1e-5f;
-
-        const float mean = means[c] / scale[0];
-        const float variance = epsilon + variances[c] / scale[0];
-        const float scale_stddiv = 1.0f / sqrt(variance);
-
-        out[c * board_size + b] = scale_stddiv * (in[c * board_size + b] - mean);
     }
 )";
 
@@ -409,7 +377,6 @@ void OpenCL::thread_init() {
         data->m_convolve3_kernel = cl::Kernel(m_program, "convolve3");
         data->m_convolve5_kernel = cl::Kernel(m_program, "convolve5");
         data->m_merge_kernel = cl::Kernel(m_program, "merge");
-        data->m_batchnorm_kernel = cl::Kernel(m_program, "batchnorm");
 
         data->m_commandqueue = cl::CommandQueue(cl::Context::getDefault(),
             cl::Device::getDefault());
@@ -457,27 +424,21 @@ void OpenCL::forward_async(std::vector<float>& input,
     cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
 
     for (auto & layer : m_layers) {
-        if (layer.is_batchnorm) {
-            batchnorm(layer.outputs,
-                tmpBuffer,
-                inBuffer,
-                layer.weights);
-        } else {
-            // convolution
-            convolve(layer.filter_size,
-                layer.channels,
-                layer.outputs,
-                inBuffer,
-                tmpBuffer,
-                mergeBuffer,
-                layer.weights);
-        }
+        // convolution
+        convolve(layer.filter_size,
+            layer.channels,
+            layer.outputs,
+            inBuffer,
+            tmpBuffer,
+            mergeBuffer,
+            layer.weights);
+        std::swap(inBuffer, tmpBuffer);
     }
 
     cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
 
     // last layer is always a convolution, so output is in tmp
-    queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
+    queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
 
     m_cb_outstanding.fetch_add(1, boost::memory_order_release);
@@ -516,59 +477,22 @@ void OpenCL::forward(std::vector<float>& input,
     cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
 
     for (auto & layer : m_layers) {
-        if (layer.is_batchnorm) {
-           batchnorm(layer.outputs,
-                     tmpBuffer,
-                     inBuffer,
-                     layer.weights);
-        } else {
-            // convolution
-            convolve(layer.filter_size,
-                     layer.channels,
-                     layer.outputs,
-                     inBuffer,
-                     tmpBuffer,
-                     mergeBuffer,
-                     layer.weights);
-        }
+        // convolution
+        convolve(layer.filter_size,
+                    layer.channels,
+                    layer.outputs,
+                    inBuffer,
+                    tmpBuffer,
+                    mergeBuffer,
+                    layer.weights);
+        std::swap(inBuffer, tmpBuffer);
     }
     cl::CommandQueue queue = thread_data.get()->m_commandqueue;
     // last layer is always a convolution, so output is in tmp
-    queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
+    queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
     queue.finish();
     thread_data.get()->m_results_outstanding.fetch_sub(1, boost::memory_order_release);
-}
-
-void OpenCL::batchnorm(int outputs,
-                       cl::Buffer & bufferInput,
-                       cl::Buffer & bufferOutput,
-                       std::vector<cl::Buffer>& weights) {
-    // fixed for 19x19
-    constexpr int width = 19;
-    constexpr int height = 19;
-    constexpr int boardsize = width * height;
-
-    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
-
-    cl::Kernel batchnorm_kernel = thread_data.get()->m_batchnorm_kernel;
-
-    try {
-        batchnorm_kernel.setArg(0, bufferInput);
-        batchnorm_kernel.setArg(1, bufferOutput);
-        batchnorm_kernel.setArg(2, weights[0]);
-        batchnorm_kernel.setArg(3, weights[1]);
-        batchnorm_kernel.setArg(4, weights[2]);
-
-        queue.enqueueNDRangeKernel(batchnorm_kernel, cl::NullRange,
-                                   cl::NDRange(outputs, boardsize),
-                                   cl::NDRange(std::min(8, outputs), 19));
-    } catch (cl::Error &e) {
-        std::cerr << "Error in convolve: " << e.what() << ": "
-            << e.err() << std::endl;
-        return;
-    }
-
 }
 
 static int rounddown_pow2(int val) {

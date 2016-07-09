@@ -35,8 +35,8 @@ public:
 
     std::vector<scored_node> get_scored_moves(FastState * state,
                                               Ensemble ensemble);
-    static constexpr int CHANNELS = 22;
-    static constexpr int MAX_CHANNELS = 160;
+    static constexpr int CHANNELS = 24;
+    static constexpr int MAX_CHANNELS = 128;
 
 #ifdef USE_OPENCL
     void async_scored_moves(boost::atomic<int> * nodecount,
