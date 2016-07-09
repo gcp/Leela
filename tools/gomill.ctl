@@ -23,12 +23,17 @@ players = {
 				"time_settings 600 0 0",
                            ],
                     ),
-    'leela-063' : Player("./leela-063 --gtp --threads 2 --noponder ",
+    'leela-063' : Player("./leela-063 --gtp --threads 1 --noponder ",
                            startup_gtp_commands=[
 				"time_settings 600 0 0",
                            ],
                     ),
-    'pachi' : Player("./pachi -t _600 threads=2,pondering=0,max_tree_size=3072 -f book2.dat", cwd="~/git/pachi"),
+    'leela-064' : Player("./leela-064 --gtp --threads 1 --noponder ",
+                           startup_gtp_commands=[
+				"time_settings 600 0 0",
+                           ],
+                    ),
+    'pachi' : Player("./pachi -t _600 threads=1,pondering=0,max_tree_size=3072 -f book2.dat", cwd="~/git/pachi"),
     'Leela_0.6.2' : Player("./leela_062_linux_x64 --threads 2 --noponder --gtp",
                            startup_gtp_commands=[
 				"time_settings 600 0 0",
@@ -41,8 +46,10 @@ board_size = 19
 komi = 7.5
 
 matchups = [
-	Matchup('leela-063', 'Leela_0.6.2',
+	Matchup('leela-063', 'leela-064',
                 scorer='players', number_of_games=1000),
-	Matchup('leela-063', 'pachi',
+	Matchup('pachi', 'leela-063', alternating=False, handicap=7,
+                scorer='players', number_of_games=1000),
+	Matchup('pachi', 'leela-064', alternating=False, handicap=7,
                 scorer='players', number_of_games=1000),
 ]
