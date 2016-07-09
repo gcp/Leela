@@ -2075,6 +2075,28 @@ int FastBoard::string_size(int vertex) {
     return m_stones[m_parent[vertex]];
 }
 
+int FastBoard::nbr_libs(int color, int vertex, int count, bool plus) {
+    assert(m_square[vertex] == EMPTY);
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        if (m_square[ai] == color) {
+            int lc = m_libs[m_parent[ai]];
+            if (!plus) {
+                if (lc == count) {
+                    return true;
+                }
+            } else {
+                assert(plus);
+                if (lc >= count) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 int FastBoard::minimum_elib_count(int color, int vertex) {
     int minlib = 100; // XXX hardcoded in some places
     

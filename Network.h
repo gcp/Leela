@@ -7,6 +7,8 @@
 #include <list>
 #include <bitset>
 #include <memory>
+#include <array>
+
 #ifdef USE_OPENCL
 #include <boost/atomic.hpp>
 class UCTNode;
@@ -23,10 +25,11 @@ public:
     enum Ensemble {
         DIRECT, RANDOM_ROTATION, AVERAGE_ALL
     };
-    typedef std::bitset<19*19> BoardPlane;
-    typedef std::vector<BoardPlane> NNPlanes;
-    typedef std::pair<int, NNPlanes> TrainPosition;
-    typedef std::vector<TrainPosition> TrainVector;
+    using BoardPlane = std::bitset<19*19>;
+    using NNPlanes = std::vector<BoardPlane>;
+    using PredMoves = std::array<int, 3>;
+    using TrainPosition = std::pair<PredMoves, NNPlanes>;
+    using TrainVector = std::vector<TrainPosition>;
 
     using scored_node = std::pair<float, int>;
 

@@ -34,7 +34,7 @@ SGFTree * SGFTree::get_child(unsigned int count) {
 
 // this follows the entire line, and doesn't really
 // need the intermediate states
-GameState SGFTree::get_mainline(unsigned int movenum) {
+GameState SGFTree::follow_mainline_state(unsigned int movenum) {
     GameState result;        
     SGFTree * link = this;
         
@@ -144,7 +144,19 @@ void SGFTree::populate_states(void) {
         std::istringstream strm(size);
         float komi;
         strm >> komi;
+        int handicap = m_state.get_handicap();
         m_state.init_game(m_state.board.get_boardsize(), komi);
+        m_state.set_handicap(handicap);
+    }
+
+    // handicap
+    it = m_properties.find("HA");
+    if (it != m_properties.end()) {
+        std::string size = it->second;
+        std::istringstream strm(size);
+        float handicap;
+        strm >> handicap;
+        m_state.set_handicap((int)handicap);
     }
 
     // handicap stone    
@@ -283,6 +295,25 @@ int SGFTree::get_move(int tomove) {
     }
     
     return SGFTree::EOT;
+}
+
+std::vector<int> SGFTree::get_mainline() {
+    std::vector<int> moves;
+
+    SGFTree * link = this;
+    int tomove = link->m_state.get_to_move();
+    link = link->get_child(0);
+
+    while (link != NULL) {
+        int move = link->get_move(tomove);
+        if (move != SGFTree::EOT) {
+            moves.push_back(move);
+        }
+        tomove = !tomove;
+        link = link->get_child(0);
+    }
+
+    return moves;
 }
 
 std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {            
