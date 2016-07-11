@@ -30,8 +30,7 @@ static std::string sourceCode = R"(
                    __global const float * weights,
                    __local float * channel_buff,
                    __private const int chan_shift,
-                   __local float * row_buff,
-                   __private const int row_buff_size) {
+                   __local float * row_buff) {
 
         // cl::NDRange global(channels, outputs, row);
         const unsigned int c   = get_global_id(0);  // channel
@@ -45,8 +44,9 @@ static std::string sourceCode = R"(
         const unsigned int lx = get_local_id(0);
         const unsigned int ly = get_local_id(1);
 
-        const unsigned int chan_buff_size = get_local_size(0);
+        const unsigned int chan_buff_size = 8;
         const unsigned int out_buff_size  = get_local_size(1);
+        const unsigned int row_buff_size  = 7;
 
         const unsigned int filter_size = 5;
         const unsigned int filter_len = filter_size * filter_size;
@@ -163,19 +163,14 @@ static std::string sourceCode = R"(
                 barrier(CLK_LOCAL_MEM_FENCE);
                 if (lx < out_lane) {
                     float val;
-                    if (chan_buff_size == 2) {
-                        val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
-                    } else {
-                        val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
-                    }
+                    val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
                     merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
                 }
                 out_cw  += row_buff_size;
@@ -191,8 +186,7 @@ static std::string sourceCode = R"(
                    __global const float * weights,
                    __local float * channel_buff,
                    __private const int chan_shift,
-                   __local float * row_buff,
-                   __private const int row_buff_size) {
+                   __local float * row_buff) {
 
         // cl::NDRange global(channels, outputs, row);
         const unsigned int c   = get_global_id(0);  // channel
@@ -206,8 +200,9 @@ static std::string sourceCode = R"(
         const unsigned int lx = get_local_id(0);
         const unsigned int ly = get_local_id(1);
 
-        const unsigned int chan_buff_size = get_local_size(0);
+        const unsigned int chan_buff_size = 8;
         const unsigned int out_buff_size  = get_local_size(1);
+        const unsigned int row_buff_size  = 7;
 
         const unsigned int width = 19;
         const unsigned int height = 19;
@@ -290,19 +285,14 @@ static std::string sourceCode = R"(
                     // lx = channels 2 or 8, ly = outputs 32
                     // repurpose the lx threads over columns now
                     float val;
-                    if (chan_buff_size == 2) {
-                        val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
-                    } else {
-                        val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
-                        val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
-                    }
+                    val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
                     merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
                 }
                 out_cw  += row_buff_size;
@@ -515,9 +505,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     // Every input channel is this big
     size_t chanSize = width * height * sizeof(float);
 
-    size_t channelGroup;
     size_t outputGroup;
-    size_t rowGroup;
 
     cl::Kernel m_convolve_kernel;
     if (filter_size == 3) {
@@ -526,15 +514,9 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         m_convolve_kernel = thread_data.get()->m_convolve5_kernel;
     }
 
-    int channelShift;
-    if (channels % 8 == 0) {
-        channelGroup = 8;
-        channelShift = 3;
-    } else {
-        channelGroup = 2;
-        channelShift = 1;
-    }
-    rowGroup = 1;
+    constexpr size_t channelGroup = 8;
+    constexpr size_t channelShift = 3;
+    constexpr size_t rowGroup = 1;
     // Workgroup things
     if (m_wavefront_size >= 64) {
         outputGroup = std::min(outputs, 32);
@@ -573,7 +555,6 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
         m_convolve_kernel.setArg(4, channelShift);
         m_convolve_kernel.setArg(5, cl::Local(rowSize));
-        m_convolve_kernel.setArg(6, rowBuffer);
 
         queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
                                    cl::NDRange(channels, outputs, 19),

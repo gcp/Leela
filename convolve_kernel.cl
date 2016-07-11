@@ -5,8 +5,7 @@ void convolve5(
                __global const float * weights,
                __local float * channel_buff,
                __private const int chan_shift,
-               __local float * row_buff,
-               __private const int row_buff_size) {
+               __local float * row_buff) {
 
     // cl::NDRange global(channels, outputs, row);
     const unsigned int c   = get_global_id(0);  // channel
@@ -20,8 +19,9 @@ void convolve5(
     const unsigned int lx = get_local_id(0);
     const unsigned int ly = get_local_id(1);
 
-    const unsigned int chan_buff_size = get_local_size(0);
+    const unsigned int chan_buff_size = 8;
     const unsigned int out_buff_size  = get_local_size(1);
+    const unsigned int row_buff_size  = 7;
 
     const unsigned int filter_size = 5;
     const unsigned int filter_len = filter_size * filter_size;
@@ -138,19 +138,14 @@ void convolve5(
             barrier(CLK_LOCAL_MEM_FENCE);
             if (lx < out_lane) {
                 float val;
-                if (chan_buff_size == 2) {
-                    val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
-                } else {
-                    val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
-                }
+                val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
                 merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
             }
             out_cw  += row_buff_size;
@@ -166,8 +161,7 @@ void convolve3(
                __global const float * weights,
                __local float * channel_buff,
                __private const int chan_shift,
-               __local float * row_buff,
-               __private const int row_buff_size) {
+               __local float * row_buff) {
 
     // cl::NDRange global(channels, outputs, row);
     const unsigned int c   = get_global_id(0);  // channel
@@ -181,8 +175,9 @@ void convolve3(
     const unsigned int lx = get_local_id(0);
     const unsigned int ly = get_local_id(1);
 
-    const unsigned int chan_buff_size = get_local_size(0);
+    const unsigned int chan_buff_size = 8;
     const unsigned int out_buff_size  = get_local_size(1);
+    const unsigned int row_buff_size  = 7;
 
     const unsigned int width = 19;
     const unsigned int height = 19;
@@ -265,19 +260,14 @@ void convolve3(
                 // lx = channels 2 or 8, ly = outputs 32
                 // repurpose the lx threads over columns now
                 float val;
-                if (chan_buff_size == 2) {
-                    val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
-                } else {
-                    val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
-                    val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
-                }
+                val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
+                val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
                 merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
             }
             out_cw  += row_buff_size;
