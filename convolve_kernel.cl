@@ -4,7 +4,6 @@ void convolve5(
                __global float * merge,
                __global const float * weights,
                __local float * channel_buff,
-               __private const int chan_shift,
                __local float * row_buff) {
 
     // cl::NDRange global(channels, outputs, row);
@@ -22,6 +21,7 @@ void convolve5(
     const unsigned int chan_buff_size = 8;
     const unsigned int out_buff_size  = get_local_size(1);
     const unsigned int row_buff_size  = 7;
+    const unsigned int chan_shift     = 3;
 
     const unsigned int filter_size = 5;
     const unsigned int filter_len = filter_size * filter_size;
@@ -160,7 +160,6 @@ void convolve3(
                __global float * merge,
                __global const float * weights,
                __local float * channel_buff,
-               __private const int chan_shift,
                __local float * row_buff) {
 
     // cl::NDRange global(channels, outputs, row);
@@ -178,6 +177,7 @@ void convolve3(
     const unsigned int chan_buff_size = 8;
     const unsigned int out_buff_size  = get_local_size(1);
     const unsigned int row_buff_size  = 7;
+    const unsigned int chan_shift     = 3;
 
     const unsigned int width = 19;
     const unsigned int height = 19;

@@ -29,7 +29,6 @@ static std::string sourceCode = R"(
                    __global float * merge,
                    __global const float * weights,
                    __local float * channel_buff,
-                   __private const int chan_shift,
                    __local float * row_buff) {
 
         // cl::NDRange global(channels, outputs, row);
@@ -47,6 +46,7 @@ static std::string sourceCode = R"(
         const unsigned int chan_buff_size = 8;
         const unsigned int out_buff_size  = get_local_size(1);
         const unsigned int row_buff_size  = 7;
+        const unsigned int chan_shift     = 3;
 
         const unsigned int filter_size = 5;
         const unsigned int filter_len = filter_size * filter_size;
@@ -185,7 +185,6 @@ static std::string sourceCode = R"(
                    __global float * merge,
                    __global const float * weights,
                    __local float * channel_buff,
-                   __private const int chan_shift,
                    __local float * row_buff) {
 
         // cl::NDRange global(channels, outputs, row);
@@ -203,6 +202,7 @@ static std::string sourceCode = R"(
         const unsigned int chan_buff_size = 8;
         const unsigned int out_buff_size  = get_local_size(1);
         const unsigned int row_buff_size  = 7;
+        const unsigned int chan_shift     = 3;
 
         const unsigned int width = 19;
         const unsigned int height = 19;
@@ -514,9 +514,9 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         m_convolve_kernel = thread_data.get()->m_convolve5_kernel;
     }
 
-    constexpr size_t channelGroup = 8;
-    constexpr size_t channelShift = 3;
-    constexpr size_t rowGroup = 1;
+    constexpr int channelGroup = 8;
+    constexpr int channelShift = 3;
+    constexpr int rowGroup = 1;
     // Workgroup things
     if (m_wavefront_size >= 64) {
         outputGroup = std::min(outputs, 32);
@@ -553,8 +553,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         m_convolve_kernel.setArg(1, bufferMerge);
         m_convolve_kernel.setArg(2, weights[0]);
         m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
-        m_convolve_kernel.setArg(4, channelShift);
-        m_convolve_kernel.setArg(5, cl::Local(rowSize));
+        m_convolve_kernel.setArg(4, cl::Local(rowSize));
 
         queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
                                    cl::NDRange(channels, outputs, 19),

@@ -78,21 +78,6 @@ extern std::tr1::array<float, 128> conv13_b;
 extern std::tr1::array<float, 3456> conv14_w;
 extern std::tr1::array<float, 3> conv14_b;
 
-#ifndef USE_CAFFE
-#ifndef USE_BLAS
-alignas(32) std::tr1::array<float, 52800>  conv1_w_reorder;
-alignas(32) std::tr1::array<float, 138240> conv2_w_reorder;
-alignas(32) std::tr1::array<float, 184320> conv3_w_reorder;
-alignas(32) std::tr1::array<float, 147456> conv4_w_reorder;
-alignas(32) std::tr1::array<float, 110592> conv5_w_reorder;
-alignas(32) std::tr1::array<float, 82944>  conv6_w_reorder;
-alignas(32) std::tr1::array<float, 82944>  conv7_w_reorder;
-alignas(32) std::tr1::array<float, 55296>  conv8_w_reorder;
-alignas(32) std::tr1::array<float, 36864>  conv9_w_reorder;
-alignas(32) std::tr1::array<float, 576>    conv10_w_reorder;
-#endif
-#endif
-
 Network * Network::get_Network(void) {
     if (!s_Net) {
         s_Net = new Network();
@@ -115,29 +100,6 @@ void Network::benchmark(FastState * state) {
              BENCH_AMOUNT,
              (float)Time::timediff(start,end)/100.0,
              (int)((float)BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
-}
-
-// original: output x channels x filter
-// causes (channels x filter) jumps
-// out_c_offset[o * out_mult] += in * filter[o * filt_out_mult];
-// we want
-// out_c_offset[o * out_mult] += in * filter[o];
-// which is channels x filter x output
-template<unsigned long outputs,
-         unsigned long channels,
-         unsigned long filter_size,
-         unsigned long W>
-void reorder_weights(std::tr1::array<float, W>& in,
-                     std::tr1::array<float, W>& out) {
-    constexpr unsigned int filter_len = filter_size * filter_size;
-    for (unsigned int o = 0; o < outputs; o++) {
-        for (unsigned int c = 0; c < channels; c++) {
-            for (unsigned int f = 0; f < filter_len; f++) {
-                out[(c * filter_len + f) * outputs + o] =
-                 in[(o * channels + c) * filter_len + f];
-            }
-        }
-    }
 }
 
 void Network::initialize(void) {
@@ -167,28 +129,12 @@ void Network::initialize(void) {
     std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
 #endif
 #endif
-#ifndef USE_BLAS
-#ifndef USE_CAFFE
-#ifndef USE_OPENCL
-    reorder_weights< 96,  22, 5>(conv1_w, conv1_w_reorder);
-    reorder_weights<160,  96, 3>(conv2_w, conv2_w_reorder);
-    reorder_weights<128, 160, 3>(conv3_w, conv3_w_reorder);
-    reorder_weights<128, 128, 3>(conv4_w, conv4_w_reorder);
-    reorder_weights< 96, 128, 3>(conv5_w, conv5_w_reorder);
-    reorder_weights< 96,  96, 3>(conv6_w, conv6_w_reorder);
-    reorder_weights< 96,  96, 3>(conv7_w, conv7_w_reorder);
-    reorder_weights< 64,  96, 3>(conv8_w, conv8_w_reorder);
-    reorder_weights< 64,  64, 3>(conv9_w, conv9_w_reorder);
-    reorder_weights<  1,  64, 3>(conv10_w, conv10_w_reorder);
-#endif
-#endif
-#endif
 #ifdef USE_CAFFE
     myprintf("Initializing DCNN...");
-    Caffe::set_mode(Caffe::CPU);
+    Caffe::set_mode(Caffe::GPU);
 
-    net.reset(new Net<float>("model_4750.txt", TEST));
-    net->CopyTrainedLayersFrom("model_4750.caffemodel");
+    net.reset(new Net<float>("model_5097.txt", TEST));
+    net->CopyTrainedLayersFrom("model_5097.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         net->num_inputs(), net->num_outputs());
@@ -199,7 +145,7 @@ void Network::initialize(void) {
     int height = input_layer->height();
     myprintf("Input: channels=%d, width=%d, height=%d\n", num_channels, width, height);
 
-    Blob<float>* output_layer = net->output_blobs()[0];
+    Blob<float>* output_layer = net->output_blobs()[2];
     int num_out_channels = output_layer->channels();
     width = output_layer->width();
     height = output_layer->height();
@@ -245,125 +191,7 @@ void Network::initialize(void) {
 #endif
 }
 
-#ifndef USE_BLAS
-template<unsigned int filter_size,
-         unsigned int channels, unsigned int outputs,
-         unsigned long W, unsigned long B>
-void convolve(std::vector<float>& input,
-              std::tr1::array<float, W>& weights,
-              std::tr1::array<float, B>& biases,
-              std::vector<float>& output) {
-    assert(&input != &output);
-
-    // fixed for 19x19
-    constexpr int width = 19;
-    constexpr int height = 19;
-
-    // size 5 = mid 3, extent 2
-    constexpr int mid = (filter_size / 2) + 1;
-    constexpr int extent = mid - 1;
-
-    constexpr unsigned int filter_len = filter_size * filter_size;
-
-    // we'll write out output channels consecutively
-    // and rearrange when done
-    alignas(32) std::array<float, width * height * outputs> tmp_out;
-
-    // clear used part of output buffer
-    // but set bias right away
-    for (unsigned int h = 0; h < height; h++) {
-        for (unsigned int w = 0; w < width; w++) {
-            float * bias_out  = &tmp_out[(h * width + w) * outputs];
-            for (unsigned int o = 0; o < outputs; o++) {
-                bias_out[o] = biases[o];
-            }
-        }
-    }
-
-    for (unsigned int c = 0; c < channels; c++) {
-        float const * ch_filter = &weights[c * filter_len * outputs];
-        for (unsigned int ch = 0; ch < height; ch++) {
-            int fhstart = ch - extent;
-            int fhend   = ch + extent;
-            for (unsigned int cw = 0; cw < width; cw++) {
-                int fwstart = cw - extent;
-                int fwend   = cw + extent;
-
-                float * out_c_offset;
-                float const * filter;
-
-                // vectorizable?
-                if (outputs >= 32 && (outputs % 32 == 0)) {
-                    out_c_offset = &tmp_out[(ch * width + cw) * outputs];
-                    filter = ch_filter;
-
-                    ASSUME_ALIGNED(out_c_offset, 32);
-                    ASSUME_ALIGNED(filter, 32);
-
-                    assert(is_aligned(out_c_offset, 32));
-                    assert(is_aligned(filter, 32));
-                } else {
-                    out_c_offset = &tmp_out[(ch * width + cw) * outputs];
-                    filter = ch_filter;
-                }
-
-                if (fhstart >= 0 && fhend < height
-                    && fwstart >= 0 && fwend < width) {
-                    float const * in = &input[(c * height + fhstart) * width + fwstart];
-                    for (unsigned int u = 0; u < filter_size; u++) {
-                        for (unsigned int v = 0; v < filter_size; v++) {
-                            for (unsigned int o = 0; o < outputs; o++) {
-                                out_c_offset[o] += *in * filter[o];
-                            }
-                            in++;
-                            filter += outputs;
-                        }
-                        in += 19 - filter_size;
-                    }
-                } else {
-                    for (int fh = fhstart; fh <= fhend; fh++) {
-                        for (int fw = fwstart; fw <= fwend; fw++) {
-                            // "zero padding"
-                            if ((unsigned)fh >= height) {
-                                filter += outputs;
-                                continue;
-                            }
-                            if ((unsigned)fw >= width) {
-                                filter += outputs;
-                                continue;
-                            }
-
-                            const float in = input[(c * height + fh) * width + fw];
-
-                            for (unsigned int o = 0; o < outputs; o++) {
-                                out_c_offset[o] += in * filter[o];
-                            }
-                            filter += outputs;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
-
-    // re-gather output data
-    for (unsigned int h = 0; h < height; h++) {
-        for (unsigned int w = 0; w < width; w++) {
-            for (unsigned int o = 0; o < outputs; o++) {
-                if (outputs > 1) {
-                    output[(o * height + h) * width + w] =
-                        lambda_ReLU(tmp_out[(h * width + w) * outputs + o]);
-                } else {
-                    output[(o * height + h) * width + w] =
-                        tmp_out[(h * width + w) * outputs + o];
-                }
-            }
-        }
-    }
-}
-#else
+#ifdef USE_BLAS
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          unsigned long W, unsigned long B>
@@ -401,45 +229,17 @@ void convolve(std::vector<float>& input,
                 &col[0], spatial_out,
                 0.0f, &output[0], spatial_out);
 
-    auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
+    auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
+                                       val : 1.0f * (std::exp(val) - 1.0f); };
 
-    if (outputs > 1) {
-        for (unsigned int o = 0; o < outputs; o++) {
-            for (unsigned int b = 0; b < spatial_out; b++) {
-                output[(o * spatial_out) + b] =
-                    lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
-            }
+    for (unsigned int o = 0; o < outputs; o++) {
+        for (unsigned int b = 0; b < spatial_out; b++) {
+            output[(o * spatial_out) + b] =
+                lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
         }
     }
 }
 #endif
-
-template<unsigned int channels>
-void batchnorm(std::vector<float>& input,
-               std::tr1::array<float, channels>& means,
-               std::tr1::array<float, channels>& variances,
-               std::tr1::array<float, 1> scale,
-               std::vector<float>& output)
-{
-    // fixed for 19x19
-    constexpr unsigned int width = 19;
-    constexpr unsigned int height = 19;
-    constexpr unsigned int board_size = width * height;
-    constexpr float epsilon = 1e-5;
-
-    for (unsigned int c = 0; c < channels; ++c) {
-        float mean = means[c] / scale[0];
-        float variance = variances[c] / scale[0];
-        variance += epsilon;
-        float scale_stddiv = 1.0f / std::sqrt(variance);
-
-        float * out = &output[c * board_size];
-        float const * in  = &input[c * board_size];
-        for (unsigned int b = 0; b < board_size; b++) {
-            out[b] = scale_stddiv * (in[b] - mean);
-        }
-    }
-}
 
 void softmax(std::vector<float>& input,
              std::vector<float>& output) {
@@ -633,54 +433,34 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
             }
         }
     }
-#ifndef USE_CAFFE
-#ifndef USE_BLAS
-#ifndef USE_OPENCL
-    convolve<5,  22,  96>(input_data, conv1_w_reorder, conv1_b, output_data);
-    batchnorm<96>(output_data, bn1_w1, bn1_w2, bn1_w3, input_data);
-    convolve<3,  96, 160>(input_data, conv2_w_reorder, conv2_b, output_data);
-    batchnorm<160>(output_data, bn2_w1, bn2_w2, bn2_w3, input_data);
-    convolve<3, 160, 128>(input_data, conv3_w_reorder, conv3_b, output_data);
-    batchnorm<128>(output_data, bn3_w1, bn3_w2, bn3_w3, input_data);
-    convolve<3, 128, 128>(input_data, conv4_w_reorder, conv4_b, output_data);
-    batchnorm<128>(output_data, bn4_w1, bn4_w2, bn4_w3, input_data);
-    convolve<3, 128,  96>(input_data, conv5_w_reorder, conv5_b, output_data);
-    batchnorm<96>(output_data, bn5_w1, bn5_w2, bn5_w3, input_data);
-    convolve<3,  96,  96>(input_data, conv6_w_reorder, conv6_b, output_data);
-    batchnorm<96>(output_data, bn6_w1, bn6_w2, bn6_w3, input_data);
-    convolve<3,  96,  96>(input_data, conv7_w_reorder, conv7_b, output_data);
-    batchnorm<96>(output_data, bn7_w1, bn7_w2, bn7_w3, input_data);
-    convolve<3,  96, 64>(input_data, conv8_w_reorder, conv8_b, output_data);
-    batchnorm<64>(output_data, bn8_w1, bn8_w2, bn8_w3, input_data);
-    convolve<3,  64, 64>(input_data, conv9_w_reorder, conv9_b, output_data);
-    batchnorm<64>(output_data, bn9_w1, bn9_w2, bn9_w3, input_data);
-    convolve<3,  64,  1>(input_data, conv10_w_reorder, conv10_b, output_data);
-    softmax(output_data, softmax_data);
-
-    std::vector<float>& outputs = softmax_data;
-#endif
-#endif
-#endif
 #if defined(USE_BLAS)
-    convolve<5,  22,  96>(input_data, conv1_w, conv1_b, output_data);
-    batchnorm<96>(output_data, bn1_w1, bn1_w2, bn1_w3, input_data);
-    convolve<3,  96, 160>(input_data, conv2_w, conv2_b, output_data);
-    batchnorm<160>(output_data, bn2_w1, bn2_w2, bn2_w3, input_data);
-    convolve<3, 160, 128>(input_data, conv3_w, conv3_b, output_data);
-    batchnorm<128>(output_data, bn3_w1, bn3_w2, bn3_w3, input_data);
+    convolve<5,  24, 128>(input_data, conv1_w, conv1_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv2_w, conv2_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv3_w, conv3_b, output_data);
+    std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv4_w, conv4_b, output_data);
-    batchnorm<128>(output_data, bn4_w1, bn4_w2, bn4_w3, input_data);
-    convolve<3, 128,  96>(input_data, conv5_w, conv5_b, output_data);
-    batchnorm<96>(output_data, bn5_w1, bn5_w2, bn5_w3, input_data);
-    convolve<3,  96,  96>(input_data, conv6_w, conv6_b, output_data);
-    batchnorm<96>(output_data, bn6_w1, bn6_w2, bn6_w3, input_data);
-    convolve<3,  96,  96>(input_data, conv7_w, conv7_b, output_data);
-    batchnorm<96>(output_data, bn7_w1, bn7_w2, bn7_w3, input_data);
-    convolve<3,  96,  64>(input_data, conv8_w, conv8_b, output_data);
-    batchnorm<64>(output_data, bn8_w1, bn8_w2, bn8_w3, input_data);
-    convolve<3,  64,  64>(input_data, conv9_w, conv9_b, output_data);
-    batchnorm<64>(output_data, bn9_w1, bn9_w2, bn9_w3, input_data);
-    convolve<3,  64,   1>(input_data, conv10_w, conv10_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv5_w, conv5_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv6_w, conv6_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv7_w, conv7_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv8_w, conv8_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv9_w, conv9_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv10_w, conv10_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv11_w, conv11_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv12_w, conv12_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv13_w, conv13_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128,   3>(input_data, conv14_w, conv14_b, output_data);
     softmax(output_data, softmax_data);
 
     std::vector<float>& outputs = softmax_data;
@@ -693,7 +473,7 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
 #endif
 #ifdef USE_CAFFE
     net->Forward();
-    Blob<float>* output_layer = net->output_blobs()[0];
+    Blob<float>* output_layer = net->output_blobs()[2];
     const float* begin = output_layer->cpu_data();
     const float* end = begin + output_layer->channels();
     auto outputs = std::vector<float>(begin, end);
@@ -1170,11 +950,11 @@ std::string Network::get_backend() {
 #ifndef __APPLE__
     return std::string("BLAS core: " + std::string(openblas_get_corename()));
 #else
-    return std::string("BLAS core: Apple Acclerate");
+    return std::string("BLAS core: Apple Accelerate");
 #endif
 #elif defined(USE_OPENCL)
     return OpenCL::get_OpenCL()->get_device_name();
-#else
-    return std::string("Leela native convolution");
+#elif defined(USE_CAFFE)
+    return std::string("Caffe");
 #endif
 }
