@@ -2202,6 +2202,41 @@ std::pair<int, int> FastBoard::after_liberties(const int color, const int vtx) {
     return std::make_pair(mylibs, opplibs);
 }
 
+bool FastBoard::check_winning_ladder(const int color, const int vtx) {
+    int me = minimum_elib_count(color, vtx);
+    // atari on enemy
+    if (me == 2) {
+        // find where the strings in danger are
+        for (int k = 0; k < 4; k++) {
+            int ai = vtx + m_dirs[k];
+            if (m_square[ai] == !color) {
+                int lc = m_libs[m_parent[ai]];
+                if (lc <= 2) {
+                    // check escape route
+                    int escape_vtx = in_atari(ai);
+                    int ae = count_pliberties(escape_vtx);
+                    if (ae == 2) {
+                        // only adds 2, could be a ladder
+                        // original atari wasn't self-atari
+                        if (!self_atari(color, vtx)) {
+                            // play atari
+                            FastBoard tmp = *this;
+                            tmp.update_board_fast(tmp.m_tomove, vtx);
+                            // try the escape
+                            bool loss = check_losing_ladder(tmp.m_tomove,
+                                                            escape_vtx);
+                            if (loss) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
 bool FastBoard::check_losing_ladder(const int color, const int vtx, int branching) {
     FastBoard tmp = *this;
     

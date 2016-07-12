@@ -39,7 +39,8 @@ private:
 
     typedef std::multimap<std::string, std::string> PropertyMap;
 
-    KoState m_state;    
+    KoState m_state;
+    FastBoard::square_t m_winner;
     std::vector<SGFTree> m_children;
     PropertyMap m_properties;
 };
