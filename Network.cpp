@@ -396,9 +396,9 @@ std::vector<Network::scored_node> Network::get_scored_moves(
                       [](scored_node & sn){ sn.first /= 8.0f; });
     }
 
-    // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-    //    show_heatmap(state, result);
-    // }
+     if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+        show_heatmap(state, result);
+     }
 
     return result;
 }
@@ -732,7 +732,11 @@ void Network::gather_features(FastState * state, NNPlanes & planes,
                 }
                 bool wl = state->board.check_winning_ladder(tomove, vtx);
                 if (wl) {
-                    ladderwin[wl] = true;
+                    ladderwin[idx] = true;
+                    //std::cerr << "winning ladder: "
+                    //          << state->board.move_to_text(state->board.get_vertex(i, j))
+                    //          << std::endl;
+
                 }
             }
         }
@@ -776,6 +780,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
 
         size_t movecount = sgftree->count_mainline_moves();
         std::vector<int> tree_moves = sgftree->get_mainline();
+        int who_won = sgftree->get_winner();
 
         SGFTree * treewalk = &(*sgftree);
         size_t counter = 0;
@@ -832,7 +837,13 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 }
 
                 if (moveseen && move != FastBoard::PASS && has_next_moves) {
-                    gather_features(state, position.second);
+                    bool to_move_won = true;
+                    if ((who_won == FastBoard::BLACK && tomove == FastBoard::WHITE)
+                        || (who_won == FastBoard::WHITE && tomove == FastBoard::BLACK)) {
+                        to_move_won = false;
+                        //std::cerr << "to move lost" << std::endl;
+                    }
+                    gather_features(state, position.second, to_move_won);
                     // add next 2 moves to position
                     // we do not check them for legality
                     int next_move = tree_moves[counter + 1];

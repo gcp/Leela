@@ -170,7 +170,7 @@ void SGFTree::populate_states(void) {
             m_winner = FastBoard::BLACK;
         } else {
             m_winner = FastBoard::INVAL;
-            std::cerr << "Could not parse game result" << std::cerr;
+            // std::cerr << "Could not parse game result: " << result << std::endl;
         }
     } else {
         m_winner = FastBoard::EMPTY;
@@ -312,6 +312,10 @@ int SGFTree::get_move(int tomove) {
     }
     
     return SGFTree::EOT;
+}
+
+FastBoard::square_t SGFTree::get_winner() {
+    return m_winner;
 }
 
 std::vector<int> SGFTree::get_mainline() {

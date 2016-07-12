@@ -799,6 +799,7 @@ int FastBoard::update_board_eye(const int color, const int i) {
 
 /*    
     returns ko square or suicide tag
+    does not update side to move
 */    
 int FastBoard::update_board_fast(const int color, const int i) {                        
     assert(m_square[i] == EMPTY);    
@@ -2203,31 +2204,31 @@ std::pair<int, int> FastBoard::after_liberties(const int color, const int vtx) {
 }
 
 bool FastBoard::check_winning_ladder(const int color, const int vtx) {
-    int me = minimum_elib_count(color, vtx);
-    // atari on enemy
-    if (me == 2) {
-        // find where the strings in danger are
-        for (int k = 0; k < 4; k++) {
-            int ai = vtx + m_dirs[k];
-            if (m_square[ai] == !color) {
-                int lc = m_libs[m_parent[ai]];
-                if (lc <= 2) {
+    // find neighbouring strings in danger
+    for (int k = 0; k < 4; k++) {
+        int ai = vtx + m_dirs[k];
+        if (m_square[ai] == !color) {
+            int lc = m_libs[m_parent[ai]];
+            // 2 liberties
+            if (lc == 2) {
+                // original atari wasn't self-atari
+                if (!self_atari(color, vtx)) {
                     // check escape route
-                    int escape_vtx = in_atari(ai);
-                    int ae = count_pliberties(escape_vtx);
+                    // play atari
+                    FastBoard tmp = *this;
+                    tmp.update_board_fast(tmp.m_tomove, vtx);
+                    int escape_vtx = tmp.in_atari(ai);
+                    assert(escape_vtx);
+                    int ae = tmp.count_pliberties(escape_vtx);
                     if (ae == 2) {
                         // only adds 2, could be a ladder
-                        // original atari wasn't self-atari
-                        if (!self_atari(color, vtx)) {
-                            // play atari
-                            FastBoard tmp = *this;
-                            tmp.update_board_fast(tmp.m_tomove, vtx);
-                            // try the escape
-                            bool loss = check_losing_ladder(tmp.m_tomove,
+                        // try the escape
+                        tmp.set_to_move(!tmp.get_to_move());
+                        // tmp.display_board(escape_vtx);
+                        bool loss = tmp.check_losing_ladder(tmp.m_tomove,
                                                             escape_vtx);
-                            if (loss) {
-                                return true;
-                            }
+                        if (loss) {
+                            return true;
                         }
                     }
                 }
@@ -2253,7 +2254,9 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
     int atari = vtx;        
                 
     tmp.update_board_fast(tmp.m_tomove, vtx);  
-    
+
+    // This loop does not swap the side to move, defender
+    // and attacker are always the same.
     while (1) {   
         // suicide
         if (tmp.get_square(atari) == EMPTY) {

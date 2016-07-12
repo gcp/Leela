@@ -22,8 +22,8 @@
 
 /* Features */
 //#define USE_BLAS
-//#define USE_CAFFE
-#define USE_OPENCL
+#define USE_CAFFE
+//#define USE_OPENCL
 #define USE_SEARCH
 
 // OpenBLAS limitation
