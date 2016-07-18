@@ -8,10 +8,10 @@ net: "train-test.prototxt"
 
 # test_iter specifies how many forward passes the test should carry out.
 # 64 * 1500 per test
-test_iter: 1500
+test_iter: 1750
 
 # Carry out testing every n training iterations.
-test_interval: 8620
+test_interval: 43200
 
 # The base learning rate, momentum and the weight decay of the network.
 momentum: 0.95
@@ -32,14 +32,14 @@ lr_policy: "fixed"
 
 # Display every n iterations
 # 1.28M pos
-display: 4310
+display: 43200
 
 # The total number of iterations
 # 100 * 100
 max_iter: 8620000
 
 # snapshot intermediate results
-snapshot: 8620
+snapshot: 43200
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
