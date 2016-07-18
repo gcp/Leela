@@ -28,7 +28,11 @@ public:
     using BoardPlane = std::bitset<19*19>;
     using NNPlanes = std::vector<BoardPlane>;
     using PredMoves = std::array<int, 3>;
-    using TrainPosition = std::pair<PredMoves, NNPlanes>;
+    struct TrainPosition {
+        bool stm_won;
+        PredMoves moves;
+        NNPlanes planes;
+    };
     using TrainVector = std::vector<TrainPosition>;
 
     using scored_node = std::pair<float, int>;
@@ -61,8 +65,7 @@ private:
         FastState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
-    static void gather_features(FastState * state, NNPlanes & planes,
-                                bool to_move_won = true);
+    static void gather_features(FastState * state, NNPlanes & planes);
 
     static Network* s_Net;
 };

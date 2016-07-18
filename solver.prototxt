@@ -1,17 +1,17 @@
-# 292952 training positions.
-# 12208 testing positions.
-# 340199 training positions.
-# 17906 testing positions.
+#5521514 training positions.
+#230072 testing positions.
+# 86200
+#  3500
+
 # The train/test net protocol buffer definition
 net: "train-test.prototxt"
 
 # test_iter specifies how many forward passes the test should carry out.
-# 128 * 105 per test
-test_iter: 95
+# 64 * 1500 per test
+test_iter: 1500
 
 # Carry out testing every n training iterations.
-# 20000 * 128 = full pass per test
-test_interval: 2200
+test_interval: 8620
 
 # The base learning rate, momentum and the weight decay of the network.
 momentum: 0.95
@@ -32,14 +32,14 @@ lr_policy: "fixed"
 
 # Display every n iterations
 # 1.28M pos
-display: 1100
+display: 4310
 
 # The total number of iterations
 # 100 * 100
-max_iter: 2200000
+max_iter: 8620000
 
 # snapshot intermediate results
-snapshot: 22000
+snapshot: 8620
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
