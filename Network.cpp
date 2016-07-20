@@ -133,8 +133,8 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::GPU);
 
-    net.reset(new Net<float>("model_5132.txt", TEST));
-    net->CopyTrainedLayersFrom("model_5132.caffemodel");
+    net.reset(new Net<float>("model_3984.txt", TEST));
+    net->CopyTrainedLayersFrom("model_3984.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         net->num_inputs(), net->num_outputs());
@@ -145,11 +145,13 @@ void Network::initialize(void) {
     int height = input_layer->height();
     myprintf("Input: channels=%d, width=%d, height=%d\n", num_channels, width, height);
 
-    Blob<float>* output_layer = net->output_blobs()[2];
-    int num_out_channels = output_layer->channels();
-    width = output_layer->width();
-    height = output_layer->height();
-    myprintf("Output: channels=%d, width=%d, height=%d\n", num_out_channels, width, height);
+    for (int i = 0; i < net->num_outputs(); i++) {
+        Blob<float>* output_layer = net->output_blobs()[i];
+        int num_out_channels = output_layer->channels();
+        width = output_layer->width();
+        height = output_layer->height();
+        myprintf("Output: channels=%d, width=%d, height=%d\n", num_out_channels, width, height);
+    }
 
 //#define WRITE_WEIGHTS
 #ifdef WRITE_WEIGHTS
@@ -473,10 +475,13 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
 #endif
 #ifdef USE_CAFFE
     net->Forward();
-    Blob<float>* output_layer = net->output_blobs()[2];
+    Blob<float>* output_layer = net->output_blobs()[0];
     const float* begin = output_layer->cpu_data();
     const float* end = begin + output_layer->channels();
     auto outputs = std::vector<float>(begin, end);
+    Blob<float>* score_layer = net->output_blobs()[1];
+    float winrate = score_layer->cpu_data()[0];
+    myprintf("Winrate: %5.4f\n", winrate);
 #endif
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         int rot_idx = rev_rotate_nn_idx(idx, rotation);
@@ -799,7 +804,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 break;
 
             // check every 3rd move
-            int skip = Random::get_Rng()->randint(10);
+            int skip = Random::get_Rng()->randint(20);
             if (skip == 0) {
                 KoState * state = treewalk->get_state();
                 int tomove = state->get_to_move();
@@ -854,6 +859,9 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                     xy = state->board.get_xy(next_next_move);
                     position.moves[2] = (xy.second * 19) + xy.first;
                     position.stm_won = (tomove == who_won);
+                    float frac = (float)counter / (float)movecount;
+                    position.stm_score = (frac * position.stm_won)
+                                          + ((1.0f - frac) * 0.5f);
                     data.push_back(position);
                 } else if (move != FastBoard::PASS) {
                     myprintf("Mainline move not found: %d\n", move);
@@ -871,7 +879,7 @@ skipnext:
             myprintf("Game %d, %d new positions, %d total\n",
                      gamecount, data.size(), train_pos + data.size());
         }
-        if (gamecount % 20000 == 0) {
+        if (gamecount % 40000 == 0) {
             std::cout << "Shuffling training data...";
             std::random_shuffle(data.begin(), data.end());
             std::cout << "writing: ";
@@ -957,6 +965,7 @@ void Network::train_network(TrainVector& data,
             int move = position.moves[0];
             NNPlanes& nnplanes = position.planes;
             int stm_won = position.stm_won;
+            float stm_score = position.stm_score;
 
             caffe::Datum datum;
             size_t datum_channels = nnplanes.size() + 3;
@@ -1003,7 +1012,7 @@ void Network::train_network(TrainVector& data,
                 buffer[(50 * 361) + b] = (b == next_next_move ? 1 : 0);
             }
             datum.set_data(buffer);
-            datum.set_label(stm_won ? 1 : 0);
+            datum.set_label(stm_score);
 
             std::string out;
             datum.SerializeToString(&out);

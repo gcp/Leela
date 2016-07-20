@@ -29,9 +29,10 @@ public:
     using NNPlanes = std::vector<BoardPlane>;
     using PredMoves = std::array<int, 3>;
     struct TrainPosition {
-        bool stm_won;
-        PredMoves moves;
         NNPlanes planes;
+        PredMoves moves;
+        float stm_score;
+        bool stm_won;
     };
     using TrainVector = std::vector<TrainPosition>;
 

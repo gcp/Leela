@@ -52,6 +52,7 @@ layer {
   type: "Silence"
   bottom: "label_move2"
   bottom: "label_move3"
+  bottom: "won"
 }
 
 layer {
@@ -321,13 +322,6 @@ layer {
 }
 
 layer {
-  name: "Win"
-  type: "Sigmoid"
-  bottom: "fc_out"
-  top: "winrate"
-}
-
-layer {
   name: "flatten_o1"
   type: "Flatten"
   bottom: "conv8_o1"
@@ -359,18 +353,20 @@ layer {
   bottom: "label_move1_m"
   # output
   top: "loss_1"
+  loss_weight: 1
 }
 
 layer {
   name: "loss_w"
-  type: "EuclideanLoss"
-  bottom: "winrate"
-  bottom: "won"
+  type: "SigmoidCrossEntropyLoss"
+  bottom: "fc_out"
+  bottom: "winpc"
   top: "loss_w"
+  loss_weight: 1
 }
 
 layer {
-  name: "accuracy"
+  name: "accuracy_m"
   type: "Accuracy"
   # input
   bottom: "flatten_o1"
@@ -379,5 +375,27 @@ layer {
     phase: TEST
   }
   # output
-  top: "accuracy"
+  top: "accuracy_m"
+}
+
+layer {
+  name: "sigmoid"
+  type: "Sigmoid"
+  bottom: "fc_out"
+  include {
+    phase: TEST
+  }
+  top: "winrate"
+}
+
+layer {
+  name: "loss"
+  type: "EuclideanLoss"
+  bottom: "winrate"
+  bottom: "winpc"
+  include {
+    phase: TEST
+  }
+  top: "l2_error"
+  loss_weight: 0
 }

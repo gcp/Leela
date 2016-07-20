@@ -1,7 +1,7 @@
-#5521514 training positions.
-#230072 testing positions.
-# 86200
-#  3500
+# 55195596 training positions.
+# 2299824 testing positions.
+# 64 x 862431
+# 64 x  35934
 
 # The train/test net protocol buffer definition
 net: "train-test.prototxt"

@@ -618,7 +618,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
     } else if (command.find("predict") == 0) {
         auto vec = Network::get_Network()->get_scored_moves(
-            &game, Network::Ensemble::AVERAGE_ALL);
+            &game, Network::Ensemble::DIRECT);
         gtp_printf(id, "");
         return true;
     } else if (command.find("bookgen") == 0) {
