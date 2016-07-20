@@ -32,7 +32,7 @@ lr_policy: "fixed"
 
 # Display every n iterations
 # 1.28M pos
-display: 43200
+display: 1000
 
 # The total number of iterations
 # 100 * 100

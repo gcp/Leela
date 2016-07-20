@@ -3,8 +3,7 @@ layer {
   type: "Data"
   name: "data"
   # outputs
-  top: "data_unsliced"
-  top: "won"
+  top: "data"
   include {
     phase: TRAIN
   }
@@ -19,8 +18,7 @@ layer {
   type: "Data"
   name: "data"
   # outputs
-  top: "data_unsliced"
-  top: "won"
+  top: "data"
   include {
     phase: TEST
   }
@@ -32,24 +30,57 @@ layer {
 }
 
 layer {
+  type: "Data"
+  name: "label"
+  # outputs
+  top: "label_unsliced"
+  include {
+    phase: TRAIN
+  }
+  data_param {
+    source: "leela_train_label"
+    batch_size: 64
+    backend: LEVELDB
+  }
+}
+
+layer {
+  type: "Data"
+  name: "label"
+  # outputs
+  top: "label_unsliced"
+  include {
+    phase: TEST
+  }
+  data_param {
+    source: "leela_test_label"
+    batch_size: 64
+    backend: LEVELDB
+  }
+}
+
+layer {
   name: "slicer_label"
   type: "Slice"
-  bottom: "data_unsliced"
-  top: "data"
+  bottom: "label_unsliced"
   top: "label_move1"
   top: "label_move2"
   top: "label_move3"
+  top: "winpc"
+  top: "won"
   slice_param {
     axis: 1
-    slice_point: 48
-    slice_point: 49
-    slice_point: 50
+    slice_point: 1
+    slice_point: 2
+    slice_point: 3
+    slice_point: 4
   }
 }
 
 layer {
   name: "silence"
   type: "Silence"
+  bottom: "label_move1"
   bottom: "label_move2"
   bottom: "label_move3"
   bottom: "won"
@@ -66,7 +97,7 @@ layer {
   # learning rate and decay multipliers for the biases
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 96
+    num_output: 128
     kernel_size: 5
     pad: 2
     stride: 1
@@ -96,7 +127,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 96
+    num_output: 128
     kernel_size: 3
     pad: 1
     stride: 1
@@ -126,7 +157,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 96
+    num_output: 128
     kernel_size: 3
     pad: 1
     stride: 1
@@ -156,7 +187,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 96
+    num_output: 128
     kernel_size: 3
     pad: 1
     stride: 1
@@ -186,7 +217,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 96
+    num_output: 128
     kernel_size: 3
     pad: 1
     stride: 1
@@ -216,7 +247,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 96
+    num_output: 128
     kernel_size: 3
     pad: 1
     stride: 1
@@ -246,7 +277,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 96
+    num_output: 128
     kernel_size: 3
     pad: 1
     stride: 1
@@ -276,7 +307,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 2
+    num_output: 128
     kernel_size: 3
     pad: 1
     stride: 1
@@ -290,19 +321,113 @@ layer {
 }
 
 layer {
-  name: "slicer_output"
-  type: "Slice"
+  name: "elu8"
+  type: "ELU"
+  # in-place
   bottom: "conv8"
-  top: "conv8_o1"
-  top: "conv8_o2"
-  slice_param {
-    axis: 1
-    slice_point: 1
+  top: "conv8"
+}
+
+layer {
+  name: "conv9"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv8"
+  top: "conv9"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
   }
 }
 
 layer {
-  name: "fc"
+  name: "elu9"
+  type: "ELU"
+  # in-place
+  bottom: "conv9"
+  top: "conv9"
+}
+
+layer {
+  name: "conv10"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv9"
+  top: "conv10"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 1
+    kernel_size: 1
+    pad: 0
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
+  }
+}
+
+layer {
+  name: "elu10"
+  type: "ELU"
+  bottom: "conv10"
+  top: "conv10"
+}
+
+#layer {
+#  name: "slicer_output"
+#  type: "Slice"
+#  bottom: "conv8"
+#  top: "conv8_o1"
+#  top: "conv8_o2"
+#  slice_param {
+#    axis: 1
+#    slice_point: 1
+#  }
+#}
+
+layer {
+  name: "ip11"
+  type: "InnerProduct"
+  # learning rate and decay multipliers for the weights
+  param { lr_mult: 1 decay_mult: 1 }
+  # learning rate and decay multipliers for the biases
+  param { lr_mult: 2 decay_mult: 0 }
+  inner_product_param {
+    num_output: 256
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+  bottom: "conv10"
+  top: "ip11"
+}
+
+layer {
+  name: "elu11"
+  type: "ELU"
+  bottom: "ip11"
+  top: "ip11"
+}
+
+layer {
+  name: "ip12"
   type: "InnerProduct"
   # learning rate and decay multipliers for the weights
   param { lr_mult: 1 decay_mult: 1 }
@@ -317,85 +442,62 @@ layer {
       type: "constant"
     }
   }
-  bottom: "conv8_o2"
-  top: "fc_out"
+  bottom: "ip11"
+  top: "ip12"
 }
 
-layer {
-  name: "flatten_o1"
-  type: "Flatten"
-  bottom: "conv8_o1"
-  top: "flatten_o1"
-}
+#layer {
+#  name: "flatten_o1"
+#  type: "Flatten"
+#  bottom: "conv8_o1"
+#  top: "flatten_o1"
+#}
 
-layer {
-  name: "flatten_l1"
-  type: "Flatten"
-  bottom: "label_move1"
-  top: "label_move1_f"
-  flatten_param {
-    axis: 1
-  }
-}
-
-layer {
-  name: "argmax_l1"
-  type: "ArgMax"
-  bottom: "label_move1_f"
-  top: "label_move1_m"
-}
-
-layer {
-  name: "loss_1"
-  type: "SoftmaxWithLoss"
+#layer {
+#  name: "loss_1"
+#  type: "SoftmaxWithLoss"
   # input
-  bottom: "flatten_o1"
-  bottom: "label_move1_m"
+#  bottom: "flatten_o1"
+#  bottom: "label_move1"
   # output
-  top: "loss_1"
-  loss_weight: 1
-}
+#  top: "loss_1"
+#  loss_weight: 1
+#}
 
 layer {
   name: "loss_w"
   type: "SigmoidCrossEntropyLoss"
-  bottom: "fc_out"
+  bottom: "ip12"
   bottom: "winpc"
   top: "loss_w"
-  loss_weight: 1
+  loss_weight: 0
 }
 
-layer {
-  name: "accuracy_m"
-  type: "Accuracy"
+#layer {
+#  name: "accuracy_m"
+#  type: "Accuracy"
   # input
-  bottom: "flatten_o1"
-  bottom: "label_move1_m"
-  include {
-    phase: TEST
-  }
+#  bottom: "flatten_o1"
+#  bottom: "label_move1"
+#  include {
+#    phase: TEST
+#  }
   # output
-  top: "accuracy_m"
-}
+#  top: "accuracy_m"
+#}
 
 layer {
   name: "sigmoid"
   type: "Sigmoid"
-  bottom: "fc_out"
-  include {
-    phase: TEST
-  }
+  bottom: "ip12"
   top: "winrate"
 }
 
 layer {
-  name: "loss"
+  name: "loss_mse"
   type: "EuclideanLoss"
   bottom: "winrate"
   bottom: "winpc"
-  include {
-    phase: TEST
-  }
   top: "l2_error"
-  loss_weight: 0
+  loss_weight: 1
 }
