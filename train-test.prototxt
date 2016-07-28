@@ -9,7 +9,7 @@ layer {
   }
   data_param {
     source: "leela_train"
-    batch_size: 64
+    batch_size: 32
     backend: LEVELDB
   }
 }
@@ -24,7 +24,7 @@ layer {
   }
   data_param {
     source: "leela_test"
-    batch_size: 64
+    batch_size: 32
     backend: LEVELDB
   }
 }
@@ -39,7 +39,7 @@ layer {
   }
   data_param {
     source: "leela_train_label"
-    batch_size: 64
+    batch_size: 32
     backend: LEVELDB
   }
 }
@@ -54,7 +54,7 @@ layer {
   }
   data_param {
     source: "leela_test_label"
-    batch_size: 64
+    batch_size: 32
     backend: LEVELDB
   }
 }
@@ -80,7 +80,6 @@ layer {
 layer {
   name: "silence"
   type: "Silence"
-  bottom: "label_move1"
   bottom: "label_move2"
   bottom: "label_move3"
   bottom: "won"
@@ -111,18 +110,35 @@ layer {
 }
 
 layer {
-  name: "elu1"
-  type: "ELU"
+  name: "relu1"
+  type: "ReLU"
   # in-place
   bottom: "conv1"
   top: "conv1"
 }
 
 layer {
+  name: "bn1"
+  type: "BatchNorm"
+  bottom: "conv1"
+  top: "bn1"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+}
+
+
+layer {
   name: "conv2"
   type: "Convolution"
   # input -> output
-  bottom: "conv1"
+  bottom: "bn1"
   top: "conv2"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -141,18 +157,34 @@ layer {
 }
 
 layer {
-  name: "elu2"
-  type:  "ELU"
+  name: "relu2"
+  type:  "ReLU"
   # in-place
   bottom: "conv2"
   top: "conv2"
+}
+
+layer {
+  name: "bn2"
+  type: "BatchNorm"
+  bottom: "conv2"
+  top: "bn2"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
 }
 
 layer {
   name: "conv3"
   type: "Convolution"
   # input -> output
-  bottom: "conv2"
+  bottom: "bn2"
   top: "conv3"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -171,18 +203,34 @@ layer {
 }
 
 layer {
-  name: "elu3"
-  type: "ELU"
+  name: "relu3"
+  type: "ReLU"
   # in-place
   bottom: "conv3"
   top: "conv3"
+}
+
+layer {
+  name: "bn3"
+  type: "BatchNorm"
+  bottom: "conv3"
+  top: "bn3"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
 }
 
 layer {
   name: "conv4"
   type: "Convolution"
   # input -> output
-  bottom: "conv3"
+  bottom: "bn3"
   top: "conv4"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -201,18 +249,34 @@ layer {
 }
 
 layer {
-  name: "elu4"
-  type: "ELU"
+  name: "relu4"
+  type: "ReLU"
   # in-place
   bottom: "conv4"
   top: "conv4"
+}
+
+layer {
+  name: "bn4"
+  type: "BatchNorm"
+  bottom: "conv4"
+  top: "bn4"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
 }
 
 layer {
   name: "conv5"
   type: "Convolution"
   # input -> output
-  bottom: "conv4"
+  bottom: "bn4"
   top: "conv5"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -231,18 +295,34 @@ layer {
 }
 
 layer {
-  name: "elu5"
-  type: "ELU"
+  name: "relu5"
+  type: "ReLU"
   # in-place
   bottom: "conv5"
   top: "conv5"
+}
+
+layer {
+  name: "bn5"
+  type: "BatchNorm"
+  bottom: "conv5"
+  top: "bn5"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
 }
 
 layer {
   name: "conv6"
   type: "Convolution"
   # input -> output
-  bottom: "conv5"
+  bottom: "bn5"
   top: "conv6"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -261,18 +341,34 @@ layer {
 }
 
 layer {
-  name: "elu6"
-  type: "ELU"
+  name: "relu6"
+  type: "ReLU"
   # in-place
   bottom: "conv6"
   top: "conv6"
+}
+
+layer {
+  name: "bn6"
+  type: "BatchNorm"
+  bottom: "conv6"
+  top: "bn6"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
 }
 
 layer {
   name: "conv7"
   type: "Convolution"
   # input -> output
-  bottom: "conv6"
+  bottom: "bn6"
   top: "conv7"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -291,18 +387,34 @@ layer {
 }
 
 layer {
-  name: "elu7"
-  type: "ELU"
+  name: "relu7"
+  type: "ReLU"
   # in-place
   bottom: "conv7"
   top: "conv7"
+}
+
+layer {
+  name: "bn7"
+  type: "BatchNorm"
+  bottom: "conv7"
+  top: "bn7"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
 }
 
 layer {
   name: "conv8"
   type: "Convolution"
   # input -> output
-  bottom: "conv7"
+  bottom: "bn7"
   top: "conv8"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -321,18 +433,34 @@ layer {
 }
 
 layer {
-  name: "elu8"
-  type: "ELU"
+  name: "relu8"
+  type: "ReLU"
   # in-place
   bottom: "conv8"
   top: "conv8"
+}
+
+layer {
+  name: "bn8"
+  type: "BatchNorm"
+  bottom: "conv8"
+  top: "bn8"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
 }
 
 layer {
   name: "conv9"
   type: "Convolution"
   # input -> output
-  bottom: "conv8"
+  bottom: "bn8"
   top: "conv9"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
@@ -351,25 +479,41 @@ layer {
 }
 
 layer {
-  name: "elu9"
-  type: "ELU"
+  name: "relu9"
+  type: "ReLU"
   # in-place
   bottom: "conv9"
   top: "conv9"
 }
 
 layer {
+  name: "bn9"
+  type: "BatchNorm"
+  bottom: "conv9"
+  top: "bn9"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+}
+
+layer {
   name: "conv10"
   type: "Convolution"
   # input -> output
-  bottom: "conv9"
+  bottom: "bn9"
   top: "conv10"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 1
-    kernel_size: 1
-    pad: 0
+    num_output: 4
+    kernel_size: 3
+    pad: 1
     stride: 1
     weight_filler {
       type: "xavier"
@@ -381,23 +525,41 @@ layer {
 }
 
 layer {
-  name: "elu10"
-  type: "ELU"
+  name: "slicer_output"
+  type: "Slice"
   bottom: "conv10"
-  top: "conv10"
+  top: "conv10_o1"
+  top: "conv10_o2"
+  slice_param {
+    axis: 1
+    slice_point: 1
+  }
 }
 
-#layer {
-#  name: "slicer_output"
-#  type: "Slice"
-#  bottom: "conv8"
-#  top: "conv8_o1"
-#  top: "conv8_o2"
-#  slice_param {
-#    axis: 1
-#    slice_point: 1
-#  }
-#}
+layer {
+  name: "relu10"
+  type: "ReLU"
+  # in-place
+  bottom: "conv10_o2"
+  top: "conv10_o2"
+}
+
+layer {
+  name: "bn10"
+  type: "BatchNorm"
+  bottom: "conv10_o2"
+  top: "bn10"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+}
+
 
 layer {
   name: "ip11"
@@ -415,15 +577,32 @@ layer {
       type: "constant"
     }
   }
-  bottom: "conv10"
+  bottom: "bn10"
   top: "ip11"
 }
 
 layer {
-  name: "elu11"
-  type: "ELU"
+  name: "relu11"
+  type: "ReLU"
+  # in-place
   bottom: "ip11"
   top: "ip11"
+}
+
+layer {
+  name: "bn11"
+  type: "BatchNorm"
+  bottom: "ip11"
+  top: "bn11"
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
+  param {
+    lr_mult: 0
+  } 
 }
 
 layer {
@@ -442,49 +621,40 @@ layer {
       type: "constant"
     }
   }
-  bottom: "ip11"
+  bottom: "bn11"
   top: "ip12"
 }
 
-#layer {
-#  name: "flatten_o1"
-#  type: "Flatten"
-#  bottom: "conv8_o1"
-#  top: "flatten_o1"
-#}
-
-#layer {
-#  name: "loss_1"
-#  type: "SoftmaxWithLoss"
-  # input
-#  bottom: "flatten_o1"
-#  bottom: "label_move1"
-  # output
-#  top: "loss_1"
-#  loss_weight: 1
-#}
-
 layer {
-  name: "loss_w"
-  type: "SigmoidCrossEntropyLoss"
-  bottom: "ip12"
-  bottom: "winpc"
-  top: "loss_w"
-  loss_weight: 0
+  name: "flatten_o1"
+  type: "Flatten"
+  bottom: "conv10_o1"
+  top: "flatten_o1"
 }
 
-#layer {
-#  name: "accuracy_m"
-#  type: "Accuracy"
+layer {
+  name: "loss_1"
+  type: "SoftmaxWithLoss"
   # input
-#  bottom: "flatten_o1"
-#  bottom: "label_move1"
-#  include {
-#    phase: TEST
-#  }
+  bottom: "flatten_o1"
+  bottom: "label_move1"
   # output
-#  top: "accuracy_m"
-#}
+  top: "loss_1"
+  loss_weight: 1
+}
+
+layer {
+  name: "accuracy_m"
+  type: "Accuracy"
+  # input
+  bottom: "flatten_o1"
+  bottom: "label_move1"
+  include {
+    phase: TEST
+  }
+  # output
+  top: "accuracy_m"
+}
 
 layer {
   name: "sigmoid"

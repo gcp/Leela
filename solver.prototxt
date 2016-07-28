@@ -1,5 +1,5 @@
-# 55195596 training positions.
-# 2299824 testing positions.
+# 55 195 601 training positions.
+#  2 299 819 testing positions.
 # 64 x 862431
 # 64 x  35934
 
@@ -8,16 +8,17 @@ net: "train-test.prototxt"
 
 # test_iter specifies how many forward passes the test should carry out.
 # 64 * 1500 per test
-test_iter: 1750
+test_iter: 3600
 
 # Carry out testing every n training iterations.
-test_interval: 43200
+test_interval: 86240
 
-# The base learning rate, momentum and the weight decay of the network.
-momentum: 0.95
+base_lr: 0.001
+momentum: 0.9
+momentum2: 0.999
 
-# begin training at a learning rate of 0.01 = 1e-2
-base_lr: 1.0
+#momentum: 0.5
+#base_lr: 0.001
 
 # learning rate policy: drop the learning rate in "steps"
 # by a factor of gamma every stepsize iterations
@@ -32,17 +33,18 @@ lr_policy: "fixed"
 
 # Display every n iterations
 # 1.28M pos
-display: 1000
+display: 86240
 
 # The total number of iterations
 # 100 * 100
 max_iter: 8620000
 
 # snapshot intermediate results
-snapshot: 43200
+snapshot: 86240
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
-type: "AdaDelta"
-delta: 1e-6
+#type: "SGD"
+type: "Adam"
+#delta: 1e-6
 solver_mode: GPU
