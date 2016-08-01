@@ -25,8 +25,9 @@
 using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score, int expand_treshold)
-    : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
-      m_valid(true), m_expand_cnt(expand_treshold), m_is_expanding(false) {
+    : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0), m_visits(0),
+      m_score(score), m_valid_eval(false), m_valid(true),
+      m_expand_cnt(expand_treshold), m_is_expanding(false) {
     m_ravevisits = 20;
     m_ravestmwins = 10.0;
 }
@@ -93,35 +94,26 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
     if (use_nets) {
 #ifdef USE_OPENCL
         if (at_root) {
-           auto raw_netlist = Network::get_Network()->get_scored_moves(
-               &state, Network::Ensemble::AVERAGE_ALL);
-           expansion_cb(&nodecount, state, raw_netlist);
+#else
+        if (1) {
+#endif
+           auto netresult = Network::get_Network()->get_scored_moves(
+               &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
+                                  Network::Ensemble::RANDOM_ROTATION));
+           expansion_cb(&nodecount, state, netresult, use_nets);
         } else {
+#ifndef USE_OPENCL
+            assert(false);
+#else
             Network::get_Network()->async_scored_moves(
                 &nodecount, &state, this, Network::Ensemble::RANDOM_ROTATION);
-        }
-#else
-        std::vector<Network::scored_node> raw_netlist;
-        if (state.get_passes() < 2) {
-            raw_netlist = Network::get_Network()->get_scored_moves(
-              &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
-                                 Network::Ensemble::RANDOM_ROTATION));
-            for (auto it = raw_netlist.begin(); it != raw_netlist.end(); ++it) {
-                int vertex = it->second;
-                if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
-                    if (!board.is_suicide(vertex, board.get_to_move())) {
-                        nodelist.push_back(*it);
-                    }
-                }
-            }
-            nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
-        }
 #endif
+        }
     } else {
-        std::vector<int> territory = state.board.influence();
-        std::vector<int> moyo = state.board.moyo();
-
         if (state.get_passes() < 2) {
+            std::vector<int> territory = state.board.influence();
+            std::vector<int> moyo = state.board.moyo();
+
             for (int i = 0; i < board.get_empty(); i++) {
                 int vertex = board.get_empty_vertex(i);
                 assert(board.get_square(vertex) == FastBoard::EMPTY);
@@ -140,21 +132,20 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
                 passscore = 0;
             }
             nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
+            link_nodelist(nodecount, board, nodelist, false);
         }
     }
-#ifndef USE_OPENCL
-    link_nodelist(nodecount, board, nodelist, use_nets);
-#endif
 }
 
-#ifdef USE_OPENCL
 void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
                            FastState & state,
-                           std::vector<Network::scored_node> & raw_netlist) {
+                           Network::Netresult & netresult,
+                           bool use_nets) {
     FastBoard & board = state.board;
     std::vector<Network::scored_node> nodelist;
 
-    for (auto it = raw_netlist.begin(); it != raw_netlist.end(); ++it) {
+    for (auto it = netresult.movescores.begin();
+         it != netresult.movescores.end(); ++it) {
         int vertex = it->second;
         if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
             if (!board.is_suicide(vertex, board.get_to_move())) {
@@ -164,9 +155,14 @@ void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
     }
     nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
 
-    link_nodelist(*nodecount, board, nodelist, true);
+    link_nodelist(*nodecount, board, nodelist, use_nets);
+
+    if (use_nets) {
+        SMP::Lock lock(get_mutex());
+        m_eval = netresult.eval;
+        m_valid_eval = true;
+    }
 }
-#endif
 
 void UCTNode::link_nodelist(boost::atomic<int> & nodecount,
                             FastBoard & board,

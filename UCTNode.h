@@ -28,11 +28,10 @@ public:
     double get_blackwins() const;
     void create_children(boost::atomic<int> & nodecount,
                          FastState & state, bool use_nets, bool at_root);
-#ifdef USE_OPENCL
     void expansion_cb(boost::atomic<int> * nodecount,
                       FastState & state,
-                      std::vector<Network::scored_node> & raw_netlist);
-#endif
+                      Network::Netresult & netresult,
+                      bool use_nets);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
     void invalidate();
@@ -78,6 +77,9 @@ private:
     int m_ravevisits;
     // move order
     float m_score;
+    // board eval
+    bool m_valid_eval;
+    float m_eval;
     // alive (superko)
     bool m_valid;
     // extend node

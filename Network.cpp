@@ -286,11 +286,9 @@ void innerproduct(std::vector<float>& input,
                   std::vector<float>& output) {
     assert(B == outputs);
 
-    // This can be sgemv with transpose, but many practical kernels
-    // aren't so hot with that.
-    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                // M     N       K
-                outputs, 1, inputs,
+    cblas_sgemv(CblasRowMajor, CblasNoTrans,
+                // M     K
+                outputs, inputs,
                 1.0f, &weights[0], inputs,
                 &input[0], 1,
                 0.0f, &output[0], 1);
@@ -378,7 +376,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     softmax(cb_data->m_output_data, softmax_data);
     std::vector<float>& outputs = softmax_data;
 
-    std::vector<Network::scored_node> result;
+    Netresult result;
 
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         int rot_idx = Network::rev_rotate_nn_idx(idx, cb_data->m_rotation);
@@ -387,14 +385,14 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
         int y = idx / 19;
         int vtx = cb_data->m_state.board.get_vertex(x, y);
         if (cb_data->m_state.board.get_square(vtx) == FastBoard::EMPTY) {
-            result.push_back(std::make_pair(val, vtx));
+            result.movescores.push_back(std::make_pair(val, vtx));
         }
     }
 
     // Network::show_heatmap(&cb_data->m_state, result);
 
     cb_data->m_node->expansion_cb(cb_data->m_nodecount, cb_data->m_state,
-                                  result);
+                                  result, true);
 
     delete cb_data;
 
@@ -457,9 +455,9 @@ void Network::async_scored_moves(boost::atomic<int> * nodecount,
 }
 #endif
 
-std::vector<Network::scored_node> Network::get_scored_moves(
+Network::Netresult Network::get_scored_moves(
     FastState * state, Ensemble ensemble) {
-    std::vector<scored_node> result;
+    Netresult result;
     if (state->board.get_boardsize() != 19) {
         return result;
     }
@@ -476,25 +474,27 @@ std::vector<Network::scored_node> Network::get_scored_moves(
         result = get_scored_moves_internal(state, planes, 0);
         for (int r = 1; r < 8; r++) {
             auto sum_res = get_scored_moves_internal(state, planes, r);
-            for (size_t i = 0; i < sum_res.size(); i++) {
-                assert(result[i].second == sum_res[i].second);
-                result[i].first += sum_res[i].first;
+            for (size_t i = 0; i < sum_res.movescores.size(); i++) {
+                assert(result.movescores[i].second == sum_res.movescores[i].second);
+                result.movescores[i].first += sum_res.movescores[i].first;
             }
+            result.eval += sum_res.eval;
         }
-        std::for_each(result.begin(), result.end(),
+        std::for_each(result.movescores.begin(), result.movescores.end(),
                       [](scored_node & sn){ sn.first /= 8.0f; });
+        result.eval /= 8.0f;
     }
 
-     if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+    if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
         show_heatmap(state, result);
-     }
+    }
 
     return result;
 }
 
-std::vector<Network::scored_node> Network::get_scored_moves_internal(
+Network::Netresult Network::get_scored_moves_internal(
     FastState * state, NNPlanes & planes, int rotation) {
-    std::vector<scored_node> result;
+    Netresult result;
 #ifdef USE_CAFFE
     Blob<float>* input_layer = net->input_blobs()[0];
     int channels = input_layer->channels();
@@ -559,7 +559,7 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
     innerproduct<256,       1>(input_data, ip12_w, ip12_b, winrate_data);
     // Sigmoid
     winrate_data[0] = 1.0f / (1.0f + exp(-winrate_data[0]));
-    //myprintf("Winrate: %5.4f\n", winrate_data[0]);
+    result.eval = winrate_data[0];
 #endif
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->forward(input_data, output_data);
@@ -575,7 +575,7 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
     auto outputs = std::vector<float>(begin, end);
     Blob<float>* score_layer = net->output_blobs()[1];
     float winrate = score_layer->cpu_data()[0];
-    myprintf("Winrate: %5.4f\n", winrate);
+    result.eval = winrate;
 #endif
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         int rot_idx = rev_rotate_nn_idx(idx, rotation);
@@ -584,14 +584,15 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
         int y = idx / 19;
         int vtx = state->board.get_vertex(x, y);
         if (state->board.get_square(vtx) == FastBoard::EMPTY) {
-            result.push_back(std::make_pair(val, vtx));
+            result.movescores.push_back(std::make_pair(val, vtx));
         }
     }
 
     return result;
 }
 
-void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
+void Network::show_heatmap(FastState * state, Netresult& result) {
+    auto moves = result.movescores;
     std::vector<std::string> display_map;
     std::string line;
 
@@ -635,6 +636,9 @@ void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
         cum += moves[tried].first;
         tried++;
     }
+
+    std::cerr << "Eval: " << boost::format("%5.4f") % result.eval
+              << std::endl;
 }
 
 void Network::gather_features(FastState * state, NNPlanes & planes) {

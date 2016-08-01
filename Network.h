@@ -35,11 +35,15 @@ public:
         bool stm_won;
     };
     using TrainVector = std::vector<TrainPosition>;
-
     using scored_node = std::pair<float, int>;
 
-    std::vector<scored_node> get_scored_moves(FastState * state,
-                                              Ensemble ensemble);
+    struct Netresult {
+        std::vector<scored_node> movescores;
+        float eval;
+    };
+
+    Netresult get_scored_moves(FastState * state,
+                               Ensemble ensemble);
     static constexpr int CHANNELS = 32;
     static constexpr int MAX_CHANNELS = 128;
 
@@ -50,7 +54,7 @@ public:
 #endif
     void initialize();
     void benchmark(FastState * state);
-    static void show_heatmap(FastState * state, std::vector<scored_node>& moves);
+    static void show_heatmap(FastState * state, Netresult & netres);
     void autotune_from_file(std::string filename);
     static Network* get_Network(void);
     std::string get_backend();
@@ -62,7 +66,7 @@ private:
     std::unique_ptr<caffe::Net<float>> net;
 #endif
 
-    std::vector<scored_node> get_scored_moves_internal(
+    Netresult get_scored_moves_internal(
         FastState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
