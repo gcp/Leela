@@ -29,8 +29,8 @@ asan:
 		leela
 
 LIBS = -lpthread -lboost_thread -lboost_system -lboost_program_options
-LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
-#LIBS += -lopenblas
+#LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
+LIBS += -lopenblas
 #LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL

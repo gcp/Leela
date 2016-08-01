@@ -367,6 +367,7 @@ void OpenCL::thread_init() {
         data->m_convolve3_kernel = cl::Kernel(m_program, "convolve3");
         data->m_convolve5_kernel = cl::Kernel(m_program, "convolve5");
         data->m_merge_kernel = cl::Kernel(m_program, "merge");
+        data->m_batchnorm_kernel = cl::Kernel(m_program, "batchnorm");
 
         data->m_commandqueue = cl::CommandQueue(cl::Context::getDefault(),
             cl::Device::getDefault());
@@ -467,16 +468,23 @@ void OpenCL::forward(std::vector<float>& input,
     cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
 
     for (auto & layer : m_layers) {
-        // convolution
-        convolve(layer.filter_size,
-                    layer.channels,
-                    layer.outputs,
-                    inBuffer,
-                    tmpBuffer,
-                    mergeBuffer,
-                    layer.weights);
-        std::swap(inBuffer, tmpBuffer);
+        if (layer.is_batchnorm) {
+           batchnorm(layer.outputs,
+                     tmpBuffer,
+                     inBuffer,
+                     layer.weights);
+        } else {
+            // convolution
+            convolve(layer.filter_size,
+                     layer.channels,
+                     layer.outputs,
+                     inBuffer,
+                     tmpBuffer,
+                     mergeBuffer,
+                     layer.weights);
+        }
     }
+    
     cl::CommandQueue queue = thread_data.get()->m_commandqueue;
     // last layer is always a convolution, so output is in tmp
     queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
@@ -580,6 +588,37 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
                   << e.err() << std::endl;
         return;
     }
+}
+
+void OpenCL::batchnorm(int outputs,
+                       cl::Buffer & bufferInput,
+                       cl::Buffer & bufferOutput,
+                       std::vector<cl::Buffer>& weights) {
+    // fixed for 19x19
+    constexpr int width = 19;
+    constexpr int height = 19;
+    constexpr int boardsize = width * height;
+
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
+
+    cl::Kernel batchnorm_kernel = thread_data.get()->m_batchnorm_kernel;
+
+    try {
+        batchnorm_kernel.setArg(0, bufferInput);
+        batchnorm_kernel.setArg(1, bufferOutput);
+        batchnorm_kernel.setArg(2, weights[0]);
+        batchnorm_kernel.setArg(3, weights[1]);
+        batchnorm_kernel.setArg(4, weights[2]);
+
+        queue.enqueueNDRangeKernel(batchnorm_kernel, cl::NullRange,
+                                   cl::NDRange(outputs, boardsize),
+                                   cl::NDRange(std::min(8, outputs), 19));
+    } catch (cl::Error &e) {
+        std::cerr << "Error in convolve: " << e.what() << ": "
+            << e.err() << std::endl;
+        return;
+    }
+
 }
 
 template<class T>
@@ -696,9 +735,9 @@ void OpenCL::initialize(void) {
     cl::Device::setDefault(best_device);
 
     // Read source file
-    //std::ifstream sourceFile("convolve_kernel.cl", std::ifstream::in);
-    //std::string sourceCode(std::istreambuf_iterator<char>(sourceFile),
-    //                       (std::istreambuf_iterator<char>()));
+    std::ifstream sourceFile("convolve_kernel.cl", std::ifstream::in);
+    std::string sourceCode(std::istreambuf_iterator<char>(sourceFile),
+                           (std::istreambuf_iterator<char>()));
 
     // Make program of the source code in the context
     try {

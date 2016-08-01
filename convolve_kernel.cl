@@ -301,7 +301,39 @@ __kernel void merge(
     for (unsigned int c = 0; c < channels; c++) {
         sum += in[(c * boardsize + b) * outputs + o];
     }
+    // ReLU
+    sum = max(sum, 0.0f);
     // ELU
-    sum = sum > 0 ? sum : 1.0f * (exp(sum) - 1.0f);
+    // sum = sum > 0 ? sum : 1.0f * (exp(sum) - 1.0f);
     out[o * boardsize + b] = sum;
+}
+
+__kernel void batchnorm(
+                        __global const float * in,
+                        __global float * out,
+                        __constant const float * means,
+                        __constant const float * variances,
+                        __constant const float * scale) {
+
+    // cl::NDRange global(outputs, 19*19);
+    const int gx = get_global_id(0);
+    const int gy = get_global_id(1);
+
+    const int output = gx;
+    const int outputs = get_global_size(0);
+
+    const unsigned int width = 19;
+    const unsigned int height = 19;
+    const unsigned int board_size = width * height;
+
+    const unsigned int c = output;
+    const unsigned int b = gy;
+
+    const float epsilon = 1e-5;
+
+    const float mean = means[c] / scale[0];
+    const float variance = epsilon + variances[c] / scale[0];
+    const float scale_stddiv = 1.0f / sqrt(variance);
+
+    out[c * board_size + b] = scale_stddiv * (in[c * board_size + b] - mean);
 }

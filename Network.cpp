@@ -49,34 +49,63 @@ using namespace Utils;
 
 Network* Network::s_Net = nullptr;
 
-extern std::tr1::array<float, 76800> conv1_w;
+extern std::tr1::array<float, 102400> conv1_w;
 extern std::tr1::array<float, 128> conv1_b;
+extern std::tr1::array<float, 128> bn1_w1;
+extern std::tr1::array<float, 128> bn1_w2;
+extern std::tr1::array<float, 1>  bn1_w3;
 extern std::tr1::array<float, 147456> conv2_w;
 extern std::tr1::array<float, 128> conv2_b;
+extern std::tr1::array<float, 128> bn2_w1;
+extern std::tr1::array<float, 128> bn2_w2;
+extern std::tr1::array<float, 1>  bn2_w3;
 extern std::tr1::array<float, 147456> conv3_w;
 extern std::tr1::array<float, 128> conv3_b;
+extern std::tr1::array<float, 128> bn3_w1;
+extern std::tr1::array<float, 128> bn3_w2;
+extern std::tr1::array<float, 1>  bn3_w3;
 extern std::tr1::array<float, 147456> conv4_w;
 extern std::tr1::array<float, 128> conv4_b;
+extern std::tr1::array<float, 128> bn4_w1;
+extern std::tr1::array<float, 128> bn4_w2;
+extern std::tr1::array<float, 1>  bn4_w3;
 extern std::tr1::array<float, 147456> conv5_w;
 extern std::tr1::array<float, 128> conv5_b;
+extern std::tr1::array<float, 128> bn5_w1;
+extern std::tr1::array<float, 128> bn5_w2;
+extern std::tr1::array<float, 1>  bn5_w3;
 extern std::tr1::array<float, 147456> conv6_w;
 extern std::tr1::array<float, 128> conv6_b;
+extern std::tr1::array<float, 128> bn6_w1;
+extern std::tr1::array<float, 128> bn6_w2;
+extern std::tr1::array<float, 1>  bn6_w3;
 extern std::tr1::array<float, 147456> conv7_w;
 extern std::tr1::array<float, 128> conv7_b;
+extern std::tr1::array<float, 128> bn7_w1;
+extern std::tr1::array<float, 128> bn7_w2;
+extern std::tr1::array<float, 1>  bn7_w3;
 extern std::tr1::array<float, 147456> conv8_w;
 extern std::tr1::array<float, 128> conv8_b;
+extern std::tr1::array<float, 128> bn8_w1;
+extern std::tr1::array<float, 128> bn8_w2;
+extern std::tr1::array<float, 1>  bn8_w3;
 extern std::tr1::array<float, 147456> conv9_w;
 extern std::tr1::array<float, 128> conv9_b;
-extern std::tr1::array<float, 147456> conv10_w;
-extern std::tr1::array<float, 128> conv10_b;
-extern std::tr1::array<float, 147456> conv11_w;
-extern std::tr1::array<float, 128> conv11_b;
-extern std::tr1::array<float, 147456> conv12_w;
-extern std::tr1::array<float, 128> conv12_b;
-extern std::tr1::array<float, 147456> conv13_w;
-extern std::tr1::array<float, 128> conv13_b;
-extern std::tr1::array<float, 3456> conv14_w;
-extern std::tr1::array<float, 3> conv14_b;
+extern std::tr1::array<float, 128> bn9_w1;
+extern std::tr1::array<float, 128> bn9_w2;
+extern std::tr1::array<float, 1>  bn9_w3;
+extern std::tr1::array<float, 4608> conv10_w;
+extern std::tr1::array<float, 4> conv10_b;
+extern std::tr1::array<float, 3> bn10_w1;
+extern std::tr1::array<float, 3> bn10_w2;
+extern std::tr1::array<float, 1> bn10_w3;
+extern std::tr1::array<float, 277248> ip11_w;
+extern std::tr1::array<float, 256> ip11_b;
+extern std::tr1::array<float, 256> bn11_w1;
+extern std::tr1::array<float, 256> bn11_w2;
+extern std::tr1::array<float, 1> bn11_w3;
+extern std::tr1::array<float, 256> ip12_w;
+extern std::tr1::array<float, 1> ip12_b;
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -108,19 +137,24 @@ void Network::initialize(void) {
     OpenCL * cl = OpenCL::get_OpenCL();
     std::cerr << "Transfering weights to GPU..." << std::flush;
     cl->push_convolve(5, conv1_w, conv1_b);
+    cl->push_batchnorm(bn1_w1, bn1_w2, bn1_w3);
     cl->push_convolve(3, conv2_w, conv2_b);
+    cl->push_batchnorm(bn2_w1, bn2_w2, bn2_w3);
     cl->push_convolve(3, conv3_w, conv3_b);
+    cl->push_batchnorm(bn3_w1, bn3_w2, bn3_w3);
     cl->push_convolve(3, conv4_w, conv4_b);
+    cl->push_batchnorm(bn4_w1, bn4_w2, bn4_w3);
     cl->push_convolve(3, conv5_w, conv5_b);
+    cl->push_batchnorm(bn5_w1, bn5_w2, bn5_w3);
     cl->push_convolve(3, conv6_w, conv6_b);
+    cl->push_batchnorm(bn6_w1, bn6_w2, bn6_w3);
     cl->push_convolve(3, conv7_w, conv7_b);
+    cl->push_batchnorm(bn7_w1, bn7_w2, bn7_w3);
     cl->push_convolve(3, conv8_w, conv8_b);
+    cl->push_batchnorm(bn8_w1, bn8_w2, bn8_w3);
     cl->push_convolve(3, conv9_w, conv9_b);
+    cl->push_batchnorm(bn9_w1, bn9_w2, bn9_w3);
     cl->push_convolve(3, conv10_w, conv10_b);
-    cl->push_convolve(3, conv11_w, conv11_b);
-    cl->push_convolve(3, conv12_w, conv12_b);
-    cl->push_convolve(3, conv13_w, conv13_b);
-    cl->push_convolve(3, conv14_w, conv14_b);
     std::cerr << "done" << std::endl;
 #endif
 #ifdef USE_BLAS
@@ -231,8 +265,7 @@ void convolve(std::vector<float>& input,
                 &col[0], spatial_out,
                 0.0f, &output[0], spatial_out);
 
-    auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
-                                       val : 1.0f * (std::exp(val) - 1.0f); };
+    auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
 
     for (unsigned int o = 0; o < outputs; o++) {
         for (unsigned int b = 0; b < spatial_out; b++) {
@@ -242,6 +275,33 @@ void convolve(std::vector<float>& input,
     }
 }
 #endif
+
+template<unsigned int channels>
+void batchnorm(std::vector<float>& input,
+               std::tr1::array<float, channels>& means,
+               std::tr1::array<float, channels>& variances,
+               std::tr1::array<float, 1> scale,
+               std::vector<float>& output)
+{
+    // fixed for 19x19
+    constexpr unsigned int width = 19;
+    constexpr unsigned int height = 19;
+    constexpr unsigned int board_size = width * height;
+    constexpr float epsilon = 1e-5;
+
+    for (unsigned int c = 0; c < channels; ++c) {
+        float mean = means[c] / scale[0];
+        float variance = variances[c] / scale[0];
+        variance += epsilon;
+        float scale_stddiv = 1.0f / std::sqrt(variance);
+
+        float * out = &output[c * board_size];
+        float const * in  = &input[c * board_size];
+        for (unsigned int b = 0; b < board_size; b++) {
+            out[b] = scale_stddiv * (in[b] - mean);
+        }
+    }
+}
 
 void softmax(std::vector<float>& input,
              std::vector<float>& output) {
@@ -369,7 +429,6 @@ void Network::async_scored_moves(boost::atomic<int> * nodecount,
 }
 #endif
 
-
 std::vector<Network::scored_node> Network::get_scored_moves(
     FastState * state, Ensemble ensemble) {
     std::vector<scored_node> result;
@@ -436,33 +495,25 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
         }
     }
 #if defined(USE_BLAS)
-    convolve<5,  24, 128>(input_data, conv1_w, conv1_b, output_data);
-    std::swap(input_data, output_data);
+    convolve<5,  32, 128>(input_data, conv1_w, conv1_b, output_data);
+    batchnorm<128>(output_data, bn1_w1, bn1_w2, bn1_w3, input_data);
     convolve<3, 128, 128>(input_data, conv2_w, conv2_b, output_data);
-    std::swap(input_data, output_data);
+    batchnorm<128>(output_data, bn2_w1, bn2_w2, bn2_w3, input_data);
     convolve<3, 128, 128>(input_data, conv3_w, conv3_b, output_data);
-    std::swap(input_data, output_data);
+    batchnorm<128>(output_data, bn3_w1, bn3_w2, bn3_w3, input_data);
     convolve<3, 128, 128>(input_data, conv4_w, conv4_b, output_data);
-    std::swap(input_data, output_data);
+    batchnorm<128>(output_data, bn4_w1, bn4_w2, bn4_w3, input_data);
     convolve<3, 128, 128>(input_data, conv5_w, conv5_b, output_data);
-    std::swap(input_data, output_data);
+    batchnorm<128>(output_data, bn5_w1, bn5_w2, bn5_w3, input_data);
     convolve<3, 128, 128>(input_data, conv6_w, conv6_b, output_data);
-    std::swap(input_data, output_data);
+    batchnorm<128>(output_data, bn6_w1, bn6_w2, bn6_w3, input_data);
     convolve<3, 128, 128>(input_data, conv7_w, conv7_b, output_data);
-    std::swap(input_data, output_data);
+    batchnorm<128>(output_data, bn7_w1, bn7_w2, bn7_w3, input_data);
     convolve<3, 128, 128>(input_data, conv8_w, conv8_b, output_data);
-    std::swap(input_data, output_data);
+    batchnorm<128>(output_data, bn8_w1, bn8_w2, bn8_w3, input_data);
     convolve<3, 128, 128>(input_data, conv9_w, conv9_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv10_w, conv10_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv11_w, conv11_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv12_w, conv12_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv13_w, conv13_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128,   3>(input_data, conv14_w, conv14_b, output_data);
+    batchnorm<128>(output_data, bn9_w1, bn9_w2, bn9_w3, input_data);
+    convolve<3, 128,   4>(input_data, conv10_w, conv10_b, output_data);
     softmax(output_data, softmax_data);
 
     std::vector<float>& outputs = softmax_data;

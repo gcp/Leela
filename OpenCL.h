@@ -22,6 +22,7 @@ private:
     unsigned int channels{0};
     unsigned int outputs{0};
     unsigned int filter_size{0};
+    bool is_batchnorm{false};
     std::vector<cl::Buffer> weights;
 };
 
@@ -32,6 +33,7 @@ private:
     cl::Kernel m_convolve3_kernel;
     cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;
+    cl::Kernel m_batchnorm_kernel;
     cl::Event m_complete_event;
     boost::atomic<int> m_results_outstanding{0};
 };
@@ -42,6 +44,19 @@ public:
 
     static OpenCL* get_OpenCL(void);
     void thread_init(void);
+
+    template <unsigned long M, unsigned long V>
+    void push_batchnorm(std::tr1::array<float, M> & means,
+                        std::tr1::array<float, V> & variances,
+                        std::tr1::array<float, 1> & scale) {
+        int layer = get_layer_count();
+        push_weights(layer, means);
+        push_weights(layer, variances);
+        push_weights(layer, scale);
+        m_layers[layer].is_batchnorm = true;
+        m_layers[layer].channels = M;
+        m_layers[layer].outputs = M;
+    }
 
     template <unsigned long W, unsigned long B>
     void push_convolve(unsigned int filter_size,
@@ -79,6 +94,8 @@ private:
     void convolve(int filter_size, int channels, int outputs,
                   cl::Buffer& input, cl::Buffer& output, cl::Buffer& merge,
                   std::vector<cl::Buffer>& weights);
+    void batchnorm(int outputs, cl::Buffer & input,
+                   cl::Buffer & output, std::vector<cl::Buffer>& weights);
 
     static OpenCL* s_OpenCL;
     boost::thread_specific_ptr<ThreadData> thread_data;
