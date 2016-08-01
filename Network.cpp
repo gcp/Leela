@@ -267,7 +267,6 @@ void convolve(std::vector<float>& input,
 
     auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
 
-
     for (unsigned int o = 0; o < outputs; o++) {
         if (outputs > 4 || o > 0) {
             for (unsigned int b = 0; b < spatial_out; b++) {
@@ -287,16 +286,23 @@ void innerproduct(std::vector<float>& input,
                   std::vector<float>& output) {
     assert(B == outputs);
 
+    // This can be sgemv with transpose, but many practical kernels
+    // aren't so hot with that.
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                // M     N       K
+                outputs, 1, inputs,
+                1.0f, &weights[0], inputs,
+                &input[0], 1,
+                0.0f, &output[0], 1);
+
+    auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
+
     for (unsigned int o = 0; o < outputs; o++) {
-        float acc = biases[o];
-        for (unsigned int i = 0; i < inputs; i++) {
-            acc += input[i] * weights[o * inputs + i];
-        }
+        float val = biases[o] + output[o];
         if (outputs > 1) {
-            output[o] = std::max(acc, 0.0f);
-        } else {
-            output[0] = acc;
+            val = lambda_ReLU(val);
         }
+        output[o] = val;
     }
 }
 #endif
