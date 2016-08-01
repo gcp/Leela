@@ -368,6 +368,7 @@ void OpenCL::thread_init() {
         data->m_convolve5_kernel = cl::Kernel(m_program, "convolve5");
         data->m_merge_kernel = cl::Kernel(m_program, "merge");
         data->m_batchnorm_kernel = cl::Kernel(m_program, "batchnorm");
+        data->m_innerproduct_kernel = cl::Kernel(m_program, "innerproduct");
 
         data->m_commandqueue = cl::CommandQueue(cl::Context::getDefault(),
             cl::Device::getDefault());
@@ -391,18 +392,27 @@ void OpenCL::add_weights(int layer,
     m_layers.back().weights.push_back(bufferWeights);
 }
 
+void OpenCL::push_noweight_layer(int layer) {
+    if (layer >= m_layers.size()) {
+        m_layers.push_back(Layer());
+    }
+}
+
 void OpenCL::forward_async(std::vector<float>& input,
                            std::vector<float>& output,
                            event_callback cb, void * data) {
     constexpr int width = 19;
     constexpr int height = 19;
+    constexpr size_t one_plane = width * height * sizeof(float);
 
     thread_data.get()->m_results_outstanding.fetch_add(1, boost::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
-    size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
-    size_t mergeSize = sizeof(float) * width * height *
+    size_t mergeSize = one_plane *
         Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 2);
+    // XXX hardcoded because of splitter
+    size_t finalSize = 4 * one_plane;
+    size_t moveSize = 1 * one_plane;
 
     cl::Buffer inBuffer = cl::Buffer(
         CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
@@ -413,14 +423,32 @@ void OpenCL::forward_async(std::vector<float>& input,
     cl::Buffer mergeBuffer = cl::Buffer(
         CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
         mergeSize);
-    cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+    cl::Buffer outBuffer = cl::Buffer(
+        CL_MEM_READ_WRITE,
+        finalSize);
+
+    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
 
     for (auto & layer : m_layers) {
         if (layer.is_batchnorm) {
            batchnorm(layer.outputs,
+                     layer.filter_size,
                      tmpBuffer,
                      inBuffer,
                      layer.weights);
+        } else if (layer.is_innerproduct) {
+          innerproduct(layer.channels,
+                       layer.outputs,
+                       inBuffer,
+                       tmpBuffer,
+                       layer.weights);
+        } else if (layer.is_splitter) {
+            assert(layer.channels == 1);
+            // copy everything to output (we'll overwrite the latter parts)
+            queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
+            // copy back the latter parts into our working buffer
+            // so essentially shift things to the front
+            queue.enqueueCopyBuffer(outBuffer, tmpBuffer, moveSize, 0, finalSize - moveSize);
         } else {
             // convolution
             convolve(layer.filter_size,
@@ -433,15 +461,16 @@ void OpenCL::forward_async(std::vector<float>& input,
         }
     }
 
-    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
-
-    // last layer is always a convolution, so output is in tmp
-    queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
-    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
+    // last layer is always an innerproduct so output is in tmp
+    queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, moveSize, 1 * sizeof(float));
+    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, moveSize + 1 * sizeof(float),
+                            output.data());
 
     m_cb_outstanding.fetch_add(1, boost::memory_order_release);
     queue.finish();
-    cb(CL_COMPLETE, 0, data);
+    if (cb != nullptr) {
+        cb(CL_COMPLETE, 0, data);
+    }
 }
 
 void OpenCL::callback_finished() {
@@ -450,54 +479,6 @@ void OpenCL::callback_finished() {
 
 void OpenCL::join_outstanding_cb() {
     while (m_cb_outstanding.load(boost::memory_order_acquire) > 0);
-}
-
-void OpenCL::forward(std::vector<float>& input,
-                     std::vector<float>& output) {
-    constexpr int width = 19;
-    constexpr int height = 19;
-
-    thread_data.get()->m_results_outstanding.fetch_add(1, boost::memory_order_release);
-    size_t inSize = sizeof(float) * input.size();
-    size_t outSize = sizeof(float) * output.size();
-    size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
-    size_t mergeSize = sizeof(float) * width * height *
-                       Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 2);
-
-    cl::Buffer inBuffer = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE
-                                     | CL_MEM_HOST_NO_ACCESS,
-                                     inSize, input.data());
-    cl::Buffer tmpBuffer = cl::Buffer(CL_MEM_READ_WRITE
-                                      | CL_MEM_HOST_NO_ACCESS,
-                                      outSize);
-    cl::Buffer mergeBuffer = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                                        mergeSize);
-    cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
-
-    for (auto & layer : m_layers) {
-        if (layer.is_batchnorm) {
-           batchnorm(layer.outputs,
-                     tmpBuffer,
-                     inBuffer,
-                     layer.weights);
-        } else {
-            // convolution
-            convolve(layer.filter_size,
-                     layer.channels,
-                     layer.outputs,
-                     inBuffer,
-                     tmpBuffer,
-                     mergeBuffer,
-                     layer.weights);
-        }
-    }
-
-    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
-    // last layer is always a convolution, so output is in tmp
-    queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
-    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
-    queue.finish();
-    thread_data.get()->m_results_outstanding.fetch_sub(1, boost::memory_order_release);
 }
 
 static int rounddown_pow2(int val) {
@@ -598,17 +579,18 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 }
 
 void OpenCL::batchnorm(int outputs,
+                       int channel_size,
                        cl::Buffer & bufferInput,
                        cl::Buffer & bufferOutput,
                        std::vector<cl::Buffer>& weights) {
-    // fixed for 19x19
-    constexpr int width = 19;
-    constexpr int height = 19;
-    constexpr int boardsize = width * height;
-
     cl::CommandQueue queue = thread_data.get()->m_commandqueue;
 
     cl::Kernel batchnorm_kernel = thread_data.get()->m_batchnorm_kernel;
+
+    size_t channelGroup = 1;
+    if (channel_size == 361) {
+        channelGroup = 19;
+    }
 
     try {
         batchnorm_kernel.setArg(0, bufferInput);
@@ -618,14 +600,40 @@ void OpenCL::batchnorm(int outputs,
         batchnorm_kernel.setArg(4, weights[2]);
 
         queue.enqueueNDRangeKernel(batchnorm_kernel, cl::NullRange,
-                                   cl::NDRange(outputs, boardsize),
-                                   cl::NDRange(std::min(8, outputs), 19));
+                                   cl::NDRange(outputs, channel_size),
+                                   cl::NDRange(std::min(8, outputs), channelGroup));
     } catch (cl::Error &e) {
-        std::cerr << "Error in convolve: " << e.what() << ": "
+        std::cerr << "Error in batchnorm: " << e.what() << ": "
             << e.err() << std::endl;
         return;
     }
+}
 
+void OpenCL::innerproduct(int inputs,
+                          int outputs,
+                          cl::Buffer & bufferInput,
+                          cl::Buffer & bufferOutput,
+                          std::vector<cl::Buffer>& weights) {
+
+    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
+
+    cl::Kernel innerproduct_kernel = thread_data.get()->m_innerproduct_kernel;
+
+    try {
+        innerproduct_kernel.setArg(0, inputs);
+        innerproduct_kernel.setArg(1, bufferInput);
+        innerproduct_kernel.setArg(2, bufferOutput);
+        innerproduct_kernel.setArg(3, weights[0]);
+        innerproduct_kernel.setArg(4, weights[1]);
+
+        queue.enqueueNDRangeKernel(innerproduct_kernel, cl::NullRange,
+                                   cl::NDRange(outputs),
+                                   cl::NDRange(1));
+    } catch (cl::Error &e) {
+        std::cerr << "Error in innerproduct: " << e.what() << ": "
+            << e.err() << std::endl;
+        return;
+    }
 }
 
 template<class T>

@@ -137,24 +137,29 @@ void Network::initialize(void) {
     OpenCL * cl = OpenCL::get_OpenCL();
     std::cerr << "Transfering weights to GPU..." << std::flush;
     cl->push_convolve(5, conv1_w, conv1_b);
-    cl->push_batchnorm(bn1_w1, bn1_w2, bn1_w3);
+    cl->push_batchnorm(361, bn1_w1, bn1_w2, bn1_w3);
     cl->push_convolve(3, conv2_w, conv2_b);
-    cl->push_batchnorm(bn2_w1, bn2_w2, bn2_w3);
+    cl->push_batchnorm(361, bn2_w1, bn2_w2, bn2_w3);
     cl->push_convolve(3, conv3_w, conv3_b);
-    cl->push_batchnorm(bn3_w1, bn3_w2, bn3_w3);
+    cl->push_batchnorm(361, bn3_w1, bn3_w2, bn3_w3);
     cl->push_convolve(3, conv4_w, conv4_b);
-    cl->push_batchnorm(bn4_w1, bn4_w2, bn4_w3);
+    cl->push_batchnorm(361, bn4_w1, bn4_w2, bn4_w3);
     cl->push_convolve(3, conv5_w, conv5_b);
-    cl->push_batchnorm(bn5_w1, bn5_w2, bn5_w3);
+    cl->push_batchnorm(361, bn5_w1, bn5_w2, bn5_w3);
     cl->push_convolve(3, conv6_w, conv6_b);
-    cl->push_batchnorm(bn6_w1, bn6_w2, bn6_w3);
+    cl->push_batchnorm(361, bn6_w1, bn6_w2, bn6_w3);
     cl->push_convolve(3, conv7_w, conv7_b);
-    cl->push_batchnorm(bn7_w1, bn7_w2, bn7_w3);
+    cl->push_batchnorm(361, bn7_w1, bn7_w2, bn7_w3);
     cl->push_convolve(3, conv8_w, conv8_b);
-    cl->push_batchnorm(bn8_w1, bn8_w2, bn8_w3);
+    cl->push_batchnorm(361, bn8_w1, bn8_w2, bn8_w3);
     cl->push_convolve(3, conv9_w, conv9_b);
-    cl->push_batchnorm(bn9_w1, bn9_w2, bn9_w3);
+    cl->push_batchnorm(361, bn9_w1, bn9_w2, bn9_w3);
     cl->push_convolve(3, conv10_w, conv10_b);
+    cl->push_split(1);
+    cl->push_batchnorm(361, bn10_w1, bn10_w2, bn10_w3);
+    cl->push_innerproduct(ip11_w, ip11_b);
+    cl->push_batchnorm(1, bn11_w1, bn11_w2, bn11_w3);
+    cl->push_innerproduct(ip12_w, ip12_b);
     std::cerr << "done" << std::endl;
 #endif
 #ifdef USE_BLAS
@@ -376,7 +381,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     softmax(cb_data->m_output_data, softmax_data);
     std::vector<float>& outputs = softmax_data;
 
-    Netresult result;
+    Network::Netresult result;
 
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         int rot_idx = Network::rev_rotate_nn_idx(idx, cb_data->m_rotation);
@@ -562,10 +567,13 @@ Network::Netresult Network::get_scored_moves_internal(
     result.eval = winrate_data[0];
 #endif
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->forward(input_data, output_data);
+    OpenCL::get_OpenCL()->forward_async(input_data, output_data,
+                                        nullptr, nullptr);
     softmax(output_data, softmax_data);
-
     std::vector<float>& outputs = softmax_data;
+    // output data + 1
+    result.eval = output_data[softmax_data.size()];
+    result.eval = 1.0f / (1.0f + exp(-result.eval));
 #endif
 #ifdef USE_CAFFE
     net->Forward();

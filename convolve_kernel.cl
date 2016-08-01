@@ -322,20 +322,42 @@ __kernel void batchnorm(
     const int gy = get_global_id(1);
 
     const int output = gx;
-    const int outputs = get_global_size(0);
+    const int outputs      = get_global_size(0);
+    const int channel_size = get_global_size(1);
 
-    const unsigned int width = 19;
-    const unsigned int height = 19;
-    const unsigned int board_size = width * height;
-
-    const unsigned int c = output;
+    const unsigned int o = output;
     const unsigned int b = gy;
 
     const float epsilon = 1e-5;
 
-    const float mean = means[c] / scale[0];
-    const float variance = epsilon + variances[c] / scale[0];
+    const float mean = means[o] / scale[0];
+    const float variance = epsilon + variances[o] / scale[0];
     const float scale_stddiv = 1.0f / sqrt(variance);
 
-    out[c * board_size + b] = scale_stddiv * (in[c * board_size + b] - mean);
+    out[o * channel_size + b] = scale_stddiv
+                                * (in[o * channel_size + b] - mean);
+}
+
+__kernel void innerproduct(
+    __private const int inputs,
+    __global const float * in,
+    __global float * out,
+    __global const float * weights,
+    __constant const float * biases) {
+
+    const int gx = get_global_id(0);
+    const int output = gx;
+
+    const int outputs = get_global_size(0);
+
+    const unsigned int o = output;
+
+    float val = biases[o];
+    for (unsigned int i = 0; i < inputs; i++) {
+        val += in[i] * weights[o * inputs + i];
+    }
+    if (outputs > 1) {
+        val = max(val, 0.0f);
+    }
+    out[o] = val;
 }
