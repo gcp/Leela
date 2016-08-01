@@ -302,7 +302,9 @@ __kernel void merge(
         sum += in[(c * boardsize + b) * outputs + o];
     }
     // ReLU
-    sum = max(sum, 0.0f);
+    if (outputs > 4 || output > 0) {
+        sum = max(sum, 0.0f);
+    }
     // ELU
     // sum = sum > 0 ? sum : 1.0f * (exp(sum) - 1.0f);
     out[o * boardsize + b] = sum;

@@ -267,26 +267,48 @@ void convolve(std::vector<float>& input,
 
     auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
 
+
     for (unsigned int o = 0; o < outputs; o++) {
-        for (unsigned int b = 0; b < spatial_out; b++) {
-            output[(o * spatial_out) + b] =
-                lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
+        if (outputs > 4 || o > 0) {
+            for (unsigned int b = 0; b < spatial_out; b++) {
+                output[(o * spatial_out) + b] =
+                    lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
+            }
+        }
+    }
+}
+
+template<unsigned int inputs,
+         unsigned int outputs,
+         unsigned long W, unsigned long B>
+void innerproduct(std::vector<float>& input,
+                  std::tr1::array<float, W>& weights,
+                  std::tr1::array<float, B>& biases,
+                  std::vector<float>& output) {
+    assert(B == outputs);
+
+    for (unsigned int o = 0; o < outputs; o++) {
+        float acc = biases[o];
+        for (unsigned int i = 0; i < inputs; i++) {
+            acc += input[i] * weights[o * inputs + i];
+        }
+        if (outputs > 1) {
+            output[o] = std::max(acc, 0.0f);
+        } else {
+            output[0] = acc;
         }
     }
 }
 #endif
 
-template<unsigned int channels>
+template<unsigned int channels,
+         unsigned int spatial_size>
 void batchnorm(std::vector<float>& input,
                std::tr1::array<float, channels>& means,
                std::tr1::array<float, channels>& variances,
                std::tr1::array<float, 1> scale,
                std::vector<float>& output)
 {
-    // fixed for 19x19
-    constexpr unsigned int width = 19;
-    constexpr unsigned int height = 19;
-    constexpr unsigned int board_size = width * height;
     constexpr float epsilon = 1e-5;
 
     for (unsigned int c = 0; c < channels; ++c) {
@@ -295,9 +317,9 @@ void batchnorm(std::vector<float>& input,
         variance += epsilon;
         float scale_stddiv = 1.0f / std::sqrt(variance);
 
-        float * out = &output[c * board_size];
-        float const * in  = &input[c * board_size];
-        for (unsigned int b = 0; b < board_size; b++) {
+        float * out = &output[c * spatial_size];
+        float const * in  = &input[c * spatial_size];
+        for (unsigned int b = 0; b < spatial_size; b++) {
             out[b] = scale_stddiv * (in[b] - mean);
         }
     }
@@ -483,6 +505,7 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
     constexpr int max_channels = MAX_CHANNELS;
     std::vector<float> input_data(max_channels * width * height);
     std::vector<float> output_data(max_channels * width * height);
+    std::vector<float> winrate_data(3 * width * height);
     std::vector<float> softmax_data(width * height);
 #endif
     for (int c = 0; c < channels; ++c) {
@@ -496,27 +519,41 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
     }
 #if defined(USE_BLAS)
     convolve<5,  32, 128>(input_data, conv1_w, conv1_b, output_data);
-    batchnorm<128>(output_data, bn1_w1, bn1_w2, bn1_w3, input_data);
+    batchnorm<128, 361>(output_data, bn1_w1, bn1_w2, bn1_w3, input_data);
     convolve<3, 128, 128>(input_data, conv2_w, conv2_b, output_data);
-    batchnorm<128>(output_data, bn2_w1, bn2_w2, bn2_w3, input_data);
+    batchnorm<128, 361>(output_data, bn2_w1, bn2_w2, bn2_w3, input_data);
     convolve<3, 128, 128>(input_data, conv3_w, conv3_b, output_data);
-    batchnorm<128>(output_data, bn3_w1, bn3_w2, bn3_w3, input_data);
+    batchnorm<128, 361>(output_data, bn3_w1, bn3_w2, bn3_w3, input_data);
     convolve<3, 128, 128>(input_data, conv4_w, conv4_b, output_data);
-    batchnorm<128>(output_data, bn4_w1, bn4_w2, bn4_w3, input_data);
+    batchnorm<128, 361>(output_data, bn4_w1, bn4_w2, bn4_w3, input_data);
     convolve<3, 128, 128>(input_data, conv5_w, conv5_b, output_data);
-    batchnorm<128>(output_data, bn5_w1, bn5_w2, bn5_w3, input_data);
+    batchnorm<128, 361>(output_data, bn5_w1, bn5_w2, bn5_w3, input_data);
     convolve<3, 128, 128>(input_data, conv6_w, conv6_b, output_data);
-    batchnorm<128>(output_data, bn6_w1, bn6_w2, bn6_w3, input_data);
+    batchnorm<128, 361>(output_data, bn6_w1, bn6_w2, bn6_w3, input_data);
     convolve<3, 128, 128>(input_data, conv7_w, conv7_b, output_data);
-    batchnorm<128>(output_data, bn7_w1, bn7_w2, bn7_w3, input_data);
+    batchnorm<128, 361>(output_data, bn7_w1, bn7_w2, bn7_w3, input_data);
     convolve<3, 128, 128>(input_data, conv8_w, conv8_b, output_data);
-    batchnorm<128>(output_data, bn8_w1, bn8_w2, bn8_w3, input_data);
+    batchnorm<128, 361>(output_data, bn8_w1, bn8_w2, bn8_w3, input_data);
     convolve<3, 128, 128>(input_data, conv9_w, conv9_b, output_data);
-    batchnorm<128>(output_data, bn9_w1, bn9_w2, bn9_w3, input_data);
+    batchnorm<128, 361>(output_data, bn9_w1, bn9_w2, bn9_w3, input_data);
     convolve<3, 128,   4>(input_data, conv10_w, conv10_b, output_data);
     softmax(output_data, softmax_data);
 
     std::vector<float>& outputs = softmax_data;
+
+    // Now get the score
+    // Skip move output
+    std::copy(output_data.cbegin() + (width * height),
+              output_data.cbegin() + (4 * width * height),
+              winrate_data.begin());
+    // BN, ReLU was done for the part of the conv data we use
+    batchnorm<3, 361>(winrate_data, bn10_w1, bn10_w2, bn10_w3, input_data);
+    innerproduct<3 * 361, 256>(input_data, ip11_w, ip11_b, winrate_data);
+    batchnorm<256, 1>(winrate_data, bn11_w1, bn11_w2, bn11_w3, input_data);
+    innerproduct<256,       1>(input_data, ip12_w, ip12_b, winrate_data);
+    // Sigmoid
+    winrate_data[0] = 1.0f / (1.0f + exp(-winrate_data[0]));
+    //myprintf("Winrate: %5.4f\n", winrate_data[0]);
 #endif
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->forward(input_data, output_data);
