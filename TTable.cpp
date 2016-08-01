@@ -28,9 +28,11 @@ void TTable::update(uint64 hash, const UCTNode * node) {
     /*
         update TT
     */            
-    m_buckets[index].m_hash      = hash;    
-    m_buckets[index].m_visits    = node->get_visits();        
-    m_buckets[index].m_blackwins = node->get_blackwins();    
+    m_buckets[index].m_hash       = hash;
+    m_buckets[index].m_visits     = node->get_visits();
+    m_buckets[index].m_blackwins  = node->get_blackwins();
+    m_buckets[index].m_eval_sum   = node->get_eval_sum();
+    m_buckets[index].m_eval_count = node->get_eval_count();
 }
 
 void TTable::sync(uint64 hash, UCTNode * node) {    
@@ -55,5 +57,7 @@ void TTable::sync(uint64 hash, UCTNode * node) {
         */            
         node->set_visits(m_buckets[index].m_visits);
         node->set_blackwins(m_buckets[index].m_blackwins);
+        node->set_eval_sum(m_buckets[index].m_eval_sum);
+        node->set_eval_count(m_buckets[index].m_eval_count);
     }     
 }

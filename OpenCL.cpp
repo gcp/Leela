@@ -470,6 +470,9 @@ void OpenCL::forward_async(std::vector<float>& input,
     queue.finish();
     if (cb != nullptr) {
         cb(CL_COMPLETE, 0, data);
+    } else {
+        thread_data.get()->m_results_outstanding.fetch_sub(1, boost::memory_order_release);
+        callback_finished();
     }
 }
 
@@ -628,7 +631,7 @@ void OpenCL::innerproduct(int inputs,
 
         queue.enqueueNDRangeKernel(innerproduct_kernel, cl::NullRange,
                                    cl::NDRange(outputs),
-                                   cl::NDRange(1));
+                                   cl::NDRange(std::min(16, outputs)));
     } catch (cl::Error &e) {
         std::cerr << "Error in innerproduct: " << e.what() << ": "
             << e.err() << std::endl;

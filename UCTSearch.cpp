@@ -84,6 +84,15 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
             noderesult.run(currstate);
         }
 
+        // Check whether we have evals to back up
+        if (!node->has_eval_propagated() && node->get_eval_count()) {
+            SMP::Lock lock(node->get_mutex());
+            if (!node->has_eval_propagated()) {
+                assert(node->get_eval_count() == 1);
+                noderesult.set_eval(node->get_eval());
+                node->set_eval_propagated();
+            }
+        }
         node->updateRAVE(noderesult, color);
     } else {
         noderesult.run(currstate);
@@ -120,14 +129,25 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 
         std::string tmp = state.move_to_text(node->get_move());
 
-        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: %s ",
-                  tmp.c_str(),
-                  node->get_visits(),
-                  node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
-                  node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
-                  node->get_ravevisits(),
-                  node->get_score() * 100.0f,
-                  tmp.c_str());
+        if (!m_use_nets) {
+            myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: %s ",
+                      tmp.c_str(),
+                      node->get_visits(),
+                      node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
+                      node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
+                      node->get_ravevisits(),
+                      node->get_score() * 100.0f,
+                      tmp.c_str());
+        } else {
+            myprintf("%4s -> %7d (U: %5.2f%%) (V: %5.2f%%: %7d) (N: %4.1f%%) PV: %s ",
+                tmp.c_str(),
+                node->get_visits(),
+                node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
+                node->get_visits() > 0 ? node->get_eval()*100.0f : 0.0f,
+                node->get_eval_count(),
+                node->get_score() * 100.0f,
+                tmp.c_str());
+        }
 
         GameState tmpstate = state;
 

@@ -23,11 +23,16 @@ public:
     void run(FastState & state, bool resigning = true);
     float get_score();
     float get_territory();
+    void set_eval(float eval);
+    float get_eval();
+    bool has_eval();
     bool passthrough(int color, int vertex);
 private:
     bool m_run;
     float m_score;
     float m_territory;
+    bool m_eval_valid;
+    float m_eval;
     color_bitboard_t m_sq;
 };
 

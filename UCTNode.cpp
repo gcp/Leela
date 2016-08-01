@@ -26,8 +26,9 @@ using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score, int expand_treshold)
     : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0), m_visits(0),
-      m_score(score), m_valid_eval(false), m_valid(true),
-      m_expand_cnt(expand_treshold), m_is_expanding(false) {
+      m_score(score), m_eval_propagated(false), m_eval_sum(0.0f),
+      m_eval_count(0), m_valid(true), m_expand_cnt(expand_treshold),
+      m_is_expanding(false) {
     m_ravevisits = 20;
     m_ravestmwins = 10.0;
 }
@@ -89,7 +90,6 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
     lock.unlock();
 
     FastBoard & board = state.board;
-    std::vector<Network::scored_node> nodelist;
 
     if (use_nets) {
 #ifdef USE_OPENCL
@@ -111,6 +111,8 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
         }
     } else {
         if (state.get_passes() < 2) {
+            std::vector<Network::scored_node> nodelist;
+
             std::vector<int> territory = state.board.influence();
             std::vector<int> moyo = state.board.moyo();
 
@@ -159,8 +161,9 @@ void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
 
     if (use_nets) {
         SMP::Lock lock(get_mutex());
-        m_eval = netresult.eval;
-        m_valid_eval = true;
+        assert(m_eval_count == 0);
+        m_eval_sum = netresult.eval;
+        m_eval_count = 1;
     }
 }
 
@@ -266,6 +269,12 @@ void UCTNode::update(Playout & gameresult, int color) {
             m_ravestmwins += 1.0 + 0.05 * score;
         }
     }
+
+    // evals
+    if (gameresult.has_eval()) {
+        m_eval_count += 1;
+        m_eval_sum   += gameresult.get_eval();
+    }
 }
 
 bool UCTNode::has_children() const {    
@@ -318,6 +327,37 @@ int UCTNode::get_ravevisits() const {
 
 int UCTNode::do_extend() const {
     return m_expand_cnt;
+}
+
+float UCTNode::get_eval() const {
+    return m_eval_sum / (double)m_eval_count;
+}
+
+double UCTNode::get_eval_sum() const {
+    return m_eval_sum;
+}
+
+int UCTNode::get_eval_count() const {
+    return m_eval_count;
+}
+
+bool UCTNode::has_eval_propagated() const {
+    return m_eval_propagated;
+}
+
+void UCTNode::set_eval_propagated() {
+    m_eval_propagated = true;
+}
+
+void UCTNode::set_eval_sum(double eval_sum) {
+    m_eval_sum = eval_sum;
+}
+
+void UCTNode::set_eval_count(int count) {
+    m_eval_count = count;
+    if (m_eval_count > 0) {
+        set_eval_propagated();
+    }
 }
 
 UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
@@ -383,10 +423,16 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             if (!child->first_visit()) {
                 // "UCT" part
                 float winrate = child->get_winrate(color);
+                float winmix  = winrate;
+                if (child->get_eval_count()) {
+                    float eval = child->get_eval();
+                    winmix += eval;
+                    winmix /= 2.0f;
+                }
                 float psa = child->get_score();
                 float denom = 1.0f + child->get_visits();
 
-                value = winrate + c_puct * psa * (numerator / denom) + c_perbias * psa;
+                value = winmix + c_puct * psa * (numerator / denom) + c_perbias * psa;
             } else {
                 float winrate = 1.0f;
                 float psa = child->get_score();

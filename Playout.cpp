@@ -13,8 +13,8 @@
 
 using namespace Utils;
 
-Playout::Playout() {
-    m_run = false;
+Playout::Playout() :
+    m_run(false), m_eval_valid(false) {
     m_sq[0].reset();
     m_sq[1].reset();
 }
@@ -29,6 +29,20 @@ float Playout::get_score() {
 float Playout::get_territory() {
     assert(m_run);
     return m_territory;
+}
+
+void Playout::set_eval(float eval) {
+    assert(m_eval_valid = false);
+    m_eval = eval;
+    m_eval_valid = true;
+}
+
+float Playout::get_eval() {
+    return m_eval;
+}
+
+bool Playout::has_eval() {
+    return m_eval_valid;
 }
 
 void Playout::run(FastState & state, bool resigning) {

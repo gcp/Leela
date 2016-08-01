@@ -382,6 +382,8 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     std::vector<float>& outputs = softmax_data;
 
     Network::Netresult result;
+    result.eval = cb_data->m_output_data[softmax_data.size()];
+    result.eval = 1.0f / (1.0f + exp(-result.eval));
 
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         int rot_idx = Network::rev_rotate_nn_idx(idx, cb_data->m_rotation);

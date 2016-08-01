@@ -351,11 +351,21 @@ __kernel void innerproduct(
     const int outputs = get_global_size(0);
 
     const unsigned int o = output;
+    unsigned int i;
 
-    float val = biases[o];
-    for (unsigned int i = 0; i < inputs; i++) {
+    float16 val16 = (float16)(0.0f);
+    for (i = 0; i + 16 < inputs; i += 16) {
+        val16 += vload16(0, &in[i]) * vload16(0, &weights[o * inputs + i]);
+    }
+    float val = val16.s0 + val16.s1 + val16.s2 + val16.s3
+              + val16.s4 + val16.s5 + val16.s6 + val16.s7
+              + val16.s8 + val16.s9 + val16.sa + val16.sb
+              + val16.sc + val16.sd + val16.se + val16.sf;
+
+    for (; i < inputs; i++) {
         val += in[i] * weights[o * inputs + i];
     }
+    val += biases[o];
     if (outputs > 1) {
         val = max(val, 0.0f);
     }

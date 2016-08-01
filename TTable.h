@@ -17,6 +17,8 @@ public:
     // XXX: need RAVE data here?
     double m_blackwins;
     int m_visits;
+    double m_eval_sum;
+    int m_eval_count;
 };
 
 class TTable {
