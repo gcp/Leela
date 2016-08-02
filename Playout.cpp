@@ -32,7 +32,6 @@ float Playout::get_territory() {
 }
 
 void Playout::set_eval(int tomove, float eval) {
-    assert(m_eval_valid = false);
     if (tomove == FastBoard::WHITE) {
         eval = 1.0f - eval;
     }

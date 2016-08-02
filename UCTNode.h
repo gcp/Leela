@@ -54,7 +54,7 @@ public:
     void set_expand_cnt(int runs);
     void set_eval_sum(double eval_sum);
     void set_eval_count(int count);
-    void update(Playout & gameresult, int color);
+    void update(Playout & gameresult, int color, bool update_eval);
     void updateRAVE(Playout & playout, int color);
     UCTNode* uct_select_child(int color, bool use_nets);
     UCTNode* get_first_child();

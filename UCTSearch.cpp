@@ -52,6 +52,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     const int color = currstate.get_to_move();
     const uint64 hash = currstate.board.get_hash();
     Playout noderesult;
+    bool update_eval = true;
 
     TTable::get_TT()->sync(hash, node);
 
@@ -84,13 +85,15 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
             noderesult.run(currstate);
         }
 
-        // Check whether we have evals to back up
+        // Check whether we have new evals to back up
         if (!node->has_eval_propagated() && node->get_eval_count()) {
             SMP::Lock lock(node->get_mutex());
             if (!node->has_eval_propagated()) {
                 assert(node->get_eval_count() == 1);
                 noderesult.set_eval(color, node->get_eval());
                 node->set_eval_propagated();
+                // Don't count our eval twice
+                update_eval = false;
             }
         }
         node->updateRAVE(noderesult, color);
@@ -99,7 +102,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     }
 
     // XXX: updateRAVE color reversal
-    node->update(noderesult, !color);
+    node->update(noderesult, !color, update_eval);
     TTable::get_TT()->update(hash, node);
 
     return noderesult;
@@ -538,7 +541,13 @@ void UCTSearch::dump_analysis(void) {
     float winrate = m_root.get_winrate(color) * 100.0f;
     winrate = std::max(0.0f, winrate);
     winrate = std::min(100.0f, winrate);
-        
+
+    float wineval = m_root.get_eval() * 100.0f;
+    wineval = std::max(0.0f, wineval);
+    wineval = std::min(100.0f, wineval);
+
+    winrate = (winrate + wineval) / 2.0f;
+
     myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n", m_root.get_visits(), 
              winrate, pvstring.c_str());   
 

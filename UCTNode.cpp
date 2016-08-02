@@ -161,9 +161,8 @@ void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
 
     if (use_nets) {
         SMP::Lock lock(get_mutex());
-        assert(m_eval_count == 0);
-        m_eval_sum = netresult.eval;
-        m_eval_count = 1;
+        m_eval_sum   += netresult.eval;
+        m_eval_count += 1;
     }
 }
 
@@ -244,7 +243,7 @@ void UCTNode::set_expand_cnt(int runs) {
     m_expand_cnt = runs;
 }
 
-void UCTNode::update(Playout & gameresult, int color) {
+void UCTNode::update(Playout & gameresult, int color, bool update_eval) {
     SMP::Lock lock(get_mutex());
     m_visits++;
     m_ravevisits++;
@@ -272,8 +271,10 @@ void UCTNode::update(Playout & gameresult, int color) {
 
     // evals
     if (gameresult.has_eval()) {
-        m_eval_count += 1;
-        m_eval_sum   += gameresult.get_eval(!color);
+        if (update_eval) {
+            m_eval_count += 1;
+            m_eval_sum   += gameresult.get_eval(color);
+        }
     }
 }
 
