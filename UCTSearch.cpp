@@ -89,7 +89,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
             SMP::Lock lock(node->get_mutex());
             if (!node->has_eval_propagated()) {
                 assert(node->get_eval_count() == 1);
-                noderesult.set_eval(node->get_eval());
+                noderesult.set_eval(color, node->get_eval());
                 node->set_eval_propagated();
             }
         }
@@ -143,7 +143,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
                 tmp.c_str(),
                 node->get_visits(),
                 node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
-                node->get_visits() > 0 ? node->get_eval()*100.0f : 0.0f,
+                node->get_eval_count() > 0 ? node->get_eval()*100.0f : 0.0f,
                 node->get_eval_count(),
                 node->get_score() * 100.0f,
                 tmp.c_str());

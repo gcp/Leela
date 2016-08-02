@@ -273,7 +273,7 @@ void UCTNode::update(Playout & gameresult, int color) {
     // evals
     if (gameresult.has_eval()) {
         m_eval_count += 1;
-        m_eval_sum   += gameresult.get_eval();
+        m_eval_sum   += gameresult.get_eval(!color);
     }
 }
 
