@@ -380,7 +380,8 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         }
     }
     
-    float bestscore = m_root.get_first_child()->get_winrate(color);   
+    float bestscore = m_root.get_first_child()->get_winrate(color);
+    float besteval = m_root.get_first_child()->get_eval(color);
     int visits = m_root.get_first_child()->get_visits();
     
     m_score = bestscore;        
@@ -473,6 +474,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
             // bad score and visited enough
             if (bestscore < 0.10f
                 && visits > 90
+                && besteval < 0.25f
                 && m_rootstate.m_movenum > movetresh) {
                 myprintf("Score looks bad. Resigning.\n");
                 bestmove = FastBoard::RESIGN;
