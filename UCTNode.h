@@ -41,19 +41,18 @@ public:
     int get_visits() const;
     int get_ravevisits() const;
     float get_score() const;
-    float get_eval() const;
-    double get_eval_sum() const;
-    int get_eval_count() const;
+    float get_eval(int tomove) const;
+    double get_blackevals() const;
+    int get_evalcount() const;
     int do_extend() const;
     bool has_eval_propagated() const;
     void set_eval_propagated();
-    void set_best();
     void set_move(int move);
     void set_visits(int visits);
     void set_blackwins(double wins);
     void set_expand_cnt(int runs);
-    void set_eval_sum(double eval_sum);
-    void set_eval_count(int count);
+    void set_blackevals(double eval_sum);
+    void set_evalcount(int count);
     void update(Playout & gameresult, int color, bool update_eval);
     void updateRAVE(Playout & playout, int color);
     UCTNode* uct_select_child(int color, bool use_nets);
@@ -86,8 +85,8 @@ private:
     float m_score;
     // board eval
     bool m_eval_propagated;
-    double m_eval_sum;
-    int m_eval_count;
+    double m_blackevals;
+    int m_evalcount;
     // alive (superko)
     bool m_valid;
     // extend node

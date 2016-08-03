@@ -86,11 +86,11 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
         }
 
         // Check whether we have new evals to back up
-        if (!node->has_eval_propagated() && node->get_eval_count()) {
+        if (!node->has_eval_propagated() && node->get_evalcount()) {
             SMP::Lock lock(node->get_mutex());
             if (!node->has_eval_propagated()) {
                 assert(node->get_eval_count() == 1);
-                noderesult.set_eval(color, node->get_eval());
+                noderesult.set_eval(node->get_blackevals());
                 node->set_eval_propagated();
                 // Don't count our eval twice
                 update_eval = false;
@@ -101,8 +101,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
         noderesult.run(currstate);
     }
 
-    // XXX: updateRAVE color reversal
-    node->update(noderesult, !color, update_eval);
+    node->update(noderesult, color, update_eval);
     TTable::get_TT()->update(hash, node);
 
     return noderesult;
@@ -146,8 +145,8 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
                 tmp.c_str(),
                 node->get_visits(),
                 node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
-                node->get_eval_count() > 0 ? node->get_eval()*100.0f : 0.0f,
-                node->get_eval_count(),
+                node->get_evalcount() > 0 ? node->get_eval(color)*100.0f : 0.0f,
+                node->get_evalcount(),
                 node->get_score() * 100.0f,
                 tmp.c_str());
         }
@@ -542,7 +541,7 @@ void UCTSearch::dump_analysis(void) {
     winrate = std::max(0.0f, winrate);
     winrate = std::min(100.0f, winrate);
 
-    float wineval = m_root.get_eval() * 100.0f;
+    float wineval = m_root.get_eval(color) * 100.0f;
     wineval = std::max(0.0f, wineval);
     wineval = std::min(100.0f, wineval);
 

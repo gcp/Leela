@@ -26,8 +26,8 @@ using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score, int expand_treshold)
     : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0), m_visits(0),
-      m_score(score), m_eval_propagated(false), m_eval_sum(0.0f),
-      m_eval_count(0), m_valid(true), m_expand_cnt(expand_treshold),
+      m_score(score), m_eval_propagated(false), m_blackevals(0.0f),
+      m_evalcount(0), m_valid(true), m_expand_cnt(expand_treshold),
       m_is_expanding(false) {
     m_ravevisits = 20;
     m_ravestmwins = 10.0;
@@ -160,9 +160,14 @@ void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
     link_nodelist(*nodecount, board, nodelist, use_nets);
 
     if (use_nets) {
+        // DCNN returns winrate as side to move
+        int tomove = board.get_to_move();
+        if (tomove == FastBoard::WHITE) {
+            netresult.eval = 1.0f - netresult.eval;
+        }
         SMP::Lock lock(get_mutex());
-        m_eval_sum   += netresult.eval;
-        m_eval_count += 1;
+        m_blackevals += netresult.eval;
+        m_evalcount  += 1;
     }
 }
 
@@ -259,11 +264,13 @@ void UCTNode::update(Playout & gameresult, int color, bool update_eval) {
         m_blackwins += 0.5;
     }
 
-    if (color == FastBoard::WHITE) {
+    // We're inspected from one level above and scores
+    // are side to move, so invert here
+    if (color == FastBoard::BLACK) {
         if (score < 0.0f) {
             m_ravestmwins += 1.0 + 0.05 * -score;
         }
-    } else if (color == FastBoard::BLACK) {
+    } else if (color == FastBoard::WHITE) {
         if (score > 0.0f) {
             m_ravestmwins += 1.0 + 0.05 * score;
         }
@@ -272,13 +279,13 @@ void UCTNode::update(Playout & gameresult, int color, bool update_eval) {
     // evals
     if (gameresult.has_eval()) {
         if (update_eval) {
-            m_eval_count += 1;
-            m_eval_sum   += gameresult.get_eval(color);
+            m_evalcount  += 1;
+            m_blackevals += gameresult.get_eval();
         }
     }
 }
 
-bool UCTNode::has_children() const {    
+bool UCTNode::has_children() const {
     return m_firstchild != NULL;
 }
 
@@ -330,16 +337,20 @@ int UCTNode::do_extend() const {
     return m_expand_cnt;
 }
 
-float UCTNode::get_eval() const {
-    return m_eval_sum / (double)m_eval_count;
+float UCTNode::get_eval(int tomove) const {
+    float score = m_blackevals / (double)m_evalcount;
+    if (tomove == FastBoard::WHITE) {
+        score = 1.0f - score;
+    }
+    return score;
 }
 
-double UCTNode::get_eval_sum() const {
-    return m_eval_sum;
+double UCTNode::get_blackevals() const {
+    return m_blackevals;
 }
 
-int UCTNode::get_eval_count() const {
-    return m_eval_count;
+int UCTNode::get_evalcount() const {
+    return m_evalcount;
 }
 
 bool UCTNode::has_eval_propagated() const {
@@ -350,13 +361,13 @@ void UCTNode::set_eval_propagated() {
     m_eval_propagated = true;
 }
 
-void UCTNode::set_eval_sum(double eval_sum) {
-    m_eval_sum = eval_sum;
+void UCTNode::set_blackevals(double eval_sum) {
+    m_blackevals = eval_sum;
 }
 
-void UCTNode::set_eval_count(int count) {
-    m_eval_count = count;
-    if (m_eval_count > 0) {
+void UCTNode::set_evalcount(int count) {
+    m_evalcount = count;
+    if (m_evalcount > 0) {
         set_eval_propagated();
     }
 }
@@ -425,10 +436,10 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 // "UCT" part
                 float winrate = child->get_winrate(color);
                 float winmix  = winrate;
-                if (child->get_eval_count()) {
-                    float eval = child->get_eval();
+                if (child->get_evalcount()) {
+                    float eval = child->get_eval(color);
                     winmix += eval;
-                    winmix /= 2.0f;
+                    winmix *= 0.5f;
                 }
                 float psa = child->get_score();
                 float denom = 1.0f + child->get_visits();

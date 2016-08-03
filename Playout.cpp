@@ -31,21 +31,14 @@ float Playout::get_territory() {
     return m_territory;
 }
 
-void Playout::set_eval(int tomove, float eval) {
-    if (tomove == FastBoard::WHITE) {
-        eval = 1.0f - eval;
-    }
-    m_black_eval = eval;
+void Playout::set_eval( float eval) {
+    m_blackeval = eval;
     m_eval_valid = true;
 }
 
-float Playout::get_eval(int tomove) {
+float Playout::get_eval() {
     assert(m_eval_valid == true);
-    if (tomove == FastBoard::BLACK) {
-        return m_black_eval;
-    } else {
-        return 1.0f - m_black_eval;
-    }
+    return m_blackeval;
 }
 
 bool Playout::has_eval() {
