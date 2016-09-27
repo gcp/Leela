@@ -96,7 +96,66 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     return noderesult;
 }
 
+void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
+#ifndef _CONSOLE
+    const int color = state.get_to_move();
+
+    if (!parent.has_children()) {
+        return;
+    }
+
+    // sort children, put best move on top
+    m_root.sort_children(color);
+
+    UCTNode * bestnode = parent.get_first_child();
+
+    if (bestnode->first_visit()) {
+        return;
+    }
+
+    using TRowVector = std::vector<std::pair<std::string, std::string>>;
+    using TDataVector = std::vector<TRowVector>;
+
+    TDataVector* GUIdata = new TDataVector();
+
+    int movecount = 0;
+    UCTNode * node = bestnode;
+
+    while (node != NULL) {
+        if (node->get_score() > 0.005f || node->get_visits() > 0) {
+            std::string tmp = state.move_to_text(node->get_move());
+            std::string pvstring(tmp);
+
+            GameState tmpstate = state;
+
+            tmpstate.play_move(node->get_move());
+            pvstring += " " + get_pv(tmpstate, *node);
+
+            std::vector<std::pair<std::string, std::string>> row;
+            row.push_back(std::make_pair(std::string("Move"), tmp));
+            row.push_back(std::make_pair(std::string("Simulations"),
+                std::to_string(node->get_visits())));
+            row.push_back(std::make_pair(std::string("Win%"),
+                node->get_visits() > 0 ?
+                    std::to_string(node->get_winrate(color)*100.0f) :
+                    std::string("-")));
+            row.push_back(std::make_pair(
+                m_use_nets ? std::string("Net Prob%") : std::string("Eval"),
+                std::to_string(node->get_score() * 100.0f)));
+            row.push_back(std::make_pair(std::string("PV"), pvstring));
+
+            GUIdata->push_back(row);
+        }
+
+        node = node->get_sibling();
+    }
+
+    AnalyzeGUI((void*)GUIdata);
+#endif
+}
+
 void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
+#ifdef _CONSOLE
     const int color = state.get_to_move();
 
     if (!parent.has_children()) {
@@ -119,22 +178,22 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
         if (++movecount > 6) break;
 
         std::string tmp = state.move_to_text(node->get_move());
+        std::string pvstring(tmp);
 
-        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: %s ",
+        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: ",
                   tmp.c_str(),
                   node->get_visits(),
                   node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                   node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
                   node->get_ravevisits(),
-                  node->get_score() * 100.0f,
-                  tmp.c_str());
+                  node->get_score() * 100.0f);
 
         GameState tmpstate = state;
 
         tmpstate.play_move(node->get_move());
-        myprintf(get_pv(tmpstate, *node).c_str());
+        pvstring += " " + get_pv(tmpstate, *node);
 
-        myprintf("\n");
+        myprintf("%s\n", pvstring.c_str());
 
         node = node->get_sibling();
     }
@@ -151,6 +210,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     myprintf(get_pv(tmpstate, parent).c_str());
 
     myprintf("\n");
+#endif
 }
 
 bool UCTSearch::easy_move() {
@@ -510,21 +570,21 @@ std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
 }
 
 void UCTSearch::dump_analysis(void) {
-    GameState tempstate = m_rootstate;   
+    GameState tempstate = m_rootstate;
     int color = tempstate.board.get_to_move();
-                
+
     std::string pvstring = get_pv(tempstate, m_root);
-    
+
     float winrate = m_root.get_winrate(color) * 100.0f;
     winrate = std::max(0.0f, winrate);
     winrate = std::min(100.0f, winrate);
-        
-    myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n", m_root.get_visits(), 
-             winrate, pvstring.c_str());   
+
+    myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n", m_root.get_visits(),
+             winrate, pvstring.c_str());
 
     if (!m_quiet) {
-        GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(), 
-                   winrate, pvstring.c_str());   
+        GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(),
+                   winrate, pvstring.c_str());
     } else {
         GUIprintf("%d nodes searched", m_root.get_visits());
     }
@@ -628,6 +688,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             if (centiseconds_elapsed - last_update > 250) {
                 last_update = centiseconds_elapsed;
                 dump_analysis();
+                dump_GUI_stats(m_rootstate, m_root);
             }
             keeprunning = (centiseconds_elapsed < time_for_move
                            && (!m_hasrunflag || (*m_runflag)));
@@ -641,6 +702,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             if (centiseconds_elapsed - last_update > 100) {
                 last_update = centiseconds_elapsed;
                 dump_analysis();
+                dump_GUI_stats(m_rootstate, m_root);
             }
             keeprunning = (!m_hasrunflag || (*m_runflag));
         }
@@ -699,6 +761,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     myprintf("\n");
 
     dump_stats(m_rootstate, m_root);
+    dump_GUI_stats(m_rootstate, m_root);
 
     Time elapsed;
     int centiseconds_elapsed = Time::timediff(start, elapsed);
@@ -747,6 +810,7 @@ void UCTSearch::ponder() {
     // display search info
     myprintf("\n");
     dump_stats(m_rootstate, m_root);
+    dump_GUI_stats(m_rootstate, m_root);
 
     myprintf("\n%d visits, %d nodes\n\n", m_root.get_visits(), (int)m_nodes);
 #endif

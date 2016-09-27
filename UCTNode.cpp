@@ -116,6 +116,7 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
             }
             nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
         }
+        link_nodelist(nodecount, board, nodelist, use_nets);
 #endif
     } else {
         std::vector<int> territory = state.board.influence();
@@ -140,11 +141,9 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
                 passscore = 0;
             }
             nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
+            link_nodelist(nodecount, board, nodelist, use_nets);
         }
     }
-#ifndef USE_OPENCL
-    link_nodelist(nodecount, board, nodelist, use_nets);
-#endif
 }
 
 #ifdef USE_OPENCL
