@@ -1012,7 +1012,6 @@ std::string FastBoard::move_to_text(int move) {
     return result.str();
 }
 
-
 std::string FastBoard::move_to_text_sgf(int move) {    
     std::ostringstream result;
     
@@ -1050,6 +1049,26 @@ std::string FastBoard::move_to_text_sgf(int move) {
     return result.str();
 }
 
+int FastBoard::text_to_move(std::string move) {
+    if (move.size() == 0 || move == "pass") {
+        return FastBoard::PASS;
+    }
+    if (move == "resign") {
+        return FastBoard::RESIGN;
+    }
+
+    char c1 = tolower(move[0]);
+    int x = c1 - 'a';
+    // There is no i in ...
+    assert(x != 8);
+    if (x > 8) x--;
+    std::string remainder = move.substr(1);
+    int y = std::stoi(remainder) - 1;
+
+    int vtx = get_vertex(x, y);
+
+    return vtx;
+}
 
 bool FastBoard::starpoint(int size, int point) {
     int stars[3];

@@ -126,7 +126,8 @@ public:
     void set_to_move(int color);
 
     std::string move_to_text(int move);
-    std::string move_to_text_sgf(int move);    
+    std::string move_to_text_sgf(int move);
+    int text_to_move(std::string move);
     std::string get_stone_list(); 
     int string_size(int vertex);
     std::vector<int> get_string_stones(int vertex);    
