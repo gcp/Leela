@@ -376,7 +376,8 @@ std::vector<Network::scored_node> Network::get_scored_moves(
     }
 
     NNPlanes planes;
-    gather_features(state, planes);
+    BoardPlane* ladder;
+    gather_features(state, planes, &ladder);
 
     if (ensemble == DIRECT) {
         result = get_scored_moves_internal(state, planes, 0);
@@ -396,9 +397,21 @@ std::vector<Network::scored_node> Network::get_scored_moves(
                       [](scored_node & sn){ sn.first /= 8.0f; });
     }
 
-    // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+    /* prune losing ladders completely */
+    for (auto & sm : result) {
+        std::pair<int, int> xy = state->board.get_xy(sm.second);
+        int bitmappos = (xy.second * 19) + xy.first;
+        if ((*ladder)[bitmappos]) {
+            //myprintf("Ladder at %s score %f\n",
+            //         state->board.move_to_text(sm.second).c_str(),
+            //         sm.first);
+            sm.first = 0.0f;
+        }
+    }
+
+    //if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
     //    show_heatmap(state, result);
-    // }
+    //}
 
     return result;
 }
@@ -538,7 +551,8 @@ void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
     }
 }
 
-void Network::gather_features(FastState * state, NNPlanes & planes) {
+void Network::gather_features(FastState * state, NNPlanes & planes,
+                              BoardPlane** ladder_out) {
     planes.resize(24);
     BoardPlane& empt_color   = planes[0];
     BoardPlane& move_color   = planes[1];
@@ -564,6 +578,10 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
     BoardPlane& movehist1    = planes[21];
     BoardPlane& movehist2    = planes[22];
     BoardPlane& has_komi     = planes[23];
+
+    if (ladder_out) {
+        *ladder_out = &ladder;
+    }
 
     bool white_has_komi = true;
     if (std::fabs(state->get_komi()) <= 0.5f

@@ -58,10 +58,11 @@ private:
 #endif
 
     std::vector<scored_node> get_scored_moves_internal(
-        FastState * state, NNPlanes & planes, int rotation);
+      FastState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
-    static void gather_features(FastState * state, NNPlanes & planes);
+    static void gather_features(FastState * state, NNPlanes & planes,
+                                BoardPlane** ladder = nullptr);
 
     static Network* s_Net;
 };
