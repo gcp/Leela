@@ -28,10 +28,10 @@ asan:
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
 		leela
 
-LIBS = -lpthread -lboost_thread -lboost_system -lboost_program_options
+LIBS = -lboost_thread -lboost_system -lboost_program_options
 #LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
-#LIBS += -lopenblas
-LIBS += -lOpenCL
+LIBS += -lopenblas
+#DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
 #LIBS += -lmkl_rt
@@ -63,7 +63,8 @@ deps = $(sources:%.cpp=%.d)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 leela: $(objects)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
+#	$(CXX) $(LDFLAGS) -o $@ $^ -static-libgcc -static-libstdc++ -Wl,-Bstatic $(LIBS) -Wl,-Bdynamic -lpthread $(DYNAMIC_LIBS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS) $(DYNAMIC_LIBS)
 
 clean:
 	-$(RM) leela $(objects) $(deps)

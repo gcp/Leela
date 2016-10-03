@@ -5,7 +5,11 @@ leela-*
 leela
 leela_test
 leela_train
+leela_test_label
+leela_train_label
 *.o
 *.d
+*.caffemodel
+*.solverstate
 tools/*.sgf
 snapshot_*
