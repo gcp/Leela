@@ -14,7 +14,7 @@ void im2col(std::vector<float>& input,
     constexpr unsigned int width = 19;
     constexpr unsigned int channel_size = height * width;
 
-    constexpr unsigned int pad = (filter_size / 2);
+    constexpr int pad = (filter_size / 2);
     constexpr unsigned int output_h = height + 2 * pad - filter_size  + 1;
     constexpr unsigned int output_w = width + 2 * pad - filter_size + 1;
 

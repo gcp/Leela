@@ -22,16 +22,16 @@
 using namespace caffe;
 #endif
 #ifdef USE_BLAS
+#include "Im2Col.h"
 #ifdef __APPLE__
 #include <Accelerate.h>
-#else
-#ifdef _WIN32
-#include <cblas.h>
-#else
+#endif
+#ifdef USE_MKL
+#include <mkl.h>
+#endif
+#ifdef USE_OPENBLAS
 #include <openblas/cblas.h>
 #endif
-#endif
-#include "Im2Col.h"
 #endif
 #ifdef USE_OPENCL
 #include "OpenCL.h"
@@ -125,8 +125,17 @@ void Network::initialize(void) {
 #endif
 #ifdef USE_BLAS
 #ifndef __APPLE__
-    openblas_set_num_threads(1);
-    std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
+#ifdef USE_OPENBLAS
+    //openblas_set_num_threads(1);
+    //std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
+#endif
+#ifdef USE_MKL
+    //mkl_set_threading_layer(MKL_THREADING_SEQUENTIAL);
+    mkl_set_num_threads(1);
+    MKLVersion Version;
+    mkl_get_version(&Version);
+    myprintf("BLAS core: MKL %s\n", Version.Processor);
+#endif
 #endif
 #endif
 #ifdef USE_CAFFE
@@ -966,7 +975,14 @@ void Network::autotune_from_file(std::string filename) {
 std::string Network::get_backend() {
 #ifdef USE_BLAS
 #ifndef __APPLE__
+#ifdef USE_OPENBLAS
     return std::string("BLAS core: " + std::string(openblas_get_corename()));
+#endif
+#ifdef USE_MKL
+    MKLVersion Version;
+    mkl_get_version(&Version);
+    return std::string("BLAS core: " + std::string(Version.Processor));
+#endif
 #else
     return std::string("BLAS core: Apple Accelerate");
 #endif
