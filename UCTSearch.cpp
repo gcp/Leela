@@ -444,32 +444,17 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     } else {
         // Opponents last move was passing
         if (m_rootstate.get_last_move() == FastBoard::PASS) {
-            if (m_root.get_pass_child() != NULL
-                && m_root.get_pass_child()->get_visits() > 100) {
-                float passscore = m_root.get_pass_child()->get_winrate(color);
-
-                // is passing a winning move?
-                if (passscore > 0.90f) {
-                    // is passing within 5% of the best move?
-                    if (bestscore - passscore < 0.05f) {
-                        myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n",
-                                    passscore * 100.0f, bestscore * 100.0f);
-                        bestmove = FastBoard::PASS;
-                    }
-                }
+            // We didn't consider passing. Should we have and
+            // end the game immediately?
+            float score = m_rootstate.final_score();
+            // do we lose by passing?
+            if ((score > 0.0f && color == FastBoard::WHITE)
+                ||
+                (score < 0.0f && color == FastBoard::BLACK)) {
+                myprintf("Passing loses, I'll play on\n");
             } else {
-                // We didn't consider passing. Should we have and
-                // end the game immediately?
-                float score = m_rootstate.final_score();
-                // do we lose by passing?
-                if ((score > 0.0f && color == FastBoard::WHITE)
-                    ||
-                    (score < 0.0f && color == FastBoard::BLACK)) {
-                    myprintf("Passing loses, I'll play on\n");
-                } else {
-                    myprintf("Passing wins, I'll pass out\n");
-                    bestmove = FastBoard::PASS;
-                }
+                myprintf("Passing wins, I'll pass out\n");
+                bestmove = FastBoard::PASS;
             }
         }
         // either by forcing or coincidence passing is
