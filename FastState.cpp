@@ -374,7 +374,7 @@ std::vector<bool> FastState::mark_dead() {
         FastState workstate(*this);
         Playout p;
         
-        p.run(workstate, false);
+        p.run(workstate, true, false);
         
         for (int i = 0; i < board.get_boardsize(); i++) {
             for (int j = 0; j < board.get_boardsize(); j++) {

@@ -74,19 +74,19 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
                     noderesult = play_simulation(currstate, next);
                 } else {
                     next->invalidate();
-                    noderesult.run(currstate);
+                    noderesult.run(currstate, false, true);
                 }
             } else {
                 currstate.play_pass();
                 noderesult = play_simulation(currstate, next);
             }
         } else {
-            noderesult.run(currstate);
+            noderesult.run(currstate, false, true);
         }
 
         node->updateRAVE(noderesult, color);
     } else {
-        noderesult.run(currstate);
+        noderesult.run(currstate, false, true);
     }
 
     // XXX: updateRAVE color reversal

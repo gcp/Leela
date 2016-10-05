@@ -32,10 +32,10 @@ float Genetic::run_simulations(FastState & state, float res) {
     
     for (int i = 0; i < 250; i++) {    
         tmp = state;        
-                
-        Playout p;        
-        p.run(tmp, false);       
-        
+
+        Playout p;
+        p.run(tmp, true, false);
+
         float score = p.get_score();
         if (start_to_move == FastBoard::WHITE) {
             score = -score;

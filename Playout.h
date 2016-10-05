@@ -20,7 +20,7 @@ public:
                           float* points = nullptr);
 
     Playout();
-    void run(FastState & state, bool resigning = true);
+    void run(FastState & state, bool postpassout, bool resigning);
     float get_score();
     float get_territory();
     bool passthrough(int color, int vertex);
