@@ -257,18 +257,15 @@ void softmax(std::vector<float>& input,
     float alpha = *std::max_element(input.begin(),
                                     input.begin() + output.size());
 
+    float denom = 0.0f;
     std::vector<float> helper(output.size());
     for (size_t i = 0; i < output.size(); i++) {
-        helper[i] = std::exp(input[i] - alpha);
+        float val  = std::exp(input[i] - alpha);
+        helper[i]  = val;
+        denom     += val;
     }
-
     for (size_t i = 0; i < output.size(); i++) {
-        float numer = helper[i];
-        float denom = 0.0f;
-        for (size_t j = 0; j < output.size(); j++) {
-            denom += helper[j];
-        }
-        output[i] = numer / denom;
+        output[i] = helper[i] / denom;
     }
 }
 

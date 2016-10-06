@@ -193,32 +193,48 @@ void convolve3(
     // weights = output * channels * filter
     // merge = channels * outputs * height * width
 
-    const unsigned int strip_size = filter_size * pad_width;
-
-    // Copy the input channels (strips) locally
+   // Copy the input channels (strips) locally
     if (out_buff_size < 21 && ly == 0) {
         // strip-row
         for (unsigned int srow = 0; srow < filter_size; srow++) {
             int in_row = row - extent + srow;
-            channel_buff[(lx * filter_size + srow) * pad_width + 0]             = 0.0f;
-            channel_buff[(lx * filter_size + srow) * pad_width + pad_width - 1] = 0.0f;
-            for (unsigned int w = 0; w < width; w++) {
-                float val = 0.0f;
-                if ((unsigned)in_row < height) {
-                    val = in[(c * height + in_row) * width + w];
+            channel_buff[(lx * pad_width + 0) * filter_size + srow]             = 0.0f;
+            if ((unsigned)in_row < height) {
+                for (unsigned int w = 0; w < width; w++) {
+                    float val = in[(c * height + in_row) * width + w];
+                    channel_buff[(lx * pad_width + w + extent) * filter_size + srow] = val;
                 }
-                channel_buff[(lx * filter_size + srow) * pad_width + w + extent] = val;
+            } else {
+                for (unsigned int w = 0; w < width; w++) {
+                    channel_buff[(lx * pad_width + w + extent) * filter_size + srow] = 0.0f;
+                }
             }
+            channel_buff[(lx * pad_width + pad_width - 1) * filter_size + srow] = 0.0f;
         }
     } else if (out_buff_size >= 21 && ly < 21) {
         // Every thread copies a column
-        for (unsigned int srow = 0; srow < filter_size; srow++) {
-            int in_row = row - extent + srow;
-            float val = 0.0f;
-            if ((unsigned)in_row < height && ly >= 1 && ly <= 19) {
-                val = in[(c * height + in_row) * width + ly - 1];
+        if (row == 0 || row == 18) {
+            // Every thread copies a column
+            for (unsigned int srow = 0; srow < filter_size; srow++) {
+                int in_row = row - extent + srow;
+                float val = 0.0f;
+                if ((unsigned)in_row < height && ly >= 1 && ly <= 19) {
+                    val = in[(c * height + in_row) * width + ly - 1];
+                }
+                channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
             }
-            channel_buff[(lx * filter_size + srow) * pad_width + ly] = val;
+        } else {
+            if (ly >= 1 && ly <= 19) {
+                for (unsigned int srow = 0; srow < filter_size; srow++) {
+                    int in_row = row - extent + srow;
+                    float val = in[(c * height + in_row) * width + ly - 1];
+                    channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
+                }
+            } else {
+                for (unsigned int srow = 0; srow < filter_size; srow++) {
+                    channel_buff[(lx * pad_width + ly) * filter_size + srow] = 0.0f;
+                }
+            }
         }
     }
 
@@ -230,25 +246,26 @@ void convolve3(
         filter_buff[f] = weights[(o * channels + c) * filter_len + f];
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
-
+    const unsigned int strip_size = filter_size * pad_width;
     unsigned int out_lane = 0;
     unsigned int out_cw   = 0;
+    barrier(CLK_LOCAL_MEM_FENCE);
+
     for (unsigned int cw = 0; cw < width; cw++) {
-        unsigned int fid = lx * strip_size + cw;
+        unsigned int fid = (lx * pad_width + cw) * filter_size;
         float out;
         // Start filter
-        out  = channel_buff[fid                  ] * filter_buff[0];
-        out += channel_buff[fid               + 1] * filter_buff[1];
-        out += channel_buff[fid               + 2] * filter_buff[2];
+        out  = channel_buff[fid    ] * filter_buff[0];
+        out += channel_buff[fid + 1] * filter_buff[3];
+        out += channel_buff[fid + 2] * filter_buff[6];
 
-        out += channel_buff[fid + pad_width      ] * filter_buff[3];
-        out += channel_buff[fid + pad_width   + 1] * filter_buff[4];
-        out += channel_buff[fid + pad_width   + 2] * filter_buff[5];
+        out += channel_buff[fid + 3] * filter_buff[1];
+        out += channel_buff[fid + 4] * filter_buff[4];
+        out += channel_buff[fid + 5] * filter_buff[7];
 
-        out += channel_buff[fid + pad_width*2    ] * filter_buff[6];
-        out += channel_buff[fid + pad_width*2 + 1] * filter_buff[7];
-        out += channel_buff[fid + pad_width*2 + 2] * filter_buff[8];
+        out += channel_buff[fid + 6] * filter_buff[2];
+        out += channel_buff[fid + 7] * filter_buff[5];
+        out += channel_buff[fid + 8] * filter_buff[8];
         // End filter
         row_buff[(ly * chan_buff_size + lx) * row_buff_size + out_lane] = out;
         out_lane++;
@@ -302,6 +319,6 @@ __kernel void merge(
         sum += in[(c * boardsize + b) * outputs + o];
     }
     // ELU
-    sum = sum > 0 ? sum : 1.0f * (exp(sum) - 1.0f);
+    sum = sum > 0 ? sum : 1.0f * (half_exp(sum) - 1.0f);
     out[o * boardsize + b] = sum;
 }
