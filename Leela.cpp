@@ -36,17 +36,21 @@ int main (int argc, char *argv[]) {
     cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
     cfg_enable_nets = true;
     cfg_max_playouts = INT_MAX;
+    cfg_lagbuffer_cs = 200;
 
     namespace po = boost::program_options;
     // Declare the supported options.
     po::options_description desc("Allowed options");
     desc.add_options()
-        ("help,h", "Show commandline options")
-        ("gtp,g", "Enable GTP mode")
-        ("threads,t", po::value<int>(), "Number of threads to use")
-        ("playouts,p", po::value<int>(), "Limit number of playouts")
-        ("noponder", "Disable pondering")
-        ("nonets", "Disable use of neural networks")
+        ("help,h", "Show commandline options.")
+        ("gtp,g", "Enable GTP mode.")
+        ("threads,t", po::value<int>()->default_value(cfg_num_threads),
+                      "Number of threads to use.")
+        ("playouts,p", po::value<int>(), "Limit number of playouts.")
+        ("lagbuffer,b", po::value<int>()->default_value(200),
+                      "Safety margin for time usage in centiseconds.")
+        ("noponder", "Disable pondering.")
+        ("nonets", "Disable use of neural networks.")
         ;
     po::variables_map vm;
     try {
@@ -72,7 +76,8 @@ int main (int argc, char *argv[]) {
         if (num_threads > cfg_num_threads) {
             std::cerr << "Clamping threads to maximum = " << cfg_num_threads
                       << std::endl;
-        } else {
+        } else if (num_threads != cfg_num_threads) {
+            std::cerr << "Using " << num_threads << " thread(s)." << std::endl;
             cfg_num_threads = num_threads;
         }
     }
@@ -87,6 +92,15 @@ int main (int argc, char *argv[]) {
 
     if (vm.count("nonets")) {
         cfg_enable_nets = false;
+    }
+
+    if (vm.count("lagbuffer")) {
+        int lagbuffer = vm["lagbuffer"].as<int>();
+        if (lagbuffer != cfg_lagbuffer_cs) {
+            std::cerr << boost::format("Using per-move time margin of %.2fs.\n")
+                % (lagbuffer/100.0f);
+            cfg_lagbuffer_cs = lagbuffer;
+        }
     }
 
     std::cout.setf(std::ios::unitbuf);

@@ -26,6 +26,7 @@ bool cfg_allow_pondering;
 int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
+int cfg_lagbuffer_cs;
 
 const std::string GTP::s_commands[] = {
     "protocol_version",
