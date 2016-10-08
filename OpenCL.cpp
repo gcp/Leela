@@ -418,17 +418,26 @@ void OpenCL::forward_async(std::vector<float>& input,
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
     size_t mergeSize = sizeof(float) * width * height *
-        Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 2);
+        Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 8);
 
-    cl::Buffer inBuffer = cl::Buffer(
-        CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-        inSize, input.data());
-    cl::Buffer tmpBuffer = cl::Buffer(
-        CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-        outSize);
-    cl::Buffer mergeBuffer = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-        mergeSize);
-    cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+    if (!thread_data.get()->m_buffers_allocated) {
+        thread_data.get()->m_inBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE, inSize);
+        thread_data.get()->m_tmpBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, outSize);
+        thread_data.get()->m_mergeBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, mergeSize);
+        thread_data.get()->m_outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+        thread_data.get()->m_buffers_allocated = true;
+    }
+
+    cl::Buffer & inBuffer = thread_data.get()->m_inBuffer;
+    cl::Buffer & outBuffer = thread_data.get()->m_outBuffer;
+    cl::Buffer & tmpBuffer = thread_data.get()->m_tmpBuffer;
+    cl::Buffer & mergeBuffer = thread_data.get()->m_mergeBuffer;
+    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
+
+    queue.enqueueWriteBuffer(inBuffer, CL_FALSE, 0, inSize, input.data());
 
     for (auto & layer : m_layers) {
         // convolution
@@ -441,8 +450,6 @@ void OpenCL::forward_async(std::vector<float>& input,
             layer.weights);
         std::swap(inBuffer, tmpBuffer);
     }
-
-    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
 
     // last layer is always a convolution, so output is in tmp
     queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
@@ -471,17 +478,26 @@ void OpenCL::forward(std::vector<float>& input,
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
     size_t mergeSize = sizeof(float) * width * height *
-                       Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 2);
+                       Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 8);
 
-    cl::Buffer inBuffer = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE
-                                     | CL_MEM_HOST_NO_ACCESS,
-                                     inSize, input.data());
-    cl::Buffer tmpBuffer = cl::Buffer(CL_MEM_READ_WRITE
-                                      | CL_MEM_HOST_NO_ACCESS,
-                                      outSize);
-    cl::Buffer mergeBuffer = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                                        mergeSize);
-    cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+    if (!thread_data.get()->m_buffers_allocated) {
+        thread_data.get()->m_inBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE, inSize);
+        thread_data.get()->m_tmpBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, outSize);
+        thread_data.get()->m_mergeBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, mergeSize);
+        thread_data.get()->m_outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+        thread_data.get()->m_buffers_allocated = true;
+    }
+
+    cl::Buffer & inBuffer = thread_data.get()->m_inBuffer;
+    cl::Buffer & outBuffer = thread_data.get()->m_outBuffer;
+    cl::Buffer & tmpBuffer = thread_data.get()->m_tmpBuffer;
+    cl::Buffer & mergeBuffer = thread_data.get()->m_mergeBuffer;
+    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
+
+    queue.enqueueWriteBuffer(inBuffer, CL_FALSE, 0, inSize, input.data());
 
     for (auto & layer : m_layers) {
         // convolution
@@ -494,7 +510,7 @@ void OpenCL::forward(std::vector<float>& input,
                     layer.weights);
         std::swap(inBuffer, tmpBuffer);
     }
-    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
+
     // last layer is always a convolution, so output is in tmp
     queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
@@ -559,7 +575,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     assert(mergeSize <= bufferMerge.getInfo<CL_MEM_SIZE>());
 
-    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
+    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
 
     try {
         m_convolve_kernel.setArg(0, bufferInput);
@@ -577,7 +593,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         return;
     }
 
-    cl::Kernel merge_kernel = thread_data.get()->m_merge_kernel;
+    cl::Kernel & merge_kernel = thread_data.get()->m_merge_kernel;
 
     try {
         merge_kernel.setArg(0, bufferMerge);
