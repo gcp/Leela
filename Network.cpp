@@ -126,8 +126,8 @@ void Network::initialize(void) {
 #ifdef USE_BLAS
 #ifndef __APPLE__
 #ifdef USE_OPENBLAS
-    //openblas_set_num_threads(1);
-    //std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
+    openblas_set_num_threads(1);
+    std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
 #endif
 #ifdef USE_MKL
     //mkl_set_threading_layer(MKL_THREADING_SEQUENTIAL);
