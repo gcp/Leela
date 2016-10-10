@@ -1,0 +1,29 @@
+Name CLOPGTP
+Script ./CLOPGTP
+
+# Parameter(s) to be optimized
+# <parameter_type> <name> <min> <max>
+# <parameter_type> may be:
+#  LinearParameter
+#  IntegerParameter
+#  GammaParameter
+#  IntegerGammaParameter
+# For GammaParameter, quadratic regression is performed on log(x)
+# Warning: 123 and not 123.0 should be used for IntegerParameter
+IntegerParameter fastnull1 -500 1000
+IntegerParameter fastnull2 -500 1000
+IntegerParameter nullextra -500 1000
+IntegerParameter razordepth   0   64
+IntegerParameter mcdepth      0   64
+IntegerParameter singdepth    0   64
+
+Processor cpu1
+Processor cpu2
+Processor cpu3
+Processor cpu4
+
+Replications 1
+DrawElo 0
+
+H 3
+Correlations all

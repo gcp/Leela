@@ -367,27 +367,26 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
     if (handicap > 0) {
         res.append("HA[" + boost::lexical_cast<std::string>(handicap) + "]");
         res.append("AB" + handicapstr);
-    }    
-    
+    }
+
     res.append("\n");
-    
-    state->forward_move();
-    
+
     int counter = 0;
-    do {
+
+    while (state->forward_move()) {
         int move = state->get_last_move();
         std::string movestr = state->board.move_to_text_sgf(move);
         if (state->get_to_move() == FastBoard::BLACK) {
             res.append(";W[" + movestr + "]");
         } else {
             res.append(";B[" + movestr + "]");
-        }                
+        }
         if (++counter % 10 == 0) {
             res.append("\n");
         }
-    } while (state->forward_move());
-    
+    }
+
     res.append(")");
-    
+
     return res;
 }
