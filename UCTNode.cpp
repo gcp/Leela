@@ -18,6 +18,7 @@
 #include "Utils.h"
 #include "Matcher.h"
 #include "Network.h"
+#include "GTP.h"
 #ifdef USE_OPENCL
 #include "OpenCL.h"
 #endif
@@ -184,7 +185,7 @@ void UCTNode::link_nodelist(boost::atomic<int> & nodecount,
 
     int expand_treshold = UCTSearch::MCTS_MATURE_TRESHOLD;
     if (use_nets) {
-        expand_treshold = UCTSearch::MCNN_MATURE_TRESHOLD;
+        expand_treshold = cfg_mcnn_maturity; //UCTSearch::MCNN_MATURE_TRESHOLD;
     }
 
     SMP::Lock lock(get_mutex());
@@ -357,7 +358,8 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             childcount++;
         }
         numerator = std::sqrt((float)parentvisits);
-        cutoff_ratio = std::max(2.0f, std::log((float)parentvisits));
+        cutoff_ratio = std::max(2.0f, cfg_cutoff_offset +
+                                      (cfg_cutoff_ratio * std::log((float)parentvisits)));
     }
 
     childcount = 0;
@@ -380,8 +382,8 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 break;
             }
 
-            float c_puct = 2.0f;
-            float c_perbias = 0.02f;
+            float c_puct = cfg_puct;
+            float c_perbias = cfg_perbias;
 
             if (!child->first_visit()) {
                 // "UCT" part

@@ -9,6 +9,12 @@ extern int cfg_num_threads;
 extern int cfg_max_playouts;
 extern bool cfg_enable_nets;
 extern int cfg_lagbuffer_cs;
+extern int cfg_mcnn_maturity;
+extern float cfg_cutoff_ratio;
+extern float cfg_cutoff_offset;
+extern float cfg_puct;
+extern float cfg_perbias;
+extern float cfg_easymove_ratio;
 
 class GTP {
 public:

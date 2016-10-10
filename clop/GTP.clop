@@ -1,5 +1,5 @@
-Name CLOPGTP
-Script ./CLOPGTP
+Name clopgtp
+Script ./clopgtp
 
 # Parameter(s) to be optimized
 # <parameter_type> <name> <min> <max>
@@ -10,17 +10,20 @@ Script ./CLOPGTP
 #  IntegerGammaParameter
 # For GammaParameter, quadratic regression is performed on log(x)
 # Warning: 123 and not 123.0 should be used for IntegerParameter
-IntegerParameter fastnull1 -500 1000
-IntegerParameter fastnull2 -500 1000
-IntegerParameter nullextra -500 1000
-IntegerParameter razordepth   0   64
-IntegerParameter mcdepth      0   64
-IntegerParameter singdepth    0   64
+IntegerGammaParameter maturity          1   2000
+GammaParameter        cutoff_ratio    0.1   10
+LinearParameter       cutoff_offset   -10   10
+GammaParameter        puct            0.1   20
+GammaParameter        perbias       0.001   0.5
+GammaParameter        easymove         1.5  50
 
 Processor cpu1
 Processor cpu2
 Processor cpu3
 Processor cpu4
+Processor cpu5
+Processor cpu6
+Processor cpu7
 
 Replications 1
 DrawElo 0

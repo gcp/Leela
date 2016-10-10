@@ -28,6 +28,12 @@ int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
 int cfg_lagbuffer_cs;
+int cfg_mcnn_maturity;
+float cfg_cutoff_ratio;
+float cfg_cutoff_offset;
+float cfg_puct;
+float cfg_perbias;
+float cfg_easymove_ratio;
 
 const std::string GTP::s_commands[] = {
     "protocol_version",

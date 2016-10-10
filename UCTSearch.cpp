@@ -232,7 +232,7 @@ bool UCTSearch::easy_move() {
         UCTNode * second = first->get_sibling();
         if (second != NULL) {
             float second_probability = second->get_score();
-            if (second_probability * 5.0f < best_probability) {
+            if (second_probability * cfg_easymove_ratio < best_probability) {
                 return true;
             }
         } else {

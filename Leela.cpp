@@ -37,6 +37,12 @@ int main (int argc, char *argv[]) {
     cfg_enable_nets = true;
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 200;
+    cfg_mcnn_maturity = 250;
+    cfg_cutoff_ratio = 1.0f;
+    cfg_cutoff_offset = 0.0f;
+    cfg_puct = 2.0f;
+    cfg_perbias = 0.02f;
+    cfg_easymove_ratio = 5.0f;
 
     namespace po = boost::program_options;
     // Declare the supported options.
@@ -51,6 +57,12 @@ int main (int argc, char *argv[]) {
                       "Safety margin for time usage in centiseconds.")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
+        ("maturity", po::value<int>())
+        ("cutoff_ratio", po::value<float>())
+        ("cutoff_offset", po::value<float>())
+        ("puct", po::value<float>())
+        ("perbias", po::value<float>())
+        ("easymove", po::value<float>())
         ;
     po::variables_map vm;
     try {
@@ -65,6 +77,30 @@ int main (int argc, char *argv[]) {
     if (vm.count("help")) {
         std::cout << desc << std::endl;
         return 1;
+    }
+
+    if (vm.count("maturity")) {
+        cfg_mcnn_maturity = vm["maturity"].as<int>();
+    }
+
+    if (vm.count("cutoff_ratio")) {
+        cfg_cutoff_ratio = vm["cutoff_ratio"].as<float>();
+    }
+
+    if (vm.count("cutoff_offset")) {
+        cfg_cutoff_offset = vm["cutoff_offset"].as<float>();
+    }
+
+    if (vm.count("puct")) {
+        cfg_puct = vm["puct"].as<float>();
+    }
+
+    if (vm.count("perbias")) {
+        cfg_perbias = vm["perbias"].as<float>();
+    }
+
+    if (vm.count("easymove")) {
+        cfg_easymove_ratio = vm["easymove"].as<float>();
     }
 
     if (vm.count("gtp")) {

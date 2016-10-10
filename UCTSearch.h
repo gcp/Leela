@@ -29,7 +29,7 @@ public:
 #ifdef USE_OPENCL
     static constexpr int MCNN_MATURE_TRESHOLD = 15;
 #else
-    static constexpr int MCNN_MATURE_TRESHOLD = 250;
+    //static constexpr int MCNN_MATURE_TRESHOLD = 250;
 #endif
     static constexpr int MCTS_MATURE_TRESHOLD = 15;
 
