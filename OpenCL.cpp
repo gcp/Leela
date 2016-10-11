@@ -32,47 +32,47 @@ static std::string sourceCode = R"(
                    __local float * row_buff) {
 
         // cl::NDRange global(channels, outputs, row);
-        const unsigned int c   = get_global_id(0);  // channel
-        const unsigned int o   = get_global_id(1);  // output
-        const unsigned int row = get_global_id(2);  // row
+        const int c   = get_global_id(0);  // channel
+        const int o   = get_global_id(1);  // output
+        const int row = get_global_id(2);  // row
 
-        const unsigned int channels = get_global_size(0);
-        const unsigned int outputs  = get_global_size(1);
+        const int channels = get_global_size(0);
+        const int outputs  = get_global_size(1);
 
         // cl::NDRange local(2, (1->32), 1);
-        const unsigned int lx = get_local_id(0);
-        const unsigned int ly = get_local_id(1);
+        const int lx = get_local_id(0);
+        const int ly = get_local_id(1);
 
-        const unsigned int chan_buff_size = 8;
-        const unsigned int out_buff_size  = get_local_size(1);
-        const unsigned int row_buff_size  = 7;
-        const unsigned int chan_shift     = 3;
+        const int chan_buff_size = 8;
+        const int out_buff_size  = get_local_size(1);
+        const int row_buff_size  = 7;
+        const int chan_shift     = 3;
 
-        const unsigned int filter_size = 5;
-        const unsigned int filter_len = filter_size * filter_size;
-        const unsigned int mid = (filter_size / 2) + 1;
-        const unsigned int extent = mid - 1;
+        const int filter_size = 5;
+        const int filter_len = filter_size * filter_size;
+        const int mid = (filter_size / 2) + 1;
+        const int extent = mid - 1;
 
         // input = channels * height * width
         // output = outputs * height * width
         // weights = output * channels * filter
         // merge = channels * outputs * height * width
 
-        const unsigned int width = 19;
-        const unsigned int height = 19;
-        const unsigned int strip_size = filter_size * width;
+        const int width = 19;
+        const int height = 19;
+        const int strip_size = filter_size * width;
 
         // Copy the input channels (strips) locally
         if (out_buff_size < 19 && ly == 0) {
             // strip-row
-            for (unsigned int srow = 0; srow < filter_size; srow++) {
+            for (int srow = 0; srow < filter_size; srow++) {
                 int in_row = row - extent + srow;
                 if ((unsigned)in_row >= height) {
-                    for (unsigned int w = 0; w < width; w++) {
+                    for (int w = 0; w < width; w++) {
                         channel_buff[(lx * filter_size + srow) * width + w] = 0.0f;
                     }
                 } else {
-                    for (unsigned int w = 0; w < width; w++) {
+                    for (int w = 0; w < width; w++) {
                         channel_buff[(lx * filter_size + srow) * width + w] =
                             in[(c * height + in_row) * width + w];
                     }
@@ -80,7 +80,7 @@ static std::string sourceCode = R"(
             }
         } else if (out_buff_size >= 19 && ly < 19) {
             // Every thread copies a column
-            for (unsigned int srow = 0; srow < filter_size; srow++) {
+            for (int srow = 0; srow < filter_size; srow++) {
                 int in_row = row - extent + srow;
                 float val = 0.0f;
                 if ((unsigned)in_row < height) {
@@ -94,21 +94,21 @@ static std::string sourceCode = R"(
 
         // Copy the filter we are applying locally
         // output * channel * filter_len
-        for (unsigned int f = 0; f < filter_len; f++) {
+        for (int f = 0; f < filter_len; f++) {
             filter_buff[f] = weights[(o * channels + c) * filter_len + f];
         }
 
         barrier(CLK_LOCAL_MEM_FENCE);
 
-        unsigned int out_lane = 0;
-        unsigned int out_cw   = 0;
-        for (unsigned int cw = 0; cw < width; cw++) {
+        int out_lane = 0;
+        int out_cw   = 0;
+        for (int cw = 0; cw < width; cw++) {
             int fwstart = cw - extent;
             int fwend   = cw + extent;
             float out;
             // Start filter
             if (fwstart >= 0 && fwend < width) {
-                unsigned int fid = lx * strip_size + fwstart;
+                int fid = lx * strip_size + fwstart;
                 out  = channel_buff[fid              ] * filter_buff[0];
                 out += channel_buff[fid           + 1] * filter_buff[1];
                 out += channel_buff[fid           + 2] * filter_buff[2];
@@ -141,7 +141,7 @@ static std::string sourceCode = R"(
             } else {
                 const float * filter_idx = filter_buff;
                 out = 0.0f;
-                for (unsigned int fh = 0; fh < filter_size; fh++) {
+                for (int fh = 0; fh < filter_size; fh++) {
                     for (int fw = fwstart; fw <= fwend; fw++) {
                         // "zero padding"
                         if ((unsigned)fw >= width) {
@@ -188,30 +188,30 @@ static std::string sourceCode = R"(
                    __local float * row_buff) {
 
         // cl::NDRange global(channels, outputs, row);
-        const unsigned int c   = get_global_id(0);  // channel
-        const unsigned int o   = get_global_id(1);  // output
-        const unsigned int row = get_global_id(2);  // row
+        const int c   = get_global_id(0);  // channel
+        const int o   = get_global_id(1);  // output
+        const int row = get_global_id(2);  // row
 
-        const unsigned int channels = get_global_size(0);
-        const unsigned int outputs  = get_global_size(1);
+        const int channels = get_global_size(0);
+        const int outputs  = get_global_size(1);
 
         // cl::NDRange local(2, (1->32), 1);
-        const unsigned int lx = get_local_id(0);
-        const unsigned int ly = get_local_id(1);
+        const int lx = get_local_id(0);
+        const int ly = get_local_id(1);
 
-        const unsigned int chan_buff_size = 8;
-        const unsigned int out_buff_size  = get_local_size(1);
-        const unsigned int row_buff_size  = 7;
-        const unsigned int chan_shift     = 3;
+        const int chan_buff_size = 8;
+        const int out_buff_size  = get_local_size(1);
+        const int row_buff_size  = 7;
+        const int chan_shift     = 3;
 
-        const unsigned int width = 19;
-        const unsigned int height = 19;
+        const int width = 19;
+        const int height = 19;
 
-        const unsigned int filter_size = 3;
-        const unsigned int filter_len = filter_size * filter_size;
-        const unsigned int mid = (filter_size / 2) + 1;
-        const unsigned int extent = mid - 1;
-        const unsigned int pad_width = width + filter_size - 1;
+        const int filter_size = 3;
+        const int filter_len = filter_size * filter_size;
+        const int mid = (filter_size / 2) + 1;
+        const int extent = mid - 1;
+        const int pad_width = width + filter_size - 1;
 
         // input = channels * height * width
         // output = outputs * height * width
@@ -221,16 +221,16 @@ static std::string sourceCode = R"(
        // Copy the input channels (strips) locally
         if (out_buff_size < 21 && ly == 0) {
             // strip-row
-            for (unsigned int srow = 0; srow < filter_size; srow++) {
+            for (int srow = 0; srow < filter_size; srow++) {
                 int in_row = row - extent + srow;
                 channel_buff[(lx * pad_width + 0) * filter_size + srow]             = 0.0f;
                 if ((unsigned)in_row < height) {
-                    for (unsigned int w = 0; w < width; w++) {
+                    for (int w = 0; w < width; w++) {
                         float val = in[(c * height + in_row) * width + w];
                         channel_buff[(lx * pad_width + w + extent) * filter_size + srow] = val;
                     }
                 } else {
-                    for (unsigned int w = 0; w < width; w++) {
+                    for (int w = 0; w < width; w++) {
                         channel_buff[(lx * pad_width + w + extent) * filter_size + srow] = 0.0f;
                     }
                 }
@@ -240,7 +240,7 @@ static std::string sourceCode = R"(
             // Every thread copies a column
             if (row == 0 || row == 18) {
                 // Every thread copies a column
-                for (unsigned int srow = 0; srow < filter_size; srow++) {
+                for (int srow = 0; srow < filter_size; srow++) {
                     int in_row = row - extent + srow;
                     float val = 0.0f;
                     if ((unsigned)in_row < height && ly >= 1 && ly <= 19) {
@@ -249,16 +249,13 @@ static std::string sourceCode = R"(
                     channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
                 }
             } else {
-                if (ly >= 1 && ly <= 19) {
-                    for (unsigned int srow = 0; srow < filter_size; srow++) {
-                        int in_row = row - extent + srow;
-                        float val = in[(c * height + in_row) * width + ly - 1];
-                        channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
+                for (int srow = 0; srow < filter_size; srow++) {
+                    int in_row = row - extent + srow;
+                    float val = in[(c * height + in_row) * width + ly - 1];
+                    if (ly == 0 || ly > 19) {
+                        val = 0.0f;
                     }
-                } else {
-                    for (unsigned int srow = 0; srow < filter_size; srow++) {
-                        channel_buff[(lx * pad_width + ly) * filter_size + srow] = 0.0f;
-                    }
+                    channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
                 }
             }
         }
@@ -267,33 +264,30 @@ static std::string sourceCode = R"(
 
         // Copy the filter we are applying locally
         // output * channel * filter_len
-        for (unsigned int f = 0; f < filter_len; f++) {
+        for (int f = 0; f < filter_len; f++) {
             filter_buff[f] = weights[(o * channels + c) * filter_len + f];
         }
 
-        const unsigned int strip_size = filter_size * pad_width;
-        unsigned int out_lane = 0;
-        unsigned int out_cw   = 0;
+        int out_lane = 0;
+        int out_cw   = 0;
+        __local float * out_row_buff = &row_buff[(ly * chan_buff_size + lx) * row_buff_size];
+        int fid = (lx * pad_width) * filter_size;
         barrier(CLK_LOCAL_MEM_FENCE);
 
-        for (unsigned int cw = 0; cw < width; cw++) {
-            unsigned int fid = (lx * pad_width + cw) * filter_size;
-            float out;
+        for (int cw = 0; cw < width; cw++) {
             // Start filter
-            out  = channel_buff[fid    ] * filter_buff[0];
-            out += channel_buff[fid + 1] * filter_buff[3];
-            out += channel_buff[fid + 2] * filter_buff[6];
-
-            out += channel_buff[fid + 3] * filter_buff[1];
-            out += channel_buff[fid + 4] * filter_buff[4];
-            out += channel_buff[fid + 5] * filter_buff[7];
-
-            out += channel_buff[fid + 6] * filter_buff[2];
-            out += channel_buff[fid + 7] * filter_buff[5];
-            out += channel_buff[fid + 8] * filter_buff[8];
+            float out  =   channel_buff[fid    ] * filter_buff[0]
+                         + channel_buff[fid + 1] * filter_buff[3]
+                         + channel_buff[fid + 2] * filter_buff[6]
+                         + channel_buff[fid + 3] * filter_buff[1]
+                         + channel_buff[fid + 4] * filter_buff[4]
+                         + channel_buff[fid + 5] * filter_buff[7]
+                         + channel_buff[fid + 6] * filter_buff[2]
+                         + channel_buff[fid + 7] * filter_buff[5]
+                         + channel_buff[fid + 8] * filter_buff[8];
             // End filter
-            row_buff[(ly * chan_buff_size + lx) * row_buff_size + out_lane] = out;
-            out_lane++;
+            out_row_buff[out_lane++] = out;
+            fid += filter_size;
 
             // Row buffer full or last lane?
             if (out_lane == row_buff_size || (cw == width - 1)) {
@@ -340,7 +334,7 @@ static std::string sourceCode = R"(
         const float bias = biases[o];
 
         float sum = bias;
-        for (unsigned int c = 0; c < channels; c++) {
+        for (int c = 0; c < channels; c++) {
             sum += in[(c * boardsize + b) * outputs + o];
         }
         // ELU
@@ -418,17 +412,26 @@ void OpenCL::forward_async(std::vector<float>& input,
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
     size_t mergeSize = sizeof(float) * width * height *
-        Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 2);
+        Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 8);
 
-    cl::Buffer inBuffer = cl::Buffer(
-        CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-        inSize, input.data());
-    cl::Buffer tmpBuffer = cl::Buffer(
-        CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-        outSize);
-    cl::Buffer mergeBuffer = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-        mergeSize);
-    cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+    if (!thread_data.get()->m_buffers_allocated) {
+        thread_data.get()->m_inBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE, inSize);
+        thread_data.get()->m_tmpBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, outSize);
+        thread_data.get()->m_mergeBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, mergeSize);
+        thread_data.get()->m_outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+        thread_data.get()->m_buffers_allocated = true;
+    }
+
+    cl::Buffer & inBuffer = thread_data.get()->m_inBuffer;
+    cl::Buffer & outBuffer = thread_data.get()->m_outBuffer;
+    cl::Buffer & tmpBuffer = thread_data.get()->m_tmpBuffer;
+    cl::Buffer & mergeBuffer = thread_data.get()->m_mergeBuffer;
+    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
+
+    queue.enqueueWriteBuffer(inBuffer, CL_FALSE, 0, inSize, input.data());
 
     for (auto & layer : m_layers) {
         // convolution
@@ -441,8 +444,6 @@ void OpenCL::forward_async(std::vector<float>& input,
             layer.weights);
         std::swap(inBuffer, tmpBuffer);
     }
-
-    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
 
     // last layer is always a convolution, so output is in tmp
     queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
@@ -471,17 +472,26 @@ void OpenCL::forward(std::vector<float>& input,
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
     size_t mergeSize = sizeof(float) * width * height *
-                       Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 2);
+                       Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 8);
 
-    cl::Buffer inBuffer = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_WRITE
-                                     | CL_MEM_HOST_NO_ACCESS,
-                                     inSize, input.data());
-    cl::Buffer tmpBuffer = cl::Buffer(CL_MEM_READ_WRITE
-                                      | CL_MEM_HOST_NO_ACCESS,
-                                      outSize);
-    cl::Buffer mergeBuffer = cl::Buffer(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
-                                        mergeSize);
-    cl::Buffer outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+    if (!thread_data.get()->m_buffers_allocated) {
+        thread_data.get()->m_inBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE, inSize);
+        thread_data.get()->m_tmpBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, outSize);
+        thread_data.get()->m_mergeBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, mergeSize);
+        thread_data.get()->m_outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
+        thread_data.get()->m_buffers_allocated = true;
+    }
+
+    cl::Buffer & inBuffer = thread_data.get()->m_inBuffer;
+    cl::Buffer & outBuffer = thread_data.get()->m_outBuffer;
+    cl::Buffer & tmpBuffer = thread_data.get()->m_tmpBuffer;
+    cl::Buffer & mergeBuffer = thread_data.get()->m_mergeBuffer;
+    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
+
+    queue.enqueueWriteBuffer(inBuffer, CL_FALSE, 0, inSize, input.data());
 
     for (auto & layer : m_layers) {
         // convolution
@@ -494,7 +504,7 @@ void OpenCL::forward(std::vector<float>& input,
                     layer.weights);
         std::swap(inBuffer, tmpBuffer);
     }
-    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
+
     // last layer is always a convolution, so output is in tmp
     queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
@@ -559,7 +569,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     assert(mergeSize <= bufferMerge.getInfo<CL_MEM_SIZE>());
 
-    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
+    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
 
     try {
         m_convolve_kernel.setArg(0, bufferInput);
@@ -577,7 +587,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         return;
     }
 
-    cl::Kernel merge_kernel = thread_data.get()->m_merge_kernel;
+    cl::Kernel & merge_kernel = thread_data.get()->m_merge_kernel;
 
     try {
         merge_kernel.setArg(0, bufferMerge);

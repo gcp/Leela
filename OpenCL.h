@@ -33,6 +33,11 @@ private:
     cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;
     cl::Event m_complete_event;
+    cl::Buffer m_inBuffer;
+    cl::Buffer m_tmpBuffer;
+    cl::Buffer m_mergeBuffer;
+    cl::Buffer m_outBuffer;
+    bool m_buffers_allocated{false};
     boost::atomic<int> m_results_outstanding{0};
 };
 
