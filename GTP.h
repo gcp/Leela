@@ -10,6 +10,8 @@ extern int cfg_max_playouts;
 extern bool cfg_enable_nets;
 extern int cfg_lagbuffer_cs;
 extern int cfg_mcnn_maturity;
+extern int cfg_atari_give_expand;
+extern int cfg_atari_escape_expand;
 extern float cfg_cutoff_ratio;
 extern float cfg_cutoff_offset;
 extern float cfg_puct;

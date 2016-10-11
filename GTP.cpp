@@ -29,6 +29,8 @@ int cfg_max_playouts;
 bool cfg_enable_nets;
 int cfg_lagbuffer_cs;
 int cfg_mcnn_maturity;
+int cfg_atari_give_expand;
+int cfg_atari_escape_expand;
 float cfg_cutoff_ratio;
 float cfg_cutoff_offset;
 float cfg_puct;

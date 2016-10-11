@@ -197,10 +197,10 @@ void UCTNode::link_nodelist(boost::atomic<int> & nodecount,
                 // atari giving
                 // was == 2, == 1
                 if (board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
-                    vtx->set_expand_cnt(expand_treshold / 3);
+                    vtx->set_expand_cnt(cfg_atari_give_expand);
                 }
                 if (board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
-                    vtx->set_expand_cnt(expand_treshold / 3);
+                    vtx->set_expand_cnt(cfg_atari_escape_expand);
                 }
             }
             link_child(vtx);

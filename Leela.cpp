@@ -37,7 +37,9 @@ int main (int argc, char *argv[]) {
     cfg_enable_nets = true;
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 200;
-    cfg_mcnn_maturity = 250;
+    cfg_mcnn_maturity = 15;
+    cfg_atari_give_expand = 5;
+    cfg_atari_escape_expand = 5;
     cfg_cutoff_ratio = 1.0f;
     cfg_cutoff_offset = 0.0f;
     cfg_puct = 2.0f;
@@ -58,6 +60,8 @@ int main (int argc, char *argv[]) {
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
         ("maturity", po::value<int>())
+        ("atari_give", po::value<int>())
+        ("atari_escape", po::value<int>())
         ("cutoff_ratio", po::value<float>())
         ("cutoff_offset", po::value<float>())
         ("puct", po::value<float>())
@@ -81,6 +85,14 @@ int main (int argc, char *argv[]) {
 
     if (vm.count("maturity")) {
         cfg_mcnn_maturity = vm["maturity"].as<int>();
+    }
+
+    if (vm.count("atari_give")) {
+        cfg_atari_give_expand = vm["atari_give"].as<int>();
+    }
+
+    if (vm.count("atari_escape")) {
+        cfg_atari_escape_expand = vm["atari_escape"].as<int>();
     }
 
     if (vm.count("cutoff_ratio")) {
