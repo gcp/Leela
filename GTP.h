@@ -21,6 +21,7 @@ extern float cfg_easymove_ratio;
 class GTP {
 public:
     static bool execute(GameState &game, std::string xinput);
+    static void setup_default_parameters();
 private:
     static const int GTP_VERSION = 2;
 

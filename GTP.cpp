@@ -22,7 +22,7 @@
 
 using namespace Utils;
 
-// Configuration flags, set by Leela.cpp
+// Configuration flags
 bool cfg_allow_pondering;
 int cfg_num_threads;
 int cfg_max_playouts;
@@ -36,6 +36,22 @@ float cfg_cutoff_offset;
 float cfg_puct;
 float cfg_perbias;
 float cfg_easymove_ratio;
+
+void GTP::setup_default_parameters() {
+    cfg_allow_pondering = true;
+    cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
+    cfg_enable_nets = true;
+    cfg_max_playouts = INT_MAX;
+    cfg_lagbuffer_cs = 200;
+    cfg_mcnn_maturity = 15;
+    cfg_atari_give_expand = 5;
+    cfg_atari_escape_expand = 5;
+    cfg_cutoff_ratio = 1.0f;
+    cfg_cutoff_offset = 0.0f;
+    cfg_puct = 2.0f;
+    cfg_perbias = 0.02f;
+    cfg_easymove_ratio = 5.0f;
+}
 
 const std::string GTP::s_commands[] = {
     "protocol_version",
