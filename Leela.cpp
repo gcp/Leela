@@ -47,6 +47,7 @@ int main (int argc, char *argv[]) {
                       "Safety margin for time usage in centiseconds.")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
+#ifdef USE_TUNER
         ("maturity", po::value<int>())
         ("atari_give", po::value<int>())
         ("atari_escape", po::value<int>())
@@ -55,6 +56,7 @@ int main (int argc, char *argv[]) {
         ("puct", po::value<float>())
         ("perbias", po::value<float>())
         ("easymove", po::value<float>())
+#endif
         ;
     po::variables_map vm;
     try {
@@ -71,6 +73,7 @@ int main (int argc, char *argv[]) {
         return 1;
     }
 
+#ifdef USE_TUNER
     if (vm.count("maturity")) {
         cfg_mcnn_maturity = vm["maturity"].as<int>();
     }
@@ -102,6 +105,7 @@ int main (int argc, char *argv[]) {
     if (vm.count("easymove")) {
         cfg_easymove_ratio = vm["easymove"].as<float>();
     }
+#endif
 
     if (vm.count("gtp")) {
         gtp_mode = true;

@@ -43,7 +43,11 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 200;
+#ifdef USE_OPENCL
     cfg_mcnn_maturity = 15;
+#else
+    cfg_mcnn_maturity = 250;
+#endif
     cfg_atari_give_expand = 5;
     cfg_atari_escape_expand = 5;
     cfg_cutoff_ratio = 1.0f;

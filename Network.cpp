@@ -485,6 +485,7 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
     std::vector<float>& outputs = softmax_data;
 #endif
 #ifdef USE_OPENCL
+    OpenCL::get_OpenCL()->thread_init();
     OpenCL::get_OpenCL()->forward(input_data, output_data);
     softmax(output_data, softmax_data);
 
