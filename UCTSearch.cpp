@@ -494,7 +494,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
             size_t movetresh= (m_rootstate.board.get_boardsize()
                                 * m_rootstate.board.get_boardsize()) / 3;
             // bad score and visited enough
-            if (bestscore < 0.10f
+            if (bestscore < 0.15f
                 && visits > 90
                 && m_rootstate.m_movenum > movetresh) {
                 myprintf("Score looks bad. Resigning.\n");
