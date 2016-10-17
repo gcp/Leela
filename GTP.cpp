@@ -45,11 +45,13 @@ void GTP::setup_default_parameters() {
     cfg_lagbuffer_cs = 200;
 #ifdef USE_OPENCL
     cfg_mcnn_maturity = 15;
-#else
-    cfg_mcnn_maturity = 250;
-#endif
     cfg_atari_give_expand = 5;
     cfg_atari_escape_expand = 5;
+#else
+    cfg_mcnn_maturity = 250;
+    cfg_atari_give_expand = 83;
+    cfg_atari_escape_expand = 83;
+#endif
     cfg_cutoff_ratio = 1.0f;
     cfg_cutoff_offset = 0.0f;
     cfg_puct = 2.0f;
