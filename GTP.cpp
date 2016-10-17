@@ -48,15 +48,15 @@ void GTP::setup_default_parameters() {
     cfg_atari_give_expand = 5;
     cfg_atari_escape_expand = 5;
 #else
-    cfg_mcnn_maturity = 250;
-    cfg_atari_give_expand = 83;
-    cfg_atari_escape_expand = 83;
+    cfg_mcnn_maturity = 147;
+    cfg_atari_give_expand = 147/3;
+    cfg_atari_escape_expand = 147/3;
 #endif
-    cfg_cutoff_ratio = 1.0f;
-    cfg_cutoff_offset = 0.0f;
-    cfg_puct = 2.0f;
-    cfg_perbias = 0.02f;
-    cfg_easymove_ratio = 5.0f;
+    cfg_cutoff_ratio = 0.489f;
+    cfg_cutoff_offset = 7.28f;
+    cfg_puct = 2.379f;
+    cfg_perbias = 0.04035f;
+    cfg_easymove_ratio = 12.994f;
 }
 
 const std::string GTP::s_commands[] = {
