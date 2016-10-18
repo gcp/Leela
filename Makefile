@@ -30,8 +30,8 @@ asan:
 
 LIBS = -lboost_thread -lboost_system -lboost_program_options
 #LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
-#LIBS += -lopenblas
-DYNAMIC_LIBS += -lOpenCL
+LIBS += -lopenblas
+#DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
 #LIBS += -lmkl_rt

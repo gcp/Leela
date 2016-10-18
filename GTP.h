@@ -17,6 +17,24 @@ extern float cfg_cutoff_offset;
 extern float cfg_puct;
 extern float cfg_perbias;
 extern float cfg_easymove_ratio;
+extern float cfg_crit_mine_1;
+extern float cfg_crit_mine_2;
+extern float cfg_crit_mine_3;
+extern float cfg_crit_his_1;
+extern float cfg_crit_his_2;
+extern float cfg_crit_his_3;
+extern float cfg_nearby;
+extern float cfg_small_self_atari;
+extern float cfg_medium_self_atari;
+extern float cfg_big_self_atari;
+extern float cfg_huge_self_atari;
+extern float cfg_useless_self_atari;
+extern float cfg_score_pow;
+extern float cfg_cut;
+extern float cfg_try_captures;
+extern float cfg_try_critical;
+extern float cfg_try_pattern;
+extern float cfg_try_loops;
 
 class GTP {
 public:

@@ -57,7 +57,7 @@ public:
 
 protected:
     FastBoard::movelist_t moves;
-    FastBoard::scoredlist_t scoredmoves;
+    FastBoard::scoredmoves_t scoredmoves;
 
     int walk_empty_list(int color, int vidx, bool allow_sa = false);
     void play_move(int color, int vertex);

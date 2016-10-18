@@ -1160,83 +1160,85 @@ std::string FastBoard::get_string(int vertex) {
     return result;
 }
 
-bool FastBoard::fast_in_atari(int vertex) {        
+bool FastBoard::fast_in_atari(int vertex) {
 //    assert(m_square[vertex] < EMPTY);
-    
+
     int par = m_parent[vertex];
     int lib = m_libs[par];
-    
-    return lib == 1;       
+
+    return lib == 1;
 }
 
 // check if string is in atari, returns 0 if not,
 // single liberty if it is
-int FastBoard::in_atari(int vertex) {        
+int FastBoard::in_atari(int vertex) {
+    assert(m_square[vertex] < EMPTY);
+
     if (m_libs[m_parent[vertex]] > 1) {
         return false;
     }
 
-    int pos = vertex;            
-    
-    assert(m_square[vertex] < EMPTY);
-  
-    do {                               
-        if (count_pliberties(pos)) {                    
+    assert(m_libs[m_parent[vertex]] == 1);
+
+    int pos = vertex;
+
+    do {
+        if (count_pliberties(pos)) {
             for (int k = 0; k < 4; k++) {
-                int ai = pos + m_dirs[k];                                                
-                if (m_square[ai] == EMPTY) { 
-                    return ai;                                                      
+                int ai = pos + m_dirs[k];
+                if (m_square[ai] == EMPTY) {
+                    return ai;
                 }
-            }                    
+            }
         }
-        
+
         pos = m_next[pos];
-    } while (pos != vertex);    
-    
+    } while (pos != vertex);
+
     assert(false);
-    
+
     return false;
 }
 
 // loop over a string and try to kill neighbors
-void FastBoard::kill_neighbours(int vertex, movelist_t & moves, size_t & movecnt) {
-    int scolor = m_square[vertex];            
+void FastBoard::kill_neighbours(int vertex, movelist_t & moves) {
+    int scolor = m_square[vertex];
     int kcolor = !scolor;
     int pos = vertex;
 
     std::tr1::array<int, 4> nbr_list;
     int nbr_cnt = 0;
-          
-    do {                               
+
+    do {
         assert(m_square[pos] == scolor);
-            
+
         for (int k = 0; k < 4; k++) {
-            int ai = pos + m_dirs[k];                                
-            
-            if (m_square[ai] == kcolor) { 
+            int ai = pos + m_dirs[k];
+
+            if (m_square[ai] == kcolor) {
                 int par = m_parent[ai];
                 int lib = m_libs[par];
-                
-                if (lib <= 1 && nbr_cnt < 4) {				
-		    bool found = false;
-		    for (int i = 0; i < nbr_cnt; i++) {
-			    if (nbr_list[i] == par) {
-				    found = true;
-			    }
-		    }
-		    if (!found) {
-			    int atari = in_atari(ai);                                        
-			    assert(m_square[atari] == EMPTY);
-			    moves[movecnt++] = atari;                   
-			    nbr_list[nbr_cnt++] = par;
-		    }
+
+                if (lib <= 1 && nbr_cnt < 4) {
+                    bool found = false;
+                    for (int i = 0; i < nbr_cnt; i++) {
+                        if (nbr_list[i] == par) {
+                            found = true;
+                        }
+                    }
+                    if (!found) {
+                        int atari = in_atari(ai);
+                        assert(m_square[atari] == EMPTY);
+                        moves.push_back(atari);
+                        nbr_list[nbr_cnt++] = par;
+                    }
                 }
             }
-        }                        
-        
+        }
+
         pos = m_next[pos];
-    } while (pos != vertex);                                                    
-}                                         
+    } while (pos != vertex);
+}
 
 int FastBoard::saving_size(int color, int vertex) {                        
     for (int k = 0; k < 4; k++) {
@@ -1262,38 +1264,33 @@ int FastBoard::saving_size(int color, int vertex) {
 // look for a neighbors of vertex with "color" that are critical,
 // and add moves that save them to work
 // vertex is sure to be filled with !color
-void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & moves, size_t & movecnt) {
+void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & moves) {
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
-        
-        if (m_square[ai] == color) {        
+
+        if (m_square[ai] == color) {
             int par = m_parent[ai];
             int lib = m_libs[par];
-            
-            if (lib <= 1) {                
+
+            if (lib <= 1) {
                 int atari = in_atari(ai);
-                                
-                size_t startsize = movecnt;
-                                
-                // find saving moves for atari square "atari"                
+
+                // find saving moves for atari square "atari"
                 // we can save by either
-                // 1) playing in the atari if it increases liberties,
-                //    i.e. it is not self-atari 
+                // 1) playing in the atari if it increases liberties
                 // 2) capturing an opponent, which means that he should
-                //    also be in atari                                                        
-                if (!self_atari(color, atari)) {                        
-                    moves[movecnt++] = atari; 
-                } 
-                
-                kill_neighbours(ai, moves, movecnt);     
-                
-                // saving moves failed, add this to critical points
-                if (movecnt == startsize) {                    
-                    m_critical.push_back(atari);
-                }            
+                //    also be in atari
+                // XXX: 1 or 2?
+                if (count_pliberties(atari) >= 1) {
+                    moves.push_back(atari);
+                }
+                kill_neighbours(ai, moves);
+
+                // add this to critical points to try and capture
+                m_critical.push_back(atari);
             }
-        } 
-    }        
+        }
+    }
 }
 
 int FastBoard::get_dir(int i) {
@@ -1995,25 +1992,25 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
     return idx1;          
 }
 
-void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves, size_t & movecnt) {
-    for (int i = 0; i < 8; i++) {        
+void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves) {
+    for (int i = 0; i < 8; i++) {
         int sq = vertex + m_extradirs[i];
-        
-        if (m_square[sq] == EMPTY) {                  
-            if (!self_atari(color, sq)) {                    
-                moves[movecnt++] = sq;        
-            }            
-        }                                        
-    }                               
-    
+
+        if (m_square[sq] == EMPTY) {
+            if (no_eye_fill(sq) && !fast_ss_suicide(color, sq)) {
+                moves.push_back(sq);
+            }
+        }
+    }
+
     return;
-}        
+}
 
 // add capture moves for color
-void FastBoard::add_global_captures(int color, movelist_t & moves, size_t & movecnt) {
+void FastBoard::add_global_captures(int color, movelist_t & moves) {
     // walk critical squares
     for (size_t i = 0; i < m_critical.size(); i++) {
-        try_capture(color, m_critical[i], moves, movecnt);
+        try_capture(color, m_critical[i], moves);
     }
     m_critical.clear();
 }
@@ -2043,29 +2040,29 @@ int FastBoard::capture_size(int color, int vertex) {
     return 0;
 }
 
-void FastBoard::try_capture(int color, int vertex, movelist_t & moves, size_t & movecnt) {
-    if (m_square[vertex] == EMPTY) {                
+void FastBoard::try_capture(int color, int vertex, movelist_t & moves) {
+    if (m_square[vertex] == EMPTY) {
         int limitlibs = count_neighbours(!color, vertex);
-        
+
         // no enemy neighbors, nothing to capture
         if (!limitlibs) {
             return;
         }
-    
+
         for (int k = 0; k < 4; k++) {
             int ai = vertex + m_dirs[k];
-            
+
             if (m_square[ai] == !color) {
                 int par = m_parent[ai];
                 int lib = m_libs[par];
-                                                   
-                if (lib <= 1) {      
-                    moves[movecnt++] = vertex;                    
-                    return;                                                                                                              
-                }                        
-            }                                                
-        }  
-    }      
+
+                if (lib <= 1) {
+                    moves.push_back(vertex);
+                    return;
+                }
+            }
+        }
+    }
 }
 
 std::string FastBoard::get_stone_list() {

@@ -1,7 +1,8 @@
 #include <assert.h>
-#include <math.h>
 #include <vector>
 #include <algorithm>
+#include <iostream>
+#include <cmath>
 
 #include "FastBoard.h"
 #include "FastState.h"
@@ -13,6 +14,7 @@
 #include "AttribScores.h"
 #include "MCOTable.h"
 #include "Genetic.h"
+#include "GTP.h"
 
 using namespace Utils;
 
@@ -127,51 +129,81 @@ int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
 int FastState::play_random_move(int color) {
     board.m_tomove = color;
 
-    size_t movecnt = 0;
-    int newcnt = 0;
-    int scoredcnt = 0;
+    moves.clear();
+    scoredmoves.clear();
 
     if (m_lastmove > 0 && m_lastmove < board.m_maxsq) {
         if (board.get_square(m_lastmove) == !color) {
-            board.add_global_captures(color, moves, movecnt);
-            board.save_critical_neighbours(color, m_lastmove, moves, movecnt);
-            board.add_pattern_moves(color, m_lastmove, moves, movecnt);
-
-            // remove ko captures from count
-            newcnt = movecnt;
-            for (size_t i = 0; i < movecnt; i++) {
-                if (moves[i] == m_komove) {
-                    newcnt--;
-                }
+            if (cfg_try_captures > Random::get_Rng()->randflt()) {
+                board.add_global_captures(color, moves);
+            }
+            if (cfg_try_critical > Random::get_Rng()->randflt()) {
+                board.save_critical_neighbours(color, m_lastmove, moves);
+            }
+            if (cfg_try_pattern > Random::get_Rng()->randflt()) {
+                board.add_pattern_moves(color, m_lastmove, moves);
             }
         }
     }
 
+    if (cfg_try_loops > Random::get_Rng()->randflt()) {
+        int loops = board.m_empty_cnt / 64;
+
+        do {
+            int vidx = Random::get_Rng()->randint(board.m_empty_cnt);
+            int vtx = walk_empty_list(board.m_tomove, vidx, true);
+
+            if (vtx == FastBoard::PASS) {
+                continue;
+            }
+
+            moves.push_back(vtx);
+        } while (--loops > 0);
+    }
+
     Matcher * matcher = Matcher::get_Matcher();
 
-    if (newcnt > 0) {
-        int cumul = 0;
+    if (moves.size()) {
+        float cumul = 0.0f;
 
-        for (size_t i = 0; i < movecnt; i++) {
-            int sq = moves[i];
-
+        for (int sq : moves) {
             // skip ko
             if (sq == m_komove) continue;
 
             int pattern = board.get_pattern_fast_augment(sq);
-            int score = matcher->matches(color, pattern);
+            float score = matcher->matches(color, pattern);
             std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
 
-            static const std::tr1::array<int, 9> crit_mine = {
-                1, 4, 1, 1, 1, 1, 1, 1, 1
-            };
+            //static const std::tr1::array<int, 9> crit_mine = {
+            //    1, 4, 1, 1, 1, 1, 1, 1, 1
+            //};
 
-            static const std::tr1::array<int, 9> crit_enemy = {
-                1, 14, 12, 1, 1, 1, 1, 1, 1
-            };
+            //static const std::tr1::array<int, 9> crit_enemy = {
+            //    1, 14, 12, 1, 1, 1, 1, 1, 1
+            //};
 
-            score *= crit_mine[nbr_crit.first];
-            score *= crit_enemy[nbr_crit.second];
+            // score *= crit_mine[nbr_crit.first];
+            // score *= crit_enemy[nbr_crit.second];
+
+            score = std::pow(score, cfg_score_pow);
+
+            assert(nbr_crit.first != 0);
+            assert(nbr_crit.second != 0);
+
+            if (nbr_crit.first == 1) {
+                score *= cfg_crit_mine_1;
+            } else  if (nbr_crit.first == 2) {
+                score *= cfg_crit_mine_2;
+            } else  if (nbr_crit.first == 3) {
+                score *= cfg_crit_mine_3;
+            }
+            if (nbr_crit.second == 1) {
+                score *= cfg_crit_his_1;
+            } else if (nbr_crit.second == 2) {
+                score *= cfg_crit_his_2;
+            } else if (nbr_crit.second == 3) {
+                score *= cfg_crit_his_3;
+            }
 
             bool nearby = false;
             for (int i = 0; i < 8; i++) {
@@ -182,55 +214,41 @@ int FastState::play_random_move(int color) {
                 }
             }
 
-            if (!nearby) {
-                score *= 20;
+            if (nearby) {
+                score *= cfg_nearby;
             }
 
-            if (score >= 256) {
+            if (board.self_atari(color, sq)) {
+                int enemy_dying = board.enemy_atari_size(color, sq);
+                if (enemy_dying) {
+                    int ours_dying = board.enemy_atari_size(!color, sq);
+                    if (ours_dying <= 1) {
+                        score *= cfg_small_self_atari;
+                    } else if (ours_dying <= 2) {
+                        score *= cfg_medium_self_atari;
+                    } else if (ours_dying < enemy_dying) {
+                        score *= cfg_big_self_atari;
+                    } else {
+                        score *= cfg_huge_self_atari;
+                    }
+                } else {
+                    score *= cfg_useless_self_atari;
+                }
+            }
+
+            if (score > cfg_cut) {
                 cumul += score;
-                scoredmoves[scoredcnt++] = std::make_pair(sq, cumul);
+                scoredmoves.push_back(std::make_pair(sq, cumul));
             }
         }
 
-        int index = Random::get_Rng()->randint32(cumul);
+        float index = Random::get_Rng()->randflt() * cumul;
 
-        for (int i = 0; i < scoredcnt; i++) {
-            int point = scoredmoves[i].second;
+        for (size_t i = 0; i < scoredmoves.size(); i++) {
+            float point = scoredmoves[i].second;
             if (index < point) {
                 return play_move_fast(scoredmoves[i].first);
             }
-        }
-    }
-
-    int loops = board.m_empty_cnt / 64;
-    int cumul = 0;
-
-    do {
-        int vidx = Random::get_Rng()->randint(board.m_empty_cnt);
-        int vtx = walk_empty_list(board.m_tomove, vidx, true);
-
-        if (vtx == FastBoard::PASS) {
-            return play_move_fast(FastBoard::PASS);
-        }
-
-        int pattern = board.get_pattern_fast_augment(vtx);
-        int score = matcher->matches(color, pattern);
-
-        if (board.self_atari(color, vtx)) {
-            score /= 64;
-        }
-
-        cumul += std::max<int>(1, score);
-        scoredmoves[scoredcnt++] = std::make_pair(vtx, cumul);
-
-    } while (--loops > 0);
-
-    int index = Random::get_Rng()->randint32(cumul);
-
-    for (int i = 0; i < scoredcnt; i++) {
-        int point = scoredmoves[i].second;
-        if (index < point) {
-            return play_move_fast(scoredmoves[i].first);
         }
     }
 
