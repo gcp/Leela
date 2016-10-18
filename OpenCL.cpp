@@ -251,9 +251,9 @@ static std::string sourceCode = R"(
             } else {
                 for (int srow = 0; srow < filter_size; srow++) {
                     int in_row = row - extent + srow;
-                    float val = val = 0.0f;
+                    float val = 0.0f;
                     if (ly >= 1 && ly <= 19) {
-                        val = in[(c * height + in_row) * width + ly - 1];    
+                        val = in[(c * height + in_row) * width + ly - 1];
                     }
                     channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
                 }
