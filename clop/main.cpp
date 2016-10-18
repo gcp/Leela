@@ -59,8 +59,8 @@ int main(int argc, char *argv[])
 
     qsrand(seed);
 
-    QString orig_cmdline("./leela --gtp --noponder --threads 1");
-    QString tune_cmdline(orig_cmdline);
+    QString orig_cmdline("./leela-073b --gtp --noponder --threads 1");
+    QString tune_cmdline("./leela --gtp --noponder --threads 1");
 
     parmset ps;
     foreach (ps, vps) {
@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
 
     orig_process.waitForFinished(-1);
     tune_process.waitForFinished(-1);
-    
+
     QProcess gnugo_process;
     QString gnugo_cmdline("gnugo --score aftermath ");
     gnugo_cmdline += " --positional-superko --chinese-rules -l ";
