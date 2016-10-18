@@ -193,7 +193,7 @@ void convolve3(
     // weights = output * channels * filter
     // merge = channels * outputs * height * width
 
-   // Copy the input channels (strips) locally
+    // Copy the input channels (strips) locally
     if (out_buff_size < 21 && ly == 0) {
         // strip-row
         for (int srow = 0; srow < filter_size; srow++) {
@@ -226,9 +226,9 @@ void convolve3(
         } else {
             for (int srow = 0; srow < filter_size; srow++) {
                 int in_row = row - extent + srow;
-                float val = in[(c * height + in_row) * width + ly - 1];
-                if (ly == 0 || ly > 19) {
-                    val = 0.0f;
+                float val = 0.0f;
+                if (ly >= 1 && ly <= 19) {
+                    val = in[(c * height + in_row) * width + ly - 1];
                 }
                 channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
             }
@@ -251,15 +251,16 @@ void convolve3(
 
     for (int cw = 0; cw < width; cw++) {
         // Start filter
-        float out  =   channel_buff[fid    ] * filter_buff[0]
-                     + channel_buff[fid + 1] * filter_buff[3]
-                     + channel_buff[fid + 2] * filter_buff[6]
-                     + channel_buff[fid + 3] * filter_buff[1]
-                     + channel_buff[fid + 4] * filter_buff[4]
-                     + channel_buff[fid + 5] * filter_buff[7]
-                     + channel_buff[fid + 6] * filter_buff[2]
-                     + channel_buff[fid + 7] * filter_buff[5]
-                     + channel_buff[fid + 8] * filter_buff[8];
+        float out  =
+              channel_buff[fid    ] * filter_buff[0]
+            + channel_buff[fid + 1] * filter_buff[3]
+            + channel_buff[fid + 2] * filter_buff[6]
+            + channel_buff[fid + 3] * filter_buff[1]
+            + channel_buff[fid + 4] * filter_buff[4]
+            + channel_buff[fid + 5] * filter_buff[7]
+            + channel_buff[fid + 6] * filter_buff[2]
+            + channel_buff[fid + 7] * filter_buff[5]
+            + channel_buff[fid + 8] * filter_buff[8];
         // End filter
         out_row_buff[out_lane++] = out;
         fid += filter_size;

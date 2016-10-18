@@ -251,9 +251,9 @@ static std::string sourceCode = R"(
             } else {
                 for (int srow = 0; srow < filter_size; srow++) {
                     int in_row = row - extent + srow;
-                    float val = in[(c * height + in_row) * width + ly - 1];
-                    if (ly == 0 || ly > 19) {
-                        val = 0.0f;
+                    float val = 0.0f;
+                    if (ly >= 1 && ly <= 19) {
+                        val = in[(c * height + in_row) * width + ly - 1];
                     }
                     channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
                 }
@@ -554,7 +554,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     size_t mergeSize = (channels >> channelShift) * outSize;
 
     // Store the filters locally
-    size_t filtSize = outputGroup * channelGroup * filter_len * sizeof(float);
+    // size_t filtSize = outputGroup * channelGroup * filter_len * sizeof(float);
 
     // Copy the rows locally
     size_t stripSize;
@@ -565,6 +565,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     }
 
     int rowBuffer = std::min<int>(channelGroup, 7);
+    assert(rowBuffer == 7); // hardcoded in kernel
     size_t rowSize = channelGroup * outputGroup * rowBuffer * sizeof(float);
 
     assert(mergeSize <= bufferMerge.getInfo<CL_MEM_SIZE>());
