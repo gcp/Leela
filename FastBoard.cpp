@@ -2223,92 +2223,91 @@ std::pair<int, int> FastBoard::after_liberties(const int color, const int vtx) {
 
 bool FastBoard::check_losing_ladder(const int color, const int vtx, int branching) {
     FastBoard tmp = *this;
-    
+
     if (branching > 5) {
         return false;
     }
-    
+
     // killing opponents?
     int elib = tmp.minimum_elib_count(color, vtx);
     if (elib == 0 || elib == 1) {
         return false;
     }
-        
-    int atari = vtx;        
-                
-    tmp.update_board_fast(tmp.m_tomove, vtx);  
-    
-    while (1) {   
-        // suicide
+
+    int atari = vtx;
+
+    tmp.update_board_fast(tmp.m_tomove, vtx);
+
+    while (1) {
+        // suicided
         if (tmp.get_square(atari) == EMPTY) {
             return true;
         }
-                                                                  
+
         int newlibs = tmp.count_rliberties(atari);
-        
+
         // self-atari
         if (newlibs == 1) {
             return true;
         }
-        
+
         // escaped ladder
         if (newlibs >= 3) {
             return false;
         }
-        
+
         // atari on opponent
         int newelib = tmp.minimum_elib_count(color, atari);
         if (newelib == 1) {
             return false;
         }
-        
+
         int lc = 0;
-		std::tr1::array<int, 2> libarr;
+        std::tr1::array<int, 2> libarr;
         tmp.add_string_liberties<2>(atari, libarr, lc);
-        
-        assert(lc == 2);                
-        
+
+        assert(lc == 2);
+
         // 2 good options => always lives
         if (tmp.count_pliberties(libarr[0]) == 3 && tmp.count_pliberties(libarr[1]) == 3) {
             return false;
         }
-        
-        // 2 equal but questionable moves => branch
+
+        // 2 equal moves => branch
         if (tmp.count_pliberties(libarr[0]) == tmp.count_pliberties(libarr[1])) {
             FastBoard tmp2 = tmp;
-            
+
             // play atari in liberty 1, escape in liberty 2
             tmp2.update_board_fast(!tmp.m_tomove, libarr[0]);
             bool ladder1 = tmp2.check_losing_ladder(color, libarr[1], branching + 1);
-            
+
             tmp2 = tmp;
-            
+
             // play atari in liberty 2, escape in liberty 1
             tmp2.update_board_fast(!tmp.m_tomove, libarr[1]);
             bool ladder2 = tmp2.check_losing_ladder(color, libarr[0], branching + 1);
-            
-            // if both escapes lose, we're dead
-            if (ladder1 && ladder2) {
+
+            // if one side of the ataris work, the ladder works
+            if (ladder1 || ladder2) {
                 return true;
             } else {
                 return false;
-            }            
-        } else {    
+            }
+        } else {
             // non branching, play atari that causes most unpleasant escape move
             if (tmp.count_pliberties(libarr[0]) > tmp.count_pliberties(libarr[1])) {
                 tmp.update_board_fast(!tmp.m_tomove, libarr[0]);
             } else if (tmp.count_pliberties(libarr[0]) < tmp.count_pliberties(libarr[1])) {
                 tmp.update_board_fast(!tmp.m_tomove, libarr[1]);
-            }     
+            }
         }
-        
+
         // find and play new saving move
         atari = tmp.in_atari(atari);
-        tmp.update_board_fast(tmp.m_tomove, atari);   
+        tmp.update_board_fast(tmp.m_tomove, atari);
     };
-    
+
     return false;
-    
 }
 
 int FastBoard::merged_string_size(int color, int vertex) {
