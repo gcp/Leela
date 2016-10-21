@@ -1,5 +1,6 @@
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <cctype>
 #include <string>
@@ -55,6 +56,7 @@ const std::string GTP::s_commands[] = {
     "set_free_handicap",
     "loadsgf",
     "kgs-time_settings",
+    "printsgf",
     ""
 };
 
@@ -630,6 +632,24 @@ bool GTP::execute(GameState & game, std::string xinput) {
         cmdstream >> filename;
 
         Book::bookgen_from_file(filename);
+        return true;
+    } else if (command.find("printsgf") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp, filename;
+
+        cmdstream >> tmp;   // eat printsgf
+        cmdstream >> filename;
+
+        auto sgf_text = SGFTree::state_to_string(&game, 0);
+
+        if (cmdstream.fail()) {
+            gtp_printf(id, "%s\n", sgf_text.c_str());
+        } else {
+            std::ofstream out(filename);
+            out << sgf_text;
+            out.close();
+        }
+
         return true;
     }
 
