@@ -363,7 +363,7 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
             }
         }
     }
-    
+
     if (handicap > 0) {
         res.append("HA[" + boost::lexical_cast<std::string>(handicap) + "]");
         res.append("AB" + handicapstr);
