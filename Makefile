@@ -1,7 +1,7 @@
 default:
 	$(MAKE) CC=gcc CXX=g++ \
 		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -ffast-math -march=native -flto -std=c++11 -DNDEBUG -D_CONSOLE'  \
-		LDFLAGS='$(LDFLAGS)' \
+		LDFLAGS='$(LDFLAGS) -g' \
 		leela
 
 gcc32b:

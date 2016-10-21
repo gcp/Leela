@@ -75,6 +75,7 @@ public:
     void save_critical_neighbours(int color, int vertex, movelist_t & moves, size_t & movecnt);
     void add_pattern_moves(int color, int vertex, movelist_t & moves, size_t & movecnt);
     void add_global_captures(int color, movelist_t & moves, size_t & movecnt);
+    void add_nakade_moves(int color, int vertex, movelist_t & moves, size_t & movecnt);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
@@ -178,13 +179,14 @@ protected:
     bool kill_or_connect(int color, int vertex);  
     int in_atari(int vertex);
     bool fast_in_atari(int vertex);
-    template <int N> void add_string_liberties(int vertex, 
+    template <int N> void add_string_liberties(int vertex,
                                                std::tr1::array<int, N> & nbr_libs, 
                                                int & nbr_libs_cnt);
     void kill_neighbours(int vertex, movelist_t & moves, size_t & movecnt);
     void try_capture(int color, int vertex, movelist_t & moves, size_t & movecnt);
     FastBoard remove_dead();
     bool predict_solid_eye(const int move, const int color, const int vtx);
+    void check_nakade(int color, int vertex, movelist_t & moves, size_t & movecnt);
 };
 
 #endif

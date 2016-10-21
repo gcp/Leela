@@ -135,6 +135,7 @@ int FastState::play_random_move(int color) {
         if (board.get_square(m_lastmove) == !color) {
             board.add_global_captures(color, moves, movecnt);
             board.save_critical_neighbours(color, m_lastmove, moves, movecnt);
+            board.add_nakade_moves(color, m_lastmove, moves, movecnt);
             board.add_pattern_moves(color, m_lastmove, moves, movecnt);
 
             // remove ko captures from count
