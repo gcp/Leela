@@ -237,7 +237,6 @@ int main(int argc, char *argv[])
 
         QRegularExpression re("^(Black|White)\\swins\\sby\\s((\\d+)\\.(\\d+))\\spoints?");
         QListIterator<QString> i(outlst);
-        QString winner;
         QString score;
         i.toBack();
         while (i.hasPrevious()) {

@@ -8,6 +8,7 @@ QT       -= gui
 
 TARGET = clopgtp
 CONFIG   += c++11
+CONFIG   += warn_on
 CONFIG   += console
 CONFIG   -= app_bundle
 
