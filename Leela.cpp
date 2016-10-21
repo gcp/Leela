@@ -64,12 +64,11 @@ int main (int argc, char *argv[]) {
         ("crit_his_3", po::value<float>())
         ("nearby", po::value<float>())
         ("small_self_atari", po::value<float>())
-        ("medium_self_atari", po::value<float>())
         ("big_self_atari", po::value<float>())
-        ("huge_self_atari", po::value<float>())
+        ("bad_self_atari", po::value<float>())
         ("useless_self_atari", po::value<float>())
         ("score_pow", po::value<float>())
-        ("cut", po::value<float>())
+        ("local", po::value<float>())
         ("try_captures", po::value<float>())
         ("try_critical", po::value<float>())
         ("try_pattern", po::value<float>())
@@ -140,14 +139,11 @@ int main (int argc, char *argv[]) {
     if (vm.count("small_self_atari")) {
         cfg_small_self_atari = vm["small_self_atari"].as<float>();
     }
-    if (vm.count("medium_self_atari")) {
-        cfg_medium_self_atari = vm["medium_self_atari"].as<float>();
-    }
     if (vm.count("big_self_atari")) {
         cfg_big_self_atari = vm["big_self_atari"].as<float>();
     }
-    if (vm.count("huge_self_atari")) {
-        cfg_huge_self_atari = vm["huge_self_atari"].as<float>();
+    if (vm.count("bad_self_atari")) {
+        cfg_bad_self_atari = vm["bad_self_atari"].as<float>();
     }
     if (vm.count("useless_self_atari")) {
         cfg_useless_self_atari = vm["useless_self_atari"].as<float>();
@@ -155,8 +151,8 @@ int main (int argc, char *argv[]) {
     if (vm.count("score_pow")) {
         cfg_score_pow = vm["score_pow"].as<float>();
     }
-    if (vm.count("cut")) {
-        cfg_cut = vm["cut"].as<float>();
+    if (vm.count("local")) {
+        cfg_local = vm["local"].as<float>();
     }
     if (vm.count("try_captures")) {
         cfg_try_captures = vm["try_captures"].as<float>();

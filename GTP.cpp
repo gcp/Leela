@@ -44,12 +44,11 @@ float cfg_crit_his_2;
 float cfg_crit_his_3;
 float cfg_nearby;
 float cfg_small_self_atari;
-float cfg_medium_self_atari;
 float cfg_big_self_atari;
-float cfg_huge_self_atari;
+float cfg_bad_self_atari;
 float cfg_useless_self_atari;
 float cfg_score_pow;
-float cfg_cut;
+float cfg_local;
 float cfg_try_captures;
 float cfg_try_critical;
 float cfg_try_pattern;
@@ -66,15 +65,15 @@ void GTP::setup_default_parameters() {
     cfg_atari_give_expand = 5;
     cfg_atari_escape_expand = 5;
 #else
-    cfg_mcnn_maturity = 150;
-    cfg_atari_give_expand = 75;
-    cfg_atari_escape_expand = 30;
+    cfg_mcnn_maturity = 250;
+    cfg_atari_give_expand = cfg_mcnn_maturity / 3;
+    cfg_atari_escape_expand = cfg_mcnn_maturity / 3;
 #endif
-    cfg_cutoff_ratio = 0.50f;
-    cfg_cutoff_offset = 7.0f;
-    cfg_puct = 2.40f;
-    cfg_perbias = 0.040f;
-    cfg_easymove_ratio = 10.0f;
+    cfg_cutoff_ratio = 1.0f;
+    cfg_cutoff_offset = 0.0f;
+    cfg_puct = 2.0f;
+    cfg_perbias = 0.02f;
+    cfg_easymove_ratio = 5.0f;
 
     cfg_crit_mine_1 = 4.0f;
     cfg_crit_mine_2 = 1.0f;
@@ -84,12 +83,11 @@ void GTP::setup_default_parameters() {
     cfg_crit_his_3 = 1.0f;
     cfg_nearby = 1.0f/20.0f;
     cfg_small_self_atari = 1.0f/64.0f;
-    cfg_medium_self_atari = 1.0f/64.0f;
     cfg_big_self_atari = 1.0f/64.0f;
-    cfg_huge_self_atari = 1.0f/64.0f;
+    cfg_bad_self_atari = 1.0f/64.0f;
     cfg_useless_self_atari = 1.0f/64.0f;
     cfg_score_pow = 1.0f;
-    cfg_cut = 0.00f;
+    cfg_local = 20.0f;
     cfg_try_captures = 1.0f;
     cfg_try_critical = 1.0f;
     cfg_try_pattern = 1.0f;

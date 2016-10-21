@@ -76,54 +76,55 @@ std::vector<int> FastState::generate_moves(int color) {
     return result;
 }
 
-bool FastState::try_move(int color, int vertex, bool allow_sa) {    
+bool FastState::try_move(int color, int vertex, bool allow_sa) {
     if (vertex != m_komove && board.no_eye_fill(vertex)) {
         if (!board.fast_ss_suicide(color, vertex)) {
             if ((allow_sa) || (!board.self_atari(color, vertex))) {
                 return true;
             }
-        } 
-    }                       
-    
+        }
+    }
+
     return false;
 }
 
-int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
-    int dir = Random::get_Rng()->randint(2);    
+int FastState::walk_empty_list(int color, bool allow_sa) {
+    int dir = Random::get_Rng()->randint(2);
+    int vidx = Random::get_Rng()->randint(board.m_empty_cnt);
 
-    if (dir == 0) {        
+    if (dir == 0) {
         for (int i = vidx; i < board.m_empty_cnt; i++) {
             int e = board.m_empty[i];
-            
+
             if (try_move(color, e, allow_sa)) {
                 return e;
-            }                        
+            }
         }
         for (int i = 0; i < vidx; i++) {
             int e = board.m_empty[i];
-            
+
             if (try_move(color, e, allow_sa)) {
                 return e;
-            }    
+            }
         }
-    } else {        
+    } else {
         for (int i = vidx; i >= 0; i--) {
             int e = board.m_empty[i];
-            
+
             if (try_move(color, e, allow_sa)) {
                 return e;
-            }    
+            }
         }
         for (int i = board.m_empty_cnt - 1; i > vidx; i--) {
             int e = board.m_empty[i];
-            
+
             if (try_move(color, e, allow_sa)) {
                 return e;
-            }    
+            }
         }
     }
-                               
-    return FastBoard::PASS;        
+
+    return FastBoard::PASS;
 }
 
 int FastState::play_random_move(int color) {
@@ -132,26 +133,30 @@ int FastState::play_random_move(int color) {
     moves.clear();
     scoredmoves.clear();
 
+    Matcher * matcher = Matcher::get_Matcher();
+    Random * rng = Random::get_Rng();
+
     if (m_lastmove > 0 && m_lastmove < board.m_maxsq) {
         if (board.get_square(m_lastmove) == !color) {
-            if (cfg_try_captures > Random::get_Rng()->randflt()) {
+            if (cfg_try_captures > rng->randflt()) {
                 board.add_global_captures(color, moves);
             }
-            if (cfg_try_critical > Random::get_Rng()->randflt()) {
+            if (cfg_try_critical > rng->randflt()) {
                 board.save_critical_neighbours(color, m_lastmove, moves);
             }
-            if (cfg_try_pattern > Random::get_Rng()->randflt()) {
+            if (cfg_try_pattern > rng->randflt()) {
                 board.add_pattern_moves(color, m_lastmove, moves);
             }
         }
     }
 
-    if (cfg_try_loops > Random::get_Rng()->randflt()) {
+    size_t local_moves = moves.size();
+
+    if (cfg_try_loops > rng->randflt()) {
         int loops = board.m_empty_cnt / 64;
 
         do {
-            int vidx = Random::get_Rng()->randint(board.m_empty_cnt);
-            int vtx = walk_empty_list(board.m_tomove, vidx, true);
+            int vtx = walk_empty_list(board.m_tomove, true);
 
             if (vtx == FastBoard::PASS) {
                 continue;
@@ -161,12 +166,11 @@ int FastState::play_random_move(int color) {
         } while (--loops > 0);
     }
 
-    Matcher * matcher = Matcher::get_Matcher();
-
     if (moves.size()) {
         float cumul = 0.0f;
 
-        for (int sq : moves) {
+        for (size_t i = 0; i < moves.size(); i++) {
+            int sq = moves[i];
             // skip ko
             if (sq == m_komove) continue;
 
@@ -224,25 +228,25 @@ int FastState::play_random_move(int color) {
                     int ours_dying = board.enemy_atari_size(!color, sq);
                     if (ours_dying <= 1) {
                         score *= cfg_small_self_atari;
-                    } else if (ours_dying <= 2) {
-                        score *= cfg_medium_self_atari;
                     } else if (ours_dying < enemy_dying) {
                         score *= cfg_big_self_atari;
                     } else {
-                        score *= cfg_huge_self_atari;
+                        score *= cfg_bad_self_atari;
                     }
                 } else {
                     score *= cfg_useless_self_atari;
                 }
             }
 
-            if (score > cfg_cut) {
-                cumul += score;
-                scoredmoves.push_back(std::make_pair(sq, cumul));
+            if (i < local_moves) {
+                score *= cfg_local;
             }
+
+            cumul += score;
+            scoredmoves.push_back(std::make_pair(sq, cumul));
         }
 
-        float index = Random::get_Rng()->randflt() * cumul;
+        float index = rng->randflt() * cumul;
 
         for (size_t i = 0; i < scoredmoves.size(); i++) {
             float point = scoredmoves[i].second;

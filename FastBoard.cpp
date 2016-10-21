@@ -2115,17 +2115,17 @@ int FastBoard::nbr_libs(int color, int vertex, int count, bool plus) {
 
 int FastBoard::minimum_elib_count(int color, int vertex) {
     int minlib = 100; // XXX hardcoded in some places
-    
+
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
         if (m_square[ai] == !color) {
-            int lc = m_libs[m_parent[ai]];            
+            int lc = m_libs[m_parent[ai]];
             if (lc < minlib) {
                 minlib = lc;
             }
-        }    
-    } 
-    
+        }
+    }
+
     return minlib;
 }
 
