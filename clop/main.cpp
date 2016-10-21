@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
     qsrand(seed);
 
-    QString orig_cmdline("./leela-073b --gtp --noponder --threads 1");
+    QString orig_cmdline("./leela-073 --gtp --noponder --threads 1");
     QString tune_cmdline("./leela --gtp --noponder --threads 1");
 
     parmset ps;
@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
     bool stop = false;
     bool orig_to_move = (qrand() % 2 == 0);
     bool black_to_move = true;
+    bool black_resigned;
     bool orig_is_black = orig_to_move;
     int passes = 0;
 
@@ -167,19 +168,20 @@ int main(int argc, char *argv[])
 
         move_side += side_prefix + resp_move + "\n";
 
+        if (resp_move.compare(QStringLiteral("pass"),
+                              Qt::CaseInsensitive) == 0) {
+            passes++;
+        } else if (resp_move.compare(QStringLiteral("resign"),
+                                     Qt::CaseInsensitive) == 0) {
+            passes++;
+            stop = true;
+            black_resigned = black_to_move;
+        }
+
         // Got move, swap sides now
         orig_to_move = !orig_to_move;
         black_to_move = !black_to_move;
 
-        if (resp_move.compare(QStringLiteral("pass"),
-                              Qt::CaseInsensitive) == 0) {
-            passes++;
-        }
-        if (resp_move.compare(QStringLiteral("resign"),
-                              Qt::CaseInsensitive) == 0) {
-            passes++;
-            stop = true;
-        }
         if (!stop) {
             if (orig_to_move) {
                 orig_process.write(qPrintable(move_side));
@@ -205,48 +207,58 @@ int main(int argc, char *argv[])
         }
     } while (!stop && passes < 2);
 
-    QString sgf_name(QDir::tempPath() + "/");
-    sgf_name += QUuid::createUuid().toRfc4122().toHex();
-    sgf_name += ".sgf";
-
-    cerr << "Writing " << sgf_name << endl;
-
-    orig_process.write(qPrintable("printsgf " + sgf_name + "\n"));
-
-    orig_process.write(qPrintable("quit\n"));
-    tune_process.write(qPrintable("quit\n"));
-
-    orig_process.waitForFinished(-1);
-    tune_process.waitForFinished(-1);
-
-    QProcess gnugo_process;
-    QString gnugo_cmdline("gnugo --score aftermath ");
-    gnugo_cmdline += " --positional-superko --chinese-rules -l ";
-    gnugo_cmdline += sgf_name;
-    gnugo_process.start(gnugo_cmdline);
-    gnugo_process.waitForFinished(-1);
-
-    QByteArray output = gnugo_process.readAllStandardOutput();
-    QString outstr(output);
-    QStringList outlst = outstr.split("\n");
-
-    QRegularExpression re("^(Black|White)\\swins\\sby\\s((\\d+)\\.(\\d+))\\spoints?");
-    QListIterator<QString> i(outlst);
     QString winner;
-    QString score;
-    i.toBack();
-    while (i.hasPrevious()) {
-        QString str = i.previous();
-        cerr << str << endl;
-        auto match = re.match(str);
-        if (match.hasMatch()) {
-            winner = match.captured(1);
-            score = match.captured(2);
-            cerr << winner << " by " << score << " points." << endl;
+
+    if (!stop) {
+        QString sgf_name(QDir::tempPath() + "/");
+        sgf_name += QUuid::createUuid().toRfc4122().toHex();
+        sgf_name += ".sgf";
+
+        cerr << "Writing " << sgf_name << endl;
+
+        orig_process.write(qPrintable("printsgf " + sgf_name + "\n"));
+
+        orig_process.write(qPrintable("quit\n"));
+        tune_process.write(qPrintable("quit\n"));
+
+        orig_process.waitForFinished(-1);
+        tune_process.waitForFinished(-1);
+
+        QProcess gnugo_process;
+        QString gnugo_cmdline("gnugo --score aftermath ");
+        gnugo_cmdline += " --positional-superko --chinese-rules -l ";
+        gnugo_cmdline += sgf_name;
+        gnugo_process.start(gnugo_cmdline);
+        gnugo_process.waitForFinished(-1);
+
+        QByteArray output = gnugo_process.readAllStandardOutput();
+        QString outstr(output);
+        QStringList outlst = outstr.split("\n");
+
+        QRegularExpression re("^(Black|White)\\swins\\sby\\s((\\d+)\\.(\\d+))\\spoints?");
+        QListIterator<QString> i(outlst);
+        QString winner;
+        QString score;
+        i.toBack();
+        while (i.hasPrevious()) {
+            QString str = i.previous();
+            cerr << str << endl;
+            auto match = re.match(str);
+            if (match.hasMatch()) {
+                winner = match.captured(1);
+                score = match.captured(2);
+                cerr << winner << " by " << score << " points." << endl;
+            }
+        }
+
+        QFile::remove(sgf_name);
+    } else {
+        if (black_resigned) {
+            winner = QString(QStringLiteral("White"));
+        } else {
+            winner = QString(QStringLiteral("Black"));
         }
     }
-
-    QFile::remove(sgf_name);
 
     if (winner.isNull()) {
         cerr << "No winner found" << endl;
