@@ -62,13 +62,12 @@ int main (int argc, char *argv[]) {
         ("crit_his_1", po::value<float>())
         ("crit_his_2", po::value<float>())
         ("crit_his_3", po::value<float>())
-        ("nearby", po::value<float>())
+        ("tactical", po::value<float>())
         ("small_self_atari", po::value<float>())
         ("big_self_atari", po::value<float>())
         ("bad_self_atari", po::value<float>())
         ("useless_self_atari", po::value<float>())
         ("score_pow", po::value<float>())
-        ("local", po::value<float>())
         ("try_captures", po::value<float>())
         ("try_critical", po::value<float>())
         ("try_pattern", po::value<float>())
@@ -133,8 +132,8 @@ int main (int argc, char *argv[]) {
     if (vm.count("crit_his_3")) {
         cfg_crit_his_3 = vm["crit_his_3"].as<float>();
     }
-    if (vm.count("nearby")) {
-        cfg_nearby = vm["nearby"].as<float>();
+    if (vm.count("tactical")) {
+        cfg_tactical = vm["tactical"].as<float>();
     }
     if (vm.count("small_self_atari")) {
         cfg_small_self_atari = vm["small_self_atari"].as<float>();
@@ -151,9 +150,6 @@ int main (int argc, char *argv[]) {
     if (vm.count("score_pow")) {
         cfg_score_pow = vm["score_pow"].as<float>();
     }
-    if (vm.count("local")) {
-        cfg_local = vm["local"].as<float>();
-    }
     if (vm.count("try_captures")) {
         cfg_try_captures = vm["try_captures"].as<float>();
     }
@@ -162,9 +158,6 @@ int main (int argc, char *argv[]) {
     }
     if (vm.count("try_pattern")) {
         cfg_try_pattern = vm["try_pattern"].as<float>();
-    }
-    if (vm.count("try_loops")) {
-        cfg_try_loops = vm["try_loops"].as<float>();
     }
 #endif
 

@@ -16,17 +16,15 @@ GammaParameter        crit_mine_3            0.001 1000
 GammaParameter        crit_his_1             0.001 1000
 GammaParameter        crit_his_2             0.001 1000
 GammaParameter        crit_his_3             0.001 1000
-GammaParameter        nearby                 0.001 1000
+GammaParameter        tactical               0.001 1000
 GammaParameter        small_self_atari       0.001 1000
 GammaParameter        big_self_atari         0.001 1000
 GammaParameter        bad_self_atari         0.001 1000
 GammaParameter        useless_self_atari     0.001 1000
-GammaParameter        score_pow              0.1     10
-GammaParameter        local                  0.01  1000
+GammaParameter        score_pow              0.1   10
 GammaParameter        try_captures           0.01  1.0
 GammaParameter        try_critical           0.01  1.0
 GammaParameter        try_pattern            0.01  1.0
-GammaParameter        try_loops              0.01  1.0
 
 Processor cpu1
 Processor cpu2

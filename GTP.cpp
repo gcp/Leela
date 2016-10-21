@@ -42,13 +42,12 @@ float cfg_crit_mine_3;
 float cfg_crit_his_1;
 float cfg_crit_his_2;
 float cfg_crit_his_3;
-float cfg_nearby;
 float cfg_small_self_atari;
 float cfg_big_self_atari;
 float cfg_bad_self_atari;
 float cfg_useless_self_atari;
 float cfg_score_pow;
-float cfg_local;
+float cfg_tactical;
 float cfg_try_captures;
 float cfg_try_critical;
 float cfg_try_pattern;
@@ -81,17 +80,15 @@ void GTP::setup_default_parameters() {
     cfg_crit_his_1 = 14.0f;
     cfg_crit_his_2 = 12.0f;
     cfg_crit_his_3 = 1.0f;
-    cfg_nearby = 1.0f/20.0f;
+    cfg_tactical = 20.0f;
     cfg_small_self_atari = 1.0f/64.0f;
     cfg_big_self_atari = 1.0f/64.0f;
     cfg_bad_self_atari = 1.0f/64.0f;
     cfg_useless_self_atari = 1.0f/64.0f;
     cfg_score_pow = 1.0f;
-    cfg_local = 20.0f;
     cfg_try_captures = 1.0f;
     cfg_try_critical = 1.0f;
     cfg_try_pattern = 1.0f;
-    cfg_try_loops = 1.0f;
 }
 
 const std::string GTP::s_commands[] = {

@@ -1275,19 +1275,25 @@ void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & mov
             if (lib <= 1) {
                 int atari = in_atari(ai);
 
+                size_t startsize = moves.size();
+
                 // find saving moves for atari square "atari"
                 // we can save by either
                 // 1) playing in the atari if it increases liberties
+                //    i.e. it is not self-atari
                 // 2) capturing an opponent, which means that he should
                 //    also be in atari
-                // XXX: 1 or 2?
-                if (count_pliberties(atari) >= 1) {
+                if (!self_atari(color, atari)) {
                     moves.push_back(atari);
                 }
+
                 kill_neighbours(ai, moves);
 
-                // add this to critical points to try and capture
-                m_critical.push_back(atari);
+                // saving moves failed, add this to critical points
+                // to try and capture
+                if (moves.size() == startsize) {
+                    m_critical.push_back(atari);
+                }
             }
         }
     }
@@ -1997,7 +2003,7 @@ void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves) {
         int sq = vertex + m_extradirs[i];
 
         if (m_square[sq] == EMPTY) {
-            if (no_eye_fill(sq) && !fast_ss_suicide(color, sq)) {
+            if (!self_atari(color, sq)) {
                 moves.push_back(sq);
             }
         }
