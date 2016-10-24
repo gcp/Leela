@@ -154,21 +154,27 @@ void Network::initialize(void) {
     int height = input_layer->height();
     myprintf("Input: channels=%d, width=%d, height=%d\n", num_channels, width, height);
 
-    Blob<float>* output_layer = net->output_blobs()[2];
-    int num_out_channels = output_layer->channels();
-    width = output_layer->width();
-    height = output_layer->height();
-    myprintf("Output: channels=%d, width=%d, height=%d\n", num_out_channels, width, height);
+    for (int i = 0; i < net->num_outputs(); i++) {
+        Blob<float>* output_layer = net->output_blobs()[i];
+        int num_out_channels = output_layer->channels();
+        width = output_layer->width();
+        height = output_layer->height();
+        myprintf("Output: channels=%d, width=%d, height=%d\n", num_out_channels, width, height);
+    }
 
 //#define WRITE_WEIGHTS
 #ifdef WRITE_WEIGHTS
     std::ofstream out("weights.txt");
+    out << "#include <boost/tr1/array.hpp>" << std::endl << std::endl;
 #endif
 
     int total_weights = 0;
     auto & layers = net->layers();
     myprintf("%d layers:\n", layers.size());
     int layer_num = 1;
+#ifdef WRITE_WEIGHTS
+    int conv_count = 0;
+#endif
     for (auto it = layers.begin(); it != layers.end(); ++it, ++layer_num) {
         myprintf("layer %d (%s)", layer_num, (*it)->type());
         auto & blobs = (*it)->blobs();
@@ -181,8 +187,33 @@ void Network::initialize(void) {
 
 #ifdef WRITE_WEIGHTS
             out << "// " << blob.shape_string() << std::endl;
-            out << "std::tr1::array<float, " << blob.count()
-                << "> weights = {{" << std::endl;
+            if (strcmp((*it)->type(), "Convolution") == 0) {
+                if (pars == blobs.begin()) {
+                    conv_count++;
+                    out << "std::tr1::array<float, " << blob.count()
+                        << "> conv" << conv_count << "_w = {{" << std::endl;
+                } else {
+                    out << "std::tr1::array<float, " << blob.count()
+                        << "> conv" << conv_count << "_b = {{" << std::endl;
+                }
+            } else if (strcmp((*it)->type(), "BatchNorm") == 0) {
+                out << "std::tr1::array<float, " << blob.count()
+                    << "> bn" << conv_count << "_w" << (pars - blobs.begin()) + 1
+                    << " = {{" << std::endl;
+            } else if (strcmp((*it)->type(), "InnerProduct") == 0) {
+                if (pars == blobs.begin()) {
+                    conv_count++;
+                    out << "std::tr1::array<float, " << blob.count()
+                        << "> ip" << conv_count << "_w = {{" << std::endl;
+                } else {
+                    out << "std::tr1::array<float, " << blob.count()
+                        << "> ip" << conv_count << "_b = {{" << std::endl;
+                }
+            } else {
+                out << "std::tr1::array<float, " << blob.count()
+                    << "> sc" << conv_count << "_w" << (pars - blobs.begin()) + 1
+                    << " = {{" << std::endl;
+            }
             for (int idx = 0; idx < blob.count(); idx++) {
                 out << blob.cpu_data()[idx];
                 if (idx != blob.count() - 1) out << ", ";
@@ -487,7 +518,8 @@ std::vector<Network::scored_node> Network::get_scored_moves_internal(
 #endif
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->thread_init();
-    OpenCL::get_OpenCL()->forward(input_data, output_data);
+    OpenCL::get_OpenCL()->forward_async(input_data, output_data,
+                                        nullptr, nullptr);
     softmax(output_data, softmax_data);
 
     std::vector<float>& outputs = softmax_data;
@@ -705,6 +737,8 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
     size_t test_pos = 0;
 
     myprintf("Total games in file: %d\n", gametotal);
+    myprintf("Shuffling...\n");
+    std::random_shuffle(games.begin(), games.end());
 
     while (gamecount < gametotal) {
         std::unique_ptr<SGFTree> sgftree(new SGFTree);
@@ -716,6 +750,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
 
         size_t movecount = sgftree->count_mainline_moves();
         std::vector<int> tree_moves = sgftree->get_mainline();
+        int who_won = sgftree->get_winner();
 
         SGFTree * treewalk = &(*sgftree);
         size_t counter = 0;
@@ -726,66 +761,69 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
             if (treewalk->get_state()->board.get_boardsize() != 19)
                 break;
 
-            // check every 3rd move
-            //int skip = Random::get_Rng()->randint(3);
-            if (1) {
-                KoState * state = treewalk->get_state();
-                int tomove = state->get_to_move();
-                int move;
+            if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE)
+                break;
 
-                if (treewalk->get_child(0) != NULL) {
-                    move = treewalk->get_child(0)->get_move(tomove);
-                    if (move == SGFTree::EOT) {
-                        break;
-                    }
-                } else {
+            KoState * state = treewalk->get_state();
+            int tomove = state->get_to_move();
+            int move;
+
+            if (treewalk->get_child(0) != NULL) {
+                move = treewalk->get_child(0)->get_move(tomove);
+                if (move == SGFTree::EOT) {
                     break;
                 }
+            } else {
+                break;
+            }
 
-                assert(move == tree_moves[counter]);
+            assert(move == tree_moves[counter]);
 
-                TrainPosition position;
+            TrainPosition position;
 
-                std::vector<int> moves = state->generate_moves(tomove);
-                bool moveseen = false;
-                for(auto it = moves.begin(); it != moves.end(); ++it) {
-                    if (*it == move) {
-                        if (move != FastBoard::PASS) {
-                            // get x y coords for actual move
-                            std::pair<int, int> xy = state->board.get_xy(move);
-                            position.first[0] = (xy.second * 19) + xy.first;
-                        }
-                        moveseen = true;
+            std::vector<int> moves = state->generate_moves(tomove);
+            bool moveseen = false;
+            for(auto it = moves.begin(); it != moves.end(); ++it) {
+                if (*it == move) {
+                    if (move != FastBoard::PASS) {
+                        // get x y coords for actual move
+                        std::pair<int, int> xy = state->board.get_xy(move);
+                        position.moves[0] = (xy.second * 19) + xy.first;
                     }
+                    moveseen = true;
                 }
+            }
 
-                bool has_next_moves = counter + 2 < tree_moves.size();
-                if (!has_next_moves) {
-                    goto skipnext;
-                }
+            bool has_next_moves = counter + 2 < tree_moves.size();
+            if (!has_next_moves) {
+                goto skipnext;
+            }
 
-                has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
-                has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
+            has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
+            has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
 
-                if (!has_next_moves) {
-                    goto skipnext;
-                }
+            if (!has_next_moves) {
+                goto skipnext;
+            }
 
-                if (moveseen && move != FastBoard::PASS && has_next_moves) {
-                    gather_features(state, position.second);
-                    // add next 2 moves to position
-                    // we do not check them for legality
-                    int next_move = tree_moves[counter + 1];
-                    int next_next_move = tree_moves[counter + 2];
-                    std::pair<int, int> xy = state->board.get_xy(next_move);
-                    position.first[1] = (xy.second * 19) + xy.first;
-                    xy = state->board.get_xy(next_next_move);
-                    position.first[2] = (xy.second * 19) + xy.first;
-                    data.push_back(position);
-                } else if (move != FastBoard::PASS) {
-                    myprintf("Mainline move not found: %d\n", move);
-                    goto skipnext;
-                }
+            if (moveseen && move != FastBoard::PASS && has_next_moves) {
+                position.stm_won = (tomove == who_won ? 1.0f : -1.0f);
+                float frac = (float)counter / (float)movecount;
+                position.stm_score = (frac * position.stm_won)
+                                      + ((1.0f - frac) * 0.0f);
+                gather_features(state, position.planes);
+                // add next 2 moves to position
+                // we do not check them for legality
+                int next_move = tree_moves[counter + 1];
+                int next_next_move = tree_moves[counter + 2];
+                std::pair<int, int> xy = state->board.get_xy(next_move);
+                position.moves[1] = (xy.second * 19) + xy.first;
+                xy = state->board.get_xy(next_next_move);
+                position.moves[2] = (xy.second * 19) + xy.first;
+                data.push_back(position);
+            } else if (move != FastBoard::PASS) {
+                myprintf("Mainline move not found: %d\n", move);
+                goto skipnext;
             }
 
             counter++;
@@ -795,13 +833,14 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
 skipnext:
         gamecount++;
         if (gamecount % 100 == 0) {
-            myprintf("Game %d, %d total positions\n", gamecount, data.size());
+            myprintf("Game %d, %d new positions, %d total\n",
+                     gamecount, data.size(), train_pos + data.size());
+        }
+        if (gamecount % 50000 == 0) {
+            train_network(data, train_pos, test_pos);
         }
     }
 
-    std::cout << "Shuffling training data...";
-    std::random_shuffle(data.begin(), data.end());
-    std::cout << "writing: ";
     train_network(data, train_pos, test_pos);
 
     std::cout << train_pos << " training positions." << std::endl;
@@ -863,35 +902,42 @@ void Network::train_network(TrainVector& data,
     boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
     std::string dbTrainName("leela_train");
     train_db->Open(dbTrainName.c_str(), caffe::db::WRITE);
+    boost::scoped_ptr<caffe::db::DB> train_label_db(caffe::db::GetDB("leveldb"));
+    std::string dbTrainLabelName("leela_train_label");
+    train_label_db->Open(dbTrainLabelName.c_str(), caffe::db::WRITE);
     boost::scoped_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
     std::string dbTestName("leela_test");
     test_db->Open(dbTestName.c_str(), caffe::db::WRITE);
+    boost::scoped_ptr<caffe::db::DB> test_label_db(caffe::db::GetDB("leveldb"));
+    std::string dbTestLabelName("leela_test_label");
+    test_label_db->Open(dbTestLabelName.c_str(), caffe::db::WRITE);
 
     boost::scoped_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
     boost::scoped_ptr<caffe::db::Transaction> test_txn(test_db->NewTransaction());
+    boost::scoped_ptr<caffe::db::Transaction> train_label_txn(train_label_db->NewTransaction());
+    boost::scoped_ptr<caffe::db::Transaction> test_label_txn(test_label_db->NewTransaction());
 
-    for (int pass = 0; pass < 2; pass++) {
+    for (int pass = 0; pass < 1; pass++) {
+        std::cout << "Shuffling training data...";
+        std::random_shuffle(data.begin(), data.end());
+        std::cout << "writing: ";
+
         size_t data_pos = 0;
         for (auto it = data.begin(); it != data.end(); ++it) {
             TrainPosition& position = *it;
-            int move = position.first[0];
-            NNPlanes& nnplanes = position.second;
+            NNPlanes& nnplanes = position.planes;
+            float stm_won = position.stm_won;
+            float stm_score = position.stm_score;
 
+             // train data
             caffe::Datum datum;
-            datum.set_channels(nnplanes.size() + 2);
+            size_t datum_channels = nnplanes.size();
+            datum.set_channels(datum_channels);
             datum.set_height(19);
             datum.set_width(19);
+            std::string buffer(datum_channels * 19 * 19, '\0');
             // check whether to rotate the position
-            int symmetry;
-            if (pass == 0) {
-                symmetry = Random::get_Rng()->randint(4);
-            } else {
-                assert(pass == 1);
-                symmetry = Random::get_Rng()->randint(4) + 4;
-            }
-            // store (rotated) move
-            int rot_move = rotate_nn_idx(move, symmetry);
-            datum.set_label(rot_move);
+            int symmetry = Random::get_Rng()->randint(8);
             // set (rotated) bitmaps
             for (size_t p = 0; p < nnplanes.size(); p++) {
                 BoardPlane tmp;
@@ -906,19 +952,30 @@ void Network::train_network(TrainVector& data,
                     assert(tmp[rot_move] == false);
                 }
                 for (size_t b = 0; b < tmp.size(); b++) {
-                    datum.add_float_data((float)tmp[b]);
+                    buffer[(p * (19 * 19)) + b] = (int)tmp[b];
                 }
             }
-            int next_move = rotate_nn_idx(position.first[1], symmetry);
-            for (size_t b = 0; b < 19*19; b++) {
-                datum.add_float_data(b == next_move ? 1.0f : 0.0f);
-            }
-            int next_next_move = rotate_nn_idx(position.first[2], symmetry);
-            for (size_t b = 0; b < 19*19; b++) {
-                datum.add_float_data(b == next_next_move ? 1.0f : 0.0f);
-            }
+            datum.set_data(buffer);
             std::string out;
             datum.SerializeToString(&out);
+
+            // labels
+            caffe::Datum datum_label;
+            datum_label.set_channels(5);
+            datum_label.set_height(1);
+            datum_label.set_width(1);
+
+            int this_move = rotate_nn_idx(position.moves[0], symmetry);
+            int next_move = rotate_nn_idx(position.moves[1], symmetry);
+            int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
+
+            datum_label.add_float_data((float)this_move);
+            datum_label.add_float_data((float)next_move);
+            datum_label.add_float_data((float)next_next_move);
+            datum_label.add_float_data((float)stm_score);
+            datum_label.add_float_data((float)stm_won);
+            std::string label_out;
+            datum_label.SerializeToString(&label_out);
 
             data_pos++;
             if (data_pos > traincut) {
@@ -926,20 +983,26 @@ void Network::train_network(TrainVector& data,
                 ss << test_pos;
                 test_pos++;
                 test_txn->Put(ss.str(), out);
+                test_label_txn->Put(ss.str(), label_out);
                 if (test_pos % 10000 == 0) {
                     std::cout << "t";
                     test_txn->Commit();
+                    test_label_txn->Commit();
                     test_txn.reset(test_db->NewTransaction());
+                    test_label_txn.reset(test_label_db->NewTransaction());
                 }
             } else {
                 std::stringstream ss;
                 ss << train_pos;
                 train_pos++;
                 train_txn->Put(ss.str(), out);
+                train_label_txn->Put(ss.str(), label_out);
                 if (train_pos % 10000 == 0) {
                     std::cout << symmetry;
                     train_txn->Commit();
+                    train_label_txn->Commit();
                     train_txn.reset(train_db->NewTransaction());
+                    train_label_txn.reset(train_label_db->NewTransaction());
                 }
             }
         }
@@ -948,6 +1011,8 @@ void Network::train_network(TrainVector& data,
 
     train_txn->Commit();
     test_txn->Commit();
+    train_label_txn->Commit();
+    test_label_txn->Commit();
 
     total_train_pos += train_pos;
     total_test_pos += test_pos;

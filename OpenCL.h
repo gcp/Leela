@@ -64,7 +64,6 @@ public:
         return m_layers.size();
     }
 
-    void forward(std::vector<float>& input, std::vector<float>& output);
     std::string get_device_name();
     void forward_async(std::vector<float>& input, std::vector<float>& output,
                        event_callback cb, void * data);

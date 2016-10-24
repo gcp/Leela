@@ -27,11 +27,12 @@ public:
     SGFTree * add_child(SGFTree child);                      
     SGFTree * get_child(unsigned int count);
     int get_move(int tomove);
-    
+    FastBoard::square_t get_winner();
+
     static std::string state_to_string(GameState * state, int compcolor);
 
-private:     
-    void populate_states(void);    
+private:
+    void populate_states(void);
     void apply_move(int color, int move);
     void apply_move(int move);
     void set_state(KoState & state); 
@@ -39,7 +40,8 @@ private:
 
     typedef std::multimap<std::string, std::string> PropertyMap;
 
-    KoState m_state;    
+    KoState m_state;
+    FastBoard::square_t m_winner{FastBoard::INVAL};
     std::vector<SGFTree> m_children;
     PropertyMap m_properties;
 };

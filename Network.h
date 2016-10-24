@@ -28,7 +28,12 @@ public:
     using BoardPlane = std::bitset<19*19>;
     using NNPlanes = std::vector<BoardPlane>;
     using PredMoves = std::array<int, 3>;
-    using TrainPosition = std::pair<PredMoves, NNPlanes>;
+    struct TrainPosition {
+        NNPlanes planes;
+        PredMoves moves;
+        float stm_won;
+        float stm_score;
+    };
     using TrainVector = std::vector<TrainPosition>;
 
     using scored_node = std::pair<float, int>;
@@ -36,7 +41,7 @@ public:
     std::vector<scored_node> get_scored_moves(FastState * state,
                                               Ensemble ensemble);
     static constexpr int CHANNELS = 24;
-    static constexpr int MAX_CHANNELS = 128;
+    static constexpr int MAX_CHANNELS = 160;
 
 #ifdef USE_OPENCL
     void async_scored_moves(boost::atomic<int> * nodecount,

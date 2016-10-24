@@ -451,7 +451,12 @@ void OpenCL::forward_async(std::vector<float>& input,
 
     m_cb_outstanding.fetch_add(1, boost::memory_order_release);
     queue.finish();
-    cb(CL_COMPLETE, 0, data);
+    if (cb != nullptr) {
+        cb(CL_COMPLETE, 0, data);
+    } else {
+        thread_data.get()->m_results_outstanding.fetch_sub(1, boost::memory_order_release);
+        callback_finished();
+    }
 }
 
 void OpenCL::callback_finished() {
@@ -460,56 +465,6 @@ void OpenCL::callback_finished() {
 
 void OpenCL::join_outstanding_cb() {
     while (m_cb_outstanding.load(boost::memory_order_acquire) > 0);
-}
-
-void OpenCL::forward(std::vector<float>& input,
-                     std::vector<float>& output) {
-    constexpr int width = 19;
-    constexpr int height = 19;
-
-    thread_data.get()->m_results_outstanding.fetch_add(1, boost::memory_order_release);
-    size_t inSize = sizeof(float) * input.size();
-    size_t outSize = sizeof(float) * output.size();
-    size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
-    size_t mergeSize = sizeof(float) * width * height *
-                       Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 8);
-
-    if (!thread_data.get()->m_buffers_allocated) {
-        thread_data.get()->m_inBuffer = cl::Buffer(
-            CL_MEM_READ_WRITE, inSize);
-        thread_data.get()->m_tmpBuffer = cl::Buffer(
-            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, outSize);
-        thread_data.get()->m_mergeBuffer = cl::Buffer(
-            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, mergeSize);
-        thread_data.get()->m_outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
-        thread_data.get()->m_buffers_allocated = true;
-    }
-
-    cl::Buffer & inBuffer = thread_data.get()->m_inBuffer;
-    cl::Buffer & outBuffer = thread_data.get()->m_outBuffer;
-    cl::Buffer & tmpBuffer = thread_data.get()->m_tmpBuffer;
-    cl::Buffer & mergeBuffer = thread_data.get()->m_mergeBuffer;
-    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
-
-    queue.enqueueWriteBuffer(inBuffer, CL_FALSE, 0, inSize, input.data());
-
-    for (auto & layer : m_layers) {
-        // convolution
-        convolve(layer.filter_size,
-                    layer.channels,
-                    layer.outputs,
-                    inBuffer,
-                    tmpBuffer,
-                    mergeBuffer,
-                    layer.weights);
-        std::swap(inBuffer, tmpBuffer);
-    }
-
-    // last layer is always a convolution, so output is in tmp
-    queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
-    queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
-    queue.finish();
-    thread_data.get()->m_results_outstanding.fetch_sub(1, boost::memory_order_release);
 }
 
 static int rounddown_pow2(int val) {

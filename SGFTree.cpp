@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <memory>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "SGFTree.h"
 #include "KoState.h"
@@ -159,7 +160,24 @@ void SGFTree::populate_states(void) {
         m_state.set_handicap((int)handicap);
     }
 
-    // handicap stone    
+    // result
+    it = m_properties.find("RE");
+    if (it != m_properties.end()) {
+        std::string result = it->second;
+        if (boost::algorithm::starts_with(result, "W+")) {
+            m_winner = FastBoard::WHITE;
+        } else if (boost::algorithm::starts_with(result, "B+")) {
+            m_winner = FastBoard::BLACK;
+        } else {
+            m_winner = FastBoard::INVAL;
+            // std::cerr << "Could not parse game result: " << result << std::endl;
+        }
+    } else {
+        m_winner = FastBoard::EMPTY;
+    }
+
+
+    // handicap stone
     std::pair<PropertyMap::iterator, 
               PropertyMap::iterator> abrange = m_properties.equal_range("AB");
     for (it = abrange.first; it != abrange.second; ++it) {
@@ -209,7 +227,6 @@ void SGFTree::populate_states(void) {
 void SGFTree::set_state(KoState & state) {
     m_state = state;
 }
-
 
 void SGFTree::apply_move(int color, int move) {      
     if (move != FastBoard::PASS && m_state.board.get_square(move) != FastBoard::EMPTY) {
@@ -295,6 +312,10 @@ int SGFTree::get_move(int tomove) {
     }
     
     return SGFTree::EOT;
+}
+
+FastBoard::square_t SGFTree::get_winner() {
+    return m_winner;
 }
 
 std::vector<int> SGFTree::get_mainline() {
