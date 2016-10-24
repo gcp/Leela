@@ -93,7 +93,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 160
+    num_output: 128
     kernel_size: 5
     pad: 2
     stride: 1
@@ -212,7 +212,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 128
+    num_output: 160
     kernel_size: 3
     pad: 1
     stride: 1
@@ -242,7 +242,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 128
+    num_output: 160
     kernel_size: 3
     pad: 1
     stride: 1
@@ -272,7 +272,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 128
+    num_output: 160
     kernel_size: 3
     pad: 1
     stride: 1
@@ -302,7 +302,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 128
+    num_output: 160
     kernel_size: 3
     pad: 1
     stride: 1
@@ -332,7 +332,7 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 128
+    num_output: 160
     kernel_size: 3
     pad: 1
     stride: 1
@@ -362,66 +362,6 @@ layer {
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 128
-    kernel_size: 3
-    pad: 1
-    stride: 1
-    weight_filler {
-      type: "xavier"
-    }
-    bias_filler {
-      type: "constant" # initialize the biases to zero (0)
-    }
-  }
-}
-
-layer {
-  name: "elu10"
-  type: "ELU"
-  # in-place
-  bottom: "conv10"
-  top: "conv10"
-}
-
-layer {
-  name: "conv11"
-  type: "Convolution"
-  # input -> output
-  bottom: "conv10"
-  top: "conv11"
-  param { lr_mult: 1 decay_mult: 1 }
-  param { lr_mult: 2 decay_mult: 0 }
-  convolution_param {
-    num_output: 128
-    kernel_size: 3
-    pad: 1
-    stride: 1
-    weight_filler {
-      type: "xavier"
-    }
-    bias_filler {
-      type: "constant" # initialize the biases to zero (0)
-    }
-  }
-}
-
-layer {
-  name: "elu11"
-  type: "ELU"
-  # in-place
-  bottom: "conv11"
-  top: "conv11"
-}
-
-layer {
-  name: "conv12"
-  type: "Convolution"
-  # input -> output
-  bottom: "conv11"
-  top: "conv12"
-  param { lr_mult: 1 decay_mult: 1 }
-  param { lr_mult: 2 decay_mult: 0 }
-  convolution_param {
     num_output: 3
     kernel_size: 3
     pad: 1
@@ -438,10 +378,10 @@ layer {
 layer {
   name: "slicer_output"
   type: "Slice"
-  bottom: "conv12"
-  top: "conv12_o1"
-  top: "conv12_o2"
-  top: "conv12_o3"
+  bottom: "conv10"
+  top: "conv10_o1"
+  top: "conv10_o2"
+  top: "conv10_o3"
   slice_param {
     axis: 1
     slice_point: 1
@@ -452,21 +392,21 @@ layer {
 layer {
   name: "flatten_o1"
   type: "Flatten"
-  bottom: "conv12_o1"
+  bottom: "conv10_o1"
   top: "flatten_o1"
 }
 
 layer {
   name: "flatten_o2"
   type: "Flatten"
-  bottom: "conv12_o2"
+  bottom: "conv10_o2"
   top: "flatten_o2"
 }
 
 layer {
   name: "flatten_o3"
   type: "Flatten"
-  bottom: "conv12_o3"
+  bottom: "conv10_o3"
   top: "flatten_o3"
 }
 

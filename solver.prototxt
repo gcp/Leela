@@ -12,7 +12,7 @@ test_iter: 525
 test_interval: 12600
 
 # The base learning rate, momentum and the weight decay of the network.
-base_lr: 0.001
+base_lr: 0.0003
 momentum: 0.9
 momentum2: 0.999
 
@@ -21,7 +21,7 @@ momentum2: 0.999
 lr_policy: "fixed"
 
 # Display every n iterations
-display: 1260
+display: 12600
 
 # The total number of iterations
 max_iter: 12600000
