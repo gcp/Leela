@@ -624,8 +624,7 @@ void Network::gather_features(FastState * state, NNPlanes & planes,
     }
 
     bool white_has_komi = true;
-    if (std::fabs(state->get_komi()) <= 0.5f
-        || state->get_handicap() != 0) {
+    if (std::fabs(state->get_komi()) <= 0.75f) {
         white_has_komi = false;
     }
 
@@ -638,6 +637,7 @@ void Network::gather_features(FastState * state, NNPlanes & planes,
                 state->board.get_square(vtx);
             int idx = j * 19 + i;
             if (color != FastBoard::EMPTY) {
+                // White gets extra points in scoring
                 if (color == FastBoard::WHITE && white_has_komi) {
                     has_komi[idx] = true;
                 }
