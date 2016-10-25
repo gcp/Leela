@@ -140,7 +140,6 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalDependencies>mkl_intel_c.lib;mkl_sequential.lib;mkl_core.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <LinkTimeCodeGeneration>PGOptimization</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>Copy /Y "$(SolutionDir)\..\*.cl" "$(TargetDir)"</Command>
