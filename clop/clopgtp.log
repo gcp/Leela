@@ -24221,3 +24221,1055 @@
 2016-10-26 18:31:28 Reading clopgtp-old.dat...
 2016-10-26 18:31:28 Backup done.
 2016-10-26 18:31:28 Samples = 2919; Results = 2883; Mismatches = 0.
+2016-10-26 19:34:27 ===== Starting: clopgtp =====
+2016-10-26 19:34:27 Found existing clopgtp.dat
+2016-10-26 19:34:27 Removing clopgtp-old.dat
+2016-10-26 19:34:27 Renaming clopgtp.dat to clopgtp-old.dat
+2016-10-26 19:34:27 Reading clopgtp-old.dat...
+2016-10-26 19:34:28 Backup done.
+2016-10-26 19:34:28 Samples = 2919; Results = 2883; Mismatches = 0.
+2016-10-26 19:34:50 Run
+2016-10-26 19:34:50 id = 6 (cpu7); Seed = 2883; Starting from setInProgress
+2016-10-26 19:34:50 id = 5 (cpu6); Seed = 2884; Starting from setInProgress
+2016-10-26 19:34:50 id = 4 (cpu5); Seed = 2885; Starting from setInProgress
+2016-10-26 19:34:50 id = 3 (cpu4); Seed = 2886; Starting from setInProgress
+2016-10-26 19:34:50 id = 2 (cpu3); Seed = 2887; Starting from setInProgress
+2016-10-26 19:34:50 id = 1 (cpu2); Seed = 2888; Starting from setInProgress
+2016-10-26 19:34:50 id = 0 (cpu1); Seed = 2889; Starting from setInProgress
+2016-10-26 19:46:02 id = 5 (cpu6); Seed = 2884; Done (0)
+2016-10-26 19:46:10 id = 5 (cpu6); Seed = 2890; Starting from setInProgress
+2016-10-26 19:48:28 id = 3 (cpu4); Seed = 2886; Done (0)
+2016-10-26 19:48:35 id = 3 (cpu4); Seed = 2891; Starting from setInProgress
+2016-10-26 19:49:12 id = 6 (cpu7); Seed = 2883; Done (1)
+2016-10-26 19:49:16 id = 6 (cpu7); Seed = 2892; Starting from setInProgress
+2016-10-26 19:49:28 id = 4 (cpu5); Seed = 2885; Done (0)
+2016-10-26 19:49:33 id = 4 (cpu5); Seed = 2893; Starting from setInProgress
+2016-10-26 19:49:48 id = 0 (cpu1); Seed = 2889; Done (0)
+2016-10-26 19:49:53 id = 0 (cpu1); Seed = 2894; Starting from setInProgress
+2016-10-26 19:50:04 id = 2 (cpu3); Seed = 2887; Done (1)
+2016-10-26 19:50:10 id = 2 (cpu3); Seed = 2895; Starting from setInProgress
+2016-10-26 19:50:13 id = 1 (cpu2); Seed = 2888; Done (0)
+2016-10-26 19:50:19 id = 1 (cpu2); Seed = 2896; Starting from setInProgress
+2016-10-26 19:59:43 id = 1 (cpu2); Seed = 2896; Done (0)
+2016-10-26 19:59:49 id = 1 (cpu2); Seed = 2897; Starting from setInProgress
+2016-10-26 19:59:58 id = 3 (cpu4); Seed = 2891; Done (0)
+2016-10-26 20:00:02 id = 3 (cpu4); Seed = 2898; Starting from setInProgress
+2016-10-26 20:01:07 id = 5 (cpu6); Seed = 2890; Done (1)
+2016-10-26 20:01:12 id = 5 (cpu6); Seed = 2899; Starting from setInProgress
+2016-10-26 20:03:42 id = 6 (cpu7); Seed = 2892; Done (0)
+2016-10-26 20:03:49 id = 6 (cpu7); Seed = 2900; Starting from setInProgress
+2016-10-26 20:03:55 id = 0 (cpu1); Seed = 2894; Done (0)
+2016-10-26 20:03:58 id = 0 (cpu1); Seed = 2901; Starting from setInProgress
+2016-10-26 20:03:58 id = 4 (cpu5); Seed = 2893; Done (1)
+2016-10-26 20:04:03 id = 4 (cpu5); Seed = 2902; Starting from setInProgress
+2016-10-26 20:05:42 id = 2 (cpu3); Seed = 2895; Done (0)
+2016-10-26 20:05:47 id = 2 (cpu3); Seed = 2903; Starting from setInProgress
+2016-10-26 20:12:49 id = 3 (cpu4); Seed = 2898; Done (0)
+2016-10-26 20:12:54 id = 3 (cpu4); Seed = 2904; Starting from setInProgress
+2016-10-26 20:14:46 id = 1 (cpu2); Seed = 2897; Done (1)
+2016-10-26 20:14:52 id = 1 (cpu2); Seed = 2905; Starting from setInProgress
+2016-10-26 20:14:58 id = 5 (cpu6); Seed = 2899; Done (1)
+2016-10-26 20:15:03 id = 5 (cpu6); Seed = 2906; Starting from setInProgress
+2016-10-26 20:17:47 id = 4 (cpu5); Seed = 2902; Done (0)
+2016-10-26 20:17:52 id = 4 (cpu5); Seed = 2907; Starting from setInProgress
+2016-10-26 20:19:12 id = 6 (cpu7); Seed = 2900; Done (0)
+2016-10-26 20:19:18 id = 6 (cpu7); Seed = 2908; Starting from setInProgress
+2016-10-26 20:19:31 id = 0 (cpu1); Seed = 2901; Done (1)
+2016-10-26 20:19:35 id = 0 (cpu1); Seed = 2909; Starting from setInProgress
+2016-10-26 20:21:07 id = 2 (cpu3); Seed = 2903; Done (0)
+2016-10-26 20:21:11 id = 2 (cpu3); Seed = 2910; Starting from setInProgress
+2016-10-26 20:27:48 id = 3 (cpu4); Seed = 2904; Done (0)
+2016-10-26 20:27:54 id = 3 (cpu4); Seed = 2911; Starting from setInProgress
+2016-10-26 20:28:15 id = 1 (cpu2); Seed = 2905; Done (0)
+2016-10-26 20:28:20 id = 1 (cpu2); Seed = 2912; Starting from setInProgress
+2016-10-26 20:30:57 id = 5 (cpu6); Seed = 2906; Done (0)
+2016-10-26 20:31:02 id = 5 (cpu6); Seed = 2913; Starting from setInProgress
+2016-10-26 20:32:18 id = 4 (cpu5); Seed = 2907; Done (0)
+2016-10-26 20:32:23 id = 4 (cpu5); Seed = 2914; Starting from setInProgress
+2016-10-26 20:33:10 id = 6 (cpu7); Seed = 2908; Done (0)
+2016-10-26 20:33:15 id = 6 (cpu7); Seed = 2915; Starting from setInProgress
+2016-10-26 20:33:47 id = 0 (cpu1); Seed = 2909; Done (1)
+2016-10-26 20:33:51 id = 0 (cpu1); Seed = 2916; Starting from setInProgress
+2016-10-26 20:36:46 id = 2 (cpu3); Seed = 2910; Done (1)
+2016-10-26 20:36:53 id = 2 (cpu3); Seed = 2917; Starting from setInProgress
+2016-10-26 20:43:05 id = 3 (cpu4); Seed = 2911; Done (0)
+2016-10-26 20:43:10 id = 3 (cpu4); Seed = 2918; Starting from setInProgress
+2016-10-26 20:44:04 id = 1 (cpu2); Seed = 2912; Done (1)
+2016-10-26 20:44:11 id = 1 (cpu2); Seed = 2919; Starting new sample
+2016-10-26 20:45:23 id = 4 (cpu5); Seed = 2914; Done (0)
+2016-10-26 20:45:29 id = 4 (cpu5); Seed = 2920; Starting new sample
+2016-10-26 20:46:44 id = 5 (cpu6); Seed = 2913; Done (0)
+2016-10-26 20:46:50 id = 5 (cpu6); Seed = 2921; Starting new sample
+2016-10-26 20:48:38 id = 6 (cpu7); Seed = 2915; Done (0)
+2016-10-26 20:48:43 id = 6 (cpu7); Seed = 2922; Starting new sample
+2016-10-26 20:48:44 id = 0 (cpu1); Seed = 2916; Done (1)
+2016-10-26 20:48:50 id = 0 (cpu1); Seed = 2923; Starting new sample
+2016-10-26 20:51:54 id = 2 (cpu3); Seed = 2917; Done (0)
+2016-10-26 20:51:59 id = 2 (cpu3); Seed = 2924; Starting new sample
+2016-10-26 20:57:40 id = 3 (cpu4); Seed = 2918; Done (0)
+2016-10-26 20:57:46 id = 3 (cpu4); Seed = 2925; Starting new sample
+2016-10-26 20:59:04 id = 1 (cpu2); Seed = 2919; Done (0)
+2016-10-26 20:59:10 id = 1 (cpu2); Seed = 2926; Starting new sample
+2016-10-26 21:01:34 id = 4 (cpu5); Seed = 2920; Done (0)
+2016-10-26 21:01:38 id = 4 (cpu5); Seed = 2927; Starting new sample
+2016-10-26 21:01:56 id = 5 (cpu6); Seed = 2921; Done (1)
+2016-10-26 21:02:02 id = 5 (cpu6); Seed = 2928; Starting new sample
+2016-10-26 21:03:12 id = 0 (cpu1); Seed = 2923; Done (1)
+2016-10-26 21:03:18 id = 0 (cpu1); Seed = 2929; Starting new sample
+2016-10-26 21:04:20 id = 6 (cpu7); Seed = 2922; Done (1)
+2016-10-26 21:04:26 id = 6 (cpu7); Seed = 2930; Starting new sample
+2016-10-26 21:05:31 id = 2 (cpu3); Seed = 2924; Done (0)
+2016-10-26 21:05:37 id = 2 (cpu3); Seed = 2931; Starting new sample
+2016-10-26 21:10:03 id = 3 (cpu4); Seed = 2925; Done (0)
+2016-10-26 21:10:08 id = 3 (cpu4); Seed = 2932; Starting new sample
+2016-10-26 21:11:53 id = 1 (cpu2); Seed = 2926; Done (0)
+2016-10-26 21:12:03 id = 1 (cpu2); Seed = 2933; Starting new sample
+2016-10-26 21:16:14 id = 4 (cpu5); Seed = 2927; Done (0)
+2016-10-26 21:16:21 id = 4 (cpu5); Seed = 2934; Starting new sample
+2016-10-26 21:17:49 id = 5 (cpu6); Seed = 2928; Done (1)
+2016-10-26 21:17:57 id = 5 (cpu6); Seed = 2935; Starting new sample
+2016-10-26 21:19:16 id = 0 (cpu1); Seed = 2929; Done (0)
+2016-10-26 21:19:23 id = 0 (cpu1); Seed = 2936; Starting new sample
+2016-10-26 21:21:04 id = 2 (cpu3); Seed = 2931; Done (0)
+2016-10-26 21:21:11 id = 2 (cpu3); Seed = 2937; Starting new sample
+2016-10-26 21:21:11 id = 6 (cpu7); Seed = 2930; Done (0)
+2016-10-26 21:21:16 id = 6 (cpu7); Seed = 2938; Starting new sample
+2016-10-26 21:22:53 id = 3 (cpu4); Seed = 2932; Done (0)
+2016-10-26 21:22:59 id = 3 (cpu4); Seed = 2939; Starting new sample
+2016-10-26 21:26:52 id = 1 (cpu2); Seed = 2933; Done (0)
+2016-10-26 21:26:58 id = 1 (cpu2); Seed = 2940; Starting new sample
+2016-10-26 21:30:40 id = 0 (cpu1); Seed = 2936; Done (0)
+2016-10-26 21:30:47 id = 0 (cpu1); Seed = 2941; Starting new sample
+2016-10-26 21:32:18 id = 4 (cpu5); Seed = 2934; Done (0)
+2016-10-26 21:32:26 id = 4 (cpu5); Seed = 2942; Starting new sample
+2016-10-26 21:33:24 id = 5 (cpu6); Seed = 2935; Done (1)
+2016-10-26 21:33:31 id = 5 (cpu6); Seed = 2943; Starting new sample
+2016-10-26 21:34:15 id = 2 (cpu3); Seed = 2937; Done (0)
+2016-10-26 21:34:22 id = 2 (cpu3); Seed = 2944; Starting new sample
+2016-10-26 21:34:53 id = 3 (cpu4); Seed = 2939; Done (1)
+2016-10-26 21:34:58 id = 3 (cpu4); Seed = 2945; Starting new sample
+2016-10-26 21:36:32 id = 6 (cpu7); Seed = 2938; Done (1)
+2016-10-26 21:36:37 id = 6 (cpu7); Seed = 2946; Starting new sample
+2016-10-26 21:42:38 id = 1 (cpu2); Seed = 2940; Done (1)
+2016-10-26 21:42:43 id = 1 (cpu2); Seed = 2947; Starting new sample
+2016-10-26 21:45:02 id = 4 (cpu5); Seed = 2942; Done (0)
+2016-10-26 21:45:07 id = 4 (cpu5); Seed = 2948; Starting new sample
+2016-10-26 21:45:30 id = 0 (cpu1); Seed = 2941; Done (1)
+2016-10-26 21:45:37 id = 0 (cpu1); Seed = 2949; Starting new sample
+2016-10-26 21:47:18 id = 5 (cpu6); Seed = 2943; Done (0)
+2016-10-26 21:47:24 id = 5 (cpu6); Seed = 2950; Starting new sample
+2016-10-26 21:49:25 id = 6 (cpu7); Seed = 2946; Done (0)
+2016-10-26 21:49:30 id = 6 (cpu7); Seed = 2951; Starting new sample
+2016-10-26 21:49:36 id = 3 (cpu4); Seed = 2945; Done (1)
+2016-10-26 21:49:42 id = 3 (cpu4); Seed = 2952; Starting new sample
+2016-10-26 21:49:49 id = 2 (cpu3); Seed = 2944; Done (1)
+2016-10-26 21:49:55 id = 2 (cpu3); Seed = 2953; Starting new sample
+2016-10-26 21:57:28 id = 1 (cpu2); Seed = 2947; Done (1)
+2016-10-26 21:57:34 id = 1 (cpu2); Seed = 2954; Starting new sample
+2016-10-26 21:59:33 id = 0 (cpu1); Seed = 2949; Done (0)
+2016-10-26 21:59:39 id = 0 (cpu1); Seed = 2955; Starting new sample
+2016-10-26 22:00:01 id = 4 (cpu5); Seed = 2948; Done (1)
+2016-10-26 22:00:07 id = 4 (cpu5); Seed = 2956; Starting new sample
+2016-10-26 22:00:40 id = 5 (cpu6); Seed = 2950; Done (1)
+2016-10-26 22:00:45 id = 5 (cpu6); Seed = 2957; Starting new sample
+2016-10-26 22:03:08 id = 6 (cpu7); Seed = 2951; Done (1)
+2016-10-26 22:03:13 id = 6 (cpu7); Seed = 2958; Starting new sample
+2016-10-26 22:04:37 id = 3 (cpu4); Seed = 2952; Done (1)
+2016-10-26 22:04:42 id = 3 (cpu4); Seed = 2959; Starting new sample
+2016-10-26 22:04:42 id = 2 (cpu3); Seed = 2953; Done (0)
+2016-10-26 22:04:47 id = 2 (cpu3); Seed = 2960; Starting new sample
+2016-10-26 22:11:03 id = 4 (cpu5); Seed = 2956; Done (1)
+2016-10-26 22:11:10 id = 4 (cpu5); Seed = 2961; Starting new sample
+2016-10-26 22:12:14 id = 1 (cpu2); Seed = 2954; Done (1)
+2016-10-26 22:12:19 id = 1 (cpu2); Seed = 2962; Starting new sample
+2016-10-26 22:13:24 id = 0 (cpu1); Seed = 2955; Done (0)
+2016-10-26 22:13:29 id = 0 (cpu1); Seed = 2963; Starting new sample
+2016-10-26 22:14:02 id = 5 (cpu6); Seed = 2957; Done (0)
+2016-10-26 22:14:08 id = 5 (cpu6); Seed = 2964; Starting new sample
+2016-10-26 22:16:04 id = 6 (cpu7); Seed = 2958; Done (0)
+2016-10-26 22:16:10 id = 6 (cpu7); Seed = 2965; Starting new sample
+2016-10-26 22:16:10 id = 3 (cpu4); Seed = 2959; Done (0)
+2016-10-26 22:16:16 id = 3 (cpu4); Seed = 2966; Starting new sample
+2016-10-26 22:19:53 id = 2 (cpu3); Seed = 2960; Done (1)
+2016-10-26 22:19:59 id = 2 (cpu3); Seed = 2967; Starting new sample
+2016-10-26 22:24:19 id = 4 (cpu5); Seed = 2961; Done (0)
+2016-10-26 22:24:25 id = 4 (cpu5); Seed = 2968; Starting new sample
+2016-10-26 22:26:39 id = 1 (cpu2); Seed = 2962; Done (0)
+2016-10-26 22:26:45 id = 1 (cpu2); Seed = 2969; Starting new sample
+2016-10-26 22:27:25 id = 0 (cpu1); Seed = 2963; Done (1)
+2016-10-26 22:27:32 id = 0 (cpu1); Seed = 2970; Starting new sample
+2016-10-26 22:28:20 id = 6 (cpu7); Seed = 2965; Done (0)
+2016-10-26 22:28:26 id = 6 (cpu7); Seed = 2971; Starting new sample
+2016-10-26 22:30:23 id = 3 (cpu4); Seed = 2966; Done (1)
+2016-10-26 22:30:28 id = 3 (cpu4); Seed = 2972; Starting new sample
+2016-10-26 22:30:41 id = 5 (cpu6); Seed = 2964; Done (0)
+2016-10-26 22:30:46 id = 5 (cpu6); Seed = 2973; Starting new sample
+2016-10-26 22:35:13 id = 2 (cpu3); Seed = 2967; Done (1)
+2016-10-26 22:35:17 id = 2 (cpu3); Seed = 2974; Starting new sample
+2016-10-26 22:39:11 id = 4 (cpu5); Seed = 2968; Done (0)
+2016-10-26 22:39:17 id = 4 (cpu5); Seed = 2975; Starting new sample
+2016-10-26 22:41:20 id = 0 (cpu1); Seed = 2970; Done (0)
+2016-10-26 22:41:25 id = 0 (cpu1); Seed = 2976; Starting new sample
+2016-10-26 22:41:41 id = 1 (cpu2); Seed = 2969; Done (0)
+2016-10-26 22:41:47 id = 1 (cpu2); Seed = 2977; Starting new sample
+2016-10-26 22:44:15 id = 6 (cpu7); Seed = 2971; Done (1)
+2016-10-26 22:44:20 id = 6 (cpu7); Seed = 2978; Starting new sample
+2016-10-26 22:45:43 id = 5 (cpu6); Seed = 2973; Done (0)
+2016-10-26 22:45:48 id = 5 (cpu6); Seed = 2979; Starting new sample
+2016-10-26 22:45:59 id = 3 (cpu4); Seed = 2972; Done (1)
+2016-10-26 22:46:04 id = 3 (cpu4); Seed = 2980; Starting new sample
+2016-10-26 22:51:09 id = 2 (cpu3); Seed = 2974; Done (0)
+2016-10-26 22:51:15 id = 2 (cpu3); Seed = 2981; Starting new sample
+2016-10-26 22:51:47 id = 1 (cpu2); Seed = 2977; Done (1)
+2016-10-26 22:51:53 id = 1 (cpu2); Seed = 2982; Starting new sample
+2016-10-26 22:54:27 id = 4 (cpu5); Seed = 2975; Done (0)
+2016-10-26 22:54:33 id = 4 (cpu5); Seed = 2983; Starting new sample
+2016-10-26 22:55:52 id = 0 (cpu1); Seed = 2976; Done (0)
+2016-10-26 22:55:57 id = 0 (cpu1); Seed = 2984; Starting new sample
+2016-10-26 22:57:27 id = 5 (cpu6); Seed = 2979; Done (1)
+2016-10-26 22:57:33 id = 5 (cpu6); Seed = 2985; Starting new sample
+2016-10-26 22:59:26 id = 6 (cpu7); Seed = 2978; Done (1)
+2016-10-26 22:59:31 id = 6 (cpu7); Seed = 2986; Starting new sample
+2016-10-26 23:00:33 id = 3 (cpu4); Seed = 2980; Done (0)
+2016-10-26 23:00:38 id = 3 (cpu4); Seed = 2987; Starting new sample
+2016-10-26 23:05:10 id = 2 (cpu3); Seed = 2981; Done (0)
+2016-10-26 23:05:16 id = 2 (cpu3); Seed = 2988; Starting new sample
+2016-10-26 23:07:17 id = 1 (cpu2); Seed = 2982; Done (1)
+2016-10-26 23:07:21 id = 1 (cpu2); Seed = 2989; Starting new sample
+2016-10-26 23:10:30 id = 4 (cpu5); Seed = 2983; Done (0)
+2016-10-26 23:10:36 id = 4 (cpu5); Seed = 2990; Starting new sample
+2016-10-26 23:11:32 id = 0 (cpu1); Seed = 2984; Done (1)
+2016-10-26 23:11:37 id = 0 (cpu1); Seed = 2991; Starting new sample
+2016-10-26 23:11:38 id = 5 (cpu6); Seed = 2985; Done (0)
+2016-10-26 23:11:43 id = 5 (cpu6); Seed = 2992; Starting new sample
+2016-10-26 23:13:16 id = 6 (cpu7); Seed = 2986; Done (0)
+2016-10-26 23:13:22 id = 6 (cpu7); Seed = 2993; Starting new sample
+2016-10-26 23:14:30 id = 3 (cpu4); Seed = 2987; Done (0)
+2016-10-26 23:14:37 id = 3 (cpu4); Seed = 2994; Starting new sample
+2016-10-26 23:19:22 id = 2 (cpu3); Seed = 2988; Done (0)
+2016-10-26 23:19:28 id = 2 (cpu3); Seed = 2995; Starting new sample
+2016-10-26 23:22:08 id = 1 (cpu2); Seed = 2989; Done (1)
+2016-10-26 23:22:13 id = 1 (cpu2); Seed = 2996; Starting new sample
+2016-10-26 23:24:20 id = 0 (cpu1); Seed = 2991; Done (0)
+2016-10-26 23:24:25 id = 0 (cpu1); Seed = 2997; Starting new sample
+2016-10-26 23:25:01 id = 5 (cpu6); Seed = 2992; Done (0)
+2016-10-26 23:25:09 id = 5 (cpu6); Seed = 2998; Starting new sample
+2016-10-26 23:26:17 id = 4 (cpu5); Seed = 2990; Done (1)
+2016-10-26 23:26:22 id = 4 (cpu5); Seed = 2999; Starting new sample
+2016-10-26 23:29:06 id = 6 (cpu7); Seed = 2993; Done (0)
+2016-10-26 23:29:11 id = 6 (cpu7); Seed = 3000; Starting new sample
+2016-10-26 23:30:15 id = 3 (cpu4); Seed = 2994; Done (0)
+2016-10-26 23:30:21 id = 3 (cpu4); Seed = 3001; Starting new sample
+2016-10-26 23:32:47 id = 2 (cpu3); Seed = 2995; Done (0)
+2016-10-26 23:32:52 id = 2 (cpu3); Seed = 3002; Starting new sample
+2016-10-26 23:35:56 id = 1 (cpu2); Seed = 2996; Done (0)
+2016-10-26 23:36:02 id = 1 (cpu2); Seed = 3003; Starting new sample
+2016-10-26 23:38:58 id = 5 (cpu6); Seed = 2998; Done (1)
+2016-10-26 23:39:03 id = 5 (cpu6); Seed = 3004; Starting new sample
+2016-10-26 23:39:33 id = 0 (cpu1); Seed = 2997; Done (0)
+2016-10-26 23:39:38 id = 0 (cpu1); Seed = 3005; Starting new sample
+2016-10-26 23:40:11 id = 6 (cpu7); Seed = 3000; Done (0)
+2016-10-26 23:40:17 id = 6 (cpu7); Seed = 3006; Starting new sample
+2016-10-26 23:40:43 id = 4 (cpu5); Seed = 2999; Done (1)
+2016-10-26 23:40:48 id = 4 (cpu5); Seed = 3007; Starting new sample
+2016-10-26 23:43:59 id = 3 (cpu4); Seed = 3001; Done (0)
+2016-10-26 23:44:04 id = 3 (cpu4); Seed = 3008; Starting new sample
+2016-10-26 23:44:08 id = 2 (cpu3); Seed = 3002; Done (1)
+2016-10-26 23:44:14 id = 2 (cpu3); Seed = 3009; Starting new sample
+2016-10-26 23:49:55 id = 1 (cpu2); Seed = 3003; Done (0)
+2016-10-26 23:50:01 id = 1 (cpu2); Seed = 3010; Starting new sample
+2016-10-26 23:53:33 id = 5 (cpu6); Seed = 3004; Done (1)
+2016-10-26 23:53:39 id = 5 (cpu6); Seed = 3011; Starting new sample
+2016-10-26 23:55:04 id = 6 (cpu7); Seed = 3006; Done (0)
+2016-10-26 23:55:09 id = 6 (cpu7); Seed = 3012; Starting new sample
+2016-10-26 23:55:27 id = 0 (cpu1); Seed = 3005; Done (0)
+2016-10-26 23:55:32 id = 0 (cpu1); Seed = 3013; Starting new sample
+2016-10-26 23:56:09 id = 4 (cpu5); Seed = 3007; Done (0)
+2016-10-26 23:56:14 id = 4 (cpu5); Seed = 3014; Starting new sample
+2016-10-26 23:57:09 id = 2 (cpu3); Seed = 3009; Done (1)
+2016-10-26 23:57:14 id = 2 (cpu3); Seed = 3015; Starting new sample
+2016-10-26 23:59:08 id = 3 (cpu4); Seed = 3008; Done (0)
+2016-10-26 23:59:13 id = 3 (cpu4); Seed = 3016; Starting new sample
+2016-10-27 00:01:28 id = 1 (cpu2); Seed = 3010; Done (1)
+2016-10-27 00:01:34 id = 1 (cpu2); Seed = 3017; Starting new sample
+2016-10-27 00:08:02 id = 4 (cpu5); Seed = 3014; Done (0)
+2016-10-27 00:08:07 id = 4 (cpu5); Seed = 3018; Starting new sample
+2016-10-27 00:08:16 id = 6 (cpu7); Seed = 3012; Done (0)
+2016-10-27 00:08:21 id = 6 (cpu7); Seed = 3019; Starting new sample
+2016-10-27 00:08:53 id = 0 (cpu1); Seed = 3013; Done (0)
+2016-10-27 00:08:58 id = 0 (cpu1); Seed = 3020; Starting new sample
+2016-10-27 00:09:48 id = 5 (cpu6); Seed = 3011; Done (1)
+2016-10-27 00:09:55 id = 5 (cpu6); Seed = 3021; Starting new sample
+2016-10-27 00:10:42 id = 2 (cpu3); Seed = 3015; Done (0)
+2016-10-27 00:10:50 id = 2 (cpu3); Seed = 3022; Starting new sample
+2016-10-27 00:14:23 id = 3 (cpu4); Seed = 3016; Done (1)
+2016-10-27 00:14:29 id = 3 (cpu4); Seed = 3023; Starting new sample
+2016-10-27 00:14:56 id = 1 (cpu2); Seed = 3017; Done (0)
+2016-10-27 00:15:01 id = 1 (cpu2); Seed = 3024; Starting new sample
+2016-10-27 00:20:53 id = 6 (cpu7); Seed = 3019; Done (1)
+2016-10-27 00:20:58 id = 6 (cpu7); Seed = 3025; Starting new sample
+2016-10-27 00:23:14 id = 4 (cpu5); Seed = 3018; Done (0)
+2016-10-27 00:23:19 id = 4 (cpu5); Seed = 3026; Starting new sample
+2016-10-27 00:23:49 id = 0 (cpu1); Seed = 3020; Done (0)
+2016-10-27 00:23:54 id = 0 (cpu1); Seed = 3027; Starting new sample
+2016-10-27 00:24:14 id = 5 (cpu6); Seed = 3021; Done (0)
+2016-10-27 00:24:22 id = 5 (cpu6); Seed = 3028; Starting new sample
+2016-10-27 00:25:46 id = 2 (cpu3); Seed = 3022; Done (1)
+2016-10-27 00:25:51 id = 2 (cpu3); Seed = 3029; Starting new sample
+2016-10-27 00:28:26 id = 3 (cpu4); Seed = 3023; Done (0)
+2016-10-27 00:28:30 id = 3 (cpu4); Seed = 3030; Starting new sample
+2016-10-27 00:30:51 id = 1 (cpu2); Seed = 3024; Done (0)
+2016-10-27 00:30:55 id = 1 (cpu2); Seed = 3031; Starting new sample
+2016-10-27 00:35:19 id = 4 (cpu5); Seed = 3026; Done (1)
+2016-10-27 00:35:25 id = 4 (cpu5); Seed = 3032; Starting new sample
+2016-10-27 00:36:04 id = 6 (cpu7); Seed = 3025; Done (0)
+2016-10-27 00:36:10 id = 6 (cpu7); Seed = 3033; Starting new sample
+2016-10-27 00:38:34 id = 0 (cpu1); Seed = 3027; Done (1)
+2016-10-27 00:38:39 id = 0 (cpu1); Seed = 3034; Starting new sample
+2016-10-27 00:38:41 id = 2 (cpu3); Seed = 3029; Done (0)
+2016-10-27 00:38:47 id = 2 (cpu3); Seed = 3035; Starting new sample
+2016-10-27 00:40:25 id = 5 (cpu6); Seed = 3028; Done (0)
+2016-10-27 00:40:32 id = 5 (cpu6); Seed = 3036; Starting new sample
+2016-10-27 00:40:36 id = 3 (cpu4); Seed = 3030; Done (1)
+2016-10-27 00:40:42 id = 3 (cpu4); Seed = 3037; Starting new sample
+2016-10-27 00:43:23 id = 1 (cpu2); Seed = 3031; Done (1)
+2016-10-27 00:43:36 id = 1 (cpu2); Seed = 3038; Starting new sample
+2016-10-27 00:48:52 id = 4 (cpu5); Seed = 3032; Done (0)
+2016-10-27 00:48:57 id = 4 (cpu5); Seed = 3039; Starting new sample
+2016-10-27 00:50:21 id = 6 (cpu7); Seed = 3033; Done (0)
+2016-10-27 00:50:26 id = 6 (cpu7); Seed = 3040; Starting new sample
+2016-10-27 00:51:00 id = 2 (cpu3); Seed = 3035; Done (0)
+2016-10-27 00:51:05 id = 2 (cpu3); Seed = 3041; Starting new sample
+2016-10-27 00:52:57 id = 0 (cpu1); Seed = 3034; Done (0)
+2016-10-27 00:53:03 id = 0 (cpu1); Seed = 3042; Starting new sample
+2016-10-27 00:55:37 id = 3 (cpu4); Seed = 3037; Done (0)
+2016-10-27 00:55:43 id = 3 (cpu4); Seed = 3043; Starting new sample
+2016-10-27 00:55:49 id = 5 (cpu6); Seed = 3036; Done (0)
+2016-10-27 00:55:55 id = 5 (cpu6); Seed = 3044; Starting new sample
+2016-10-27 00:59:03 id = 1 (cpu2); Seed = 3038; Done (0)
+2016-10-27 00:59:09 id = 1 (cpu2); Seed = 3045; Starting new sample
+2016-10-27 01:01:16 id = 4 (cpu5); Seed = 3039; Done (0)
+2016-10-27 01:01:22 id = 4 (cpu5); Seed = 3046; Starting new sample
+2016-10-27 01:03:18 id = 6 (cpu7); Seed = 3040; Done (1)
+2016-10-27 01:03:23 id = 6 (cpu7); Seed = 3047; Starting new sample
+2016-10-27 01:04:35 id = 2 (cpu3); Seed = 3041; Done (1)
+2016-10-27 01:04:40 id = 2 (cpu3); Seed = 3048; Starting new sample
+2016-10-27 01:07:44 id = 0 (cpu1); Seed = 3042; Done (1)
+2016-10-27 01:07:51 id = 0 (cpu1); Seed = 3049; Starting new sample
+2016-10-27 01:09:21 id = 5 (cpu6); Seed = 3044; Done (0)
+2016-10-27 01:09:27 id = 5 (cpu6); Seed = 3050; Starting new sample
+2016-10-27 01:11:25 id = 3 (cpu4); Seed = 3043; Done (0)
+2016-10-27 01:11:31 id = 3 (cpu4); Seed = 3051; Starting new sample
+2016-10-27 01:14:21 id = 4 (cpu5); Seed = 3046; Done (0)
+2016-10-27 01:14:28 id = 4 (cpu5); Seed = 3052; Starting new sample
+2016-10-27 01:14:41 id = 1 (cpu2); Seed = 3045; Done (0)
+2016-10-27 01:14:47 id = 1 (cpu2); Seed = 3053; Starting new sample
+2016-10-27 01:17:27 id = 6 (cpu7); Seed = 3047; Done (0)
+2016-10-27 01:17:34 id = 6 (cpu7); Seed = 3054; Starting new sample
+2016-10-27 01:17:56 id = 2 (cpu3); Seed = 3048; Done (0)
+2016-10-27 01:18:01 id = 2 (cpu3); Seed = 3055; Starting new sample
+2016-10-27 01:23:08 id = 0 (cpu1); Seed = 3049; Done (0)
+2016-10-27 01:23:13 id = 0 (cpu1); Seed = 3056; Starting new sample
+2016-10-27 01:24:39 id = 5 (cpu6); Seed = 3050; Done (0)
+2016-10-27 01:24:45 id = 5 (cpu6); Seed = 3057; Starting new sample
+2016-10-27 01:26:28 id = 3 (cpu4); Seed = 3051; Done (0)
+2016-10-27 01:26:34 id = 3 (cpu4); Seed = 3058; Starting new sample
+2016-10-27 01:27:54 id = 4 (cpu5); Seed = 3052; Done (0)
+2016-10-27 01:28:00 id = 4 (cpu5); Seed = 3059; Starting new sample
+2016-10-27 01:29:54 id = 1 (cpu2); Seed = 3053; Done (0)
+2016-10-27 01:29:59 id = 1 (cpu2); Seed = 3060; Starting new sample
+2016-10-27 01:31:48 id = 2 (cpu3); Seed = 3055; Done (1)
+2016-10-27 01:31:54 id = 2 (cpu3); Seed = 3061; Starting new sample
+2016-10-27 01:32:05 id = 6 (cpu7); Seed = 3054; Done (1)
+2016-10-27 01:32:12 id = 6 (cpu7); Seed = 3062; Starting new sample
+2016-10-27 01:38:17 id = 0 (cpu1); Seed = 3056; Done (0)
+2016-10-27 01:38:22 id = 0 (cpu1); Seed = 3063; Starting new sample
+2016-10-27 01:39:11 id = 3 (cpu4); Seed = 3058; Done (1)
+2016-10-27 01:39:17 id = 3 (cpu4); Seed = 3064; Starting new sample
+2016-10-27 01:39:21 id = 5 (cpu6); Seed = 3057; Done (0)
+2016-10-27 01:39:26 id = 5 (cpu6); Seed = 3065; Starting new sample
+2016-10-27 01:40:45 id = 4 (cpu5); Seed = 3059; Done (0)
+2016-10-27 01:40:51 id = 4 (cpu5); Seed = 3066; Starting new sample
+2016-10-27 01:45:50 id = 1 (cpu2); Seed = 3060; Done (1)
+2016-10-27 01:45:55 id = 1 (cpu2); Seed = 3067; Starting new sample
+2016-10-27 01:47:07 id = 2 (cpu3); Seed = 3061; Done (0)
+2016-10-27 01:47:13 id = 2 (cpu3); Seed = 3068; Starting new sample
+2016-10-27 01:47:29 id = 6 (cpu7); Seed = 3062; Done (1)
+2016-10-27 01:47:36 id = 6 (cpu7); Seed = 3069; Starting new sample
+2016-10-27 01:50:40 id = 5 (cpu6); Seed = 3065; Done (1)
+2016-10-27 01:50:46 id = 5 (cpu6); Seed = 3070; Starting new sample
+2016-10-27 01:52:13 id = 0 (cpu1); Seed = 3063; Done (0)
+2016-10-27 01:52:18 id = 0 (cpu1); Seed = 3071; Starting new sample
+2016-10-27 01:53:40 id = 3 (cpu4); Seed = 3064; Done (0)
+2016-10-27 01:53:45 id = 3 (cpu4); Seed = 3072; Starting new sample
+2016-10-27 01:53:59 id = 1 (cpu2); Seed = 3067; Done (1)
+2016-10-27 01:54:06 id = 1 (cpu2); Seed = 3073; Starting new sample
+2016-10-27 01:56:31 id = 4 (cpu5); Seed = 3066; Done (1)
+2016-10-27 01:56:38 id = 4 (cpu5); Seed = 3074; Starting new sample
+2016-10-27 02:01:06 id = 6 (cpu7); Seed = 3069; Done (1)
+2016-10-27 02:01:13 id = 6 (cpu7); Seed = 3075; Starting new sample
+2016-10-27 02:01:59 id = 2 (cpu3); Seed = 3068; Done (1)
+2016-10-27 02:02:05 id = 2 (cpu3); Seed = 3076; Starting new sample
+2016-10-27 02:04:11 id = 5 (cpu6); Seed = 3070; Done (0)
+2016-10-27 02:04:17 id = 5 (cpu6); Seed = 3077; Starting new sample
+2016-10-27 02:06:22 id = 0 (cpu1); Seed = 3071; Done (0)
+2016-10-27 02:06:28 id = 0 (cpu1); Seed = 3078; Starting new sample
+2016-10-27 02:08:42 id = 3 (cpu4); Seed = 3072; Done (0)
+2016-10-27 02:08:47 id = 3 (cpu4); Seed = 3079; Starting new sample
+2016-10-27 02:09:42 id = 1 (cpu2); Seed = 3073; Done (0)
+2016-10-27 02:09:48 id = 1 (cpu2); Seed = 3080; Starting new sample
+2016-10-27 02:10:58 id = 4 (cpu5); Seed = 3074; Done (0)
+2016-10-27 02:11:05 id = 4 (cpu5); Seed = 3081; Starting new sample
+2016-10-27 02:15:43 id = 6 (cpu7); Seed = 3075; Done (0)
+2016-10-27 02:15:48 id = 6 (cpu7); Seed = 3082; Starting new sample
+2016-10-27 02:17:19 id = 2 (cpu3); Seed = 3076; Done (0)
+2016-10-27 02:17:24 id = 2 (cpu3); Seed = 3083; Starting new sample
+2016-10-27 02:18:38 id = 5 (cpu6); Seed = 3077; Done (0)
+2016-10-27 02:18:44 id = 5 (cpu6); Seed = 3084; Starting new sample
+2016-10-27 02:20:35 id = 0 (cpu1); Seed = 3078; Done (1)
+2016-10-27 02:20:41 id = 0 (cpu1); Seed = 3085; Starting new sample
+2016-10-27 02:23:32 id = 3 (cpu4); Seed = 3079; Done (0)
+2016-10-27 02:23:38 id = 3 (cpu4); Seed = 3086; Starting new sample
+2016-10-27 02:24:37 id = 1 (cpu2); Seed = 3080; Done (0)
+2016-10-27 02:24:44 id = 1 (cpu2); Seed = 3087; Starting new sample
+2016-10-27 02:25:20 id = 4 (cpu5); Seed = 3081; Done (0)
+2016-10-27 02:25:26 id = 4 (cpu5); Seed = 3088; Starting new sample
+2016-10-27 02:29:21 id = 6 (cpu7); Seed = 3082; Done (1)
+2016-10-27 02:29:26 id = 6 (cpu7); Seed = 3089; Starting new sample
+2016-10-27 02:32:51 id = 2 (cpu3); Seed = 3083; Done (1)
+2016-10-27 02:32:57 id = 2 (cpu3); Seed = 3090; Starting new sample
+2016-10-27 02:33:50 id = 5 (cpu6); Seed = 3084; Done (1)
+2016-10-27 02:33:57 id = 5 (cpu6); Seed = 3091; Starting new sample
+2016-10-27 02:36:33 id = 0 (cpu1); Seed = 3085; Done (0)
+2016-10-27 02:36:40 id = 0 (cpu1); Seed = 3092; Starting new sample
+2016-10-27 02:38:37 id = 4 (cpu5); Seed = 3088; Done (1)
+2016-10-27 02:38:43 id = 4 (cpu5); Seed = 3093; Starting new sample
+2016-10-27 02:39:14 id = 3 (cpu4); Seed = 3086; Done (1)
+2016-10-27 02:39:21 id = 3 (cpu4); Seed = 3094; Starting new sample
+2016-10-27 02:40:27 id = 1 (cpu2); Seed = 3087; Done (0)
+2016-10-27 02:40:35 id = 1 (cpu2); Seed = 3095; Starting new sample
+2016-10-27 02:42:27 id = 6 (cpu7); Seed = 3089; Done (1)
+2016-10-27 02:42:34 id = 6 (cpu7); Seed = 3096; Starting new sample
+2016-10-27 02:44:17 id = 2 (cpu3); Seed = 3090; Done (0)
+2016-10-27 02:44:25 id = 2 (cpu3); Seed = 3097; Starting new sample
+2016-10-27 02:48:20 id = 5 (cpu6); Seed = 3091; Done (0)
+2016-10-27 02:48:26 id = 5 (cpu6); Seed = 3098; Starting new sample
+2016-10-27 02:50:47 id = 0 (cpu1); Seed = 3092; Done (1)
+2016-10-27 02:50:52 id = 0 (cpu1); Seed = 3099; Starting new sample
+2016-10-27 02:52:15 id = 4 (cpu5); Seed = 3093; Done (1)
+2016-10-27 02:52:22 id = 4 (cpu5); Seed = 3100; Starting new sample
+2016-10-27 02:53:10 id = 3 (cpu4); Seed = 3094; Done (0)
+2016-10-27 02:53:18 id = 3 (cpu4); Seed = 3101; Starting new sample
+2016-10-27 02:55:02 id = 1 (cpu2); Seed = 3095; Done (1)
+2016-10-27 02:55:08 id = 1 (cpu2); Seed = 3102; Starting new sample
+2016-10-27 02:56:59 id = 6 (cpu7); Seed = 3096; Done (0)
+2016-10-27 02:57:05 id = 6 (cpu7); Seed = 3103; Starting new sample
+2016-10-27 02:57:33 id = 2 (cpu3); Seed = 3097; Done (1)
+2016-10-27 02:57:38 id = 2 (cpu3); Seed = 3104; Starting new sample
+2016-10-27 03:03:19 id = 5 (cpu6); Seed = 3098; Done (0)
+2016-10-27 03:03:25 id = 5 (cpu6); Seed = 3105; Starting new sample
+2016-10-27 03:04:08 id = 0 (cpu1); Seed = 3099; Done (0)
+2016-10-27 03:04:13 id = 0 (cpu1); Seed = 3106; Starting new sample
+2016-10-27 03:06:21 id = 4 (cpu5); Seed = 3100; Done (0)
+2016-10-27 03:06:27 id = 4 (cpu5); Seed = 3107; Starting new sample
+2016-10-27 03:06:58 id = 1 (cpu2); Seed = 3102; Done (1)
+2016-10-27 03:07:03 id = 1 (cpu2); Seed = 3108; Starting new sample
+2016-10-27 03:07:35 id = 3 (cpu4); Seed = 3101; Done (1)
+2016-10-27 03:07:43 id = 3 (cpu4); Seed = 3109; Starting new sample
+2016-10-27 03:09:52 id = 2 (cpu3); Seed = 3104; Done (0)
+2016-10-27 03:09:57 id = 2 (cpu3); Seed = 3110; Starting new sample
+2016-10-27 03:10:07 id = 6 (cpu7); Seed = 3103; Done (0)
+2016-10-27 03:10:13 id = 6 (cpu7); Seed = 3111; Starting new sample
+2016-10-27 03:16:01 id = 5 (cpu6); Seed = 3105; Done (1)
+2016-10-27 03:16:08 id = 5 (cpu6); Seed = 3112; Starting new sample
+2016-10-27 03:18:05 id = 0 (cpu1); Seed = 3106; Done (1)
+2016-10-27 03:18:12 id = 0 (cpu1); Seed = 3113; Starting new sample
+2016-10-27 03:20:35 id = 1 (cpu2); Seed = 3108; Done (0)
+2016-10-27 03:20:43 id = 1 (cpu2); Seed = 3114; Starting new sample
+2016-10-27 03:20:43 id = 4 (cpu5); Seed = 3107; Done (0)
+2016-10-27 03:20:50 id = 4 (cpu5); Seed = 3115; Starting new sample
+2016-10-27 03:21:21 id = 3 (cpu4); Seed = 3109; Done (0)
+2016-10-27 03:21:28 id = 3 (cpu4); Seed = 3116; Starting new sample
+2016-10-27 03:23:37 id = 2 (cpu3); Seed = 3110; Done (0)
+2016-10-27 03:23:43 id = 2 (cpu3); Seed = 3117; Starting new sample
+2016-10-27 03:25:15 id = 6 (cpu7); Seed = 3111; Done (0)
+2016-10-27 03:25:20 id = 6 (cpu7); Seed = 3118; Starting new sample
+2016-10-27 03:30:08 id = 5 (cpu6); Seed = 3112; Done (0)
+2016-10-27 03:30:12 id = 5 (cpu6); Seed = 3119; Starting new sample
+2016-10-27 03:31:52 id = 3 (cpu4); Seed = 3116; Done (1)
+2016-10-27 03:31:57 id = 3 (cpu4); Seed = 3120; Starting new sample
+2016-10-27 03:32:19 id = 0 (cpu1); Seed = 3113; Done (0)
+2016-10-27 03:32:26 id = 0 (cpu1); Seed = 3121; Starting new sample
+2016-10-27 03:35:21 id = 1 (cpu2); Seed = 3114; Done (0)
+2016-10-27 03:35:25 id = 1 (cpu2); Seed = 3122; Starting new sample
+2016-10-27 03:36:43 id = 4 (cpu5); Seed = 3115; Done (0)
+2016-10-27 03:36:49 id = 4 (cpu5); Seed = 3123; Starting new sample
+2016-10-27 03:37:04 id = 6 (cpu7); Seed = 3118; Done (0)
+2016-10-27 03:37:09 id = 6 (cpu7); Seed = 3124; Starting new sample
+2016-10-27 03:38:10 id = 2 (cpu3); Seed = 3117; Done (0)
+2016-10-27 03:38:15 id = 2 (cpu3); Seed = 3125; Starting new sample
+2016-10-27 03:43:48 id = 5 (cpu6); Seed = 3119; Done (0)
+2016-10-27 03:43:55 id = 5 (cpu6); Seed = 3126; Starting new sample
+2016-10-27 03:46:02 id = 0 (cpu1); Seed = 3121; Done (0)
+2016-10-27 03:46:07 id = 0 (cpu1); Seed = 3127; Starting new sample
+2016-10-27 03:46:12 id = 3 (cpu4); Seed = 3120; Done (0)
+2016-10-27 03:46:16 id = 3 (cpu4); Seed = 3128; Starting new sample
+2016-10-27 03:48:56 id = 1 (cpu2); Seed = 3122; Done (0)
+2016-10-27 03:49:02 id = 1 (cpu2); Seed = 3129; Starting new sample
+2016-10-27 03:50:58 id = 4 (cpu5); Seed = 3123; Done (0)
+2016-10-27 03:51:02 id = 4 (cpu5); Seed = 3130; Starting new sample
+2016-10-27 03:51:02 id = 6 (cpu7); Seed = 3124; Done (1)
+2016-10-27 03:51:07 id = 6 (cpu7); Seed = 3131; Starting new sample
+2016-10-27 03:53:28 id = 2 (cpu3); Seed = 3125; Done (0)
+2016-10-27 03:53:35 id = 2 (cpu3); Seed = 3132; Starting new sample
+2016-10-27 03:58:13 id = 5 (cpu6); Seed = 3126; Done (1)
+2016-10-27 03:58:18 id = 5 (cpu6); Seed = 3133; Starting new sample
+2016-10-27 04:01:00 id = 0 (cpu1); Seed = 3127; Done (0)
+2016-10-27 04:01:05 id = 0 (cpu1); Seed = 3134; Starting new sample
+2016-10-27 04:02:01 id = 3 (cpu4); Seed = 3128; Done (1)
+2016-10-27 04:02:06 id = 3 (cpu4); Seed = 3135; Starting new sample
+2016-10-27 04:02:17 id = 1 (cpu2); Seed = 3129; Done (0)
+2016-10-27 04:02:24 id = 1 (cpu2); Seed = 3136; Starting new sample
+2016-10-27 04:02:43 id = 4 (cpu5); Seed = 3130; Done (1)
+2016-10-27 04:02:49 id = 4 (cpu5); Seed = 3137; Starting new sample
+2016-10-27 04:06:49 id = 6 (cpu7); Seed = 3131; Done (0)
+2016-10-27 04:06:54 id = 6 (cpu7); Seed = 3138; Starting new sample
+2016-10-27 04:07:55 id = 2 (cpu3); Seed = 3132; Done (1)
+2016-10-27 04:08:02 id = 2 (cpu3); Seed = 3139; Starting new sample
+2016-10-27 04:11:14 id = 0 (cpu1); Seed = 3134; Done (1)
+2016-10-27 04:11:22 id = 0 (cpu1); Seed = 3140; Starting new sample
+2016-10-27 04:12:01 id = 5 (cpu6); Seed = 3133; Done (0)
+2016-10-27 04:12:07 id = 5 (cpu6); Seed = 3141; Starting new sample
+2016-10-27 04:16:03 id = 4 (cpu5); Seed = 3137; Done (0)
+2016-10-27 04:16:08 id = 4 (cpu5); Seed = 3142; Starting new sample
+2016-10-27 04:16:38 id = 3 (cpu4); Seed = 3135; Done (0)
+2016-10-27 04:16:43 id = 3 (cpu4); Seed = 3143; Starting new sample
+2016-10-27 04:17:39 id = 1 (cpu2); Seed = 3136; Done (0)
+2016-10-27 04:17:46 id = 1 (cpu2); Seed = 3144; Starting new sample
+2016-10-27 04:21:31 id = 6 (cpu7); Seed = 3138; Done (0)
+2016-10-27 04:21:39 id = 6 (cpu7); Seed = 3145; Starting new sample
+2016-10-27 04:22:19 id = 2 (cpu3); Seed = 3139; Done (0)
+2016-10-27 04:22:26 id = 2 (cpu3); Seed = 3146; Starting new sample
+2016-10-27 04:25:10 id = 0 (cpu1); Seed = 3140; Done (1)
+2016-10-27 04:25:18 id = 0 (cpu1); Seed = 3147; Starting new sample
+2016-10-27 04:26:41 id = 5 (cpu6); Seed = 3141; Done (0)
+2016-10-27 04:26:47 id = 5 (cpu6); Seed = 3148; Starting new sample
+2016-10-27 04:28:53 id = 2 (cpu3); Seed = 3146; Done (1)
+2016-10-27 04:28:57 id = 2 (cpu3); Seed = 3149; Starting new sample
+2016-10-27 04:30:27 id = 1 (cpu2); Seed = 3144; Done (0)
+2016-10-27 04:30:33 id = 1 (cpu2); Seed = 3150; Starting new sample
+2016-10-27 04:31:21 id = 3 (cpu4); Seed = 3143; Done (0)
+2016-10-27 04:31:27 id = 3 (cpu4); Seed = 3151; Starting new sample
+2016-10-27 04:32:01 id = 4 (cpu5); Seed = 3142; Done (0)
+2016-10-27 04:32:08 id = 4 (cpu5); Seed = 3152; Starting new sample
+2016-10-27 04:34:44 id = 6 (cpu7); Seed = 3145; Done (0)
+2016-10-27 04:34:49 id = 6 (cpu7); Seed = 3153; Starting new sample
+2016-10-27 04:37:46 id = 0 (cpu1); Seed = 3147; Done (1)
+2016-10-27 04:37:50 id = 0 (cpu1); Seed = 3154; Starting new sample
+2016-10-27 04:40:32 id = 2 (cpu3); Seed = 3149; Done (0)
+2016-10-27 04:40:37 id = 2 (cpu3); Seed = 3155; Starting new sample
+2016-10-27 04:41:05 id = 5 (cpu6); Seed = 3148; Done (0)
+2016-10-27 04:41:11 id = 5 (cpu6); Seed = 3156; Starting new sample
+2016-10-27 04:45:13 id = 1 (cpu2); Seed = 3150; Done (0)
+2016-10-27 04:45:19 id = 1 (cpu2); Seed = 3157; Starting new sample
+2016-10-27 04:46:19 id = 4 (cpu5); Seed = 3152; Done (0)
+2016-10-27 04:46:24 id = 4 (cpu5); Seed = 3158; Starting new sample
+2016-10-27 04:46:52 id = 3 (cpu4); Seed = 3151; Done (1)
+2016-10-27 04:46:59 id = 3 (cpu4); Seed = 3159; Starting new sample
+2016-10-27 04:50:24 id = 6 (cpu7); Seed = 3153; Done (1)
+2016-10-27 04:50:28 id = 6 (cpu7); Seed = 3160; Starting new sample
+2016-10-27 04:51:45 id = 0 (cpu1); Seed = 3154; Done (0)
+2016-10-27 04:51:51 id = 0 (cpu1); Seed = 3161; Starting new sample
+2016-10-27 04:54:30 id = 5 (cpu6); Seed = 3156; Done (1)
+2016-10-27 04:54:35 id = 5 (cpu6); Seed = 3162; Starting new sample
+2016-10-27 04:55:15 id = 2 (cpu3); Seed = 3155; Done (0)
+2016-10-27 04:55:19 id = 2 (cpu3); Seed = 3163; Starting new sample
+2016-10-27 04:57:48 id = 4 (cpu5); Seed = 3158; Done (1)
+2016-10-27 04:57:56 id = 4 (cpu5); Seed = 3164; Starting new sample
+2016-10-27 05:00:49 id = 1 (cpu2); Seed = 3157; Done (0)
+2016-10-27 05:00:56 id = 1 (cpu2); Seed = 3165; Starting new sample
+2016-10-27 05:01:41 id = 3 (cpu4); Seed = 3159; Done (1)
+2016-10-27 05:01:46 id = 3 (cpu4); Seed = 3166; Starting new sample
+2016-10-27 05:04:34 id = 6 (cpu7); Seed = 3160; Done (0)
+2016-10-27 05:04:39 id = 6 (cpu7); Seed = 3167; Starting new sample
+2016-10-27 05:07:08 id = 0 (cpu1); Seed = 3161; Done (1)
+2016-10-27 05:07:13 id = 0 (cpu1); Seed = 3168; Starting new sample
+2016-10-27 05:08:59 id = 5 (cpu6); Seed = 3162; Done (0)
+2016-10-27 05:09:04 id = 5 (cpu6); Seed = 3169; Starting new sample
+2016-10-27 05:09:34 id = 2 (cpu3); Seed = 3163; Done (1)
+2016-10-27 05:09:40 id = 2 (cpu3); Seed = 3170; Starting new sample
+2016-10-27 05:11:20 id = 4 (cpu5); Seed = 3164; Done (1)
+2016-10-27 05:11:27 id = 4 (cpu5); Seed = 3171; Starting new sample
+2016-10-27 05:15:10 id = 1 (cpu2); Seed = 3165; Done (1)
+2016-10-27 05:15:16 id = 1 (cpu2); Seed = 3172; Starting new sample
+2016-10-27 05:16:10 id = 3 (cpu4); Seed = 3166; Done (0)
+2016-10-27 05:16:17 id = 3 (cpu4); Seed = 3173; Starting new sample
+2016-10-27 05:19:31 id = 6 (cpu7); Seed = 3167; Done (0)
+2016-10-27 05:19:37 id = 6 (cpu7); Seed = 3174; Starting new sample
+2016-10-27 05:20:45 id = 5 (cpu6); Seed = 3169; Done (1)
+2016-10-27 05:20:51 id = 5 (cpu6); Seed = 3175; Starting new sample
+2016-10-27 05:22:44 id = 2 (cpu3); Seed = 3170; Done (0)
+2016-10-27 05:22:51 id = 2 (cpu3); Seed = 3176; Starting new sample
+2016-10-27 05:22:51 id = 0 (cpu1); Seed = 3168; Done (0)
+2016-10-27 05:22:57 id = 0 (cpu1); Seed = 3177; Starting new sample
+2016-10-27 05:27:02 id = 4 (cpu5); Seed = 3171; Done (0)
+2016-10-27 05:27:08 id = 4 (cpu5); Seed = 3178; Starting new sample
+2016-10-27 05:30:05 id = 1 (cpu2); Seed = 3172; Done (0)
+2016-10-27 05:30:11 id = 1 (cpu2); Seed = 3179; Starting new sample
+2016-10-27 05:31:01 id = 2 (cpu3); Seed = 3176; Done (1)
+2016-10-27 05:31:08 id = 2 (cpu3); Seed = 3180; Starting new sample
+2016-10-27 05:32:24 id = 3 (cpu4); Seed = 3173; Done (0)
+2016-10-27 05:32:30 id = 3 (cpu4); Seed = 3181; Starting new sample
+2016-10-27 05:35:02 id = 6 (cpu7); Seed = 3174; Done (0)
+2016-10-27 05:35:09 id = 6 (cpu7); Seed = 3182; Starting new sample
+2016-10-27 05:36:11 id = 5 (cpu6); Seed = 3175; Done (0)
+2016-10-27 05:36:17 id = 5 (cpu6); Seed = 3183; Starting new sample
+2016-10-27 05:38:17 id = 0 (cpu1); Seed = 3177; Done (1)
+2016-10-27 05:38:22 id = 0 (cpu1); Seed = 3184; Starting new sample
+2016-10-27 05:41:00 id = 4 (cpu5); Seed = 3178; Done (0)
+2016-10-27 05:41:07 id = 4 (cpu5); Seed = 3185; Starting new sample
+2016-10-27 05:43:28 id = 1 (cpu2); Seed = 3179; Done (0)
+2016-10-27 05:43:34 id = 1 (cpu2); Seed = 3186; Starting new sample
+2016-10-27 05:43:37 id = 3 (cpu4); Seed = 3181; Done (0)
+2016-10-27 05:43:43 id = 3 (cpu4); Seed = 3187; Starting new sample
+2016-10-27 05:46:42 id = 2 (cpu3); Seed = 3180; Done (1)
+2016-10-27 05:46:49 id = 2 (cpu3); Seed = 3188; Starting new sample
+2016-10-27 05:47:03 id = 6 (cpu7); Seed = 3182; Done (0)
+2016-10-27 05:47:08 id = 6 (cpu7); Seed = 3189; Starting new sample
+2016-10-27 05:51:33 id = 0 (cpu1); Seed = 3184; Done (0)
+2016-10-27 05:51:39 id = 0 (cpu1); Seed = 3190; Starting new sample
+2016-10-27 05:51:53 id = 5 (cpu6); Seed = 3183; Done (0)
+2016-10-27 05:51:59 id = 5 (cpu6); Seed = 3191; Starting new sample
+2016-10-27 05:54:34 id = 1 (cpu2); Seed = 3186; Done (0)
+2016-10-27 05:54:40 id = 1 (cpu2); Seed = 3192; Starting new sample
+2016-10-27 05:57:06 id = 4 (cpu5); Seed = 3185; Done (0)
+2016-10-27 05:57:13 id = 4 (cpu5); Seed = 3193; Starting new sample
+2016-10-27 05:59:35 id = 3 (cpu4); Seed = 3187; Done (0)
+2016-10-27 05:59:41 id = 3 (cpu4); Seed = 3194; Starting new sample
+2016-10-27 06:01:21 id = 2 (cpu3); Seed = 3188; Done (0)
+2016-10-27 06:01:28 id = 2 (cpu3); Seed = 3195; Starting new sample
+2016-10-27 06:02:39 id = 6 (cpu7); Seed = 3189; Done (1)
+2016-10-27 06:02:45 id = 6 (cpu7); Seed = 3196; Starting new sample
+2016-10-27 06:04:47 id = 5 (cpu6); Seed = 3191; Done (1)
+2016-10-27 06:04:53 id = 5 (cpu6); Seed = 3197; Starting new sample
+2016-10-27 06:07:52 id = 0 (cpu1); Seed = 3190; Done (0)
+2016-10-27 06:07:58 id = 0 (cpu1); Seed = 3198; Starting new sample
+2016-10-27 06:08:39 id = 1 (cpu2); Seed = 3192; Done (1)
+2016-10-27 06:08:44 id = 1 (cpu2); Seed = 3199; Starting new sample
+2016-10-27 06:11:11 id = 4 (cpu5); Seed = 3193; Done (0)
+2016-10-27 06:11:16 id = 4 (cpu5); Seed = 3200; Starting new sample
+2016-10-27 06:12:17 id = 3 (cpu4); Seed = 3194; Done (1)
+2016-10-27 06:12:23 id = 3 (cpu4); Seed = 3201; Starting new sample
+2016-10-27 06:16:02 id = 2 (cpu3); Seed = 3195; Done (0)
+2016-10-27 06:16:10 id = 2 (cpu3); Seed = 3202; Starting new sample
+2016-10-27 06:16:10 id = 5 (cpu6); Seed = 3197; Done (1)
+2016-10-27 06:16:16 id = 5 (cpu6); Seed = 3203; Starting new sample
+2016-10-27 06:16:16 id = 6 (cpu7); Seed = 3196; Done (0)
+2016-10-27 06:16:22 id = 6 (cpu7); Seed = 3204; Starting new sample
+2016-10-27 06:21:43 id = 0 (cpu1); Seed = 3198; Done (0)
+2016-10-27 06:21:50 id = 0 (cpu1); Seed = 3205; Starting new sample
+2016-10-27 06:24:35 id = 1 (cpu2); Seed = 3199; Done (0)
+2016-10-27 06:24:41 id = 1 (cpu2); Seed = 3206; Starting new sample
+2016-10-27 06:26:27 id = 4 (cpu5); Seed = 3200; Done (1)
+2016-10-27 06:26:33 id = 4 (cpu5); Seed = 3207; Starting new sample
+2016-10-27 06:27:39 id = 3 (cpu4); Seed = 3201; Done (0)
+2016-10-27 06:27:45 id = 3 (cpu4); Seed = 3208; Starting new sample
+2016-10-27 06:30:56 id = 2 (cpu3); Seed = 3202; Done (0)
+2016-10-27 06:31:02 id = 2 (cpu3); Seed = 3209; Starting new sample
+2016-10-27 06:31:02 id = 6 (cpu7); Seed = 3204; Done (1)
+2016-10-27 06:31:07 id = 6 (cpu7); Seed = 3210; Starting new sample
+2016-10-27 06:31:22 id = 5 (cpu6); Seed = 3203; Done (0)
+2016-10-27 06:31:28 id = 5 (cpu6); Seed = 3211; Starting new sample
+2016-10-27 06:34:07 id = 1 (cpu2); Seed = 3206; Done (1)
+2016-10-27 06:34:13 id = 1 (cpu2); Seed = 3212; Starting new sample
+2016-10-27 06:36:47 id = 0 (cpu1); Seed = 3205; Done (0)
+2016-10-27 06:36:54 id = 0 (cpu1); Seed = 3213; Starting new sample
+2016-10-27 06:40:44 id = 4 (cpu5); Seed = 3207; Done (0)
+2016-10-27 06:40:50 id = 4 (cpu5); Seed = 3214; Starting new sample
+2016-10-27 06:43:12 id = 3 (cpu4); Seed = 3208; Done (0)
+2016-10-27 06:43:16 id = 3 (cpu4); Seed = 3215; Starting new sample
+2016-10-27 06:44:42 id = 2 (cpu3); Seed = 3209; Done (0)
+2016-10-27 06:44:49 id = 2 (cpu3); Seed = 3216; Starting new sample
+2016-10-27 06:46:13 id = 6 (cpu7); Seed = 3210; Done (0)
+2016-10-27 06:46:19 id = 6 (cpu7); Seed = 3217; Starting new sample
+2016-10-27 06:46:28 id = 5 (cpu6); Seed = 3211; Done (0)
+2016-10-27 06:46:32 id = 5 (cpu6); Seed = 3218; Starting new sample
+2016-10-27 06:48:09 id = 0 (cpu1); Seed = 3213; Done (1)
+2016-10-27 06:48:14 id = 0 (cpu1); Seed = 3219; Starting new sample
+2016-10-27 06:49:49 id = 1 (cpu2); Seed = 3212; Done (0)
+2016-10-27 06:49:54 id = 1 (cpu2); Seed = 3220; Starting new sample
+2016-10-27 06:55:42 id = 4 (cpu5); Seed = 3214; Done (0)
+2016-10-27 06:55:47 id = 4 (cpu5); Seed = 3221; Starting new sample
+2016-10-27 06:58:49 id = 2 (cpu3); Seed = 3216; Done (0)
+2016-10-27 06:58:54 id = 2 (cpu3); Seed = 3222; Starting new sample
+2016-10-27 06:59:12 id = 3 (cpu4); Seed = 3215; Done (0)
+2016-10-27 06:59:17 id = 3 (cpu4); Seed = 3223; Starting new sample
+2016-10-27 07:00:38 id = 6 (cpu7); Seed = 3217; Done (0)
+2016-10-27 07:00:44 id = 6 (cpu7); Seed = 3224; Starting new sample
+2016-10-27 07:01:39 id = 5 (cpu6); Seed = 3218; Done (0)
+2016-10-27 07:01:45 id = 5 (cpu6); Seed = 3225; Starting new sample
+2016-10-27 07:02:52 id = 0 (cpu1); Seed = 3219; Done (0)
+2016-10-27 07:02:59 id = 0 (cpu1); Seed = 3226; Starting new sample
+2016-10-27 07:06:20 id = 1 (cpu2); Seed = 3220; Done (1)
+2016-10-27 07:06:27 id = 1 (cpu2); Seed = 3227; Starting new sample
+2016-10-27 07:10:33 id = 4 (cpu5); Seed = 3221; Done (0)
+2016-10-27 07:10:39 id = 4 (cpu5); Seed = 3228; Starting new sample
+2016-10-27 07:11:36 id = 3 (cpu4); Seed = 3223; Done (1)
+2016-10-27 07:11:42 id = 3 (cpu4); Seed = 3229; Starting new sample
+2016-10-27 07:13:46 id = 2 (cpu3); Seed = 3222; Done (1)
+2016-10-27 07:13:51 id = 2 (cpu3); Seed = 3230; Starting new sample
+2016-10-27 07:13:51 id = 5 (cpu6); Seed = 3225; Done (0)
+2016-10-27 07:13:57 id = 5 (cpu6); Seed = 3231; Starting new sample
+2016-10-27 07:14:29 id = 6 (cpu7); Seed = 3224; Done (0)
+2016-10-27 07:14:37 id = 6 (cpu7); Seed = 3232; Starting new sample
+2016-10-27 07:17:30 id = 0 (cpu1); Seed = 3226; Done (0)
+2016-10-27 07:17:37 id = 0 (cpu1); Seed = 3233; Starting new sample
+2016-10-27 07:20:21 id = 1 (cpu2); Seed = 3227; Done (0)
+2016-10-27 07:20:28 id = 1 (cpu2); Seed = 3234; Starting new sample
+2016-10-27 07:23:16 id = 3 (cpu4); Seed = 3229; Done (1)
+2016-10-27 07:23:22 id = 3 (cpu4); Seed = 3235; Starting new sample
+2016-10-27 07:23:49 id = 4 (cpu5); Seed = 3228; Done (0)
+2016-10-27 07:23:58 id = 4 (cpu5); Seed = 3236; Starting new sample
+2016-10-27 07:28:24 id = 6 (cpu7); Seed = 3232; Done (0)
+2016-10-27 07:28:32 id = 6 (cpu7); Seed = 3237; Starting new sample
+2016-10-27 07:29:02 id = 2 (cpu3); Seed = 3230; Done (0)
+2016-10-27 07:29:08 id = 2 (cpu3); Seed = 3238; Starting new sample
+2016-10-27 07:29:14 id = 0 (cpu1); Seed = 3233; Done (1)
+2016-10-27 07:29:22 id = 0 (cpu1); Seed = 3239; Starting new sample
+2016-10-27 07:30:07 id = 5 (cpu6); Seed = 3231; Done (1)
+2016-10-27 07:30:14 id = 5 (cpu6); Seed = 3240; Starting new sample
+2016-10-27 07:34:35 id = 1 (cpu2); Seed = 3234; Done (0)
+2016-10-27 07:34:40 id = 1 (cpu2); Seed = 3241; Starting new sample
+2016-10-27 07:35:12 id = 3 (cpu4); Seed = 3235; Done (1)
+2016-10-27 07:35:17 id = 3 (cpu4); Seed = 3242; Starting new sample
+2016-10-27 07:40:15 id = 4 (cpu5); Seed = 3236; Done (0)
+2016-10-27 07:40:21 id = 4 (cpu5); Seed = 3243; Starting new sample
+2016-10-27 07:43:03 id = 6 (cpu7); Seed = 3237; Done (1)
+2016-10-27 07:43:09 id = 6 (cpu7); Seed = 3244; Starting new sample
+2016-10-27 07:43:30 id = 2 (cpu3); Seed = 3238; Done (0)
+2016-10-27 07:43:35 id = 2 (cpu3); Seed = 3245; Starting new sample
+2016-10-27 07:44:19 id = 0 (cpu1); Seed = 3239; Done (0)
+2016-10-27 07:44:24 id = 0 (cpu1); Seed = 3246; Starting new sample
+2016-10-27 07:45:33 id = 5 (cpu6); Seed = 3240; Done (0)
+2016-10-27 07:45:39 id = 5 (cpu6); Seed = 3247; Starting new sample
+2016-10-27 07:49:35 id = 3 (cpu4); Seed = 3242; Done (1)
+2016-10-27 07:49:41 id = 3 (cpu4); Seed = 3248; Starting new sample
+2016-10-27 07:49:41 id = 1 (cpu2); Seed = 3241; Done (1)
+2016-10-27 07:49:48 id = 1 (cpu2); Seed = 3249; Starting new sample
+2016-10-27 07:55:01 id = 4 (cpu5); Seed = 3243; Done (0)
+2016-10-27 07:55:07 id = 4 (cpu5); Seed = 3250; Starting new sample
+2016-10-27 07:57:35 id = 6 (cpu7); Seed = 3244; Done (0)
+2016-10-27 07:57:42 id = 6 (cpu7); Seed = 3251; Starting new sample
+2016-10-27 07:58:42 id = 0 (cpu1); Seed = 3246; Done (1)
+2016-10-27 07:58:51 id = 0 (cpu1); Seed = 3252; Starting new sample
+2016-10-27 08:00:00 id = 2 (cpu3); Seed = 3245; Done (1)
+2016-10-27 08:00:08 id = 2 (cpu3); Seed = 3253; Starting new sample
+2016-10-27 08:00:51 id = 5 (cpu6); Seed = 3247; Done (1)
+2016-10-27 08:00:58 id = 5 (cpu6); Seed = 3254; Starting new sample
+2016-10-27 08:02:15 id = 3 (cpu4); Seed = 3248; Done (0)
+2016-10-27 08:02:21 id = 3 (cpu4); Seed = 3255; Starting new sample
+2016-10-27 08:03:15 id = 1 (cpu2); Seed = 3249; Done (1)
+2016-10-27 08:03:23 id = 1 (cpu2); Seed = 3256; Starting new sample
+2016-10-27 08:08:57 id = 4 (cpu5); Seed = 3250; Done (0)
+2016-10-27 08:09:03 id = 4 (cpu5); Seed = 3257; Starting new sample
+2016-10-27 08:10:54 id = 0 (cpu1); Seed = 3252; Done (0)
+2016-10-27 08:11:02 id = 0 (cpu1); Seed = 3258; Starting new sample
+2016-10-27 08:11:41 id = 6 (cpu7); Seed = 3251; Done (0)
+2016-10-27 08:11:49 id = 6 (cpu7); Seed = 3259; Starting new sample
+2016-10-27 08:13:33 id = 2 (cpu3); Seed = 3253; Done (1)
+2016-10-27 08:13:41 id = 2 (cpu3); Seed = 3260; Starting new sample
+2016-10-27 08:15:51 id = 5 (cpu6); Seed = 3254; Done (0)
+2016-10-27 08:15:59 id = 5 (cpu6); Seed = 3261; Starting new sample
+2016-10-27 08:17:49 id = 3 (cpu4); Seed = 3255; Done (1)
+2016-10-27 08:17:56 id = 3 (cpu4); Seed = 3262; Starting new sample
+2016-10-27 08:18:57 id = 1 (cpu2); Seed = 3256; Done (0)
+2016-10-27 08:19:04 id = 1 (cpu2); Seed = 3263; Starting new sample
+2016-10-27 08:21:22 id = 4 (cpu5); Seed = 3257; Done (0)
+2016-10-27 08:21:28 id = 4 (cpu5); Seed = 3264; Starting new sample
+2016-10-27 08:24:52 id = 0 (cpu1); Seed = 3258; Done (0)
+2016-10-27 08:24:58 id = 0 (cpu1); Seed = 3265; Starting new sample
+2016-10-27 08:25:28 id = 6 (cpu7); Seed = 3259; Done (1)
+2016-10-27 08:25:34 id = 6 (cpu7); Seed = 3266; Starting new sample
+2016-10-27 08:25:58 id = 2 (cpu3); Seed = 3260; Done (1)
+2016-10-27 08:26:04 id = 2 (cpu3); Seed = 3267; Starting new sample
+2016-10-27 08:27:59 id = 5 (cpu6); Seed = 3261; Done (1)
+2016-10-27 08:28:06 id = 5 (cpu6); Seed = 3268; Starting new sample
+2016-10-27 08:30:21 id = 3 (cpu4); Seed = 3262; Done (1)
+2016-10-27 08:30:27 id = 3 (cpu4); Seed = 3269; Starting new sample
+2016-10-27 08:34:30 id = 1 (cpu2); Seed = 3263; Done (0)
+2016-10-27 08:34:36 id = 1 (cpu2); Seed = 3270; Starting new sample
+2016-10-27 08:35:45 id = 4 (cpu5); Seed = 3264; Done (1)
+2016-10-27 08:35:51 id = 4 (cpu5); Seed = 3271; Starting new sample
+2016-10-27 08:39:21 id = 0 (cpu1); Seed = 3265; Done (0)
+2016-10-27 08:39:27 id = 0 (cpu1); Seed = 3272; Starting new sample
+2016-10-27 08:40:31 id = 6 (cpu7); Seed = 3266; Done (0)
+2016-10-27 08:40:37 id = 6 (cpu7); Seed = 3273; Starting new sample
+2016-10-27 08:41:48 id = 2 (cpu3); Seed = 3267; Done (0)
+2016-10-27 08:41:55 id = 2 (cpu3); Seed = 3274; Starting new sample
+2016-10-27 08:43:42 id = 5 (cpu6); Seed = 3268; Done (0)
+2016-10-27 08:43:49 id = 5 (cpu6); Seed = 3275; Starting new sample
+2016-10-27 08:45:37 id = 3 (cpu4); Seed = 3269; Done (0)
+2016-10-27 08:45:43 id = 3 (cpu4); Seed = 3276; Starting new sample
+2016-10-27 08:49:52 id = 1 (cpu2); Seed = 3270; Done (0)
+2016-10-27 08:49:59 id = 1 (cpu2); Seed = 3277; Starting new sample
+2016-10-27 08:50:39 id = 4 (cpu5); Seed = 3271; Done (0)
+2016-10-27 08:50:46 id = 4 (cpu5); Seed = 3278; Starting new sample
+2016-10-27 08:54:36 id = 0 (cpu1); Seed = 3272; Done (0)
+2016-10-27 08:54:42 id = 0 (cpu1); Seed = 3279; Starting new sample
+2016-10-27 08:55:03 id = 2 (cpu3); Seed = 3274; Done (1)
+2016-10-27 08:55:09 id = 2 (cpu3); Seed = 3280; Starting new sample
+2016-10-27 08:55:40 id = 6 (cpu7); Seed = 3273; Done (1)
+2016-10-27 08:55:48 id = 6 (cpu7); Seed = 3281; Starting new sample
+2016-10-27 08:58:48 id = 5 (cpu6); Seed = 3275; Done (1)
+2016-10-27 08:58:54 id = 5 (cpu6); Seed = 3282; Starting new sample
+2016-10-27 08:59:23 id = 3 (cpu4); Seed = 3276; Done (0)
+2016-10-27 08:59:30 id = 3 (cpu4); Seed = 3283; Starting new sample
+2016-10-27 09:03:12 id = 4 (cpu5); Seed = 3278; Done (1)
+2016-10-27 09:03:21 id = 4 (cpu5); Seed = 3284; Starting new sample
+2016-10-27 09:04:29 id = 1 (cpu2); Seed = 3277; Done (0)
+2016-10-27 09:04:34 id = 1 (cpu2); Seed = 3285; Starting new sample
+2016-10-27 09:07:33 id = 6 (cpu7); Seed = 3281; Done (0)
+2016-10-27 09:07:40 id = 6 (cpu7); Seed = 3286; Starting new sample
+2016-10-27 09:08:51 id = 2 (cpu3); Seed = 3280; Done (0)
+2016-10-27 09:08:59 id = 2 (cpu3); Seed = 3287; Starting new sample
+2016-10-27 09:09:17 id = 0 (cpu1); Seed = 3279; Done (0)
+2016-10-27 09:09:23 id = 0 (cpu1); Seed = 3288; Starting new sample
+2016-10-27 09:12:29 id = 5 (cpu6); Seed = 3282; Done (0)
+2016-10-27 09:12:36 id = 5 (cpu6); Seed = 3289; Starting new sample
+2016-10-27 09:13:30 id = 3 (cpu4); Seed = 3283; Done (1)
+2016-10-27 09:13:35 id = 3 (cpu4); Seed = 3290; Starting new sample
+2016-10-27 09:15:37 id = 1 (cpu2); Seed = 3285; Done (1)
+2016-10-27 09:15:47 id = 1 stopped. RunningProcessors = 6
+2016-10-27 09:17:21 id = 4 (cpu5); Seed = 3284; Done (0)
+2016-10-27 09:17:26 id = 4 stopped. RunningProcessors = 5
+2016-10-27 09:22:08 id = 6 (cpu7); Seed = 3286; Done (0)
+2016-10-27 09:22:13 id = 6 stopped. RunningProcessors = 4
+2016-10-27 09:22:55 id = 2 (cpu3); Seed = 3287; Done (1)
+2016-10-27 09:22:59 id = 2 stopped. RunningProcessors = 3
+2016-10-27 09:23:56 id = 0 (cpu1); Seed = 3288; Done (0)
+2016-10-27 09:23:59 id = 0 stopped. RunningProcessors = 2
+2016-10-27 09:25:27 id = 3 (cpu4); Seed = 3290; Done (0)
+2016-10-27 09:25:30 id = 3 stopped. RunningProcessors = 1
+2016-10-27 09:25:47 id = 5 (cpu6); Seed = 3289; Done (1)
+2016-10-27 09:25:50 id = 5 stopped. RunningProcessors = 0
+2016-10-27 09:25:50 Stop
+2016-10-27 07:34:29 ===== Starting: clopgtp =====
+2016-10-27 07:34:29 Found existing clopgtp.dat
+2016-10-27 07:34:29 Removing clopgtp-old.dat
+2016-10-27 07:34:29 Renaming clopgtp.dat to clopgtp-old.dat
+2016-10-27 07:34:29 Reading clopgtp-old.dat...
+2016-10-27 07:34:29 Backup done.
+2016-10-27 07:34:29 Samples = 3291; Results = 3291; Mismatches = 0.
+2016-10-27 07:34:34 Run
+2016-10-27 07:34:34 id = 6 (cpu7); Seed = 3291; Starting new sample
+2016-10-27 07:34:34 id = 5 (cpu6); Seed = 3292; Starting new sample
+2016-10-27 07:34:34 id = 4 (cpu5); Seed = 3293; Starting new sample
+2016-10-27 07:34:34 id = 3 (cpu4); Seed = 3294; Starting new sample
+2016-10-27 07:34:34 id = 2 (cpu3); Seed = 3295; Starting new sample
+2016-10-27 07:34:34 id = 1 (cpu2); Seed = 3296; Starting new sample
+2016-10-27 07:34:34 id = 0 (cpu1); Seed = 3297; Starting new sample
+2016-10-27 07:35:51 ===== Starting: clopgtp =====
+2016-10-27 07:35:51 Found existing clopgtp.dat
+2016-10-27 07:35:51 Removing clopgtp-old.dat
+2016-10-27 07:35:51 Renaming clopgtp.dat to clopgtp-old.dat
+2016-10-27 07:35:51 Reading clopgtp-old.dat...
+2016-10-27 07:35:51 Backup done.
+2016-10-27 07:35:51 Samples = 3298; Results = 3291; Mismatches = 0.
+2016-10-27 07:35:54 Run
+2016-10-27 07:35:54 id = 6 (cpu7); Seed = 3291; Starting from setInProgress
+2016-10-27 07:35:54 id = 5 (cpu6); Seed = 3292; Starting from setInProgress
+2016-10-27 07:35:54 id = 4 (cpu5); Seed = 3293; Starting from setInProgress
+2016-10-27 07:35:54 id = 3 (cpu4); Seed = 3294; Starting from setInProgress
+2016-10-27 07:35:54 id = 2 (cpu3); Seed = 3295; Starting from setInProgress
+2016-10-27 07:35:54 id = 1 (cpu2); Seed = 3296; Starting from setInProgress
+2016-10-27 07:35:54 id = 0 (cpu1); Seed = 3297; Starting from setInProgress
+2016-10-27 07:36:59 ===== Starting: clopgtp =====
+2016-10-27 07:36:59 Found existing clopgtp.dat
+2016-10-27 07:36:59 Removing clopgtp-old.dat
+2016-10-27 07:36:59 Renaming clopgtp.dat to clopgtp-old.dat
+2016-10-27 07:36:59 Reading clopgtp-old.dat...
+2016-10-27 07:36:59 Backup done.
+2016-10-27 07:36:59 Samples = 3298; Results = 3291; Mismatches = 0.
+2016-10-27 07:37:02 Run
+2016-10-27 07:37:02 id = 35 (cpu36); Seed = 3291; Starting from setInProgress
+2016-10-27 07:37:02 id = 34 (cpu35); Seed = 3292; Starting from setInProgress
+2016-10-27 07:37:02 id = 33 (cpu34); Seed = 3293; Starting from setInProgress
+2016-10-27 07:37:02 id = 32 (cpu33); Seed = 3294; Starting from setInProgress
+2016-10-27 07:37:02 id = 31 (cpu32); Seed = 3295; Starting from setInProgress
+2016-10-27 07:37:02 id = 30 (cpu31); Seed = 3296; Starting from setInProgress
+2016-10-27 07:37:02 id = 29 (cpu30); Seed = 3297; Starting from setInProgress
+2016-10-27 07:37:02 id = 28 (cpu29); Seed = 3298; Starting new sample
+2016-10-27 07:37:02 id = 27 (cpu28); Seed = 3299; Starting new sample
+2016-10-27 07:37:02 id = 26 (cpu27); Seed = 3300; Starting new sample
+2016-10-27 07:37:02 id = 25 (cpu26); Seed = 3301; Starting new sample
+2016-10-27 07:37:02 id = 24 (cpu25); Seed = 3302; Starting new sample
+2016-10-27 07:37:02 id = 23 (cpu24); Seed = 3303; Starting new sample
+2016-10-27 07:37:03 id = 22 (cpu23); Seed = 3304; Starting new sample
+2016-10-27 07:37:03 id = 21 (cpu22); Seed = 3305; Starting new sample
+2016-10-27 07:37:03 id = 20 (cpu21); Seed = 3306; Starting new sample
+2016-10-27 07:37:03 id = 19 (cpu20); Seed = 3307; Starting new sample
+2016-10-27 07:37:03 id = 18 (cpu19); Seed = 3308; Starting new sample
+2016-10-27 07:37:03 id = 17 (cpu18); Seed = 3309; Starting new sample
+2016-10-27 07:37:03 id = 16 (cpu17); Seed = 3310; Starting new sample
+2016-10-27 07:37:03 id = 15 (cpu16); Seed = 3311; Starting new sample
+2016-10-27 07:37:03 id = 14 (cpu15); Seed = 3312; Starting new sample
+2016-10-27 07:37:03 id = 13 (cpu14); Seed = 3313; Starting new sample
+2016-10-27 07:37:03 id = 12 (cpu13); Seed = 3314; Starting new sample
+2016-10-27 07:37:03 id = 11 (cpu12); Seed = 3315; Starting new sample
+2016-10-27 07:37:03 id = 10 (cpu11); Seed = 3316; Starting new sample
+2016-10-27 07:37:03 id = 9 (cpu10); Seed = 3317; Starting new sample
+2016-10-27 07:37:03 id = 8 (cpu9); Seed = 3318; Starting new sample
+2016-10-27 07:37:03 id = 7 (cpu8); Seed = 3319; Starting new sample
+2016-10-27 07:37:03 id = 6 (cpu7); Seed = 3320; Starting new sample
+2016-10-27 07:37:03 id = 5 (cpu6); Seed = 3321; Starting new sample
+2016-10-27 07:37:03 id = 4 (cpu5); Seed = 3322; Starting new sample
+2016-10-27 07:37:03 id = 3 (cpu4); Seed = 3323; Starting new sample
+2016-10-27 07:37:03 id = 2 (cpu3); Seed = 3324; Starting new sample
+2016-10-27 07:37:03 id = 1 (cpu2); Seed = 3325; Starting new sample
+2016-10-27 07:37:03 id = 0 (cpu1); Seed = 3326; Starting new sample
+2016-10-27 07:48:32 id = 34 (cpu35); Seed = 3292; Done (0)
+2016-10-27 07:48:32 id = 34 (cpu35); Seed = 3327; Starting new sample
+2016-10-27 07:48:49 id = 26 (cpu27); Seed = 3300; Done (0)
+2016-10-27 07:48:49 id = 26 (cpu27); Seed = 3328; Starting new sample
+2016-10-27 07:49:02 id = 4 (cpu5); Seed = 3322; Done (1)
+2016-10-27 07:49:02 id = 4 (cpu5); Seed = 3329; Starting new sample
+2016-10-27 07:49:08 id = 7 (cpu8); Seed = 3319; Done (1)
+2016-10-27 07:49:08 id = 7 (cpu8); Seed = 3330; Starting new sample
+2016-10-27 07:49:46 id = 20 (cpu21); Seed = 3306; Done (1)
+2016-10-27 07:49:46 id = 20 (cpu21); Seed = 3331; Starting new sample
+2016-10-27 07:49:58 id = 10 (cpu11); Seed = 3316; Done (0)
+2016-10-27 07:49:58 id = 10 (cpu11); Seed = 3332; Starting new sample
+2016-10-27 07:50:01 id = 29 (cpu30); Seed = 3297; Done (0)
+2016-10-27 07:50:01 id = 29 (cpu30); Seed = 3333; Starting new sample
+2016-10-27 07:50:01 id = 5 (cpu6); Seed = 3321; Done (1)
+2016-10-27 07:50:01 id = 5 (cpu6); Seed = 3334; Starting new sample
+2016-10-27 07:50:14 id = 21 (cpu22); Seed = 3305; Done (0)
+2016-10-27 07:50:14 id = 21 (cpu22); Seed = 3335; Starting new sample
+2016-10-27 07:50:14 id = 8 (cpu9); Seed = 3318; Done (0)
+2016-10-27 07:50:14 id = 8 (cpu9); Seed = 3336; Starting new sample
+2016-10-27 07:50:24 id = 12 (cpu13); Seed = 3314; Done (0)
+2016-10-27 07:50:24 id = 12 (cpu13); Seed = 3337; Starting new sample
+2016-10-27 07:50:29 id = 6 (cpu7); Seed = 3320; Done (0)
+2016-10-27 07:50:29 id = 6 (cpu7); Seed = 3338; Starting new sample
+2016-10-27 07:50:32 id = 9 (cpu10); Seed = 3317; Done (0)
+2016-10-27 07:50:32 id = 9 (cpu10); Seed = 3339; Starting new sample
+2016-10-27 07:50:34 id = 30 (cpu31); Seed = 3296; Done (1)
+2016-10-27 07:50:34 id = 30 (cpu31); Seed = 3340; Starting new sample
+2016-10-27 07:50:37 id = 0 (cpu1); Seed = 3326; Done (1)
+2016-10-27 07:50:37 id = 0 (cpu1); Seed = 3341; Starting new sample
+2016-10-27 07:50:42 id = 28 (cpu29); Seed = 3298; Done (0)
+2016-10-27 07:50:42 id = 28 (cpu29); Seed = 3342; Starting new sample
+2016-10-27 07:51:02 id = 33 (cpu34); Seed = 3293; Done (1)
+2016-10-27 07:51:02 id = 33 (cpu34); Seed = 3343; Starting new sample
+2016-10-27 07:51:04 id = 17 (cpu18); Seed = 3309; Done (0)
+2016-10-27 07:51:04 id = 17 (cpu18); Seed = 3344; Starting new sample
+2016-10-27 07:51:08 id = 27 (cpu28); Seed = 3299; Done (0)
+2016-10-27 07:51:08 id = 27 (cpu28); Seed = 3345; Starting new sample
+2016-10-27 07:51:10 id = 11 (cpu12); Seed = 3315; Done (0)
+2016-10-27 07:51:10 id = 11 (cpu12); Seed = 3346; Starting new sample
+2016-10-27 07:51:14 id = 22 (cpu23); Seed = 3304; Done (1)
+2016-10-27 07:51:14 id = 22 (cpu23); Seed = 3347; Starting new sample
+2016-10-27 07:51:20 id = 25 (cpu26); Seed = 3301; Done (0)
+2016-10-27 07:51:20 id = 25 (cpu26); Seed = 3348; Starting new sample
+2016-10-27 07:51:23 id = 3 (cpu4); Seed = 3323; Done (0)
+2016-10-27 07:51:23 id = 3 (cpu4); Seed = 3349; Starting new sample
+2016-10-27 07:51:27 id = 1 (cpu2); Seed = 3325; Done (0)
+2016-10-27 07:51:27 id = 1 (cpu2); Seed = 3350; Starting new sample
+2016-10-27 07:51:32 id = 24 (cpu25); Seed = 3302; Done (1)
+2016-10-27 07:51:32 id = 24 (cpu25); Seed = 3351; Starting new sample
+2016-10-27 07:51:33 id = 15 (cpu16); Seed = 3311; Done (0)
+2016-10-27 07:51:33 id = 15 (cpu16); Seed = 3352; Starting new sample
+2016-10-27 07:51:37 id = 35 (cpu36); Seed = 3291; Done (1)
+2016-10-27 07:51:37 id = 35 (cpu36); Seed = 3353; Starting new sample
+2016-10-27 07:51:42 id = 23 (cpu24); Seed = 3303; Done (0)
+2016-10-27 07:51:42 id = 23 (cpu24); Seed = 3354; Starting new sample
+2016-10-27 07:51:46 id = 18 (cpu19); Seed = 3308; Done (0)
+2016-10-27 07:51:46 id = 18 (cpu19); Seed = 3355; Starting new sample
+2016-10-27 07:52:00 id = 14 (cpu15); Seed = 3312; Done (1)
+2016-10-27 07:52:00 id = 14 (cpu15); Seed = 3356; Starting new sample
+2016-10-27 07:52:12 id = 31 (cpu32); Seed = 3295; Done (0)
+2016-10-27 07:52:12 id = 31 (cpu32); Seed = 3357; Starting new sample
+2016-10-27 07:52:17 id = 32 (cpu33); Seed = 3294; Done (0)
+2016-10-27 07:52:17 id = 32 (cpu33); Seed = 3358; Starting new sample
+2016-10-27 07:52:26 id = 19 (cpu20); Seed = 3307; Done (1)
+2016-10-27 07:52:26 id = 19 (cpu20); Seed = 3359; Starting new sample
+2016-10-27 07:52:30 id = 13 (cpu14); Seed = 3313; Done (0)
+2016-10-27 07:52:30 id = 13 (cpu14); Seed = 3360; Starting new sample
+2016-10-27 07:52:38 id = 2 (cpu3); Seed = 3324; Done (0)
+2016-10-27 07:52:38 id = 2 (cpu3); Seed = 3361; Starting new sample
+2016-10-27 07:53:05 id = 16 (cpu17); Seed = 3310; Done (1)
+2016-10-27 07:53:05 id = 16 (cpu17); Seed = 3362; Starting new sample
+2016-10-27 08:02:36 id = 12 (cpu13); Seed = 3337; Done (1)
+2016-10-27 08:02:36 id = 12 (cpu13); Seed = 3363; Starting new sample
+2016-10-27 08:03:53 id = 29 (cpu30); Seed = 3333; Done (0)
+2016-10-27 08:03:53 id = 29 (cpu30); Seed = 3364; Starting new sample
+2016-10-27 08:03:59 id = 25 (cpu26); Seed = 3348; Done (1)
+2016-10-27 08:03:59 id = 25 (cpu26); Seed = 3365; Starting new sample
+2016-10-27 08:04:00 id = 5 (cpu6); Seed = 3334; Done (0)
+2016-10-27 08:04:00 id = 5 (cpu6); Seed = 3366; Starting new sample
+2016-10-27 08:04:05 id = 1 (cpu2); Seed = 3350; Done (0)
+2016-10-27 08:04:05 id = 1 (cpu2); Seed = 3367; Starting new sample
+2016-10-27 08:04:06 id = 4 (cpu5); Seed = 3329; Done (0)
+2016-10-27 08:04:06 id = 4 (cpu5); Seed = 3368; Starting new sample
+2016-10-27 08:04:07 id = 28 (cpu29); Seed = 3342; Done (0)
+2016-10-27 08:04:07 id = 28 (cpu29); Seed = 3369; Starting new sample
+2016-10-27 08:04:10 id = 9 (cpu10); Seed = 3339; Done (0)
+2016-10-27 08:04:10 id = 9 (cpu10); Seed = 3370; Starting new sample
+2016-10-27 08:04:12 id = 20 (cpu21); Seed = 3331; Done (0)
+2016-10-27 08:04:16 id = 20 (cpu21); Seed = 3371; Starting new sample
+2016-10-27 08:04:16 id = 7 (cpu8); Seed = 3330; Done (0)
+2016-10-27 08:04:16 id = 7 (cpu8); Seed = 3372; Starting new sample
+2016-10-27 08:04:21 id = 8 (cpu9); Seed = 3336; Done (0)
+2016-10-27 08:04:21 id = 8 (cpu9); Seed = 3373; Starting new sample
+2016-10-27 08:04:28 id = 0 (cpu1); Seed = 3341; Done (0)
+2016-10-27 08:04:28 id = 0 (cpu1); Seed = 3374; Starting new sample
+2016-10-27 08:04:41 id = 34 (cpu35); Seed = 3327; Done (1)
+2016-10-27 08:04:41 id = 34 (cpu35); Seed = 3375; Starting new sample
+2016-10-27 08:04:55 id = 10 (cpu11); Seed = 3332; Done (1)
+2016-10-27 08:04:55 id = 10 (cpu11); Seed = 3376; Starting new sample
+2016-10-27 08:04:55 id = 21 (cpu22); Seed = 3335; Done (1)
+2016-10-27 08:04:55 id = 21 (cpu22); Seed = 3377; Starting new sample
+2016-10-27 08:05:13 id = 26 (cpu27); Seed = 3328; Done (1)
+2016-10-27 08:05:13 id = 26 (cpu27); Seed = 3378; Starting new sample
+2016-10-27 08:05:31 id = 30 (cpu31); Seed = 3340; Done (0)
+2016-10-27 08:05:31 id = 30 (cpu31); Seed = 3379; Starting new sample
+2016-10-27 08:05:40 id = 22 (cpu23); Seed = 3347; Done (0)
+2016-10-27 08:05:40 id = 22 (cpu23); Seed = 3380; Starting new sample
+2016-10-27 08:05:56 id = 32 (cpu33); Seed = 3358; Done (1)
+2016-10-27 08:05:56 id = 32 (cpu33); Seed = 3381; Starting new sample
+2016-10-27 08:05:59 id = 24 (cpu25); Seed = 3351; Done (0)
+2016-10-27 08:05:59 id = 24 (cpu25); Seed = 3382; Starting new sample
+2016-10-27 08:06:04 id = 3 (cpu4); Seed = 3349; Done (0)
+2016-10-27 08:06:04 id = 3 (cpu4); Seed = 3383; Starting new sample
+2016-10-27 08:06:07 id = 33 (cpu34); Seed = 3343; Done (0)
+2016-10-27 08:06:07 id = 33 (cpu34); Seed = 3384; Starting new sample
+2016-10-27 08:06:08 id = 11 (cpu12); Seed = 3346; Done (0)
+2016-10-27 08:06:08 id = 11 (cpu12); Seed = 3385; Starting new sample
+2016-10-27 08:06:15 id = 6 (cpu7); Seed = 3338; Done (1)
+2016-10-27 08:06:15 id = 6 (cpu7); Seed = 3386; Starting new sample
+2016-10-27 08:06:29 id = 27 (cpu28); Seed = 3345; Done (1)
+2016-10-27 08:06:29 id = 27 (cpu28); Seed = 3387; Starting new sample
+2016-10-27 08:06:38 id = 35 (cpu36); Seed = 3353; Done (0)
+2016-10-27 08:06:38 id = 35 (cpu36); Seed = 3388; Starting new sample
+2016-10-27 08:06:45 id = 15 (cpu16); Seed = 3352; Done (0)
+2016-10-27 08:06:45 id = 15 (cpu16); Seed = 3389; Starting new sample
+2016-10-27 08:06:52 id = 19 (cpu20); Seed = 3359; Done (1)
+2016-10-27 08:06:52 id = 19 (cpu20); Seed = 3390; Starting new sample
+2016-10-27 08:06:57 id = 18 (cpu19); Seed = 3355; Done (0)
+2016-10-27 08:06:57 id = 18 (cpu19); Seed = 3391; Starting new sample
+2016-10-27 08:07:06 id = 16 (cpu17); Seed = 3362; Done (0)
+2016-10-27 08:07:06 id = 16 (cpu17); Seed = 3392; Starting new sample
+2016-10-27 08:07:08 id = 17 (cpu18); Seed = 3344; Done (1)
+2016-10-27 08:07:08 id = 17 (cpu18); Seed = 3393; Starting new sample
+2016-10-27 08:07:17 id = 13 (cpu14); Seed = 3360; Done (1)
+2016-10-27 08:07:17 id = 13 (cpu14); Seed = 3394; Starting new sample
+2016-10-27 08:07:34 id = 23 (cpu24); Seed = 3354; Done (0)
+2016-10-27 08:07:34 id = 23 (cpu24); Seed = 3395; Starting new sample
+2016-10-27 08:07:39 id = 2 (cpu3); Seed = 3361; Done (0)
+2016-10-27 08:07:39 id = 2 (cpu3); Seed = 3396; Starting new sample
+2016-10-27 08:07:54 id = 31 (cpu32); Seed = 3357; Done (0)
+2016-10-27 08:07:54 id = 31 (cpu32); Seed = 3397; Starting new sample
+2016-10-27 08:08:32 id = 14 (cpu15); Seed = 3356; Done (0)
+2016-10-27 08:08:32 id = 14 (cpu15); Seed = 3398; Starting new sample
+2016-10-27 08:17:10 id = 29 (cpu30); Seed = 3364; Done (0)
+2016-10-27 08:17:10 id = 29 (cpu30); Seed = 3399; Starting new sample
