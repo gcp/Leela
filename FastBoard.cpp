@@ -2024,15 +2024,15 @@ void FastBoard::check_nakade(int color, int vertex,
     std::tr1::array<int, 6> empty_counts;
     std::tr1::array<int, 5> nbr_to_coord;
 
-    std::fill(empty_counts.begin(), empty_counts.end(), 0);
-#ifndef NDEBUG
-    std::fill(nakade.begin(), nakade.end(), 0);
-    std::fill(nbr_to_coord.begin(), nbr_to_coord.end(), 0);
-#endif
-
-    // we're on an empty square
-    size_t sq_count = 0;
     int nbrs = count_neighbours(EMPTY, vertex);
+    // We're the only empty square in the hood.
+    if (nbrs == 0) return;
+
+    std::fill(empty_counts.begin(), empty_counts.end(), 0);
+    std::fill(nbr_to_coord.begin(), nbr_to_coord.end(), 0);
+
+    // We're on an empty square, set empty neighbours
+    size_t sq_count = 0;
     nbr_to_coord[nbrs] = vertex;
     empty_counts[nbrs]++;
     nakade[sq_count++] = vertex;
@@ -2066,7 +2066,7 @@ void FastBoard::check_nakade(int color, int vertex,
                         empty_counts[nbrs]++;
                         nakade[sq_count++] = ai;
                     } else {
-                        // always alive
+                        // Too much eyespace, always alive
                         return;
                     }
                 }
