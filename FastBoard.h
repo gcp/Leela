@@ -55,10 +55,10 @@ public:
     /*
         move generation types
     */
-    typedef std::tr1::array<int, 24> movelist_t;
-    typedef std::pair<int, int> movescore_t;
-    typedef std::tr1::array<movescore_t, 24> scoredlist_t;
-    
+    using movescore_t = std::pair<int, float>;
+    using movelist_t = std::vector<int>;
+    using scoredmoves_t = std::vector<movescore_t>;
+
     int get_boardsize(void);
     square_t get_square(int x, int y);
     square_t get_square(int vertex); 
@@ -72,10 +72,10 @@ public:
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
     int update_board_fast(const int color, const int i);
-    void save_critical_neighbours(int color, int vertex, movelist_t & moves, size_t & movecnt);
-    void add_pattern_moves(int color, int vertex, movelist_t & moves, size_t & movecnt);
-    void add_global_captures(int color, movelist_t & moves, size_t & movecnt);
-    void add_nakade_moves(int color, int vertex, movelist_t & moves, size_t & movecnt);
+    void save_critical_neighbours(int color, int vertex, movelist_t & moves);
+    void add_pattern_moves(int color, int vertex, movelist_t & moves);
+    void add_global_captures(int color, movelist_t & moves);
+    void add_nakade_moves(int color, int vertex, movelist_t & moves);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
@@ -182,11 +182,11 @@ protected:
     template <int N> void add_string_liberties(int vertex,
                                                std::tr1::array<int, N> & nbr_libs, 
                                                int & nbr_libs_cnt);
-    void kill_neighbours(int vertex, movelist_t & moves, size_t & movecnt);
-    void try_capture(int color, int vertex, movelist_t & moves, size_t & movecnt);
+    void kill_neighbours(int vertex, movelist_t & moves);
+    void try_capture(int color, int vertex, movelist_t & moves);
     FastBoard remove_dead();
     bool predict_solid_eye(const int move, const int color, const int vtx);
-    void check_nakade(int color, int vertex, movelist_t & moves, size_t & movecnt);
+    void check_nakade(int color, int vertex, movelist_t & moves);
 };
 
 #endif
