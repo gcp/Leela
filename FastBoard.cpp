@@ -2147,7 +2147,7 @@ void FastBoard::check_nakade(int color, int vertex,
                     // Non corner, 3 libs, may be critical point
                     if (count_neighbours(EMPTY, sq) == 3
                         && count_neighbours(color, sq) == 1
-                        && count_neighbours(!color, sq) == 1) {
+                        && count_neighbours(!color, sq) == 0) {
                         crit_3_lib_pnt = sq;
                     }
                 }
