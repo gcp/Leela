@@ -217,6 +217,11 @@ int FastState::play_random_move(int color) {
         int score = matcher->matches(color, pattern);
 
         if (board.self_atari(color, vtx)) {
+            // Self-atari with a group of 6 stones always leaves behind
+            // a live group due to eyespace of size 7.
+            if (board.enemy_atari_size(!color, vtx) >= 6) {
+                continue;
+            }
             score /= 64;
         }
 
