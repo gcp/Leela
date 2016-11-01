@@ -77,8 +77,8 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\include;C:\Projects\OpenCL-ICD-Loader\inc;C:\boost\boost_1_60_0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\lib\ia32_win;C:\boost\boost_1_60_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\include;C:\Projects\OpenCL-ICD-Loader\inc;C:\boost\boost_1_62_0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\lib\ia32_win;C:\boost\boost_1_62_0\stage\lib32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
