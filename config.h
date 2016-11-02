@@ -21,11 +21,11 @@
 #define PROGRAM_VERSION "0.7.4"
 
 /* Features */
-//#define USE_BLAS
-//#define USE_OPENBLAS
+#define USE_BLAS
+#define USE_OPENBLAS
 //#define USE_MKL
 //#define USE_CAFFE
-#define USE_OPENCL
+//#define USE_OPENCL
 #define USE_SEARCH
 
 // OpenBLAS limitation

@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <functional>
+#include <algorithm>
 
 #include "FastState.h"
 #include "Playout.h"

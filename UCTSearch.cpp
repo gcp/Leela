@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <thread>
+#include <algorithm>
 
 #include "FastBoard.h"
 #include "UCTSearch.h"
