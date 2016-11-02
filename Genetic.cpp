@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <iostream>
+#include <cmath>
 #include <fstream>
 
 #include "Genetic.h"
@@ -49,7 +50,7 @@ float Genetic::run_simulations(FastState & state, float res) {
     
     //myprintf("Simul: %f  Reference: %f\n", simulscore, res);
     
-    float sqerr = powf(2.0f * (simulscore - res), 2.0f);
+    float sqerr = std::pow(2.0f * (simulscore - res), 2.0f);
     
     return sqerr;
 }
@@ -148,7 +149,7 @@ void Genetic::genetic_tune() {
     for (size_t i = 0; i < pool.size(); i++) {
         pool[i].resize(60);
         for (size_t j = 0; j < pool[i].size(); j++) {
-            pool[i][j] = powf(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
+            pool[i][j] = std::pow(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
         }                
     } 
     
@@ -209,7 +210,7 @@ void Genetic::genetic_tune() {
                         newrank[i] = pool[mother][i];                    
                     }        
                 } else {                    
-                    newrank[i] = powf(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
+                    newrank[i] = std::pow(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
                 }            
             }       
             

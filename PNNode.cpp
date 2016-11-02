@@ -1,6 +1,7 @@
-#include <cassert>
 #include "config.h"
 
+#include <cassert>
+#include <algorithm>
 #include <math.h>
 
 #include "Attributes.h"
