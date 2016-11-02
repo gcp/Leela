@@ -9,8 +9,6 @@
 #include <cmath>
 #include <array>
 #include <boost/utility.hpp>
-#include <boost/tr1/array.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/format.hpp>
 
 #ifdef USE_CAFFE
@@ -49,34 +47,34 @@ using namespace Utils;
 
 Network* Network::s_Net = nullptr;
 
-extern std::tr1::array<float, 76800> conv1_w;
-extern std::tr1::array<float, 128> conv1_b;
-extern std::tr1::array<float, 147456> conv2_w;
-extern std::tr1::array<float, 128> conv2_b;
-extern std::tr1::array<float, 147456> conv3_w;
-extern std::tr1::array<float, 128> conv3_b;
-extern std::tr1::array<float, 147456> conv4_w;
-extern std::tr1::array<float, 128> conv4_b;
-extern std::tr1::array<float, 147456> conv5_w;
-extern std::tr1::array<float, 128> conv5_b;
-extern std::tr1::array<float, 147456> conv6_w;
-extern std::tr1::array<float, 128> conv6_b;
-extern std::tr1::array<float, 147456> conv7_w;
-extern std::tr1::array<float, 128> conv7_b;
-extern std::tr1::array<float, 147456> conv8_w;
-extern std::tr1::array<float, 128> conv8_b;
-extern std::tr1::array<float, 147456> conv9_w;
-extern std::tr1::array<float, 128> conv9_b;
-extern std::tr1::array<float, 147456> conv10_w;
-extern std::tr1::array<float, 128> conv10_b;
-extern std::tr1::array<float, 147456> conv11_w;
-extern std::tr1::array<float, 128> conv11_b;
-extern std::tr1::array<float, 147456> conv12_w;
-extern std::tr1::array<float, 128> conv12_b;
-extern std::tr1::array<float, 147456> conv13_w;
-extern std::tr1::array<float, 128> conv13_b;
-extern std::tr1::array<float, 3456> conv14_w;
-extern std::tr1::array<float, 3> conv14_b;
+extern std::array<float, 76800> conv1_w;
+extern std::array<float, 128> conv1_b;
+extern std::array<float, 147456> conv2_w;
+extern std::array<float, 128> conv2_b;
+extern std::array<float, 147456> conv3_w;
+extern std::array<float, 128> conv3_b;
+extern std::array<float, 147456> conv4_w;
+extern std::array<float, 128> conv4_b;
+extern std::array<float, 147456> conv5_w;
+extern std::array<float, 128> conv5_b;
+extern std::array<float, 147456> conv6_w;
+extern std::array<float, 128> conv6_b;
+extern std::array<float, 147456> conv7_w;
+extern std::array<float, 128> conv7_b;
+extern std::array<float, 147456> conv8_w;
+extern std::array<float, 128> conv8_b;
+extern std::array<float, 147456> conv9_w;
+extern std::array<float, 128> conv9_b;
+extern std::array<float, 147456> conv10_w;
+extern std::array<float, 128> conv10_b;
+extern std::array<float, 147456> conv11_w;
+extern std::array<float, 128> conv11_b;
+extern std::array<float, 147456> conv12_w;
+extern std::array<float, 128> conv12_b;
+extern std::array<float, 147456> conv13_w;
+extern std::array<float, 128> conv13_b;
+extern std::array<float, 3456> conv14_w;
+extern std::array<float, 3> conv14_b;
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -181,7 +179,7 @@ void Network::initialize(void) {
 
 #ifdef WRITE_WEIGHTS
             out << "// " << blob.shape_string() << std::endl;
-            out << "std::tr1::array<float, " << blob.count()
+            out << "std::array<float, " << blob.count()
                 << "> weights = {{" << std::endl;
             for (int idx = 0; idx < blob.count(); idx++) {
                 out << blob.cpu_data()[idx];
@@ -205,8 +203,8 @@ template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          unsigned long W, unsigned long B>
 void convolve(std::vector<float>& input,
-              std::tr1::array<float, W>& weights,
-              std::tr1::array<float, B>& biases,
+              std::array<float, W>& weights,
+              std::array<float, B>& biases,
               std::vector<float>& output) {
     // fixed for 19x19
     constexpr unsigned int width = 19;
@@ -272,11 +270,11 @@ void softmax(std::vector<float>& input,
 #ifdef USE_OPENCL
 class CallbackData {
 public:
-    boost::atomic<int> * m_nodecount;
+    std::atomic<int> * m_nodecount;
     FastState m_state;
     UCTNode * m_node;
     int m_rotation;
-    boost::atomic<int> * m_thread_results_outstanding;
+    std::atomic<int> * m_thread_results_outstanding;
     std::vector<float> m_output_data;
     std::vector<float> m_input_data;
 };
@@ -286,7 +284,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     CallbackData * cb_data = static_cast<CallbackData*>(data);
 
     // Mark the kernels as available
-    cb_data->m_thread_results_outstanding->fetch_sub(1, boost::memory_order_release);
+    cb_data->m_thread_results_outstanding->fetch_sub(1, std::memory_order_release);
 
     constexpr int width = 19;
     constexpr int height = 19;
@@ -320,7 +318,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     OpenCL::get_OpenCL()->callback_finished();
 }
 
-void Network::async_scored_moves(boost::atomic<int> * nodecount,
+void Network::async_scored_moves(std::atomic<int> * nodecount,
                                  FastState * state,
                                  UCTNode * node,
                                  Ensemble ensemble) {

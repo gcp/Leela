@@ -9,10 +9,10 @@
 #include <sstream>
 #include <fstream>
 #include <cmath>
+#include <array>
+#include <thread>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
-#include <boost/tr1/array.hpp>
-#include <boost/thread.hpp>
 
 #include "Utils.h"
 #include "Timing.h"
@@ -366,7 +366,7 @@ bool OpenCL::thread_can_issue() {
     return current_queue < 2;
 }
 
-boost::atomic<int> * OpenCL::get_thread_results_outstanding() {
+std::atomic<int> * OpenCL::get_thread_results_outstanding() {
     return &thread_data.get()->m_results_outstanding;
 }
 
@@ -407,7 +407,7 @@ void OpenCL::forward_async(std::vector<float>& input,
     constexpr int width = 19;
     constexpr int height = 19;
 
-    thread_data.get()->m_results_outstanding.fetch_add(1, boost::memory_order_release);
+    thread_data.get()->m_results_outstanding.fetch_add(1, std::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
@@ -449,17 +449,17 @@ void OpenCL::forward_async(std::vector<float>& input,
     queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
 
-    m_cb_outstanding.fetch_add(1, boost::memory_order_release);
+    m_cb_outstanding.fetch_add(1, std::memory_order_release);
     queue.finish();
     cb(CL_COMPLETE, 0, data);
 }
 
 void OpenCL::callback_finished() {
-    m_cb_outstanding.fetch_sub(1, boost::memory_order_release);
+    m_cb_outstanding.fetch_sub(1, std::memory_order_release);
 }
 
 void OpenCL::join_outstanding_cb() {
-    while (m_cb_outstanding.load(boost::memory_order_acquire) > 0);
+    while (m_cb_outstanding.load(std::memory_order_acquire) > 0);
 }
 
 void OpenCL::forward(std::vector<float>& input,
@@ -467,7 +467,7 @@ void OpenCL::forward(std::vector<float>& input,
     constexpr int width = 19;
     constexpr int height = 19;
 
-    thread_data.get()->m_results_outstanding.fetch_add(1, boost::memory_order_release);
+    thread_data.get()->m_results_outstanding.fetch_add(1, std::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
@@ -509,7 +509,7 @@ void OpenCL::forward(std::vector<float>& input,
     queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
     queue.finish();
-    thread_data.get()->m_results_outstanding.fetch_sub(1, boost::memory_order_release);
+    thread_data.get()->m_results_outstanding.fetch_sub(1, std::memory_order_release);
 }
 
 static int rounddown_pow2(int val) {

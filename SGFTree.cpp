@@ -4,7 +4,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <memory>
-#include <boost/lexical_cast.hpp>
 
 #include "SGFTree.h"
 #include "KoState.h"
@@ -328,8 +327,8 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
     int size = state->board.get_boardsize();
     
     res.append("(;GM[1]FF[4]RU[Chinese]");
-    res.append("SZ[" + boost::lexical_cast<std::string>(size) + "]");
-    res.append("KM[" + boost::lexical_cast<std::string>(komi) + "]");
+    res.append("SZ[" + std::to_string(size) + "]");
+    res.append("KM[" + std::to_string(komi) + "]");
     if (compcolor == FastBoard::WHITE) {
         res.append("PW[Leela " + std::string(PROGRAM_VERSION) + "]");
         res.append("PB[Human]");
@@ -341,9 +340,9 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
     float score = state->final_score();
     
     if (score > 0.0f) {
-        res.append("RE[B+" + boost::lexical_cast<std::string>(score) + "]");
+        res.append("RE[B+" + std::to_string(score) + "]");
     } else {
-        res.append("RE[W+" + boost::lexical_cast<std::string>(-score) + "]");
+        res.append("RE[W+" + std::to_string(-score) + "]");
     }
     
     state->rewind();
@@ -365,7 +364,7 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
     }
 
     if (handicap > 0) {
-        res.append("HA[" + boost::lexical_cast<std::string>(handicap) + "]");
+        res.append("HA[" + std::to_string(handicap) + "]");
         res.append("AB" + handicapstr);
     }
 

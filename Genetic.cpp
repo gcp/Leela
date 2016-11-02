@@ -1,7 +1,6 @@
 #include "config.h"
 
 #include <memory>
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <fstream>
 
@@ -62,7 +61,7 @@ void Genetic::load_testsets() {
     for (int j = 0; j < 3; j++) {
         for (int i = 1; i <= 7000; i++) {        
             std::string file = prefix[j];
-            file += boost::lexical_cast<std::string>(i);
+            file += std::to_string(i);
             file += std::string(".sgf");
             
             std::unique_ptr<SGFTree> sgftree(new SGFTree);
@@ -228,7 +227,7 @@ void Genetic::genetic_tune() {
                 poolmse[element] = err;            
                 
                 std::ofstream fp_out;
-                std::string fname = "matcher_" + boost::lexical_cast<std::string>(err) + ".txt";
+                std::string fname = "matcher_" + std::to_string(err) + ".txt";
                 fp_out.open(fname.c_str());
             
                 for (size_t i = 0; i < pool[element].size(); i++) {
@@ -296,7 +295,7 @@ void Genetic::genetic_split(std::string filename) {
                 std::string gamestr = SGFTree::state_to_string(&game, FastBoard::BLACK);
                 
                 std::ofstream fp_out;
-                std::string fname = "win\\" + boost::lexical_cast<std::string>(gamecount+1) + ".sgf";
+                std::string fname = "win\\" + std::to_string(gamecount+1) + ".sgf";
                 fp_out.open(fname.c_str()); 
                 fp_out << gamestr;               
                 fp_out.close();     
@@ -308,7 +307,7 @@ void Genetic::genetic_split(std::string filename) {
                 std::string gamestr = SGFTree::state_to_string(&game, FastBoard::BLACK);
                 
                 std::ofstream fp_out;
-                std::string fname = "loss\\" + boost::lexical_cast<std::string>(gamecount+1) + ".sgf";
+                std::string fname = "loss\\" + std::to_string(gamecount+1) + ".sgf";
                 fp_out.open(fname.c_str()); 
                 fp_out << gamestr;               
                 fp_out.close();     

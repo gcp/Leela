@@ -3,7 +3,7 @@
 #include <sstream>
 #include <algorithm>
 #include <assert.h>
-#include <boost/tr1/array.hpp>
+#include <array>
 
 #include "config.h"
 
@@ -15,12 +15,12 @@
 
 using namespace Utils;
 
-const std::tr1::array<int, 2> FastBoard::s_eyemask = {
+const std::array<int, 2> FastBoard::s_eyemask = {
     4 * (1 << (NBR_SHIFT * BLACK)),
     4 * (1 << (NBR_SHIFT * WHITE))
 };
 
-const std::tr1::array<FastBoard::square_t, 4> FastBoard::s_cinvert = {
+const std::array<FastBoard::square_t, 4> FastBoard::s_cinvert = {
     WHITE, BLACK, EMPTY, INVAL
 };
 
@@ -258,7 +258,7 @@ int FastBoard::fast_ss_suicide(const int color, const int i)  {
 void FastBoard::add_neighbour(const int i, const int color) {       
     assert(color == WHITE || color == BLACK || color == EMPTY);                                                          
 
-    std::tr1::array<int, 4> nbr_pars;
+    std::array<int, 4> nbr_pars;
     int nbr_par_cnt = 0;    
 
     for (int k = 0; k < 4; k++) {
@@ -283,7 +283,7 @@ void FastBoard::add_neighbour(const int i, const int color) {
 void FastBoard::remove_neighbour(const int i, const int color) {         
     assert(color == WHITE || color == BLACK || color == EMPTY);        
     
-    std::tr1::array<int, 4> nbr_pars;
+    std::array<int, 4> nbr_pars;
     int nbr_par_cnt = 0;    
 
     for (int k = 0; k < 4; k++) {
@@ -1204,7 +1204,7 @@ void FastBoard::kill_neighbours(int vertex, movelist_t & moves, size_t & movecnt
     int kcolor = !scolor;
     int pos = vertex;
 
-    std::tr1::array<int, 4> nbr_list;
+    std::array<int, 4> nbr_list;
     int nbr_cnt = 0;
           
     do {                               
@@ -1320,7 +1320,7 @@ bool FastBoard::kill_or_connect(int color, int vertex) {
 
 template <int N> 
 void FastBoard::add_string_liberties(int vertex, 
-                                     std::tr1::array<int, N> & nbr_libs, 
+                                     std::array<int, N> & nbr_libs, 
                                      int & nbr_libs_cnt) {
     int pos = vertex;
 #ifndef NDEBUG
@@ -1389,7 +1389,7 @@ bool FastBoard::self_atari(int color, int vertex) {
     // become one (or less, in which case this is multi stone suicide)
     
     // list of all liberties, this never gets big             
-    std::tr1::array<int, 3> nbr_libs;
+    std::array<int, 3> nbr_libs;
     int nbr_libs_cnt = 0;
     
     // add the vertex we play in to the liberties list
@@ -1747,7 +1747,7 @@ int FastBoard::get_pattern3_augment_spec(const int sq, int libspec, bool invert)
 // extend = fill in 4 most extended squares with inval
 int FastBoard::get_pattern4(const int sq, bool invert) {          
     const int size = m_boardsize;
-    std::tr1::array<square_t, 12> sqs;        
+    std::array<square_t, 12> sqs;        
         
     sqs[1]  = m_square[sq - (size + 2) - 1];
     sqs[2]  = m_square[sq - (size + 2)];
@@ -1856,7 +1856,7 @@ int FastBoard::get_pattern4(const int sq, bool invert) {
 // extend = fill in most extended squares with inval
 uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {          
     const int size = m_boardsize;
-    std::tr1::array<uint64, 20> sqs;
+    std::array<uint64, 20> sqs;
     
     /*
      XXX        012
@@ -2151,7 +2151,7 @@ int FastBoard::enemy_atari_size(const int color, const int vertex) {
 // returns our lowest liberties, enemies lowest liberties
 // 8 is the maximum
 std::pair<int, int> FastBoard::nbr_criticality(int color, int vertex) {    
-    std::tr1::array<int, 4> color_libs;
+    std::array<int, 4> color_libs;
 
     color_libs[0] = 8;
     color_libs[1] = 8;
@@ -2263,7 +2263,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
         }
 
         int lc = 0;
-        std::tr1::array<int, 2> libarr;
+        std::array<int, 2> libarr;
         tmp.add_string_liberties<2>(atari, libarr, lc);
 
         assert(lc == 2);
@@ -2312,7 +2312,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 
 int FastBoard::merged_string_size(int color, int vertex) {
     int totalsize = 0;
-    std::tr1::array<int, 4> nbrpar;
+    std::array<int, 4> nbrpar;
     int nbrcnt = 0;        
 
     for (int k = 0; k < 4; k++) {
