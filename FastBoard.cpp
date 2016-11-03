@@ -2019,9 +2019,9 @@ void FastBoard::add_global_captures(int color, movelist_t & moves) {
 }
 
 void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
-    std::tr1::array<int, 6> nakade;
-    std::tr1::array<int, 6> empty_counts;
-    std::tr1::array<int, 5> nbr_to_coord;
+    std::array<int, 6> nakade;
+    std::array<int, 6> empty_counts;
+    std::array<int, 5> nbr_to_coord;
 
     int nbrs = count_neighbours(EMPTY, vertex);
     // We're the only empty square in the hood.
