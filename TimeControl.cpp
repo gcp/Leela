@@ -165,7 +165,6 @@ int TimeControl::max_time_for_move(int color) {
     }
 
     timealloc = std::max<int>(timealloc, 0);
-    timealloc = std::min<int>(timealloc, m_remaining_time[color]);
     return timealloc;
 }
 

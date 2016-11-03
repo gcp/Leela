@@ -144,21 +144,21 @@ public:
 protected:
     /*
         bit masks to detect eyes on neighbors
-    */        
-    static const std::array<int,      2> s_eyemask; 
+    */
+    static const std::array<int,      2> s_eyemask;
     static const std::array<square_t, 4> s_cinvert; /* color inversion */
-    
-    std::array<square_t,  MAXSQ>           m_square;      /* board contents */            
-    std::array<unsigned short, MAXSQ+1>    m_next;        /* next stone in string */ 
-    std::array<unsigned short, MAXSQ+1>    m_parent;      /* parent node of string */            
-    std::array<unsigned short, MAXSQ+1>    m_libs;        /* liberties per string parent */        
-    std::array<unsigned short, MAXSQ+1>    m_stones;      /* stones per string parent */        
-    std::array<unsigned short, MAXSQ>      m_neighbours;  /* counts of neighboring stones */       
-    std::array<int, 4>          m_dirs;        /* movement directions 4 way */    
+
+    std::array<square_t,  MAXSQ>           m_square;      /* board contents */
+    std::array<unsigned short, MAXSQ+1>    m_next;        /* next stone in string */
+    std::array<unsigned short, MAXSQ+1>    m_parent;      /* parent node of string */
+    std::array<unsigned short, MAXSQ+1>    m_libs;        /* liberties per string parent */
+    std::array<unsigned short, MAXSQ+1>    m_stones;      /* stones per string parent */
+    std::array<unsigned short, MAXSQ>      m_neighbours;  /* counts of neighboring stones */
+    std::array<int, 4>          m_dirs;        /* movement directions 4 way */
     std::array<int, 8>          m_extradirs;   /* movement directions 8 way */
     std::array<int, 2>          m_prisoners;   /* prisoners per color */
-    std::array<int, 2>          m_totalstones; /* stones per color */                 
-    std::vector<int>                 m_critical;    /* queue of critical points */    
+    std::array<int, 2>          m_totalstones; /* stones per color */
+    std::vector<int>                 m_critical;    /* queue of critical points */
     std::array<unsigned short, MAXSQ> m_empty;       /* empty squares */
     std::array<unsigned short, MAXSQ> m_empty_idx;   /* indexes of square */
     int m_empty_cnt;                                      /* count of empties */
@@ -179,7 +179,7 @@ protected:
     int in_atari(int vertex);
     bool fast_in_atari(int vertex);
     template <int N> void add_string_liberties(int vertex, 
-                                               std::array<int, N> & nbr_libs, 
+                                               std::array<int, N> & nbr_libs,
                                                int & nbr_libs_cnt);
     void kill_neighbours(int vertex, movelist_t & moves, size_t & movecnt);
     void try_capture(int color, int vertex, movelist_t & moves, size_t & movecnt);
