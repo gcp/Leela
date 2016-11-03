@@ -7,7 +7,9 @@
 #include <utility>
 #include <thread>
 #include <algorithm>
+#ifdef _WIN32
 #include <boost/thread/detail/tss_hooks.hpp>
+#endif
 
 #include "FastBoard.h"
 #include "UCTSearch.h"
@@ -592,7 +594,9 @@ void UCTWorker::operator()() {
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
+#ifdef _WIN32
     boost::on_thread_exit();
+#endif
 }
 
 float UCTSearch::get_score() {

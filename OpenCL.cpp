@@ -557,7 +557,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     constexpr int channelShift = 3;
     constexpr int rowGroup = 1;
     // Workgroup things
-    if (m_max_workgroup_size < 512 || m_max_workgroup_dims[2] < 64) {
+    if (m_max_workgroup_size < 512 || m_max_workgroup_dims[1] < 64) {
         outputGroup = std::min(outputs, 32);
     } else {
         outputGroup = std::min(outputs, 64);
@@ -574,8 +574,8 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     // Copy the rows locally
     size_t stripSize;
-    size_t rowTileSize;
-    size_t rowTiles;
+    int rowTileSize;
+    int rowTiles;
     if (filter_size == 3) {
         stripSize = filter_size * (width + (filter_size - 1)) * sizeof(float);
         rowTiles    =  cfg_rowtiles;
