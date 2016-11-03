@@ -185,12 +185,13 @@ static std::string sourceCode = R"(
                    __global float * merge,
                    __global const float * weights,
                    __local float * channel_buff,
-                   __local float * row_buff) {
+                   __local float * row_buff,
+                   const int row_tile_size) {
 
         // cl::NDRange global(channels, outputs, row);
         const int c   = get_global_id(0);  // channel
         const int o   = get_global_id(1);  // output
-        const int row = get_global_id(2);  // row
+        const int r   = get_global_id(2);  // row
 
         const int channels = get_global_size(0);
         const int outputs  = get_global_size(1);
@@ -218,7 +219,20 @@ static std::string sourceCode = R"(
         // weights = output * channels * filter
         // merge = channels * outputs * height * width
 
-       // Copy the input channels (strips) locally
+        __private float filter_buff[9];
+        __private float chan_cache[2];
+
+        // Copy the filter we are applying locally
+        // output * channel * filter_len
+        for (int f = 0; f < filter_len; f++) {
+            filter_buff[f] = weights[(o * channels + c) * filter_len + f];
+        }
+
+        for (int tile = 0; tile < row_tile_size; tile++) {
+        int row = r * row_tile_size + tile;
+        if (row > 18) break;
+
+        // Copy the input channels (strips) locally
         if (out_buff_size < 21 && ly == 0) {
             // strip-row
             for (int srow = 0; srow < filter_size; srow++) {
@@ -238,7 +252,7 @@ static std::string sourceCode = R"(
             }
         } else if (out_buff_size >= 21 && ly < 21) {
             // Every thread copies a column
-            if (row == 0 || row == 18) {
+            if (tile == 0 || row == 18) {
                 // Every thread copies a column
                 for (int srow = 0; srow < filter_size; srow++) {
                     int in_row = row - extent + srow;
@@ -247,25 +261,22 @@ static std::string sourceCode = R"(
                         val = in[(c * height + in_row) * width + ly - 1];
                     }
                     channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
+                    if (srow > 0) {
+                        chan_cache[srow - 1] = val;
+                    }
                 }
             } else {
-                for (int srow = 0; srow < filter_size; srow++) {
-                    int in_row = row - extent + srow;
-                    float val = 0.0f;
-                    if (ly >= 1 && ly <= 19) {
-                        val = in[(c * height + in_row) * width + ly - 1];
-                    }
-                    channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
+                int in_row = row - extent + 2;
+                float val = 0.0f;
+                if (ly >= 1 && ly <= 19) {
+                    val = in[(c * height + in_row) * width + ly - 1];
                 }
+                channel_buff[(lx * pad_width + ly) * filter_size + 0] = chan_cache[0];
+                channel_buff[(lx * pad_width + ly) * filter_size + 1] = chan_cache[1];
+                channel_buff[(lx * pad_width + ly) * filter_size + 2] = val;
+                chan_cache[0] = chan_cache[1];
+                chan_cache[1] = val;
             }
-        }
-
-        __private float filter_buff[9];
-
-        // Copy the filter we are applying locally
-        // output * channel * filter_len
-        for (int f = 0; f < filter_len; f++) {
-            filter_buff[f] = weights[(o * channels + c) * filter_len + f];
         }
 
         int out_lane = 0;
@@ -309,6 +320,7 @@ static std::string sourceCode = R"(
                 out_cw  += row_buff_size;
                 out_lane = 0;
             }
+        }
         }
     }
 
@@ -545,7 +557,11 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     constexpr int channelShift = 3;
     constexpr int rowGroup = 1;
     // Workgroup things
-    outputGroup = std::min(outputs, 32);
+    if (m_max_workgroup_size < 512 || m_max_workgroup_dims[2] < 64) {
+        outputGroup = std::min(outputs, 32);
+    } else {
+        outputGroup = std::min(outputs, 64);
+    }
 
     // Total output size after reducing
     size_t outSize = width * height * outputs * sizeof(float);
@@ -558,10 +574,16 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     // Copy the rows locally
     size_t stripSize;
+    size_t rowTileSize;
+    size_t rowTiles;
     if (filter_size == 3) {
         stripSize = filter_size * (width + (filter_size - 1)) * sizeof(float);
+        rowTiles    =  cfg_rowtiles;
+        rowTileSize =  (19 + rowTiles - 1) / rowTiles;
     } else {
         stripSize = filter_size * width * sizeof(float);
+        rowTiles    = 19;
+        rowTileSize =  1;
     }
 
     int rowBuffer = std::min<int>(channelGroup, 7);
@@ -578,9 +600,12 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         m_convolve_kernel.setArg(2, weights[0]);
         m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
         m_convolve_kernel.setArg(4, cl::Local(rowSize));
+        if (filter_size == 3) {
+            m_convolve_kernel.setArg(5, rowTileSize);
+        }
 
         queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
-                                   cl::NDRange(channels, outputs, 19),
+                                   cl::NDRange(channels, outputs, rowTiles),
                                    cl::NDRange(channelGroup, outputGroup, rowGroup));
     } catch (cl::Error &e) {
         std::cerr << "Error in convolve: " << e.what() << ": "
@@ -748,6 +773,16 @@ void OpenCL::initialize(void) {
         thread_data.get()->m_convolve3_kernel.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(
             best_device);
     std::cerr << "Wavefront/Warp size: " << m_wavefront_size << std::endl;
+
+    m_max_workgroup_size = best_device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
+    m_max_workgroup_dims = best_device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>();
+
+    std::cerr << "Max workgroup size: " << m_max_workgroup_size << std::endl;
+    std::cerr << "Max workgroup dimensions: ";
+    for (size_t d : m_max_workgroup_dims) {
+        std::cerr << d << " ";
+    }
+    std::cerr << std::endl;
 
     m_init_ok = true;
 }

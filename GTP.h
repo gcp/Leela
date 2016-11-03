@@ -9,6 +9,9 @@ extern int cfg_num_threads;
 extern int cfg_max_playouts;
 extern bool cfg_enable_nets;
 extern int cfg_lagbuffer_cs;
+#ifdef USE_OPENCL
+extern int cfg_rowtiles;
+#endif
 
 class GTP {
 public:

@@ -29,6 +29,9 @@ int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
 int cfg_lagbuffer_cs;
+#ifdef USE_OPENCL
+int cfg_rowtiles;
+#endif
 
 const std::string GTP::s_commands[] = {
     "protocol_version",

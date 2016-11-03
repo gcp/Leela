@@ -37,7 +37,9 @@ int main (int argc, char *argv[]) {
     cfg_enable_nets = true;
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 200;
-
+#ifdef USE_OPENCL
+    cfg_rowtiles = 5;
+#endif
     namespace po = boost::program_options;
     // Declare the supported options.
     po::options_description desc("Allowed options");
@@ -47,10 +49,14 @@ int main (int argc, char *argv[]) {
         ("threads,t", po::value<int>()->default_value(cfg_num_threads),
                       "Number of threads to use.")
         ("playouts,p", po::value<int>(), "Limit number of playouts.")
-        ("lagbuffer,b", po::value<int>()->default_value(200),
+        ("lagbuffer,b", po::value<int>()->default_value(cfg_lagbuffer_cs),
                       "Safety margin for time usage in centiseconds.")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
+#ifdef USE_OPENCL
+        ("rowtiles", po::value<int>()->default_value(cfg_rowtiles),
+                     "Split up the board in # tiles")
+#endif
         ;
     po::variables_map vm;
     try {
@@ -102,6 +108,19 @@ int main (int argc, char *argv[]) {
             cfg_lagbuffer_cs = lagbuffer;
         }
     }
+
+#ifdef USE_OPENCL
+    if (vm.count("rowtiles")) {
+        int rowtiles = vm["rowtiles"].as<int>();
+        rowtiles = std::min(19, rowtiles);
+        rowtiles = std::max(1, rowtiles);
+        if (rowtiles != cfg_rowtiles) {
+            std::cerr << "Splitting the board in " << rowtiles
+                      << " tiles." << std::endl;
+            cfg_rowtiles = rowtiles;
+        }
+    }
+#endif
 
     std::cout.setf(std::ios::unitbuf);
     std::cerr.setf(std::ios::unitbuf);

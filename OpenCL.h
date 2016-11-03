@@ -89,7 +89,9 @@ private:
     std::vector<Layer> m_layers;
     cl::Program m_program;
 
-    int m_wavefront_size{0};
+    size_t m_wavefront_size{0};
+    size_t m_max_workgroup_size{0};
+    std::vector<size_t> m_max_workgroup_dims;
     bool m_init_ok{false};
 
     // Keep track of all async/cb threads we dispatch
