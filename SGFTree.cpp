@@ -4,7 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <memory>
-#include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
 
 #include "SGFTree.h"
 #include "KoState.h"
@@ -290,10 +290,10 @@ int SGFTree::get_move(int tomove) {
     it = m_properties.find(movestring);
     
     if (it != m_properties.end()) {
-        std::string movestring = it->second;        
+        std::string movestring = it->second;
         return string_to_vertex(movestring);
     }
-    
+
     return SGFTree::EOT;
 }
 
@@ -316,47 +316,40 @@ std::vector<int> SGFTree::get_mainline() {
     return moves;
 }
 
-std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {            
+std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
     std::unique_ptr<GameState> state(new GameState);
-    
+
     // make a working copy
     *state = *pstate;
-    
-    std::string res;
-    
+
+    std::string header;
+    std::string moves;
+
     float komi = state->get_komi();
     int size = state->board.get_boardsize();
-    
-    res.append("(;GM[1]FF[4]RU[Chinese]");
-    res.append("SZ[" + boost::lexical_cast<std::string>(size) + "]");
-    res.append("KM[" + boost::lexical_cast<std::string>(komi) + "]");
+
+    header.append("(;GM[1]FF[4]RU[Chinese]");
+    header.append("SZ[" + std::to_string(size) + "]");
+    header.append("KM[" + str(boost::format("%.1f") % komi) + "]");
     if (compcolor == FastBoard::WHITE) {
-        res.append("PW[Leela " + std::string(PROGRAM_VERSION) + "]");
-        res.append("PB[Human]");
+        header.append("PW[Leela " + std::string(PROGRAM_VERSION) + "]");
+        header.append("PB[Human]");
     } else {
-        res.append("PB[Leela " + std::string(PROGRAM_VERSION) + "]");
-        res.append("PW[Human]");
+        header.append("PB[Leela " + std::string(PROGRAM_VERSION) + "]");
+        header.append("PW[Human]");
     }
-    
-    float score = state->final_score();
-    
-    if (score > 0.0f) {
-        res.append("RE[B+" + boost::lexical_cast<std::string>(score) + "]");
-    } else {
-        res.append("RE[W+" + boost::lexical_cast<std::string>(-score) + "]");
-    }
-    
+
     state->rewind();
-    
+
     // check handicap here (anchor point)
     int handicap = 0;
     std::string handicapstr;
-    
+
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             int vertex = state->board.get_vertex(i, j);
             int square = state->board.get_square(vertex);
-            
+
             if (square == FastBoard::BLACK) {
                 handicap++;
                 handicapstr.append("[" + state->board.move_to_text_sgf(vertex) + "]");
@@ -365,27 +358,50 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
     }
 
     if (handicap > 0) {
-        res.append("HA[" + boost::lexical_cast<std::string>(handicap) + "]");
-        res.append("AB" + handicapstr);
+        header.append("HA[" + std::to_string(handicap) + "]");
+        moves.append("AB" + handicapstr);
     }
 
-    res.append("\n");
+    moves.append("\n");
 
     int counter = 0;
     while (state->forward_move()) {
         int move = state->get_last_move();
+        if (move == FastBoard::RESIGN) {
+            break;
+        }
         std::string movestr = state->board.move_to_text_sgf(move);
         if (state->get_to_move() == FastBoard::BLACK) {
-            res.append(";W[" + movestr + "]");
+            moves.append(";W[" + movestr + "]");
         } else {
-            res.append(";B[" + movestr + "]");
+            moves.append(";B[" + movestr + "]");
         }
         if (++counter % 10 == 0) {
-            res.append("\n");
+            moves.append("\n");
         }
     }
 
-    res.append(")");
+    if (state->get_last_move() != FastBoard::RESIGN) {
+        float score = state->final_score();
 
-    return res;
+        if (score > 0.0f) {
+            header.append("RE[B+" + str(boost::format("%.1f") % score) + "]");
+        } else {
+            header.append("RE[W+" + str(boost::format("%.1f") % -score) + "]");
+        }
+    } else {
+        // Last move was resign, so side to move won
+        if (state->get_to_move() == FastBoard::BLACK) {
+            header.append("RE[B+Resign]");
+        } else {
+            header.append("RE[W+Resign]");
+        }
+    }
+
+    std::string result(header);
+    result.append("\n");
+    result.append(moves);
+    result.append(")\n");
+
+    return result;
 }

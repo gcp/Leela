@@ -1,4 +1,4 @@
-std::tr1::array<int, 806> internal_patterns_fast = {
+std::array<int, 806> internal_patterns_fast = {
 43690,
 43711,
 27306,
@@ -807,7 +807,7 @@ std::tr1::array<int, 806> internal_patterns_fast = {
 1298
 };
 
-std::tr1::array<float, 806> internal_weights_fast = {
+std::array<float, 806> internal_weights_fast = {
 0.145405,
 0.00337177,
 0.202233,

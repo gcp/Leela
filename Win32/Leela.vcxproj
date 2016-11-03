@@ -29,7 +29,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v140_xp</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>PGOptimize</WholeProgramOptimization>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -77,8 +77,8 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\include;C:\Projects\OpenCL-ICD-Loader\inc;C:\boost\boost_1_60_0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\lib\ia32_win;C:\boost\boost_1_60_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\include;C:\Projects\OpenCL-ICD-Loader\inc;C:\boost\boost_1_62_0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\boost\boost_1_62_0\stage\lib32;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\lib\ia32_win;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -140,7 +140,6 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalDependencies>mkl_intel_c.lib;mkl_sequential.lib;mkl_core.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <LinkTimeCodeGeneration>PGOptimization</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>Copy /Y "$(SolutionDir)\..\*.cl" "$(TargetDir)"</Command>
@@ -246,7 +245,6 @@
     <ClInclude Include="..\PNNode.h" />
     <ClInclude Include="..\PNSearch.h" />
     <ClInclude Include="..\Random.h" />
-    <ClInclude Include="..\Ruleset.h" />
     <ClInclude Include="..\SGFParser.h" />
     <ClInclude Include="..\SGFTree.h" />
     <ClInclude Include="..\SMP.h" />

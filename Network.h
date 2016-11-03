@@ -10,7 +10,7 @@
 #include <array>
 
 #ifdef USE_OPENCL
-#include <boost/atomic.hpp>
+#include <atomic>
 class UCTNode;
 #endif
 #ifdef USE_CAFFE
@@ -39,7 +39,7 @@ public:
     static constexpr int MAX_CHANNELS = 128;
 
 #ifdef USE_OPENCL
-    void async_scored_moves(boost::atomic<int> * nodecount,
+    void async_scored_moves(std::atomic<int> * nodecount,
                             FastState * state, UCTNode * node,
                             Ensemble ensemble);
 #endif

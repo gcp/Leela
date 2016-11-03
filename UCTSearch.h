@@ -2,9 +2,7 @@
 #define UCTSEARCH_H_INCLUDED
 
 #include <memory>
-#include <boost/function.hpp>
-#include <boost/thread.hpp>
-#include <boost/atomic.hpp>
+#include <atomic>
 
 #include "GameState.h"
 #include "UCTNode.h"
@@ -42,7 +40,7 @@ public:
     int think(int color, passflag_t passflag = NORMAL);
     void set_playout_limit(int playouts);
     void set_use_nets(bool usenets);
-    void set_runflag(boost::atomic<bool> * flag);
+    void set_runflag(std::atomic<bool> * flag);
     void set_analyzing(bool flag);
     void set_quiet(bool flag);
     void ponder();
@@ -65,14 +63,14 @@ private:
 
     GameState & m_rootstate;
     UCTNode m_root;
-    boost::atomic<int> m_nodes;
-    boost::atomic<bool> m_run;
+    std::atomic<int> m_nodes;
+    std::atomic<bool> m_run;
     int m_maxplayouts;
     float m_score;
 
     // For external control
     bool m_hasrunflag;
-    boost::atomic<bool> * m_runflag;
+    std::atomic<bool> * m_runflag;
 
     // Special modes
     bool m_use_nets;

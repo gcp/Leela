@@ -177,11 +177,11 @@ int FastState::play_random_move(int color) {
             int score = matcher->matches(color, pattern);
             std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
 
-            static const std::tr1::array<int, 9> crit_mine = {
+            static const std::array<int, 9> crit_mine = {
                 1, 4, 1, 1, 1, 1, 1, 1, 1
             };
 
-            static const std::tr1::array<int, 9> crit_enemy = {
+            static const std::array<int, 9> crit_enemy = {
                 1, 14, 12, 1, 1, 1, 1, 1, 1
             };
 
@@ -232,6 +232,11 @@ int FastState::play_random_move(int color) {
         int score = matcher->matches(color, pattern);
 
         if (board.self_atari(color, vtx)) {
+            // Self-atari with a group of 6 stones always leaves behind
+            // a live group due to eyespace of size 7.
+            if (board.enemy_atari_size(!color, vtx) >= 6) {
+                continue;
+            }
             score /= 64;
         }
 
