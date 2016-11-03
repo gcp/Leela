@@ -1320,7 +1320,7 @@ bool FastBoard::kill_or_connect(int color, int vertex) {
 
 template <int N> 
 void FastBoard::add_string_liberties(int vertex, 
-                                     std::array<int, N> & nbr_libs, 
+                                     std::array<int, N> & nbr_libs,
                                      int & nbr_libs_cnt) {
     int pos = vertex;
 #ifndef NDEBUG
@@ -1747,8 +1747,8 @@ int FastBoard::get_pattern3_augment_spec(const int sq, int libspec, bool invert)
 // extend = fill in 4 most extended squares with inval
 int FastBoard::get_pattern4(const int sq, bool invert) {          
     const int size = m_boardsize;
-    std::array<square_t, 12> sqs;        
-        
+    std::array<square_t, 12> sqs;
+
     sqs[1]  = m_square[sq - (size + 2) - 1];
     sqs[2]  = m_square[sq - (size + 2)];
     sqs[3]  = m_square[sq - (size + 2) + 1];
