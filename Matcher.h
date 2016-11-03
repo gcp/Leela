@@ -1,8 +1,8 @@
 #ifndef MATCHER_H_INCLUDED
 #define MATCHER_H_INCLUDED
 
+#include <array>
 #include <vector>
-#include <boost/tr1/array.hpp>
 #include <bitset>
 
 class Matcher {
@@ -22,7 +22,7 @@ private:
 
     static Matcher* s_matcher;
 
-    std::tr1::array<std::vector<float>, 2> m_patterns;
+    std::array<std::vector<float>, 2> m_patterns;
 };
 
 #endif

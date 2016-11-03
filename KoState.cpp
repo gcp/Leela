@@ -1,7 +1,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <string.h>
+#include <string>
+#include <algorithm>
 
 #include "config.h"
 

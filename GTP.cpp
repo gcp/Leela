@@ -6,6 +6,8 @@
 #include <string>
 #include <sstream>
 #include <cmath>
+#include <climits>
+#include <algorithm>
 
 #include "config.h"
 #include "Utils.h"
@@ -28,67 +30,37 @@ int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
 int cfg_lagbuffer_cs;
-int cfg_mcnn_maturity;
-int cfg_atari_give_expand;
-int cfg_atari_escape_expand;
-float cfg_cutoff_ratio;
-float cfg_cutoff_offset;
-float cfg_puct;
-float cfg_perbias;
-float cfg_easymove_ratio;
+#ifdef USE_OPENCL
+int cfg_rowtiles;
+#endif
 float cfg_crit_mine_1;
 float cfg_crit_mine_2;
-float cfg_crit_mine_3;
 float cfg_crit_his_1;
 float cfg_crit_his_2;
-float cfg_crit_his_3;
-float cfg_small_self_atari;
-float cfg_big_self_atari;
-float cfg_bad_self_atari;
+float cfg_regular_self_atari;
 float cfg_useless_self_atari;
-float cfg_score_pow;
 float cfg_tactical;
-float cfg_try_captures;
-float cfg_try_critical;
-float cfg_try_pattern;
-float cfg_try_loops;
+float cfg_bound;
+float cfg_pass_score;
 
 void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
     cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
     cfg_enable_nets = true;
     cfg_max_playouts = INT_MAX;
-    cfg_lagbuffer_cs = 200;
+    cfg_lagbuffer_cs = 100;
 #ifdef USE_OPENCL
-    cfg_mcnn_maturity = 15;
-    cfg_atari_give_expand = 5;
-    cfg_atari_escape_expand = 5;
-#else
-    cfg_mcnn_maturity = 250;
-    cfg_atari_give_expand = cfg_mcnn_maturity / 3;
-    cfg_atari_escape_expand = cfg_mcnn_maturity / 3;
+    cfg_rowtiles = 5;
 #endif
-    cfg_cutoff_ratio = 1.0f;
-    cfg_cutoff_offset = 0.0f;
-    cfg_puct = 2.0f;
-    cfg_perbias = 0.02f;
-    cfg_easymove_ratio = 5.0f;
-
     cfg_crit_mine_1 = 4.0f;
     cfg_crit_mine_2 = 1.0f;
-    cfg_crit_mine_3 = 1.0f;
     cfg_crit_his_1 = 14.0f;
     cfg_crit_his_2 = 12.0f;
-    cfg_crit_his_3 = 1.0f;
     cfg_tactical = 20.0f;
-    cfg_small_self_atari = 1.0f/64.0f;
-    cfg_big_self_atari = 1.0f/64.0f;
-    cfg_bad_self_atari = 1.0f/64.0f;
+    cfg_bound = 1.0f;
+    cfg_regular_self_atari = 1.0f/64.0f;
     cfg_useless_self_atari = 1.0f/64.0f;
-    cfg_score_pow = 1.0f;
-    cfg_try_captures = 1.0f;
-    cfg_try_critical = 1.0f;
-    cfg_try_pattern = 1.0f;
+    cfg_pass_score = 1e-15f;
 }
 
 const std::string GTP::s_commands[] = {
@@ -484,7 +456,8 @@ bool GTP::execute(GameState & game, std::string xinput) {
             game.play_move(move);
             game.display_state();
 
-        } while (game.get_passes() < 2);
+        } while (game.get_passes() < 2
+                 && game.get_last_move() != FastBoard::RESIGN);
 
         return true;
     } else if (command.find("bench") == 0) {

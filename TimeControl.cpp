@@ -1,6 +1,7 @@
 #include <cassert>
 #include "TimeControl.h"
 #include "Utils.h"
+#include "GTP.h"
 
 using namespace Utils;
 
@@ -109,7 +110,7 @@ int TimeControl::max_time_for_move(int color) {
     /*
         always keep a 2 second margin for net hiccups
     */
-    static const int BUFFER_CENTISECS = 200;
+    const int BUFFER_CENTISECS = cfg_lagbuffer_cs;
 
     int timealloc = 0;
 
@@ -164,7 +165,6 @@ int TimeControl::max_time_for_move(int color) {
     }
 
     timealloc = std::max<int>(timealloc, 0);
-    timealloc = std::min<int>(timealloc, m_remaining_time[color]);
     return timealloc;
 }
 

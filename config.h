@@ -17,20 +17,20 @@
 /* Hard limits */
 
 #define PROGRAM_NAME "Leela"
-//#define PROGRAM_VERSION "0.7.1. I will resign when I am lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I am won. You can download the latest stable version at https://sjeng.org/leela"
-#define PROGRAM_VERSION "0.7.3 e"
+//#define PROGRAM_VERSION "0.7.5. I will resign when I am lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I am won. You can download the latest stable version at https://sjeng.org/leela"
+#define PROGRAM_VERSION "0.7.5 a"
 
 /* Features */
 #define USE_BLAS
-#define USE_OPENBLAS
-//#define USE_MKL
+//#define USE_OPENBLAS
+#define USE_MKL
 //#define USE_CAFFE
-#define USE_TUNER
 //#define USE_OPENCL
+#define USE_TUNER
 #define USE_SEARCH
 
 // OpenBLAS limitation
-#ifdef USE_BLAS
+#if defined(USE_BLAS) && defined(USE_OPENBLAS)
 #define MAX_CPUS 32
 #else
 #define MAX_CPUS 128

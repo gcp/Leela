@@ -3,7 +3,6 @@
 
 #include <bitset>
 #include <vector>
-#include <boost/tr1/array.hpp>
 
 #include "GameState.h"
 #include "FastState.h"
@@ -11,7 +10,7 @@
 class Playout {
 public:       
     typedef std::bitset<FastBoard::MAXSQ> bitboard_t;
-    typedef std::tr1::array<bitboard_t, 2> color_bitboard_t;
+    typedef std::array<bitboard_t, 2> color_bitboard_t;
     
     static const int AUTOGAMES = 100000;    
     static void do_playout_benchmark(GameState & game);

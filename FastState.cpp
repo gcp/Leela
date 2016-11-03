@@ -138,15 +138,9 @@ int FastState::play_random_move(int color) {
 
     if (m_lastmove > 0 && m_lastmove < board.m_maxsq) {
         if (board.get_square(m_lastmove) == !color) {
-            if (cfg_try_captures > rng->randflt()) {
-                board.add_global_captures(color, moves);
-            }
-            if (cfg_try_critical > rng->randflt()) {
-                board.save_critical_neighbours(color, m_lastmove, moves);
-            }
-            if (cfg_try_pattern > rng->randflt()) {
-                board.add_pattern_moves(color, m_lastmove, moves);
-            }
+            board.add_global_captures(color, moves);
+            board.save_critical_neighbours(color, m_lastmove, moves);
+            board.add_pattern_moves(color, m_lastmove, moves);
             moves.erase(std::remove_if(moves.begin(), moves.end(),
                                        [this](int sq){ return sq == m_komove;}),
                         moves.end());
@@ -157,26 +151,22 @@ int FastState::play_random_move(int color) {
         float cumul = 0.0f;
 
         for (int sq : moves) {
-            // skip ko
-            // XXX
-            if (sq == m_komove) continue;
+            assert(sq != m_komove);
 
             int pattern = board.get_pattern_fast_augment(sq);
             float score = matcher->matches(color, pattern);
             std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
 
-            //static const std::tr1::array<int, 9> crit_mine = {
+            //static const std::array<int, 9> crit_mine = {
             //    1, 4, 1, 1, 1, 1, 1, 1, 1
             //};
 
-            //static const std::tr1::array<int, 9> crit_enemy = {
+            //static const std::array<int, 9> crit_enemy = {
             //    1, 14, 12, 1, 1, 1, 1, 1, 1
             //};
 
             // score *= crit_mine[nbr_crit.first];
             // score *= crit_enemy[nbr_crit.second];
-
-            score = std::pow(score, cfg_score_pow);
 
             assert(nbr_crit.first != 0);
             assert(nbr_crit.second != 0);
@@ -185,15 +175,11 @@ int FastState::play_random_move(int color) {
                 score *= cfg_crit_mine_1;
             } else  if (nbr_crit.first == 2) {
                 score *= cfg_crit_mine_2;
-            } else  if (nbr_crit.first == 3) {
-                score *= cfg_crit_mine_3;
             }
             if (nbr_crit.second == 1) {
                 score *= cfg_crit_his_1;
             } else if (nbr_crit.second == 2) {
                 score *= cfg_crit_his_2;
-            } else if (nbr_crit.second == 3) {
-                score *= cfg_crit_his_3;
             }
 
             bool nearby = false;
@@ -209,7 +195,7 @@ int FastState::play_random_move(int color) {
                 score *= cfg_tactical;
             }
 
-            if (score >= 1.0f) {
+            if (score >= cfg_bound) {
                 cumul += score;
                 scoredmoves.push_back(std::make_pair(sq, cumul));
             }
@@ -240,16 +226,14 @@ int FastState::play_random_move(int color) {
         float score = matcher->matches(color, pattern);
 
         if (board.self_atari(color, vtx)) {
+            // Self-atari with a group of 6 stones always leaves behind
+            // a live group due to eyespace of size 7.
+            if (board.enemy_atari_size(!color, vtx) >= 6) {
+                continue;
+            }
             int enemy_dying = board.enemy_atari_size(color, vtx);
             if (enemy_dying) {
-                int ours_dying = board.enemy_atari_size(!color, vtx);
-                if (ours_dying <= 1) {
-                    score *= cfg_small_self_atari;
-                } else if (ours_dying < enemy_dying) {
-                    score *= cfg_big_self_atari;
-                } else {
-                    score *= cfg_bad_self_atari;
-                }
+                score *= cfg_regular_self_atari;
             } else {
                 score *= cfg_useless_self_atari;
             }
@@ -257,8 +241,10 @@ int FastState::play_random_move(int color) {
 
         cumul += score;
         scoredmoves.push_back(std::make_pair(vtx, cumul));
-
     } while (--loops > 0);
+
+    cumul += cfg_pass_score;
+    scoredmoves.push_back(std::make_pair(FastBoard::PASS, cumul));
 
     float index = rng->randflt() * cumul;
 
@@ -269,6 +255,7 @@ int FastState::play_random_move(int color) {
         }
     }
 
+    assert(false);
     return play_move_fast(FastBoard::PASS);
 }
 

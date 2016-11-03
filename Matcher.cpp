@@ -1,6 +1,6 @@
 #include "config.h"
 
-#include <map>
+#include <unordered_map>
 #include <math.h>
 
 #include "Matcher.h"
@@ -41,7 +41,7 @@ Matcher::Matcher() {
     // center square
     int startvtx = board.get_vertex(1, 1);
 
-    typedef std::map<int, float> patmap;
+    typedef std::unordered_map<int, float> patmap;
     patmap patweights;
 
     for (size_t i = 0; i < internal_weights_fast.size(); i++) {

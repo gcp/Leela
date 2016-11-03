@@ -2,7 +2,7 @@
 #define SMP_H_INCLUDED
 
 #include "config.h"
-#include <boost/atomic.hpp>
+#include <atomic>
 
 namespace SMP {
     int get_num_cpus();
@@ -13,7 +13,7 @@ namespace SMP {
         ~Mutex();
         friend class Lock;
     private:
-        boost::atomic<bool> m_lock;
+        std::atomic<bool> m_lock;
     };
 
     class Lock {

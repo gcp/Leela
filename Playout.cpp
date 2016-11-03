@@ -1,5 +1,5 @@
 #include <vector>
-#include <boost/tr1/array.hpp>
+#include <array>
 #include <cstdlib>
 #include <cassert>
 #include "config.h"

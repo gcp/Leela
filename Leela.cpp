@@ -43,35 +43,24 @@ int main (int argc, char *argv[]) {
         ("threads,t", po::value<int>()->default_value(cfg_num_threads),
                       "Number of threads to use.")
         ("playouts,p", po::value<int>(), "Limit number of playouts.")
-        ("lagbuffer,b", po::value<int>()->default_value(200),
+        ("lagbuffer,b", po::value<int>()->default_value(cfg_lagbuffer_cs),
                       "Safety margin for time usage in centiseconds.")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
+#ifdef USE_OPENCL
+        ("rowtiles", po::value<int>()->default_value(cfg_rowtiles),
+                     "Split up the board in # tiles")
+#endif
 #ifdef USE_TUNER
-        ("maturity", po::value<int>())
-        ("atari_give", po::value<int>())
-        ("atari_escape", po::value<int>())
-        ("cutoff_ratio", po::value<float>())
-        ("cutoff_offset", po::value<float>())
-        ("puct", po::value<float>())
-        ("perbias", po::value<float>())
-        ("easymove", po::value<float>())
         ("crit_mine_1", po::value<float>())
         ("crit_mine_2", po::value<float>())
-        ("crit_mine_3", po::value<float>())
         ("crit_his_1", po::value<float>())
         ("crit_his_2", po::value<float>())
-        ("crit_his_3", po::value<float>())
         ("tactical", po::value<float>())
-        ("small_self_atari", po::value<float>())
-        ("big_self_atari", po::value<float>())
-        ("bad_self_atari", po::value<float>())
+        ("bound", po::value<float>())
+        ("regular_self_atari", po::value<float>())
         ("useless_self_atari", po::value<float>())
-        ("score_pow", po::value<float>())
-        ("try_captures", po::value<float>())
-        ("try_critical", po::value<float>())
-        ("try_pattern", po::value<float>())
-        ("try_loops", po::value<float>())
+        ("pass_score", po::value<float>())
 #endif
         ;
     po::variables_map vm;
@@ -90,38 +79,11 @@ int main (int argc, char *argv[]) {
     }
 
 #ifdef USE_TUNER
-    if (vm.count("maturity")) {
-        cfg_mcnn_maturity = vm["maturity"].as<int>();
-    }
-    if (vm.count("atari_give")) {
-        cfg_atari_give_expand = vm["atari_give"].as<int>();
-    }
-    if (vm.count("atari_escape")) {
-        cfg_atari_escape_expand = vm["atari_escape"].as<int>();
-    }
-    if (vm.count("cutoff_ratio")) {
-        cfg_cutoff_ratio = vm["cutoff_ratio"].as<float>();
-    }
-    if (vm.count("cutoff_offset")) {
-        cfg_cutoff_offset = vm["cutoff_offset"].as<float>();
-    }
-    if (vm.count("puct")) {
-        cfg_puct = vm["puct"].as<float>();
-    }
-    if (vm.count("perbias")) {
-        cfg_perbias = vm["perbias"].as<float>();
-    }
-    if (vm.count("easymove")) {
-        cfg_easymove_ratio = vm["easymove"].as<float>();
-    }
     if (vm.count("crit_mine_1")) {
         cfg_crit_mine_1 = vm["crit_mine_1"].as<float>();
     }
     if (vm.count("crit_mine_2")) {
         cfg_crit_mine_2 = vm["crit_mine_2"].as<float>();
-    }
-    if (vm.count("crit_mine_3")) {
-        cfg_crit_mine_3 = vm["crit_mine_3"].as<float>();
     }
     if (vm.count("crit_his_1")) {
         cfg_crit_his_1 = vm["crit_his_1"].as<float>();
@@ -129,35 +91,20 @@ int main (int argc, char *argv[]) {
     if (vm.count("crit_his_2")) {
         cfg_crit_his_2 = vm["crit_his_2"].as<float>();
     }
-    if (vm.count("crit_his_3")) {
-        cfg_crit_his_3 = vm["crit_his_3"].as<float>();
-    }
     if (vm.count("tactical")) {
         cfg_tactical = vm["tactical"].as<float>();
     }
-    if (vm.count("small_self_atari")) {
-        cfg_small_self_atari = vm["small_self_atari"].as<float>();
+    if (vm.count("bound")) {
+        cfg_bound = vm["bound"].as<float>();
     }
-    if (vm.count("big_self_atari")) {
-        cfg_big_self_atari = vm["big_self_atari"].as<float>();
-    }
-    if (vm.count("bad_self_atari")) {
-        cfg_bad_self_atari = vm["bad_self_atari"].as<float>();
+    if (vm.count("regular_self_atari")) {
+        cfg_regular_self_atari = vm["regular_self_atari"].as<float>();
     }
     if (vm.count("useless_self_atari")) {
         cfg_useless_self_atari = vm["useless_self_atari"].as<float>();
     }
-    if (vm.count("score_pow")) {
-        cfg_score_pow = vm["score_pow"].as<float>();
-    }
-    if (vm.count("try_captures")) {
-        cfg_try_captures = vm["try_captures"].as<float>();
-    }
-    if (vm.count("try_critical")) {
-        cfg_try_critical = vm["try_critical"].as<float>();
-    }
-    if (vm.count("try_pattern")) {
-        cfg_try_pattern = vm["try_pattern"].as<float>();
+    if (vm.count("pass_score")) {
+        cfg_pass_score = vm["pass_score"].as<float>();
     }
 #endif
 
@@ -196,6 +143,19 @@ int main (int argc, char *argv[]) {
             cfg_lagbuffer_cs = lagbuffer;
         }
     }
+
+#ifdef USE_OPENCL
+    if (vm.count("rowtiles")) {
+        int rowtiles = vm["rowtiles"].as<int>();
+        rowtiles = std::min(19, rowtiles);
+        rowtiles = std::max(1, rowtiles);
+        if (rowtiles != cfg_rowtiles) {
+            std::cerr << "Splitting the board in " << rowtiles
+                      << " tiles." << std::endl;
+            cfg_rowtiles = rowtiles;
+        }
+    }
+#endif
 
     std::cout.setf(std::ios::unitbuf);
     std::cerr.setf(std::ios::unitbuf);
