@@ -160,18 +160,11 @@ int FastState::play_random_move(int color) {
         if (board.get_square(m_lastmove) == !color) {
             board.add_global_captures(color, moves);
             board.save_critical_neighbours(color, m_lastmove, moves);
+            board.add_pattern_moves(color, m_lastmove, moves);
+            board.add_nakade_moves(color, m_lastmove, moves);
             moves.erase(std::remove_if(moves.begin(), moves.end(),
                                        [this](int sq){ return sq == m_komove;}),
                         moves.end());
-            if (!moves.size()) {
-                if (60 > rng->randint(100)) {
-                    board.add_nakade_moves(color, m_lastmove, moves);
-                }
-                board.add_pattern_moves(color, m_lastmove, moves);
-                moves.erase(std::remove_if(moves.begin(), moves.end(),
-                                           [this](int sq){ return sq == m_komove;}),
-                            moves.end());
-            }
         }
     }
 
