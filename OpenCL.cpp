@@ -252,6 +252,7 @@ static std::string sourceCode = R"(
                 }
             } else if (out_buff_size >= 21 && ly < 21) {
                 // Every thread copies a column
+                int copy_idx = (lx * pad_width + ly) * filter_size;
                 if (tile == 0 || row == 18) {
                     // Every thread copies a column
                     for (int srow = 0; srow < filter_size; srow++) {
@@ -260,7 +261,7 @@ static std::string sourceCode = R"(
                         if ((unsigned)in_row < height && ly >= 1 && ly <= 19) {
                             val = in[(c * height + in_row) * width + ly - 1];
                         }
-                        channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
+                        channel_buff[copy_idx + srow] = val;
                         if (srow > 0) {
                             chan_cache[srow - 1] = val;
                         }
@@ -271,9 +272,9 @@ static std::string sourceCode = R"(
                     if (ly >= 1 && ly <= 19) {
                         val = in[(c * height + in_row) * width + ly - 1];
                     }
-                    channel_buff[(lx * pad_width + ly) * filter_size + 0] = chan_cache[0];
-                    channel_buff[(lx * pad_width + ly) * filter_size + 1] = chan_cache[1];
-                    channel_buff[(lx * pad_width + ly) * filter_size + 2] = val;
+                    channel_buff[copy_idx + 0] = chan_cache[0];
+                    channel_buff[copy_idx + 1] = chan_cache[1];
+                    channel_buff[copy_idx + 2] = val;
                     chan_cache[0] = chan_cache[1];
                     chan_cache[1] = val;
                 }
