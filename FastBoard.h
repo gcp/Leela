@@ -20,11 +20,7 @@ public:
     /*
         largest board supported 
     */
-#ifdef LITEVERSION    
-    static const int MAXBOARDSIZE = 13;
-#else
     static const int MAXBOARDSIZE = 25;
-#endif    
 
     /*
         highest existing square        
@@ -55,13 +51,13 @@ public:
     /*
         move generation types
     */
-    using movescore_t = std::pair<int, float>;
+    using movescore_t = std::pair<int, int>;
     using movelist_t = std::vector<int>;
     using scoredmoves_t = std::vector<movescore_t>;
 
     int get_boardsize(void);
     square_t get_square(int x, int y);
-    square_t get_square(int vertex); 
+    square_t get_square(int vertex);
     int get_vertex(int i, int j);
     void set_square(int x, int y, square_t content);
     void set_square(int vertex, square_t content);
@@ -140,26 +136,26 @@ public:
     void display_board(int lastmove = -1);    
 
     static bool starpoint(int size, int point);
-    static bool starpoint(int size, int x, int y);                           
-                
+    static bool starpoint(int size, int x, int y);
+
 protected:
     /*
         bit masks to detect eyes on neighbors
-    */        
-    static const std::tr1::array<int,      2> s_eyemask; 
+    */
+    static const std::tr1::array<int,      2> s_eyemask;
     static const std::tr1::array<square_t, 4> s_cinvert; /* color inversion */
-    
-    std::tr1::array<square_t,  MAXSQ>           m_square;      /* board contents */            
-    std::tr1::array<unsigned short, MAXSQ+1>    m_next;        /* next stone in string */ 
-    std::tr1::array<unsigned short, MAXSQ+1>    m_parent;      /* parent node of string */            
-    std::tr1::array<unsigned short, MAXSQ+1>    m_libs;        /* liberties per string parent */        
-    std::tr1::array<unsigned short, MAXSQ+1>    m_stones;      /* stones per string parent */        
-    std::tr1::array<unsigned short, MAXSQ>      m_neighbours;  /* counts of neighboring stones */       
-    std::tr1::array<int, 4>          m_dirs;        /* movement directions 4 way */    
+
+    std::tr1::array<square_t,  MAXSQ>           m_square;      /* board contents */
+    std::tr1::array<unsigned short, MAXSQ+1>    m_next;        /* next stone in string */
+    std::tr1::array<unsigned short, MAXSQ+1>    m_parent;      /* parent node of string */
+    std::tr1::array<unsigned short, MAXSQ+1>    m_libs;        /* liberties per string parent */
+    std::tr1::array<unsigned short, MAXSQ+1>    m_stones;      /* stones per string parent */
+    std::tr1::array<unsigned short, MAXSQ>      m_neighbours;  /* counts of neighboring stones */
+    std::tr1::array<int, 4>          m_dirs;        /* movement directions 4 way */
     std::tr1::array<int, 8>          m_extradirs;   /* movement directions 8 way */
     std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
-    std::tr1::array<int, 2>          m_totalstones; /* stones per color */                 
-    std::vector<int>                 m_critical;    /* queue of critical points */    
+    std::tr1::array<int, 2>          m_totalstones; /* stones per color */
+    std::vector<int>                 m_critical;    /* queue of critical points */
     std::tr1::array<unsigned short, MAXSQ> m_empty;       /* empty squares */
     std::tr1::array<unsigned short, MAXSQ> m_empty_idx;   /* indexes of square */
     int m_empty_cnt;                                      /* count of empties */
@@ -180,7 +176,7 @@ protected:
     int in_atari(int vertex);
     bool fast_in_atari(int vertex);
     template <int N> void add_string_liberties(int vertex,
-                                               std::tr1::array<int, N> & nbr_libs, 
+                                               std::tr1::array<int, N> & nbr_libs,
                                                int & nbr_libs_cnt);
     void kill_neighbours(int vertex, movelist_t & moves);
     void try_capture(int color, int vertex, movelist_t & moves);
