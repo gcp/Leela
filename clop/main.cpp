@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
     qsrand(seed);
 
-    QString orig_cmdline("./leela-073e --gtp --noponder --threads 1");
+    QString orig_cmdline("./leela_ref --gtp --noponder --threads 1");
     QString tune_cmdline("./leela --gtp --noponder --threads 1");
 
     parmset ps;
@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        QFile::remove(sgf_name);
+        //QFile::remove(sgf_name);
     } else {
         orig_process.write(qPrintable("quit\n"));
         tune_process.write(qPrintable("quit\n"));
