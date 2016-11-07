@@ -52,15 +52,15 @@ void GTP::setup_default_parameters() {
 #ifdef USE_OPENCL
     cfg_rowtiles = 5;
 #endif
-    cfg_crit_mine_1 = 3.66f;
-    cfg_crit_mine_2 = 2.18f;
-    cfg_crit_his_1 = 8.97f;
-    cfg_crit_his_2 = 2.81f;
-    cfg_tactical = 8.36f;
-    cfg_bound = 0.1294f;
-    cfg_regular_self_atari = 0.7798f;
-    cfg_useless_self_atari = 0.0131f;
-    cfg_pass_score = 1.465e-5f;
+    cfg_crit_mine_1 = 4.16f;
+    cfg_crit_mine_2 = 1.81f;
+    cfg_crit_his_1 = 9.03f;
+    cfg_crit_his_2 = 2.58f;
+    cfg_tactical = 10.89f;
+    cfg_bound = 0.168f;
+    cfg_regular_self_atari = 0.768f;
+    cfg_useless_self_atari = 0.0326f;
+    cfg_pass_score = 1.41e-5f;
 }
 
 const std::string GTP::s_commands[] = {

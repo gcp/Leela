@@ -9797,10 +9797,98 @@
 2016-11-07 17:30:03 id = 11 (cpu12); Seed = 4832; Starting new sample
 2016-11-07 17:30:11 id = 31 (cpu32); Seed = 4797; Done (1)
 2016-11-07 17:30:11 id = 31 (cpu32); Seed = 4833; Starting new sample
-2016-11-07 18:31:19 ===== Starting: clopgtp =====
-2016-11-07 18:31:19 Found existing clopgtp.dat
-2016-11-07 18:31:19 Removing clopgtp-old.dat
-2016-11-07 18:31:19 Renaming clopgtp.dat to clopgtp-old.dat
-2016-11-07 18:31:19 Reading clopgtp-old.dat...
-2016-11-07 18:31:19 Backup done.
-2016-11-07 18:31:19 Samples = 4834; Results = 4798; Mismatches = 0.
+2016-11-07 17:31:34 id = 35 (cpu36); Seed = 4799; Done (1)
+2016-11-07 17:31:34 id = 35 (cpu36); Seed = 4834; Starting new sample
+2016-11-07 17:31:47 id = 18 (cpu19); Seed = 4798; Done (0)
+2016-11-07 17:31:47 id = 18 (cpu19); Seed = 4835; Starting new sample
+2016-11-07 17:31:52 id = 29 (cpu30); Seed = 4802; Done (1)
+2016-11-07 17:31:52 id = 29 (cpu30); Seed = 4836; Starting new sample
+2016-11-07 17:32:25 id = 30 (cpu31); Seed = 4800; Done (1)
+2016-11-07 17:32:25 id = 30 (cpu31); Seed = 4837; Starting new sample
+2016-11-07 17:32:35 id = 6 (cpu7); Seed = 4803; Done (0)
+2016-11-07 17:32:35 id = 6 (cpu7); Seed = 4838; Starting new sample
+2016-11-07 17:32:44 id = 0 (cpu1); Seed = 4801; Done (1)
+2016-11-07 17:32:44 id = 0 (cpu1); Seed = 4839; Starting new sample
+2016-11-07 17:32:54 id = 7 (cpu8); Seed = 4805; Done (0)
+2016-11-07 17:32:54 id = 7 (cpu8); Seed = 4840; Starting new sample
+2016-11-07 17:33:43 id = 16 (cpu17); Seed = 4808; Done (0)
+2016-11-07 17:33:43 id = 16 (cpu17); Seed = 4841; Starting new sample
+2016-11-07 17:33:53 id = 9 (cpu10); Seed = 4810; Done (0)
+2016-11-07 17:33:53 id = 9 (cpu10); Seed = 4842; Starting new sample
+2016-11-07 17:34:01 id = 32 (cpu33); Seed = 4804; Done (1)
+2016-11-07 17:34:01 id = 32 (cpu33); Seed = 4843; Starting new sample
+2016-11-07 17:35:08 id = 20 (cpu21); Seed = 4806; Done (0)
+2016-11-07 17:35:08 id = 20 (cpu21); Seed = 4844; Starting new sample
+2016-11-07 17:35:33 id = 4 (cpu5); Seed = 4807; Done (1)
+2016-11-07 17:35:33 id = 4 (cpu5); Seed = 4845; Starting new sample
+2016-11-07 17:36:02 id = 5 (cpu6); Seed = 4812; Done (0)
+2016-11-07 17:36:02 id = 5 (cpu6); Seed = 4846; Starting new sample
+2016-11-07 17:36:03 id = 34 (cpu35); Seed = 4811; Done (0)
+2016-11-07 17:36:03 id = 34 (cpu35); Seed = 4847; Starting new sample
+2016-11-07 17:36:04 id = 3 (cpu4); Seed = 4814; Done (1)
+2016-11-07 17:36:04 id = 3 (cpu4); Seed = 4848; Starting new sample
+2016-11-07 17:36:37 id = 22 (cpu23); Seed = 4809; Done (0)
+2016-11-07 17:36:37 id = 22 (cpu23); Seed = 4849; Starting new sample
+2016-11-07 17:37:00 id = 2 (cpu3); Seed = 4813; Done (0)
+2016-11-07 17:37:00 id = 2 (cpu3); Seed = 4850; Starting new sample
+2016-11-07 17:37:08 id = 14 (cpu15); Seed = 4816; Done (0)
+2016-11-07 17:37:08 id = 14 (cpu15); Seed = 4851; Starting new sample
+2016-11-07 17:38:15 id = 26 (cpu27); Seed = 4815; Done (0)
+2016-11-07 17:38:15 id = 26 (cpu27); Seed = 4852; Starting new sample
+2016-11-07 17:38:52 id = 8 (cpu9); Seed = 4817; Done (0)
+2016-11-07 17:38:52 id = 8 (cpu9); Seed = 4853; Starting new sample
+2016-11-07 17:38:59 id = 24 (cpu25); Seed = 4820; Done (0)
+2016-11-07 17:38:59 id = 24 (cpu25); Seed = 4854; Starting new sample
+2016-11-07 17:40:13 id = 23 (cpu24); Seed = 4818; Done (1)
+2016-11-07 17:40:13 id = 23 (cpu24); Seed = 4855; Starting new sample
+2016-11-07 17:40:17 id = 17 (cpu18); Seed = 4819; Done (1)
+2016-11-07 17:40:17 id = 17 (cpu18); Seed = 4856; Starting new sample
+2016-11-07 17:40:31 id = 21 (cpu22); Seed = 4821; Done (0)
+2016-11-07 17:40:31 id = 21 (cpu22); Seed = 4857; Starting new sample
+2016-11-07 17:40:49 id = 28 (cpu29); Seed = 4822; Done (0)
+2016-11-07 17:40:49 id = 28 (cpu29); Seed = 4858; Starting new sample
+2016-11-07 17:40:58 id = 13 (cpu14); Seed = 4823; Done (1)
+2016-11-07 17:40:58 id = 13 (cpu14); Seed = 4859; Starting new sample
+2016-11-07 17:41:01 id = 33 (cpu34); Seed = 4824; Done (1)
+2016-11-07 17:41:01 id = 33 (cpu34); Seed = 4860; Starting new sample
+2016-11-07 17:41:15 id = 27 (cpu28); Seed = 4830; Done (1)
+2016-11-07 17:41:15 id = 27 (cpu28); Seed = 4861; Starting new sample
+2016-11-07 17:41:50 id = 1 (cpu2); Seed = 4828; Done (1)
+2016-11-07 17:41:50 id = 1 (cpu2); Seed = 4862; Starting new sample
+2016-11-07 17:42:07 id = 12 (cpu13); Seed = 4827; Done (0)
+2016-11-07 17:42:07 id = 12 (cpu13); Seed = 4863; Starting new sample
+2016-11-07 17:42:30 id = 10 (cpu11); Seed = 4825; Done (0)
+2016-11-07 17:42:30 id = 10 (cpu11); Seed = 4864; Starting new sample
+2016-11-07 17:43:35 id = 31 (cpu32); Seed = 4833; Done (1)
+2016-11-07 17:43:35 id = 31 (cpu32); Seed = 4865; Starting new sample
+2016-11-07 17:43:42 id = 15 (cpu16); Seed = 4826; Done (1)
+2016-11-07 17:43:42 id = 15 (cpu16); Seed = 4866; Starting new sample
+2016-11-07 17:43:50 id = 25 (cpu26); Seed = 4829; Done (0)
+2016-11-07 17:43:50 id = 25 (cpu26); Seed = 4867; Starting new sample
+2016-11-07 17:43:52 id = 18 (cpu19); Seed = 4835; Done (0)
+2016-11-07 17:43:52 id = 18 (cpu19); Seed = 4868; Starting new sample
+2016-11-07 17:44:03 id = 19 (cpu20); Seed = 4831; Done (0)
+2016-11-07 17:44:03 id = 19 (cpu20); Seed = 4869; Starting new sample
+2016-11-07 17:44:42 id = 30 (cpu31); Seed = 4837; Done (1)
+2016-11-07 17:44:42 id = 30 (cpu31); Seed = 4870; Starting new sample
+2016-11-07 17:45:05 id = 11 (cpu12); Seed = 4832; Done (0)
+2016-11-07 17:45:05 id = 11 (cpu12); Seed = 4871; Starting new sample
+2016-11-07 17:45:34 id = 35 (cpu36); Seed = 4834; Done (0)
+2016-11-07 17:45:34 id = 35 (cpu36); Seed = 4872; Starting new sample
+2016-11-07 17:46:06 id = 6 (cpu7); Seed = 4838; Done (0)
+2016-11-07 17:46:06 id = 6 (cpu7); Seed = 4873; Starting new sample
+2016-11-07 17:46:39 id = 29 (cpu30); Seed = 4836; Done (1)
+2016-11-07 17:46:39 id = 29 (cpu30); Seed = 4874; Starting new sample
+2016-11-07 17:46:40 id = 7 (cpu8); Seed = 4840; Done (1)
+2016-11-07 17:46:40 id = 7 (cpu8); Seed = 4875; Starting new sample
+2016-11-07 17:47:00 id = 9 (cpu10); Seed = 4842; Done (0)
+2016-11-07 17:47:00 id = 9 (cpu10); Seed = 4876; Starting new sample
+2016-11-07 17:47:03 id = 0 (cpu1); Seed = 4839; Done (1)
+2016-11-07 17:47:03 id = 0 (cpu1); Seed = 4877; Starting new sample
+2016-11-07 18:47:53 ===== Starting: clopgtp =====
+2016-11-07 18:47:53 Found existing clopgtp.dat
+2016-11-07 18:47:53 Removing clopgtp-old.dat
+2016-11-07 18:47:53 Renaming clopgtp.dat to clopgtp-old.dat
+2016-11-07 18:47:53 Reading clopgtp-old.dat...
+2016-11-07 18:47:53 Backup done.
+2016-11-07 18:47:53 Samples = 4878; Results = 4842; Mismatches = 0.
