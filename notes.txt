@@ -5,3 +5,5 @@
 
 - Build probability map from net results
   Linear interp from 0.5 to 0 for 30 moves
+
+- Node formula for first visit is wrong
