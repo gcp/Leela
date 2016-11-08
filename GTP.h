@@ -21,6 +21,10 @@ extern float cfg_useless_self_atari;
 extern float cfg_tactical;
 extern float cfg_bound;
 extern float cfg_pass_score;
+extern float cfg_fpu;
+extern float cfg_perbias;
+extern float cfg_puct;
+extern float cfg_puct_pow;
 
 class GTP {
 public:

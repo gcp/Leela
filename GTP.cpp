@@ -42,6 +42,10 @@ float cfg_useless_self_atari;
 float cfg_tactical;
 float cfg_bound;
 float cfg_pass_score;
+float cfg_fpu;
+float cfg_perbias;
+float cfg_puct;
+float cfg_puct_pow;
 
 void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
@@ -61,6 +65,10 @@ void GTP::setup_default_parameters() {
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
+    cfg_fpu = 1.0f;
+    cfg_perbias = 0.02f;
+    cfg_puct = 2.0f;
+    cfg_puct_pow = 0.5f;
 }
 
 const std::string GTP::s_commands[] = {

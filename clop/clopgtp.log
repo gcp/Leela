@@ -10157,3 +10157,543 @@
 2016-11-07 18:40:25 id = 17 (cpu18); Seed = 5012; Starting new sample
 2016-11-07 18:41:28 id = 7 (cpu8); Seed = 4975; Done (1)
 2016-11-07 18:41:28 id = 7 (cpu8); Seed = 5013; Starting new sample
+2016-11-08 09:55:08 ===== Starting: clopgtp =====
+2016-11-08 09:55:08 Found existing clopgtp.dat
+2016-11-08 09:55:08 Removing clopgtp-old.dat
+2016-11-08 09:55:08 Renaming clopgtp.dat to clopgtp-old.dat
+2016-11-08 09:55:08 Reading clopgtp-old.dat...
+2016-11-08 09:55:08 Wrong N (got 9, expected 4)
+2016-11-08 09:55:31 Run
+2016-11-08 09:55:31 id = 6 (cpu7); Seed = 0; Starting new sample
+2016-11-08 09:55:31 id = 5 (cpu6); Seed = 1; Starting new sample
+2016-11-08 09:55:31 id = 4 (cpu5); Seed = 2; Starting new sample
+2016-11-08 09:55:31 id = 3 (cpu4); Seed = 3; Starting new sample
+2016-11-08 09:55:31 id = 2 (cpu3); Seed = 4; Starting new sample
+2016-11-08 09:55:31 id = 1 (cpu2); Seed = 5; Starting new sample
+2016-11-08 09:55:31 id = 0 (cpu1); Seed = 6; Starting new sample
+2016-11-08 10:07:56 id = 1 (cpu2); Seed = 5; Done (0)
+2016-11-08 10:07:56 id = 1 (cpu2); Seed = 7; Starting new sample
+2016-11-08 10:08:34 id = 6 (cpu7); Seed = 0; Done (1)
+2016-11-08 10:08:34 id = 6 (cpu7); Seed = 8; Starting new sample
+2016-11-08 10:09:05 id = 5 (cpu6); Seed = 1; Done (0)
+2016-11-08 10:09:05 id = 5 (cpu6); Seed = 9; Starting new sample
+2016-11-08 10:09:09 id = 3 (cpu4); Seed = 3; Done (1)
+2016-11-08 10:09:09 id = 3 (cpu4); Seed = 10; Starting new sample
+2016-11-08 10:09:46 id = 2 (cpu3); Seed = 4; Done (1)
+2016-11-08 10:09:46 id = 2 (cpu3); Seed = 11; Starting new sample
+2016-11-08 10:10:36 id = 4 (cpu5); Seed = 2; Done (1)
+2016-11-08 10:10:36 id = 4 (cpu5); Seed = 12; Starting new sample
+2016-11-08 10:12:06 id = 0 (cpu1); Seed = 6; Done (1)
+2016-11-08 10:12:06 id = 0 (cpu1); Seed = 13; Starting new sample
+2016-11-08 10:21:15 id = 1 (cpu2); Seed = 7; Done (1)
+2016-11-08 10:21:15 id = 1 (cpu2); Seed = 14; Starting new sample
+2016-11-08 10:22:34 id = 3 (cpu4); Seed = 10; Done (1)
+2016-11-08 10:22:34 id = 3 (cpu4); Seed = 15; Starting new sample
+2016-11-08 10:23:21 id = 6 (cpu7); Seed = 8; Done (0)
+2016-11-08 10:23:21 id = 6 (cpu7); Seed = 16; Starting new sample
+2016-11-08 10:23:51 id = 5 (cpu6); Seed = 9; Done (0)
+2016-11-08 10:23:51 id = 5 (cpu6); Seed = 17; Starting new sample
+2016-11-08 10:24:11 id = 2 (cpu3); Seed = 11; Done (1)
+2016-11-08 10:24:11 id = 2 (cpu3); Seed = 18; Starting new sample
+2016-11-08 10:25:33 id = 4 (cpu5); Seed = 12; Done (1)
+2016-11-08 10:25:33 id = 4 (cpu5); Seed = 19; Starting new sample
+2016-11-08 10:27:10 id = 0 (cpu1); Seed = 13; Done (0)
+2016-11-08 10:27:10 id = 0 (cpu1); Seed = 20; Starting new sample
+2016-11-08 10:35:00 id = 1 (cpu2); Seed = 14; Done (0)
+2016-11-08 10:35:00 id = 1 (cpu2); Seed = 21; Starting new sample
+2016-11-08 10:35:21 id = 3 (cpu4); Seed = 15; Done (1)
+2016-11-08 10:35:21 id = 3 (cpu4); Seed = 22; Starting new sample
+2016-11-08 10:38:15 id = 4 (cpu5); Seed = 19; Done (0)
+2016-11-08 10:38:15 id = 4 (cpu5); Seed = 23; Starting new sample
+2016-11-08 10:38:16 id = 5 (cpu6); Seed = 17; Done (0)
+2016-11-08 10:38:16 id = 5 (cpu6); Seed = 24; Starting new sample
+2016-11-08 10:38:45 id = 6 (cpu7); Seed = 16; Done (0)
+2016-11-08 10:38:45 id = 6 (cpu7); Seed = 25; Starting new sample
+2016-11-08 10:39:04 id = 2 (cpu3); Seed = 18; Done (0)
+2016-11-08 10:39:04 id = 2 (cpu3); Seed = 26; Starting new sample
+2016-11-08 10:39:30 id = 0 (cpu1); Seed = 20; Done (1)
+2016-11-08 10:39:30 id = 0 (cpu1); Seed = 27; Starting new sample
+2016-11-08 10:48:52 id = 1 (cpu2); Seed = 21; Done (0)
+2016-11-08 10:48:52 id = 1 (cpu2); Seed = 28; Starting new sample
+2016-11-08 10:50:29 id = 3 (cpu4); Seed = 22; Done (1)
+2016-11-08 10:50:29 id = 3 (cpu4); Seed = 29; Starting new sample
+2016-11-08 10:51:45 id = 4 (cpu5); Seed = 23; Done (1)
+2016-11-08 10:51:45 id = 4 (cpu5); Seed = 30; Starting new sample
+2016-11-08 10:53:36 id = 6 (cpu7); Seed = 25; Done (0)
+2016-11-08 10:53:36 id = 6 (cpu7); Seed = 31; Starting new sample
+2016-11-08 10:54:00 id = 2 (cpu3); Seed = 26; Done (0)
+2016-11-08 10:54:01 id = 2 (cpu3); Seed = 32; Starting new sample
+2016-11-08 10:54:38 id = 5 (cpu6); Seed = 24; Done (1)
+2016-11-08 10:54:38 id = 5 (cpu6); Seed = 33; Starting new sample
+2016-11-08 10:54:39 id = 0 (cpu1); Seed = 27; Done (0)
+2016-11-08 10:54:39 id = 0 (cpu1); Seed = 34; Starting new sample
+2016-11-08 11:02:52 id = 1 (cpu2); Seed = 28; Done (1)
+2016-11-08 11:02:52 id = 1 (cpu2); Seed = 35; Starting new sample
+2016-11-08 11:03:49 id = 4 (cpu5); Seed = 30; Done (1)
+2016-11-08 11:03:49 id = 4 (cpu5); Seed = 36; Starting new sample
+2016-11-08 11:05:31 id = 3 (cpu4); Seed = 29; Done (0)
+2016-11-08 11:05:31 id = 3 (cpu4); Seed = 37; Starting new sample
+2016-11-08 11:08:33 id = 2 (cpu3); Seed = 32; Done (1)
+2016-11-08 11:08:33 id = 2 (cpu3); Seed = 38; Starting new sample
+2016-11-08 11:08:45 id = 0 (cpu1); Seed = 34; Done (1)
+2016-11-08 11:08:45 id = 0 (cpu1); Seed = 39; Starting new sample
+2016-11-08 11:08:50 id = 6 (cpu7); Seed = 31; Done (0)
+2016-11-08 11:08:50 id = 6 (cpu7); Seed = 40; Starting new sample
+2016-11-08 11:11:15 id = 5 (cpu6); Seed = 33; Done (1)
+2016-11-08 11:11:15 id = 5 (cpu6); Seed = 41; Starting new sample
+2016-11-08 11:14:37 id = 1 (cpu2); Seed = 35; Done (1)
+2016-11-08 11:14:37 id = 1 stopped. RunningProcessors = 6
+2016-11-08 11:18:04 id = 4 (cpu5); Seed = 36; Done (1)
+2016-11-08 11:18:04 id = 4 stopped. RunningProcessors = 5
+2016-11-08 11:19:02 id = 3 (cpu4); Seed = 37; Done (1)
+2016-11-08 11:19:02 id = 3 stopped. RunningProcessors = 4
+2016-11-08 11:22:37 id = 0 (cpu1); Seed = 39; Done (0)
+2016-11-08 11:22:37 id = 0 stopped. RunningProcessors = 3
+2016-11-08 11:22:48 id = 2 (cpu3); Seed = 38; Done (0)
+2016-11-08 11:22:48 id = 2 stopped. RunningProcessors = 2
+2016-11-08 11:23:14 id = 5 (cpu6); Seed = 41; Done (0)
+2016-11-08 11:23:14 id = 5 stopped. RunningProcessors = 1
+2016-11-08 11:23:57 id = 6 (cpu7); Seed = 40; Done (0)
+2016-11-08 11:23:57 id = 6 stopped. RunningProcessors = 0
+2016-11-08 11:23:57 Stop
+2016-11-08 10:32:36 ===== Starting: clopgtp =====
+2016-11-08 10:32:36 Found existing clopgtp.dat
+2016-11-08 10:32:36 Removing clopgtp-old.dat
+2016-11-08 10:32:36 Renaming clopgtp.dat to clopgtp-old.dat
+2016-11-08 10:32:36 Reading clopgtp-old.dat...
+2016-11-08 10:32:36 Backup done.
+2016-11-08 10:32:36 Samples = 42; Results = 42; Mismatches = 0.
+2016-11-08 10:32:36 Run
+2016-11-08 10:32:36 id = 35 (cpu36); Seed = 42; Starting new sample
+2016-11-08 10:32:36 id = 34 (cpu35); Seed = 43; Starting new sample
+2016-11-08 10:32:36 id = 33 (cpu34); Seed = 44; Starting new sample
+2016-11-08 10:32:36 id = 32 (cpu33); Seed = 45; Starting new sample
+2016-11-08 10:32:36 id = 31 (cpu32); Seed = 46; Starting new sample
+2016-11-08 10:32:36 id = 30 (cpu31); Seed = 47; Starting new sample
+2016-11-08 10:32:36 id = 29 (cpu30); Seed = 48; Starting new sample
+2016-11-08 10:32:36 id = 28 (cpu29); Seed = 49; Starting new sample
+2016-11-08 10:32:36 id = 27 (cpu28); Seed = 50; Starting new sample
+2016-11-08 10:32:36 id = 26 (cpu27); Seed = 51; Starting new sample
+2016-11-08 10:32:36 id = 25 (cpu26); Seed = 52; Starting new sample
+2016-11-08 10:32:36 id = 24 (cpu25); Seed = 53; Starting new sample
+2016-11-08 10:32:36 id = 23 (cpu24); Seed = 54; Starting new sample
+2016-11-08 10:32:36 id = 22 (cpu23); Seed = 55; Starting new sample
+2016-11-08 10:32:36 id = 21 (cpu22); Seed = 56; Starting new sample
+2016-11-08 10:32:36 id = 20 (cpu21); Seed = 57; Starting new sample
+2016-11-08 10:32:36 id = 19 (cpu20); Seed = 58; Starting new sample
+2016-11-08 10:32:36 id = 18 (cpu19); Seed = 59; Starting new sample
+2016-11-08 10:32:36 id = 17 (cpu18); Seed = 60; Starting new sample
+2016-11-08 10:32:36 id = 16 (cpu17); Seed = 61; Starting new sample
+2016-11-08 10:32:36 id = 15 (cpu16); Seed = 62; Starting new sample
+2016-11-08 10:32:36 id = 14 (cpu15); Seed = 63; Starting new sample
+2016-11-08 10:32:36 id = 13 (cpu14); Seed = 64; Starting new sample
+2016-11-08 10:32:36 id = 12 (cpu13); Seed = 65; Starting new sample
+2016-11-08 10:32:36 id = 11 (cpu12); Seed = 66; Starting new sample
+2016-11-08 10:32:36 id = 10 (cpu11); Seed = 67; Starting new sample
+2016-11-08 10:32:36 id = 9 (cpu10); Seed = 68; Starting new sample
+2016-11-08 10:32:36 id = 8 (cpu9); Seed = 69; Starting new sample
+2016-11-08 10:32:36 id = 7 (cpu8); Seed = 70; Starting new sample
+2016-11-08 10:32:36 id = 6 (cpu7); Seed = 71; Starting new sample
+2016-11-08 10:32:36 id = 5 (cpu6); Seed = 72; Starting new sample
+2016-11-08 10:32:36 id = 4 (cpu5); Seed = 73; Starting new sample
+2016-11-08 10:32:36 id = 3 (cpu4); Seed = 74; Starting new sample
+2016-11-08 10:32:36 id = 2 (cpu3); Seed = 75; Starting new sample
+2016-11-08 10:32:36 id = 1 (cpu2); Seed = 76; Starting new sample
+2016-11-08 10:32:36 id = 0 (cpu1); Seed = 77; Starting new sample
+2016-11-08 10:43:13 id = 9 (cpu10); Seed = 68; Done (1)
+2016-11-08 10:43:13 id = 9 (cpu10); Seed = 78; Starting new sample
+2016-11-08 10:43:22 id = 27 (cpu28); Seed = 50; Done (0)
+2016-11-08 10:43:22 id = 27 (cpu28); Seed = 79; Starting new sample
+2016-11-08 10:44:07 id = 14 (cpu15); Seed = 63; Done (0)
+2016-11-08 10:44:07 id = 14 (cpu15); Seed = 80; Starting new sample
+2016-11-08 10:44:33 id = 2 (cpu3); Seed = 75; Done (0)
+2016-11-08 10:44:33 id = 2 (cpu3); Seed = 81; Starting new sample
+2016-11-08 10:44:37 id = 11 (cpu12); Seed = 66; Done (1)
+2016-11-08 10:44:37 id = 11 (cpu12); Seed = 82; Starting new sample
+2016-11-08 10:44:46 id = 35 (cpu36); Seed = 42; Done (0)
+2016-11-08 10:44:46 id = 35 (cpu36); Seed = 83; Starting new sample
+2016-11-08 10:44:49 id = 0 (cpu1); Seed = 77; Done (0)
+2016-11-08 10:44:49 id = 0 (cpu1); Seed = 84; Starting new sample
+2016-11-08 10:45:00 id = 28 (cpu29); Seed = 49; Done (0)
+2016-11-08 10:45:00 id = 28 (cpu29); Seed = 85; Starting new sample
+2016-11-08 10:45:02 id = 7 (cpu8); Seed = 70; Done (1)
+2016-11-08 10:45:02 id = 7 (cpu8); Seed = 86; Starting new sample
+2016-11-08 10:45:10 id = 23 (cpu24); Seed = 54; Done (0)
+2016-11-08 10:45:10 id = 23 (cpu24); Seed = 87; Starting new sample
+2016-11-08 10:45:16 id = 32 (cpu33); Seed = 45; Done (1)
+2016-11-08 10:45:16 id = 32 (cpu33); Seed = 88; Starting new sample
+2016-11-08 10:45:22 id = 8 (cpu9); Seed = 69; Done (0)
+2016-11-08 10:45:22 id = 8 (cpu9); Seed = 89; Starting new sample
+2016-11-08 10:45:30 id = 24 (cpu25); Seed = 53; Done (1)
+2016-11-08 10:45:30 id = 24 (cpu25); Seed = 90; Starting new sample
+2016-11-08 10:45:33 id = 5 (cpu6); Seed = 72; Done (0)
+2016-11-08 10:45:33 id = 5 (cpu6); Seed = 91; Starting new sample
+2016-11-08 10:45:39 id = 21 (cpu22); Seed = 56; Done (0)
+2016-11-08 10:45:39 id = 21 (cpu22); Seed = 92; Starting new sample
+2016-11-08 10:46:02 id = 15 (cpu16); Seed = 62; Done (1)
+2016-11-08 10:46:02 id = 15 (cpu16); Seed = 93; Starting new sample
+2016-11-08 10:46:12 id = 22 (cpu23); Seed = 55; Done (1)
+2016-11-08 10:46:12 id = 22 (cpu23); Seed = 94; Starting new sample
+2016-11-08 10:46:13 id = 31 (cpu32); Seed = 46; Done (1)
+2016-11-08 10:46:13 id = 31 (cpu32); Seed = 95; Starting new sample
+2016-11-08 10:46:14 id = 34 (cpu35); Seed = 43; Done (0)
+2016-11-08 10:46:14 id = 34 (cpu35); Seed = 96; Starting new sample
+2016-11-08 10:46:17 id = 26 (cpu27); Seed = 51; Done (1)
+2016-11-08 10:46:17 id = 26 (cpu27); Seed = 97; Starting new sample
+2016-11-08 10:46:19 id = 1 (cpu2); Seed = 76; Done (0)
+2016-11-08 10:46:19 id = 1 (cpu2); Seed = 98; Starting new sample
+2016-11-08 10:46:23 id = 30 (cpu31); Seed = 47; Done (0)
+2016-11-08 10:46:23 id = 30 (cpu31); Seed = 99; Starting new sample
+2016-11-08 10:46:27 id = 12 (cpu13); Seed = 65; Done (1)
+2016-11-08 10:46:27 id = 12 (cpu13); Seed = 100; Starting new sample
+2016-11-08 10:46:27 id = 4 (cpu5); Seed = 73; Done (1)
+2016-11-08 10:46:27 id = 4 (cpu5); Seed = 101; Starting new sample
+2016-11-08 10:46:28 id = 18 (cpu19); Seed = 59; Done (1)
+2016-11-08 10:46:28 id = 18 (cpu19); Seed = 102; Starting new sample
+2016-11-08 10:46:31 id = 10 (cpu11); Seed = 67; Done (0)
+2016-11-08 10:46:31 id = 10 (cpu11); Seed = 103; Starting new sample
+2016-11-08 10:46:36 id = 29 (cpu30); Seed = 48; Done (1)
+2016-11-08 10:46:36 id = 29 (cpu30); Seed = 104; Starting new sample
+2016-11-08 10:47:05 id = 13 (cpu14); Seed = 64; Done (0)
+2016-11-08 10:47:05 id = 13 (cpu14); Seed = 105; Starting new sample
+2016-11-08 10:47:13 id = 17 (cpu18); Seed = 60; Done (0)
+2016-11-08 10:47:13 id = 17 (cpu18); Seed = 106; Starting new sample
+2016-11-08 10:47:16 id = 25 (cpu26); Seed = 52; Done (0)
+2016-11-08 10:47:16 id = 25 (cpu26); Seed = 107; Starting new sample
+2016-11-08 10:47:22 id = 20 (cpu21); Seed = 57; Done (1)
+2016-11-08 10:47:22 id = 20 (cpu21); Seed = 108; Starting new sample
+2016-11-08 10:47:25 id = 19 (cpu20); Seed = 58; Done (0)
+2016-11-08 10:47:25 id = 19 (cpu20); Seed = 109; Starting new sample
+2016-11-08 10:47:29 id = 3 (cpu4); Seed = 74; Done (0)
+2016-11-08 10:47:29 id = 3 (cpu4); Seed = 110; Starting new sample
+2016-11-08 10:48:00 id = 6 (cpu7); Seed = 71; Done (1)
+2016-11-08 10:48:00 id = 6 (cpu7); Seed = 111; Starting new sample
+2016-11-08 10:48:17 id = 16 (cpu17); Seed = 61; Done (0)
+2016-11-08 10:48:17 id = 16 (cpu17); Seed = 112; Starting new sample
+2016-11-08 10:48:48 id = 33 (cpu34); Seed = 44; Done (1)
+2016-11-08 10:48:48 id = 33 (cpu34); Seed = 113; Starting new sample
+2016-11-08 10:55:01 id = 7 (cpu8); Seed = 86; Done (1)
+2016-11-08 10:55:01 id = 7 (cpu8); Seed = 114; Starting new sample
+2016-11-08 10:55:58 id = 8 (cpu9); Seed = 89; Done (1)
+2016-11-08 10:55:58 id = 8 (cpu9); Seed = 115; Starting new sample
+2016-11-08 10:56:28 id = 9 (cpu10); Seed = 78; Done (1)
+2016-11-08 10:56:28 id = 9 (cpu10); Seed = 116; Starting new sample
+2016-11-08 10:57:33 id = 14 (cpu15); Seed = 80; Done (0)
+2016-11-08 10:57:33 id = 14 (cpu15); Seed = 117; Starting new sample
+2016-11-08 10:58:08 id = 27 (cpu28); Seed = 79; Done (1)
+2016-11-08 10:58:08 id = 27 (cpu28); Seed = 118; Starting new sample
+2016-11-08 10:58:25 id = 24 (cpu25); Seed = 90; Done (0)
+2016-11-08 10:58:25 id = 24 (cpu25); Seed = 119; Starting new sample
+2016-11-08 10:58:32 id = 10 (cpu11); Seed = 103; Done (0)
+2016-11-08 10:58:32 id = 10 (cpu11); Seed = 120; Starting new sample
+2016-11-08 10:58:34 id = 15 (cpu16); Seed = 93; Done (1)
+2016-11-08 10:58:34 id = 15 (cpu16); Seed = 121; Starting new sample
+2016-11-08 10:58:35 id = 2 (cpu3); Seed = 81; Done (0)
+2016-11-08 10:58:35 id = 2 (cpu3); Seed = 122; Starting new sample
+2016-11-08 10:58:44 id = 11 (cpu12); Seed = 82; Done (0)
+2016-11-08 10:58:44 id = 11 (cpu12); Seed = 123; Starting new sample
+2016-11-08 10:58:58 id = 0 (cpu1); Seed = 84; Done (1)
+2016-11-08 10:58:58 id = 0 (cpu1); Seed = 124; Starting new sample
+2016-11-08 10:59:10 id = 25 (cpu26); Seed = 107; Done (1)
+2016-11-08 10:59:10 id = 25 (cpu26); Seed = 125; Starting new sample
+2016-11-08 10:59:37 id = 23 (cpu24); Seed = 87; Done (1)
+2016-11-08 10:59:37 id = 23 (cpu24); Seed = 126; Starting new sample
+2016-11-08 10:59:42 id = 5 (cpu6); Seed = 91; Done (0)
+2016-11-08 10:59:42 id = 5 (cpu6); Seed = 127; Starting new sample
+2016-11-08 10:59:44 id = 33 (cpu34); Seed = 113; Done (0)
+2016-11-08 10:59:44 id = 33 (cpu34); Seed = 128; Starting new sample
+2016-11-08 10:59:51 id = 35 (cpu36); Seed = 83; Done (0)
+2016-11-08 10:59:51 id = 35 (cpu36); Seed = 129; Starting new sample
+2016-11-08 10:59:56 id = 1 (cpu2); Seed = 98; Done (0)
+2016-11-08 10:59:56 id = 1 (cpu2); Seed = 130; Starting new sample
+2016-11-08 11:00:01 id = 13 (cpu14); Seed = 105; Done (0)
+2016-11-08 11:00:01 id = 13 (cpu14); Seed = 131; Starting new sample
+2016-11-08 11:00:03 id = 4 (cpu5); Seed = 101; Done (1)
+2016-11-08 11:00:03 id = 4 (cpu5); Seed = 132; Starting new sample
+2016-11-08 11:00:13 id = 21 (cpu22); Seed = 92; Done (0)
+2016-11-08 11:00:13 id = 21 (cpu22); Seed = 133; Starting new sample
+2016-11-08 11:00:24 id = 26 (cpu27); Seed = 97; Done (1)
+2016-11-08 11:00:24 id = 26 (cpu27); Seed = 134; Starting new sample
+2016-11-08 11:00:30 id = 32 (cpu33); Seed = 88; Done (0)
+2016-11-08 11:00:30 id = 32 (cpu33); Seed = 135; Starting new sample
+2016-11-08 11:00:39 id = 28 (cpu29); Seed = 85; Done (0)
+2016-11-08 11:00:39 id = 28 (cpu29); Seed = 136; Starting new sample
+2016-11-08 11:00:46 id = 31 (cpu32); Seed = 95; Done (0)
+2016-11-08 11:00:46 id = 31 (cpu32); Seed = 137; Starting new sample
+2016-11-08 11:00:55 id = 30 (cpu31); Seed = 99; Done (0)
+2016-11-08 11:00:55 id = 30 (cpu31); Seed = 138; Starting new sample
+2016-11-08 11:01:00 id = 17 (cpu18); Seed = 106; Done (1)
+2016-11-08 11:01:00 id = 17 (cpu18); Seed = 139; Starting new sample
+2016-11-08 11:01:07 id = 34 (cpu35); Seed = 96; Done (0)
+2016-11-08 11:01:07 id = 34 (cpu35); Seed = 140; Starting new sample
+2016-11-08 11:01:13 id = 18 (cpu19); Seed = 102; Done (0)
+2016-11-08 11:01:13 id = 18 (cpu19); Seed = 141; Starting new sample
+2016-11-08 11:01:23 id = 19 (cpu20); Seed = 109; Done (1)
+2016-11-08 11:01:23 id = 19 (cpu20); Seed = 142; Starting new sample
+2016-11-08 11:01:26 id = 22 (cpu23); Seed = 94; Done (0)
+2016-11-08 11:01:26 id = 22 (cpu23); Seed = 143; Starting new sample
+2016-11-08 11:01:38 id = 20 (cpu21); Seed = 108; Done (0)
+2016-11-08 11:01:38 id = 20 (cpu21); Seed = 144; Starting new sample
+2016-11-08 11:01:43 id = 12 (cpu13); Seed = 100; Done (1)
+2016-11-08 11:01:43 id = 12 (cpu13); Seed = 145; Starting new sample
+2016-11-08 11:01:51 id = 29 (cpu30); Seed = 104; Done (1)
+2016-11-08 11:01:51 id = 29 (cpu30); Seed = 146; Starting new sample
+2016-11-08 11:02:08 id = 3 (cpu4); Seed = 110; Done (1)
+2016-11-08 11:02:08 id = 3 (cpu4); Seed = 147; Starting new sample
+2016-11-08 11:02:40 id = 16 (cpu17); Seed = 112; Done (1)
+2016-11-08 11:02:40 id = 16 (cpu17); Seed = 148; Starting new sample
+2016-11-08 11:02:46 id = 6 (cpu7); Seed = 111; Done (0)
+2016-11-08 11:02:46 id = 6 (cpu7); Seed = 149; Starting new sample
+2016-11-08 11:09:00 id = 7 (cpu8); Seed = 114; Done (1)
+2016-11-08 11:09:00 id = 7 (cpu8); Seed = 150; Starting new sample
+2016-11-08 11:09:54 id = 8 (cpu9); Seed = 115; Done (0)
+2016-11-08 11:09:54 id = 8 (cpu9); Seed = 151; Starting new sample
+2016-11-08 11:10:23 id = 9 (cpu10); Seed = 116; Done (0)
+2016-11-08 11:10:23 id = 9 (cpu10); Seed = 152; Starting new sample
+2016-11-08 11:10:37 id = 24 (cpu25); Seed = 119; Done (1)
+2016-11-08 11:10:37 id = 24 (cpu25); Seed = 153; Starting new sample
+2016-11-08 11:11:15 id = 15 (cpu16); Seed = 121; Done (1)
+2016-11-08 11:11:15 id = 15 (cpu16); Seed = 154; Starting new sample
+2016-11-08 11:11:15 id = 23 (cpu24); Seed = 126; Done (0)
+2016-11-08 11:11:15 id = 23 (cpu24); Seed = 155; Starting new sample
+2016-11-08 11:11:35 id = 10 (cpu11); Seed = 120; Done (1)
+2016-11-08 11:11:35 id = 10 (cpu11); Seed = 156; Starting new sample
+2016-11-08 11:12:19 id = 25 (cpu26); Seed = 125; Done (1)
+2016-11-08 11:12:19 id = 25 (cpu26); Seed = 157; Starting new sample
+2016-11-08 11:12:23 id = 27 (cpu28); Seed = 118; Done (0)
+2016-11-08 11:12:23 id = 27 (cpu28); Seed = 158; Starting new sample
+2016-11-08 11:12:34 id = 14 (cpu15); Seed = 117; Done (0)
+2016-11-08 11:12:34 id = 14 (cpu15); Seed = 159; Starting new sample
+2016-11-08 11:12:38 id = 0 (cpu1); Seed = 124; Done (0)
+2016-11-08 11:12:38 id = 0 (cpu1); Seed = 160; Starting new sample
+2016-11-08 11:12:46 id = 2 (cpu3); Seed = 122; Done (0)
+2016-11-08 11:12:46 id = 2 (cpu3); Seed = 161; Starting new sample
+2016-11-08 11:12:47 id = 17 (cpu18); Seed = 139; Done (0)
+2016-11-08 11:12:47 id = 17 (cpu18); Seed = 162; Starting new sample
+2016-11-08 11:12:49 id = 16 (cpu17); Seed = 148; Done (0)
+2016-11-08 11:12:49 id = 16 (cpu17); Seed = 163; Starting new sample
+2016-11-08 11:13:06 id = 20 (cpu21); Seed = 144; Done (0)
+2016-11-08 11:13:06 id = 20 (cpu21); Seed = 164; Starting new sample
+2016-11-08 11:13:14 id = 21 (cpu22); Seed = 133; Done (1)
+2016-11-08 11:13:14 id = 21 (cpu22); Seed = 165; Starting new sample
+2016-11-08 11:13:18 id = 31 (cpu32); Seed = 137; Done (0)
+2016-11-08 11:13:18 id = 31 (cpu32); Seed = 166; Starting new sample
+2016-11-08 11:13:40 id = 33 (cpu34); Seed = 128; Done (0)
+2016-11-08 11:13:40 id = 33 (cpu34); Seed = 167; Starting new sample
+2016-11-08 11:14:04 id = 22 (cpu23); Seed = 143; Done (0)
+2016-11-08 11:14:04 id = 22 (cpu23); Seed = 168; Starting new sample
+2016-11-08 11:14:12 id = 11 (cpu12); Seed = 123; Done (1)
+2016-11-08 11:14:12 id = 11 (cpu12); Seed = 169; Starting new sample
+2016-11-08 11:14:17 id = 13 (cpu14); Seed = 131; Done (1)
+2016-11-08 11:14:17 id = 13 (cpu14); Seed = 170; Starting new sample
+2016-11-08 11:14:30 id = 30 (cpu31); Seed = 138; Done (1)
+2016-11-08 11:14:30 id = 30 (cpu31); Seed = 171; Starting new sample
+2016-11-08 11:14:37 id = 28 (cpu29); Seed = 136; Done (0)
+2016-11-08 11:14:37 id = 28 (cpu29); Seed = 172; Starting new sample
+2016-11-08 11:15:03 id = 35 (cpu36); Seed = 129; Done (1)
+2016-11-08 11:15:03 id = 35 (cpu36); Seed = 173; Starting new sample
+2016-11-08 11:15:05 id = 4 (cpu5); Seed = 132; Done (1)
+2016-11-08 11:15:05 id = 4 (cpu5); Seed = 174; Starting new sample
+2016-11-08 11:15:33 id = 5 (cpu6); Seed = 127; Done (0)
+2016-11-08 11:15:33 id = 5 (cpu6); Seed = 175; Starting new sample
+2016-11-08 11:15:41 id = 29 (cpu30); Seed = 146; Done (0)
+2016-11-08 11:15:41 id = 29 (cpu30); Seed = 176; Starting new sample
+2016-11-08 11:15:51 id = 26 (cpu27); Seed = 134; Done (0)
+2016-11-08 11:15:51 id = 26 (cpu27); Seed = 177; Starting new sample
+2016-11-08 11:15:53 id = 12 (cpu13); Seed = 145; Done (1)
+2016-11-08 11:15:53 id = 12 (cpu13); Seed = 178; Starting new sample
+2016-11-08 11:15:55 id = 1 (cpu2); Seed = 130; Done (1)
+2016-11-08 11:15:55 id = 1 (cpu2); Seed = 179; Starting new sample
+2016-11-08 11:16:01 id = 32 (cpu33); Seed = 135; Done (1)
+2016-11-08 11:16:01 id = 32 (cpu33); Seed = 180; Starting new sample
+2016-11-08 11:16:27 id = 19 (cpu20); Seed = 142; Done (0)
+2016-11-08 11:16:27 id = 19 (cpu20); Seed = 181; Starting new sample
+2016-11-08 11:16:41 id = 18 (cpu19); Seed = 141; Done (1)
+2016-11-08 11:16:41 id = 18 (cpu19); Seed = 182; Starting new sample
+2016-11-08 11:16:51 id = 34 (cpu35); Seed = 140; Done (1)
+2016-11-08 11:16:51 id = 34 (cpu35); Seed = 183; Starting new sample
+2016-11-08 11:18:02 id = 6 (cpu7); Seed = 149; Done (0)
+2016-11-08 11:18:02 id = 6 (cpu7); Seed = 184; Starting new sample
+2016-11-08 11:18:52 id = 3 (cpu4); Seed = 147; Done (0)
+2016-11-08 11:18:52 id = 3 (cpu4); Seed = 185; Starting new sample
+2016-11-08 11:20:09 id = 9 (cpu10); Seed = 152; Done (1)
+2016-11-08 11:20:09 id = 9 (cpu10); Seed = 186; Starting new sample
+2016-11-08 11:22:50 id = 7 (cpu8); Seed = 150; Done (1)
+2016-11-08 11:22:50 id = 7 (cpu8); Seed = 187; Starting new sample
+2016-11-08 11:23:42 id = 8 (cpu9); Seed = 151; Done (1)
+2016-11-08 11:23:42 id = 8 (cpu9); Seed = 188; Starting new sample
+2016-11-08 11:23:50 id = 10 (cpu11); Seed = 156; Done (0)
+2016-11-08 11:23:50 id = 10 (cpu11); Seed = 189; Starting new sample
+2016-11-08 11:24:33 id = 21 (cpu22); Seed = 165; Done (0)
+2016-11-08 11:24:33 id = 21 (cpu22); Seed = 190; Starting new sample
+2016-11-08 11:24:51 id = 24 (cpu25); Seed = 153; Done (1)
+2016-11-08 11:24:51 id = 24 (cpu25); Seed = 191; Starting new sample
+2016-11-08 11:25:37 id = 14 (cpu15); Seed = 159; Done (1)
+2016-11-08 11:25:37 id = 14 (cpu15); Seed = 192; Starting new sample
+2016-11-08 11:26:34 id = 15 (cpu16); Seed = 154; Done (1)
+2016-11-08 11:26:34 id = 15 (cpu16); Seed = 193; Starting new sample
+2016-11-08 11:26:40 id = 23 (cpu24); Seed = 155; Done (0)
+2016-11-08 11:26:40 id = 23 (cpu24); Seed = 194; Starting new sample
+2016-11-08 11:26:40 id = 0 (cpu1); Seed = 160; Done (0)
+2016-11-08 11:26:40 id = 0 (cpu1); Seed = 195; Starting new sample
+2016-11-08 11:26:48 id = 25 (cpu26); Seed = 157; Done (0)
+2016-11-08 11:26:48 id = 25 (cpu26); Seed = 196; Starting new sample
+2016-11-08 11:27:08 id = 16 (cpu17); Seed = 163; Done (1)
+2016-11-08 11:27:08 id = 16 (cpu17); Seed = 197; Starting new sample
+2016-11-08 11:27:24 id = 27 (cpu28); Seed = 158; Done (1)
+2016-11-08 11:27:24 id = 27 (cpu28); Seed = 198; Starting new sample
+2016-11-08 11:27:25 id = 30 (cpu31); Seed = 171; Done (1)
+2016-11-08 11:27:25 id = 30 (cpu31); Seed = 199; Starting new sample
+2016-11-08 11:27:26 id = 17 (cpu18); Seed = 162; Done (0)
+2016-11-08 11:27:26 id = 17 (cpu18); Seed = 200; Starting new sample
+2016-11-08 11:27:43 id = 11 (cpu12); Seed = 169; Done (0)
+2016-11-08 11:27:43 id = 11 (cpu12); Seed = 201; Starting new sample
+2016-11-08 11:27:45 id = 19 (cpu20); Seed = 181; Done (0)
+2016-11-08 11:27:45 id = 19 (cpu20); Seed = 202; Starting new sample
+2016-11-08 11:27:54 id = 2 (cpu3); Seed = 161; Done (0)
+2016-11-08 11:27:54 id = 2 (cpu3); Seed = 203; Starting new sample
+2016-11-08 11:28:17 id = 33 (cpu34); Seed = 167; Done (1)
+2016-11-08 11:28:17 id = 33 (cpu34); Seed = 204; Starting new sample
+2016-11-08 11:28:18 id = 31 (cpu32); Seed = 166; Done (0)
+2016-11-08 11:28:18 id = 31 (cpu32); Seed = 205; Starting new sample
+2016-11-08 11:28:43 id = 26 (cpu27); Seed = 177; Done (1)
+2016-11-08 11:28:43 id = 26 (cpu27); Seed = 206; Starting new sample
+2016-11-08 11:28:43 id = 4 (cpu5); Seed = 174; Done (1)
+2016-11-08 11:28:43 id = 4 (cpu5); Seed = 207; Starting new sample
+2016-11-08 11:28:53 id = 28 (cpu29); Seed = 172; Done (1)
+2016-11-08 11:28:53 id = 28 (cpu29); Seed = 208; Starting new sample
+2016-11-08 11:28:55 id = 20 (cpu21); Seed = 164; Done (0)
+2016-11-08 11:28:55 id = 20 (cpu21); Seed = 209; Starting new sample
+2016-11-08 11:28:57 id = 22 (cpu23); Seed = 168; Done (1)
+2016-11-08 11:28:57 id = 22 (cpu23); Seed = 210; Starting new sample
+2016-11-08 11:29:23 id = 13 (cpu14); Seed = 170; Done (1)
+2016-11-08 11:29:23 id = 13 (cpu14); Seed = 211; Starting new sample
+2016-11-08 11:29:32 id = 35 (cpu36); Seed = 173; Done (0)
+2016-11-08 11:29:32 id = 35 (cpu36); Seed = 212; Starting new sample
+2016-11-08 11:30:02 id = 18 (cpu19); Seed = 182; Done (1)
+2016-11-08 11:30:02 id = 18 (cpu19); Seed = 213; Starting new sample
+2016-11-08 11:30:02 id = 34 (cpu35); Seed = 183; Done (1)
+2016-11-08 11:30:02 id = 34 (cpu35); Seed = 214; Starting new sample
+2016-11-08 11:30:06 id = 32 (cpu33); Seed = 180; Done (1)
+2016-11-08 11:30:06 id = 32 (cpu33); Seed = 215; Starting new sample
+2016-11-08 11:30:19 id = 5 (cpu6); Seed = 175; Done (1)
+2016-11-08 11:30:19 id = 5 (cpu6); Seed = 216; Starting new sample
+2016-11-08 11:30:43 id = 1 (cpu2); Seed = 179; Done (1)
+2016-11-08 11:30:43 id = 1 (cpu2); Seed = 217; Starting new sample
+2016-11-08 11:30:46 id = 29 (cpu30); Seed = 176; Done (0)
+2016-11-08 11:30:46 id = 29 (cpu30); Seed = 218; Starting new sample
+2016-11-08 11:31:15 id = 12 (cpu13); Seed = 178; Done (0)
+2016-11-08 11:31:15 id = 12 (cpu13); Seed = 219; Starting new sample
+2016-11-08 11:32:47 id = 6 (cpu7); Seed = 184; Done (1)
+2016-11-08 11:32:47 id = 6 (cpu7); Seed = 220; Starting new sample
+2016-11-08 11:33:22 id = 3 (cpu4); Seed = 185; Done (1)
+2016-11-08 11:33:22 id = 3 (cpu4); Seed = 221; Starting new sample
+2016-11-08 11:33:57 id = 9 (cpu10); Seed = 186; Done (1)
+2016-11-08 11:33:57 id = 9 (cpu10); Seed = 222; Starting new sample
+2016-11-08 11:37:13 id = 8 (cpu9); Seed = 188; Done (0)
+2016-11-08 11:37:13 id = 8 (cpu9); Seed = 223; Starting new sample
+2016-11-08 11:37:15 id = 24 (cpu25); Seed = 191; Done (1)
+2016-11-08 11:37:15 id = 24 (cpu25); Seed = 224; Starting new sample
+2016-11-08 11:37:33 id = 7 (cpu8); Seed = 187; Done (0)
+2016-11-08 11:37:33 id = 7 (cpu8); Seed = 225; Starting new sample
+2016-11-08 11:38:44 id = 10 (cpu11); Seed = 189; Done (0)
+2016-11-08 11:38:44 id = 10 (cpu11); Seed = 226; Starting new sample
+2016-11-08 11:39:04 id = 21 (cpu22); Seed = 190; Done (0)
+2016-11-08 11:39:04 id = 21 (cpu22); Seed = 227; Starting new sample
+2016-11-08 11:39:09 id = 0 (cpu1); Seed = 195; Done (1)
+2016-11-08 11:39:09 id = 0 (cpu1); Seed = 228; Starting new sample
+2016-11-08 11:39:25 id = 23 (cpu24); Seed = 194; Done (1)
+2016-11-08 11:39:25 id = 23 (cpu24); Seed = 229; Starting new sample
+2016-11-08 11:39:45 id = 25 (cpu26); Seed = 196; Done (1)
+2016-11-08 11:39:45 id = 25 (cpu26); Seed = 230; Starting new sample
+2016-11-08 11:40:43 id = 27 (cpu28); Seed = 198; Done (0)
+2016-11-08 11:40:43 id = 27 (cpu28); Seed = 231; Starting new sample
+2016-11-08 11:40:47 id = 14 (cpu15); Seed = 192; Done (1)
+2016-11-08 11:40:47 id = 14 (cpu15); Seed = 232; Starting new sample
+2016-11-08 11:41:16 id = 17 (cpu18); Seed = 200; Done (0)
+2016-11-08 11:41:16 id = 17 (cpu18); Seed = 233; Starting new sample
+2016-11-08 11:41:42 id = 2 (cpu3); Seed = 203; Done (1)
+2016-11-08 11:41:42 id = 2 (cpu3); Seed = 234; Starting new sample
+2016-11-08 11:42:05 id = 15 (cpu16); Seed = 193; Done (0)
+2016-11-08 11:42:05 id = 15 (cpu16); Seed = 235; Starting new sample
+2016-11-08 11:42:07 id = 11 (cpu12); Seed = 201; Done (0)
+2016-11-08 11:42:07 id = 11 (cpu12); Seed = 236; Starting new sample
+2016-11-08 11:42:26 id = 22 (cpu23); Seed = 210; Done (1)
+2016-11-08 11:42:26 id = 22 (cpu23); Seed = 237; Starting new sample
+2016-11-08 11:42:28 id = 33 (cpu34); Seed = 204; Done (0)
+2016-11-08 11:42:28 id = 33 (cpu34); Seed = 238; Starting new sample
+2016-11-08 11:42:40 id = 19 (cpu20); Seed = 202; Done (0)
+2016-11-08 11:42:40 id = 19 (cpu20); Seed = 239; Starting new sample
+2016-11-08 11:42:46 id = 16 (cpu17); Seed = 197; Done (1)
+2016-11-08 11:42:46 id = 16 (cpu17); Seed = 240; Starting new sample
+2016-11-08 11:42:47 id = 20 (cpu21); Seed = 209; Done (0)
+2016-11-08 11:42:47 id = 20 (cpu21); Seed = 241; Starting new sample
+2016-11-08 11:43:02 id = 26 (cpu27); Seed = 206; Done (0)
+2016-11-08 11:43:02 id = 26 (cpu27); Seed = 242; Starting new sample
+2016-11-08 11:43:13 id = 30 (cpu31); Seed = 199; Done (0)
+2016-11-08 11:43:13 id = 30 (cpu31); Seed = 243; Starting new sample
+2016-11-08 11:43:37 id = 18 (cpu19); Seed = 213; Done (0)
+2016-11-08 11:43:37 id = 18 (cpu19); Seed = 244; Starting new sample
+2016-11-08 11:43:42 id = 31 (cpu32); Seed = 205; Done (1)
+2016-11-08 11:43:42 id = 31 (cpu32); Seed = 245; Starting new sample
+2016-11-08 11:43:44 id = 28 (cpu29); Seed = 208; Done (0)
+2016-11-08 11:43:44 id = 28 (cpu29); Seed = 246; Starting new sample
+2016-11-08 11:44:02 id = 35 (cpu36); Seed = 212; Done (0)
+2016-11-08 11:44:02 id = 35 (cpu36); Seed = 247; Starting new sample
+2016-11-08 11:44:07 id = 32 (cpu33); Seed = 215; Done (0)
+2016-11-08 11:44:07 id = 32 (cpu33); Seed = 248; Starting new sample
+2016-11-08 11:44:10 id = 5 (cpu6); Seed = 216; Done (1)
+2016-11-08 11:44:10 id = 5 (cpu6); Seed = 249; Starting new sample
+2016-11-08 11:44:13 id = 4 (cpu5); Seed = 207; Done (0)
+2016-11-08 11:44:13 id = 4 (cpu5); Seed = 250; Starting new sample
+2016-11-08 11:45:25 ===== Starting: clopgtp =====
+2016-11-08 11:45:25 Found existing clopgtp.dat
+2016-11-08 11:45:25 Removing clopgtp-old.dat
+2016-11-08 11:45:25 Renaming clopgtp.dat to clopgtp-old.dat
+2016-11-08 11:45:25 Reading clopgtp-old.dat...
+2016-11-08 11:45:25 Backup done.
+2016-11-08 11:45:25 Samples = 251; Results = 215; Mismatches = 0.
+2016-11-08 11:45:25 Run
+2016-11-08 11:45:25 id = 35 (cpu36); Seed = 211; Starting from setInProgress
+2016-11-08 11:45:25 id = 34 (cpu35); Seed = 214; Starting from setInProgress
+2016-11-08 11:45:25 id = 33 (cpu34); Seed = 217; Starting from setInProgress
+2016-11-08 11:45:25 id = 32 (cpu33); Seed = 218; Starting from setInProgress
+2016-11-08 11:45:25 id = 31 (cpu32); Seed = 219; Starting from setInProgress
+2016-11-08 11:45:25 id = 30 (cpu31); Seed = 220; Starting from setInProgress
+2016-11-08 11:45:25 id = 29 (cpu30); Seed = 221; Starting from setInProgress
+2016-11-08 11:45:25 id = 28 (cpu29); Seed = 222; Starting from setInProgress
+2016-11-08 11:45:25 id = 27 (cpu28); Seed = 223; Starting from setInProgress
+2016-11-08 11:45:25 id = 26 (cpu27); Seed = 224; Starting from setInProgress
+2016-11-08 11:45:25 id = 25 (cpu26); Seed = 225; Starting from setInProgress
+2016-11-08 11:45:25 id = 24 (cpu25); Seed = 226; Starting from setInProgress
+2016-11-08 11:45:25 id = 23 (cpu24); Seed = 227; Starting from setInProgress
+2016-11-08 11:45:25 id = 22 (cpu23); Seed = 228; Starting from setInProgress
+2016-11-08 11:45:25 id = 21 (cpu22); Seed = 229; Starting from setInProgress
+2016-11-08 11:45:25 id = 20 (cpu21); Seed = 230; Starting from setInProgress
+2016-11-08 11:45:25 id = 19 (cpu20); Seed = 231; Starting from setInProgress
+2016-11-08 11:45:25 id = 18 (cpu19); Seed = 232; Starting from setInProgress
+2016-11-08 11:45:25 id = 17 (cpu18); Seed = 233; Starting from setInProgress
+2016-11-08 11:45:25 id = 16 (cpu17); Seed = 234; Starting from setInProgress
+2016-11-08 11:45:25 id = 15 (cpu16); Seed = 235; Starting from setInProgress
+2016-11-08 11:45:25 id = 14 (cpu15); Seed = 236; Starting from setInProgress
+2016-11-08 11:45:25 id = 13 (cpu14); Seed = 237; Starting from setInProgress
+2016-11-08 11:45:25 id = 12 (cpu13); Seed = 238; Starting from setInProgress
+2016-11-08 11:45:25 id = 11 (cpu12); Seed = 239; Starting from setInProgress
+2016-11-08 11:45:25 id = 10 (cpu11); Seed = 240; Starting from setInProgress
+2016-11-08 11:45:25 id = 9 (cpu10); Seed = 241; Starting from setInProgress
+2016-11-08 11:45:25 id = 8 (cpu9); Seed = 242; Starting from setInProgress
+2016-11-08 11:45:25 id = 7 (cpu8); Seed = 243; Starting from setInProgress
+2016-11-08 11:45:25 id = 6 (cpu7); Seed = 244; Starting from setInProgress
+2016-11-08 11:45:25 id = 5 (cpu6); Seed = 245; Starting from setInProgress
+2016-11-08 11:45:25 id = 4 (cpu5); Seed = 246; Starting from setInProgress
+2016-11-08 11:45:25 id = 3 (cpu4); Seed = 247; Starting from setInProgress
+2016-11-08 11:45:25 id = 2 (cpu3); Seed = 248; Starting from setInProgress
+2016-11-08 11:45:25 id = 1 (cpu2); Seed = 249; Starting from setInProgress
+2016-11-08 11:45:25 id = 0 (cpu1); Seed = 250; Starting from setInProgress
+2016-11-08 12:46:00 ===== Starting: clopgtp =====
+2016-11-08 12:46:00 Found existing clopgtp.dat
+2016-11-08 12:46:00 Removing clopgtp-old.dat
+2016-11-08 12:46:00 Renaming clopgtp.dat to clopgtp-old.dat
+2016-11-08 12:46:00 Reading clopgtp-old.dat...
+2016-11-08 12:46:00 Backup done.
+2016-11-08 12:46:00 Samples = 251; Results = 215; Mismatches = 0.

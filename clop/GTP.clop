@@ -10,15 +10,10 @@ Script ./clopgtp
 #  IntegerGammaParameter
 # For GammaParameter, quadratic regression is performed on log(x)
 # Warning: 123 and not 123.0 should be used for IntegerParameter
-GammaParameter        crit_mine_1            0.1      100
-GammaParameter        crit_mine_2            0.1      100
-GammaParameter        crit_his_1             0.1      100
-GammaParameter        crit_his_2             0.1      100
-GammaParameter        bound                  0.01     20
-GammaParameter        tactical               0.1      200
-GammaParameter        regular_self_atari     0.0001   100
-GammaParameter        useless_self_atari     0.0001   100
-GammaParameter        pass_score             0.000001 1
+GammaParameter        puct       0.1   100
+GammaParameter        puct_pow   0.1   5
+GammaParameter        perbias    0.001 1.0
+GammaParameter        fpu        0.1   10
 
 Processor cpu1
 Processor cpu2
