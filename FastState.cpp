@@ -226,9 +226,7 @@ int FastState::play_random_move(int color) {
             return play_move_fast(FastBoard::PASS);
         }
 
-        if (loops <= 1) {
-            vtx = board.replace_if_nakade(color, vtx);
-        }
+        vtx = board.replace_if_nakade(color, vtx);
 
         int pattern = board.get_pattern_fast_augment(vtx);
         int score = matcher->matches(color, pattern);
