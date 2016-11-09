@@ -71,7 +71,8 @@ public:
     void save_critical_neighbours(int color, int vertex, movelist_t & moves);
     void add_pattern_moves(int color, int vertex, movelist_t & moves);
     void add_global_captures(int color, movelist_t & moves);
-    void add_nakade_moves(int color, int vertex, movelist_t & moves);
+    void add_near_nakade_moves(int color, int vertex, movelist_t & moves);
+    int replace_if_nakade(int color, int vertex);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);

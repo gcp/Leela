@@ -2161,7 +2161,7 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
 }
 
 // add nakade moves for color
-void FastBoard::add_nakade_moves(int color, int vertex, movelist_t & moves) {
+void FastBoard::add_near_nakade_moves(int color, int vertex, movelist_t & moves) {
     // empty square directly next to last stone?
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
@@ -2169,6 +2169,16 @@ void FastBoard::add_nakade_moves(int color, int vertex, movelist_t & moves) {
             // nakade shape is made by color not to move
             check_nakade(!color, ai, moves);
         }
+    }
+}
+
+int FastBoard::replace_if_nakade(int color, int vertex) {
+    movelist_t tmp_moves;
+    check_nakade(!color, vertex, tmp_moves);
+    if (tmp_moves.empty()) {
+        return vertex;
+    } else {
+        return tmp_moves[0];
     }
 }
 
