@@ -357,8 +357,8 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             }
             childcount++;
         }
-        numerator = std::pow((float)parentvisits, cfg_puct_pow);
-        cutoff_ratio = std::max(2.0f, std::log((float)parentvisits));
+        numerator = std::log((float)parentvisits);
+        cutoff_ratio = cfg_cutoff_offset + cfg_cutoff_ratio * std::log((float)parentvisits);
     }
 
     childcount = 0;
@@ -381,22 +381,27 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 break;
             }
 
-            float c_puct = cfg_puct;
-            float c_perbias = cfg_perbias;
-
             if (!child->first_visit()) {
                 // "UCT" part
                 float winrate = child->get_winrate(color);
                 float psa = child->get_score();
-                float denom = 1.0f + child->get_visits();
+                float denom = child->get_visits();
 
-                value = winrate + c_puct * psa * (numerator / denom) + c_perbias * psa;
+                float cts = std::sqrt(cfg_puct * (numerator / denom));
+                float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
+
+                 value = winrate + cts - mti;
             } else {
                 float winrate = cfg_fpu;
                 float psa = child->get_score();
-                float denom = 1.0f;
+                float mti;
+                if (parentvisits > 1) {
+                    mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
+                } else {
+                    mti = (cfg_psa / psa);
+                }
 
-                value = winrate + c_puct * psa * (numerator / denom) + c_perbias * psa;
+                value = winrate - mti;
             }
         } else {
             float uctvalue;

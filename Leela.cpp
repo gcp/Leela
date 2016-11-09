@@ -63,8 +63,9 @@ int main (int argc, char *argv[]) {
         ("pass_score", po::value<float>())
         ("fpu", po::value<float>())
         ("puct", po::value<float>())
-        ("puct_pow", po::value<float>())
-        ("perbias", po::value<float>())
+        ("psa", po::value<float>())
+        ("cutoff_offset", po::value<float>())
+        ("cutoff_ratio", po::value<float>())
 #endif
         ;
     po::variables_map vm;
@@ -116,11 +117,14 @@ int main (int argc, char *argv[]) {
     if (vm.count("puct")) {
         cfg_puct = vm["puct"].as<float>();
     }
-    if (vm.count("puct_pow")) {
-        cfg_puct_pow = vm["puct_pow"].as<float>();
+    if (vm.count("psa")) {
+        cfg_psa = vm["psa"].as<float>();
     }
-    if (vm.count("perbias")) {
-        cfg_perbias = vm["perbias"].as<float>();
+    if (vm.count("cutoff_offset")) {
+        cfg_cutoff_offset = vm["cutoff_offset"].as<float>();
+    }
+    if (vm.count("cutoff_ratio")) {
+        cfg_cutoff_ratio = vm["cutoff_ratio"].as<float>();
     }
 #endif
 

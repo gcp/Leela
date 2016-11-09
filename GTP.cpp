@@ -43,9 +43,10 @@ float cfg_tactical;
 float cfg_bound;
 float cfg_pass_score;
 float cfg_fpu;
-float cfg_perbias;
+float cfg_cutoff_offset;
+float cfg_cutoff_ratio;
 float cfg_puct;
-float cfg_puct_pow;
+float cfg_psa;
 
 void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
@@ -66,9 +67,10 @@ void GTP::setup_default_parameters() {
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 1.0f;
-    cfg_perbias = 0.02f;
-    cfg_puct = 2.0f;
-    cfg_puct_pow = 0.5f;
+    cfg_puct = 1.5f;
+    cfg_psa = 2.0f;
+    cfg_cutoff_offset = 2.0f;
+    cfg_cutoff_ratio = 1.0f;
 }
 
 const std::string GTP::s_commands[] = {
