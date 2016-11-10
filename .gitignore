@@ -12,4 +12,7 @@ leela_train_label
 *.caffemodel
 *.solverstate
 tools/*.sgf
+clop/clopgtp
+clop/Makefile
+clop/*.user
 snapshot_*

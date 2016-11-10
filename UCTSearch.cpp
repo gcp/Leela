@@ -7,6 +7,9 @@
 #include <utility>
 #include <thread>
 #include <algorithm>
+#ifdef _WIN32
+#include <boost/thread/detail/tss_hooks.hpp>
+#endif
 
 #include "FastBoard.h"
 #include "UCTSearch.h"
@@ -591,6 +594,9 @@ void UCTWorker::operator()() {
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
+#ifdef _WIN32
+    boost::on_thread_exit();
+#endif
 }
 
 float UCTSearch::get_score() {
@@ -700,7 +706,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
     for (auto& thread : tg) {
-        thread.join();
+        if (thread.joinable()) {
+            thread.join();
+        }
     }
     if (!m_root.has_children()) {
         return FastBoard::PASS;
@@ -795,7 +803,9 @@ void UCTSearch::ponder() {
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
     for (auto& thread : tg) {
-        thread.join();
+        if (thread.joinable()) {
+            thread.join();
+        }
     }
     // display search info
     myprintf("\n");

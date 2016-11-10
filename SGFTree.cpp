@@ -365,6 +365,7 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
     moves.append("\n");
 
     int counter = 0;
+
     while (state->forward_move()) {
         int move = state->get_last_move();
         if (move == FastBoard::RESIGN) {

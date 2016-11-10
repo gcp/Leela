@@ -1,7 +1,8 @@
 #include <assert.h>
-#include <math.h>
 #include <vector>
 #include <algorithm>
+#include <iostream>
+#include <cmath>
 
 #include "FastBoard.h"
 #include "FastState.h"
@@ -13,6 +14,7 @@
 #include "AttribScores.h"
 #include "MCOTable.h"
 #include "Genetic.h"
+#include "GTP.h"
 
 using namespace Utils;
 
@@ -74,54 +76,55 @@ std::vector<int> FastState::generate_moves(int color) {
     return result;
 }
 
-bool FastState::try_move(int color, int vertex, bool allow_sa) {    
+bool FastState::try_move(int color, int vertex, bool allow_sa) {
     if (vertex != m_komove && board.no_eye_fill(vertex)) {
         if (!board.fast_ss_suicide(color, vertex)) {
             if ((allow_sa) || (!board.self_atari(color, vertex))) {
                 return true;
             }
-        } 
-    }                       
-    
+        }
+    }
+
     return false;
 }
 
-int FastState::walk_empty_list(int color, int vidx, bool allow_sa) {
-    int dir = Random::get_Rng()->randint(2);    
+int FastState::walk_empty_list(int color, bool allow_sa) {
+    int dir = Random::get_Rng()->randint(2);
+    int vidx = Random::get_Rng()->randint(board.m_empty_cnt);
 
-    if (dir == 0) {        
+    if (dir == 0) {
         for (int i = vidx; i < board.m_empty_cnt; i++) {
             int e = board.m_empty[i];
-            
+
             if (try_move(color, e, allow_sa)) {
                 return e;
-            }                        
+            }
         }
         for (int i = 0; i < vidx; i++) {
             int e = board.m_empty[i];
-            
+
             if (try_move(color, e, allow_sa)) {
                 return e;
-            }    
+            }
         }
-    } else {        
+    } else {
         for (int i = vidx; i >= 0; i--) {
             int e = board.m_empty[i];
-            
+
             if (try_move(color, e, allow_sa)) {
                 return e;
-            }    
+            }
         }
         for (int i = board.m_empty_cnt - 1; i > vidx; i--) {
             int e = board.m_empty[i];
-            
+
             if (try_move(color, e, allow_sa)) {
                 return e;
-            }    
+            }
         }
     }
-                               
-    return FastBoard::PASS;        
+
+    return FastBoard::PASS;
 }
 
 int FastState::select_weighted(FastBoard::scoredmoves_t & scoredmoves,
@@ -168,23 +171,37 @@ int FastState::play_random_move(int color) {
     }
 
     if (moves.size()) {
-        int cumul = 0;
-
+        float cumul = 0.0f;
         for (int sq : moves) {
+            assert(sq != m_komove);
             int pattern = board.get_pattern_fast_augment(sq);
-            int score = matcher->matches(color, pattern);
+            float score = matcher->matches(color, pattern);
             std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
 
-            static const std::array<int, 9> crit_mine = {
-                1, 4, 1, 1, 1, 1, 1, 1, 1
-            };
+            //static const std::array<int, 9> crit_mine = {
+            //    1, 4, 1, 1, 1, 1, 1, 1, 1
+            //};
 
-            static const std::array<int, 9> crit_enemy = {
-                1, 14, 12, 1, 1, 1, 1, 1, 1
-            };
+            //static const std::array<int, 9> crit_enemy = {
+            //    1, 14, 12, 1, 1, 1, 1, 1, 1
+            //};
 
-            score *= crit_mine[nbr_crit.first];
-            score *= crit_enemy[nbr_crit.second];
+            // score *= crit_mine[nbr_crit.first];
+            // score *= crit_enemy[nbr_crit.second];
+
+            assert(nbr_crit.first != 0);
+            assert(nbr_crit.second != 0);
+
+            if (nbr_crit.first == 1) {
+                score *= cfg_crit_mine_1;
+            } else  if (nbr_crit.first == 2) {
+                score *= cfg_crit_mine_2;
+            }
+            if (nbr_crit.second == 1) {
+                score *= cfg_crit_his_1;
+            } else if (nbr_crit.second == 2) {
+                score *= cfg_crit_his_2;
+            }
 
             bool nearby = false;
             for (int i = 0; i < 8; i++) {
@@ -196,31 +213,31 @@ int FastState::play_random_move(int color) {
             }
 
             if (!nearby) {
-                score *= 20;
+                score *= cfg_tactical;
             }
 
-            if (score >= 256) {
+            if (score >= cfg_bound) {
                 cumul += score;
                 scoredmoves.push_back(std::make_pair(sq, cumul));
             }
         }
 
-        int index = rng->randint32(cumul);
+        float index = rng->randflt() * cumul;
 
         for (size_t i = 0; i < scoredmoves.size(); i++) {
-            int point = scoredmoves[i].second;
+            float point = scoredmoves[i].second;
             if (index < point) {
                 return play_move_fast(scoredmoves[i].first);
             }
         }
     }
 
+
     int loops = board.m_empty_cnt / 64;
-    int cumul = 0;
+    float cumul = 0.0f;
 
     do {
-        int vidx = rng->randint(board.m_empty_cnt);
-        int vtx = walk_empty_list(board.m_tomove, vidx, true);
+        int vtx = walk_empty_list(board.m_tomove, true);
 
         if (vtx == FastBoard::PASS) {
             return play_move_fast(FastBoard::PASS);
@@ -229,7 +246,7 @@ int FastState::play_random_move(int color) {
         vtx = board.replace_if_nakade(color, vtx);
 
         int pattern = board.get_pattern_fast_augment(vtx);
-        int score = matcher->matches(color, pattern);
+        float score = matcher->matches(color, pattern);
 
         if (board.self_atari(color, vtx)) {
             // Self-atari with a group of 6 stones always leaves behind
@@ -237,23 +254,31 @@ int FastState::play_random_move(int color) {
             if (board.enemy_atari_size(!color, vtx) >= 6) {
                 continue;
             }
-            score /= 64;
+            int enemy_dying = board.enemy_atari_size(color, vtx);
+            if (enemy_dying) {
+                score *= cfg_regular_self_atari;
+            } else {
+                score *= cfg_useless_self_atari;
+            }
         }
 
-        cumul += std::max<int>(1, score);
+        cumul += score;
         scoredmoves.push_back(std::make_pair(vtx, cumul));
-
     } while (--loops > 0);
 
-    int index = rng->randint32(cumul);
+    cumul += cfg_pass_score;
+    scoredmoves.push_back(std::make_pair(FastBoard::PASS, cumul));
+
+    float index = rng->randflt() * cumul;
 
     for (size_t i = 0; i < scoredmoves.size(); i++) {
-        int point = scoredmoves[i].second;
+        float point = scoredmoves[i].second;
         if (index < point) {
             return play_move_fast(scoredmoves[i].first);
         }
     }
 
+    assert(false);
     return play_move_fast(FastBoard::PASS);
 }
 

@@ -41,6 +41,7 @@ CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include
 CAFFE_LIB = $(CAFFE_BASE)/lib
 CXXFLAGS += -I$(CAFFE_INC) -I/usr/local/cuda/include
+#CXXFLAGS += -I/opt/intel/mkl/include
 #CXXFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Headers
 LDFLAGS  += -L$(CAFFE_LIB)
 #LDFLAGS  += -L/opt/intel/mkl/lib/intel64/
@@ -64,8 +65,8 @@ deps = $(sources:%.cpp=%.d)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 leela: $(objects)
-#	$(CXX) $(LDFLAGS) -o $@ $^ -static-libgcc -static-libstdc++ -Wl,-Bstatic $(LIBS) -Wl,-Bdynamic $(DYNAMIC_LIBS)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS) $(DYNAMIC_LIBS)
+	$(CXX) $(LDFLAGS) -o $@ $^ -static-libgcc -static-libstdc++ -Wl,-Bstatic $(LIBS) -Wl,-Bdynamic $(DYNAMIC_LIBS)
+#	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS) $(DYNAMIC_LIBS)
 
 clean:
 	-$(RM) leela $(objects) $(deps)

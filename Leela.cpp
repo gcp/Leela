@@ -32,11 +32,7 @@ int main (int argc, char *argv[]) {
 #endif
     // Defaults
     gtp_mode = false;
-    cfg_allow_pondering = true;
-    cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
-    cfg_enable_nets = true;
-    cfg_max_playouts = INT_MAX;
-    cfg_lagbuffer_cs = 200;
+    GTP::setup_default_parameters();
 
     namespace po = boost::program_options;
     // Declare the supported options.
@@ -47,10 +43,30 @@ int main (int argc, char *argv[]) {
         ("threads,t", po::value<int>()->default_value(cfg_num_threads),
                       "Number of threads to use.")
         ("playouts,p", po::value<int>(), "Limit number of playouts.")
-        ("lagbuffer,b", po::value<int>()->default_value(200),
+        ("lagbuffer,b", po::value<int>()->default_value(cfg_lagbuffer_cs),
                       "Safety margin for time usage in centiseconds.")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
+#ifdef USE_OPENCL
+        ("rowtiles", po::value<int>()->default_value(cfg_rowtiles),
+                     "Split up the board in # tiles")
+#endif
+#ifdef USE_TUNER
+        ("crit_mine_1", po::value<float>())
+        ("crit_mine_2", po::value<float>())
+        ("crit_his_1", po::value<float>())
+        ("crit_his_2", po::value<float>())
+        ("tactical", po::value<float>())
+        ("bound", po::value<float>())
+        ("regular_self_atari", po::value<float>())
+        ("useless_self_atari", po::value<float>())
+        ("pass_score", po::value<float>())
+        ("fpu", po::value<float>())
+        ("puct", po::value<float>())
+        ("psa", po::value<float>())
+        ("cutoff_offset", po::value<float>())
+        ("cutoff_ratio", po::value<float>())
+#endif
         ;
     po::variables_map vm;
     try {
@@ -66,6 +82,51 @@ int main (int argc, char *argv[]) {
         std::cout << desc << std::endl;
         return 1;
     }
+
+#ifdef USE_TUNER
+    if (vm.count("crit_mine_1")) {
+        cfg_crit_mine_1 = vm["crit_mine_1"].as<float>();
+    }
+    if (vm.count("crit_mine_2")) {
+        cfg_crit_mine_2 = vm["crit_mine_2"].as<float>();
+    }
+    if (vm.count("crit_his_1")) {
+        cfg_crit_his_1 = vm["crit_his_1"].as<float>();
+    }
+    if (vm.count("crit_his_2")) {
+        cfg_crit_his_2 = vm["crit_his_2"].as<float>();
+    }
+    if (vm.count("tactical")) {
+        cfg_tactical = vm["tactical"].as<float>();
+    }
+    if (vm.count("bound")) {
+        cfg_bound = vm["bound"].as<float>();
+    }
+    if (vm.count("regular_self_atari")) {
+        cfg_regular_self_atari = vm["regular_self_atari"].as<float>();
+    }
+    if (vm.count("useless_self_atari")) {
+        cfg_useless_self_atari = vm["useless_self_atari"].as<float>();
+    }
+    if (vm.count("pass_score")) {
+        cfg_pass_score = vm["pass_score"].as<float>();
+    }
+    if (vm.count("fpu")) {
+        cfg_fpu = vm["fpu"].as<float>();
+    }
+    if (vm.count("puct")) {
+        cfg_puct = vm["puct"].as<float>();
+    }
+    if (vm.count("psa")) {
+        cfg_psa = vm["psa"].as<float>();
+    }
+    if (vm.count("cutoff_offset")) {
+        cfg_cutoff_offset = vm["cutoff_offset"].as<float>();
+    }
+    if (vm.count("cutoff_ratio")) {
+        cfg_cutoff_ratio = vm["cutoff_ratio"].as<float>();
+    }
+#endif
 
     if (vm.count("gtp")) {
         gtp_mode = true;
@@ -102,6 +163,19 @@ int main (int argc, char *argv[]) {
             cfg_lagbuffer_cs = lagbuffer;
         }
     }
+
+#ifdef USE_OPENCL
+    if (vm.count("rowtiles")) {
+        int rowtiles = vm["rowtiles"].as<int>();
+        rowtiles = std::min(19, rowtiles);
+        rowtiles = std::max(1, rowtiles);
+        if (rowtiles != cfg_rowtiles) {
+            std::cerr << "Splitting the board in " << rowtiles
+                      << " tiles." << std::endl;
+            cfg_rowtiles = rowtiles;
+        }
+    }
+#endif
 
     std::cout.setf(std::ios::unitbuf);
     std::cerr.setf(std::ios::unitbuf);
