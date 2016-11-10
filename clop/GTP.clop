@@ -10,15 +10,11 @@ Script ./clopgtp
 #  IntegerGammaParameter
 # For GammaParameter, quadratic regression is performed on log(x)
 # Warning: 123 and not 123.0 should be used for IntegerParameter
-GammaParameter        crit_mine_1            0.1      100
-GammaParameter        crit_mine_2            0.1      100
-GammaParameter        crit_his_1             0.1      100
-GammaParameter        crit_his_2             0.1      100
-GammaParameter        bound                  0.01     20
-GammaParameter        tactical               0.1      200
-GammaParameter        regular_self_atari     0.0001   100
-GammaParameter        useless_self_atari     0.0001   100
-GammaParameter        pass_score             0.000001 1
+GammaParameter        puct           0.01    100.0
+GammaParameter        psa            0.01    20.0
+GammaParameter        fpu            0.1     100.0
+LinearParameter       cutoff_offset  0.1     100.0
+GammaParameter        cutoff_ratio   0.1     50.0
 
 Processor cpu1
 Processor cpu2
@@ -27,6 +23,35 @@ Processor cpu4
 Processor cpu5
 Processor cpu6
 Processor cpu7
+Processor cpu8
+Processor cpu9
+Processor cpu10
+Processor cpu11
+Processor cpu12
+Processor cpu13
+Processor cpu14
+Processor cpu15
+Processor cpu16
+Processor cpu17
+Processor cpu18
+Processor cpu19
+Processor cpu20
+Processor cpu21
+Processor cpu22
+Processor cpu23
+Processor cpu24
+Processor cpu25
+Processor cpu26
+Processor cpu27
+Processor cpu28
+Processor cpu29
+Processor cpu30
+Processor cpu31
+Processor cpu32
+Processor cpu33
+Processor cpu34
+Processor cpu35
+Processor cpu36
 
 Replications 1
 DrawElo 0

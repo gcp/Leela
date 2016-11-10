@@ -61,6 +61,11 @@ int main (int argc, char *argv[]) {
         ("regular_self_atari", po::value<float>())
         ("useless_self_atari", po::value<float>())
         ("pass_score", po::value<float>())
+        ("fpu", po::value<float>())
+        ("puct", po::value<float>())
+        ("psa", po::value<float>())
+        ("cutoff_offset", po::value<float>())
+        ("cutoff_ratio", po::value<float>())
 #endif
         ;
     po::variables_map vm;
@@ -105,6 +110,21 @@ int main (int argc, char *argv[]) {
     }
     if (vm.count("pass_score")) {
         cfg_pass_score = vm["pass_score"].as<float>();
+    }
+    if (vm.count("fpu")) {
+        cfg_fpu = vm["fpu"].as<float>();
+    }
+    if (vm.count("puct")) {
+        cfg_puct = vm["puct"].as<float>();
+    }
+    if (vm.count("psa")) {
+        cfg_psa = vm["psa"].as<float>();
+    }
+    if (vm.count("cutoff_offset")) {
+        cfg_cutoff_offset = vm["cutoff_offset"].as<float>();
+    }
+    if (vm.count("cutoff_ratio")) {
+        cfg_cutoff_ratio = vm["cutoff_ratio"].as<float>();
     }
 #endif
 
