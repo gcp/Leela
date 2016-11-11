@@ -221,6 +221,7 @@ static std::string sourceCode = R"(
 
         __private float filter_buff[9];
         __private float chan_cache[2];
+        __private float stripe_cache[9];
 
         // Copy the filter we are applying locally
         // output * channel * filter_len
@@ -286,20 +287,31 @@ static std::string sourceCode = R"(
             int fid = (lx * pad_width) * filter_size;
             barrier(CLK_LOCAL_MEM_FENCE);
 
+            for (int rc = 0; rc < 9; rc++) {
+                stripe_cache[rc] = channel_buff[fid + rc];
+            }
+
             for (int cw = 0; cw < width; cw++) {
                 // Start filter
-                float out  =   channel_buff[fid    ] * filter_buff[0]
-                             + channel_buff[fid + 1] * filter_buff[3]
-                             + channel_buff[fid + 2] * filter_buff[6]
-                             + channel_buff[fid + 3] * filter_buff[1]
-                             + channel_buff[fid + 4] * filter_buff[4]
-                             + channel_buff[fid + 5] * filter_buff[7]
-                             + channel_buff[fid + 6] * filter_buff[2]
-                             + channel_buff[fid + 7] * filter_buff[5]
-                             + channel_buff[fid + 8] * filter_buff[8];
+                float out  =   stripe_cache[      0] * filter_buff[0]
+                             + stripe_cache[      1] * filter_buff[3]
+                             + stripe_cache[      2] * filter_buff[6]
+                             + stripe_cache[      3] * filter_buff[1]
+                             + stripe_cache[      4] * filter_buff[4]
+                             + stripe_cache[      5] * filter_buff[7]
+                             + stripe_cache[      6] * filter_buff[2]
+                             + stripe_cache[      7] * filter_buff[5]
+                             + stripe_cache[      8] * filter_buff[8];
                 // End filter
                 out_row_buff[out_lane++] = out;
                 fid += filter_size;
+
+                for (int rc = 0; rc < 6; rc++) {
+                    stripe_cache[rc] = stripe_cache[rc + 3];
+                }
+                stripe_cache[6] = channel_buff[fid + 6];
+                stripe_cache[7] = channel_buff[fid + 7];
+                stripe_cache[8] = channel_buff[fid + 8];
 
                 // Row buffer full or last lane?
                 if (out_lane == row_buff_size || (cw == width - 1)) {
@@ -760,7 +772,7 @@ void OpenCL::initialize(void) {
     }
     // Build program for these specific devices
     try {
-        m_program.build("-cl-mad-enable -cl-fast-relaxed-math -cl-no-signed-zeros");
+        m_program.build("-cl-mad-enable -cl-fast-relaxed-math -cl-no-signed-zeros -cl-denorms-are-zero");
     } catch (cl::Error &e) {
         std::cerr << "Error building: " << std::endl
                   << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault())
