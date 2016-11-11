@@ -196,6 +196,7 @@ void convolve3(
 
     __private float filter_buff[9];
     __private float chan_cache[2];
+    __private float stripe_cache[9];
 
     // Copy the filter we are applying locally
     // output * channel * filter_len
@@ -227,6 +228,7 @@ void convolve3(
             }
         } else if (out_buff_size >= 21 && ly < 21) {
             // Every thread copies a column
+            int copy_idx = (lx * pad_width + ly) * filter_size;
             if (tile == 0 || row == 18) {
                 // Every thread copies a column
                 for (int srow = 0; srow < filter_size; srow++) {
@@ -235,7 +237,7 @@ void convolve3(
                     if ((unsigned)in_row < height && ly >= 1 && ly <= 19) {
                         val = in[(c * height + in_row) * width + ly - 1];
                     }
-                    channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
+                    channel_buff[copy_idx + srow] = val;
                     if (srow > 0) {
                         chan_cache[srow - 1] = val;
                     }
@@ -246,9 +248,9 @@ void convolve3(
                 if (ly >= 1 && ly <= 19) {
                     val = in[(c * height + in_row) * width + ly - 1];
                 }
-                channel_buff[(lx * pad_width + ly) * filter_size + 0] = chan_cache[0];
-                channel_buff[(lx * pad_width + ly) * filter_size + 1] = chan_cache[1];
-                channel_buff[(lx * pad_width + ly) * filter_size + 2] = val;
+                channel_buff[copy_idx + 0] = chan_cache[0];
+                channel_buff[copy_idx + 1] = chan_cache[1];
+                channel_buff[copy_idx + 2] = val;
                 chan_cache[0] = chan_cache[1];
                 chan_cache[1] = val;
             }
@@ -260,20 +262,31 @@ void convolve3(
         int fid = (lx * pad_width) * filter_size;
         barrier(CLK_LOCAL_MEM_FENCE);
 
+        for (int rc = 0; rc < 9; rc++) {
+            stripe_cache[rc] = channel_buff[fid + rc];
+        }
+
         for (int cw = 0; cw < width; cw++) {
             // Start filter
-            float out  =   channel_buff[fid    ] * filter_buff[0]
-                + channel_buff[fid + 1] * filter_buff[3]
-                + channel_buff[fid + 2] * filter_buff[6]
-                + channel_buff[fid + 3] * filter_buff[1]
-                + channel_buff[fid + 4] * filter_buff[4]
-                + channel_buff[fid + 5] * filter_buff[7]
-                + channel_buff[fid + 6] * filter_buff[2]
-                + channel_buff[fid + 7] * filter_buff[5]
-                + channel_buff[fid + 8] * filter_buff[8];
+            float out  =   stripe_cache[      0] * filter_buff[0]
+                + stripe_cache[      1] * filter_buff[3]
+                + stripe_cache[      2] * filter_buff[6]
+                + stripe_cache[      3] * filter_buff[1]
+                + stripe_cache[      4] * filter_buff[4]
+                + stripe_cache[      5] * filter_buff[7]
+                + stripe_cache[      6] * filter_buff[2]
+                + stripe_cache[      7] * filter_buff[5]
+                + stripe_cache[      8] * filter_buff[8];
             // End filter
             out_row_buff[out_lane++] = out;
             fid += filter_size;
+
+            for (int rc = 0; rc < 6; rc++) {
+                stripe_cache[rc] = stripe_cache[rc + 3];
+            }
+            stripe_cache[6] = channel_buff[fid + 6];
+            stripe_cache[7] = channel_buff[fid + 7];
+            stripe_cache[8] = channel_buff[fid + 8];
 
             // Row buffer full or last lane?
             if (out_lane == row_buff_size || (cw == width - 1)) {
