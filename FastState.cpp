@@ -167,6 +167,12 @@ int FastState::play_random_move(int color) {
             moves.erase(std::remove_if(moves.begin(), moves.end(),
                                        [this](int sq){ return sq == m_komove;}),
                         moves.end());
+            if (moves.empty()) {
+                board.add_near_nakade_moves(color, m_lastmove, moves);
+                moves.erase(std::remove_if(moves.begin(), moves.end(),
+                                           [this](int sq){ return sq == m_komove;}),
+                            moves.end());
+            }
         }
     }
 
@@ -242,10 +248,6 @@ int FastState::play_random_move(int color) {
         if (vtx == FastBoard::PASS) {
             return play_move_fast(FastBoard::PASS);
         }
-
-        //if (loops <= 1) {
-        vtx = board.replace_if_nakade(color, vtx);
-        //}
 
         int pattern = board.get_pattern_fast_augment(vtx);
         float score = matcher->matches(color, pattern);
