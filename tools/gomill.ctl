@@ -33,12 +33,12 @@ players = {
 				"time_settings 600 0 0",
                            ],
                     ),
-    'leela-075i' : Player("./leela-075i --gtp --threads 1 --noponder ",
+    'leela-077b' : Player("./leela-077b --gtp --threads 1 --noponder ",
                            startup_gtp_commands=[
 				"time_settings 600 0 0",
                            ],
                     ),
-    'leela-075j' : Player("./leela-075j --gtp --threads 1 --noponder ",
+    'leela-077ba' : Player("./leela-077ba --gtp --threads 1 --noponder ",
                            startup_gtp_commands=[
 				"time_settings 600 0 0",
                            ],
@@ -56,16 +56,16 @@ board_size = 19
 komi = 7.5
 
 matchups = [
-	Matchup('leela-073e', 'leela-075i',
+	Matchup('leela-077b', 'leela-077ba',
                 scorer='players', number_of_games=1000),
-	Matchup('leela-073e', 'leela-075j',
-                scorer='players', number_of_games=1000),
-	Matchup('leela-075i', 'leela-075j',
-                scorer='players', number_of_games=1000),
-	Matchup('pachi', 'leela-073e', alternating=False, handicap=8,
-                scorer='players', number_of_games=1000),
-	Matchup('pachi', 'leela-075i', alternating=False, handicap=8,
-                scorer='players', number_of_games=1000),
-	Matchup('pachi', 'leela-075j', alternating=False, handicap=8,
-                scorer='players', number_of_games=1000),
+#	Matchup('leela-073e', 'leela-075j',
+#                scorer='players', number_of_games=1000),
+#	Matchup('leela-075i', 'leela-075j',
+#               scorer='players', number_of_games=1000),
+#	Matchup('pachi', 'leela-073e', alternating=False, handicap=8,
+#               scorer='players', number_of_games=1000),
+#	Matchup('pachi', 'leela-075i', alternating=False, handicap=8,
+#               scorer='players', number_of_games=1000),
+#	Matchup('pachi', 'leela-075j', alternating=False, handicap=8,
+#                scorer='players', number_of_games=1000),
 ]
