@@ -22,7 +22,6 @@
     <ProjectGuid>{1592E749-97D3-488E-9957-FF61622A4365}</ProjectGuid>
     <RootNamespace>Leela</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>5.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -39,7 +38,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -77,8 +75,8 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\include;C:\Projects\OpenCL-ICD-Loader\inc;C:\boost\boost_1_62_0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\boost\boost_1_62_0\stage\lib32;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.0.109\windows\mkl\lib\ia32_win;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.1.143\windows\mkl\include;C:\Projects\OpenCL-ICD-Loader\inc;C:\boost\boost_1_62_0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\boost\boost_1_62_0\stage\lib32;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.1.143\windows\mkl\lib\ia32_win;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -91,8 +89,8 @@
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\boost\boost_1_60_0\;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\boost\boost_1_60_0\stage\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.1.143\windows\mkl\include;C:\boost\boost_1_62_0\;C:\Projects\OpenCL-ICD-Loader\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build64;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.1.143\windows\mkl\lib\intel64_win;C:\boost\boost_1_62_0\stage\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -120,7 +118,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_SECURE_SCL=0;BOOST_LIB_DIAGNOSTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
@@ -190,6 +188,7 @@
       <LargeAddressAware>true</LargeAddressAware>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <AdditionalDependencies>mkl_intel_lp64.lib;mkl_sequential.lib;mkl_core.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

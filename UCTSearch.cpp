@@ -8,6 +8,7 @@
 #include <thread>
 #include <algorithm>
 #ifdef _WIN32
+#include <boost/thread.hpp>
 #include <boost/thread/detail/tss_hooks.hpp>
 #endif
 
