@@ -1,4 +1,5 @@
 __kernel
+__attribute__((reqd_work_group_size(8, 32, 1)))
 void convolve5(
     __global const float * in,
     __global float * merge,
@@ -77,6 +78,7 @@ void convolve5(
 
     int out_lane = 0;
     int out_cw   = 0;
+#pragma unroll
     for (int cw = 0; cw < width; cw++) {
         int fwstart = cw - extent;
         int fwend   = cw + extent;
@@ -116,6 +118,7 @@ void convolve5(
         } else {
             const float * filter_idx = filter_buff;
             out = 0.0f;
+#pragma unroll
             for (int fh = 0; fh < filter_size; fh++) {
                 for (int fw = fwstart; fw <= fwend; fw++) {
                     // "zero padding"
@@ -155,6 +158,7 @@ void convolve5(
 }
 
 __kernel
+__attribute__((work_group_size_hint(8, 32, 1)))
 void convolve3(
     __global const float * in,
     __global float * merge,
@@ -266,6 +270,7 @@ void convolve3(
             stripe_cache[rc] = channel_buff[fid + rc];
         }
 
+#pragma unroll
         for (int cw = 0; cw < width; cw++) {
             // Start filter
             float out  =   stripe_cache[      0] * filter_buff[0]
