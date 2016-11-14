@@ -9,8 +9,6 @@
 #include <cmath>
 #include <array>
 #include <boost/utility.hpp>
-#include <boost/tr1/array.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/format.hpp>
 
 #ifdef USE_CAFFE
@@ -49,34 +47,34 @@ using namespace Utils;
 
 Network* Network::s_Net = nullptr;
 
-extern std::tr1::array<float, 76800> conv1_w;
-extern std::tr1::array<float, 128> conv1_b;
-extern std::tr1::array<float, 147456> conv2_w;
-extern std::tr1::array<float, 128> conv2_b;
-extern std::tr1::array<float, 147456> conv3_w;
-extern std::tr1::array<float, 128> conv3_b;
-extern std::tr1::array<float, 147456> conv4_w;
-extern std::tr1::array<float, 128> conv4_b;
-extern std::tr1::array<float, 147456> conv5_w;
-extern std::tr1::array<float, 128> conv5_b;
-extern std::tr1::array<float, 147456> conv6_w;
-extern std::tr1::array<float, 128> conv6_b;
-extern std::tr1::array<float, 147456> conv7_w;
-extern std::tr1::array<float, 128> conv7_b;
-extern std::tr1::array<float, 147456> conv8_w;
-extern std::tr1::array<float, 128> conv8_b;
-extern std::tr1::array<float, 147456> conv9_w;
-extern std::tr1::array<float, 128> conv9_b;
-extern std::tr1::array<float, 147456> conv10_w;
-extern std::tr1::array<float, 128> conv10_b;
-extern std::tr1::array<float, 147456> conv11_w;
-extern std::tr1::array<float, 128> conv11_b;
-extern std::tr1::array<float, 147456> conv12_w;
-extern std::tr1::array<float, 128> conv12_b;
-extern std::tr1::array<float, 147456> conv13_w;
-extern std::tr1::array<float, 128> conv13_b;
-extern std::tr1::array<float, 3456> conv14_w;
-extern std::tr1::array<float, 3> conv14_b;
+extern std::array<float, 76800> conv1_w;
+extern std::array<float, 128> conv1_b;
+extern std::array<float, 147456> conv2_w;
+extern std::array<float, 128> conv2_b;
+extern std::array<float, 147456> conv3_w;
+extern std::array<float, 128> conv3_b;
+extern std::array<float, 147456> conv4_w;
+extern std::array<float, 128> conv4_b;
+extern std::array<float, 147456> conv5_w;
+extern std::array<float, 128> conv5_b;
+extern std::array<float, 147456> conv6_w;
+extern std::array<float, 128> conv6_b;
+extern std::array<float, 147456> conv7_w;
+extern std::array<float, 128> conv7_b;
+extern std::array<float, 147456> conv8_w;
+extern std::array<float, 128> conv8_b;
+extern std::array<float, 147456> conv9_w;
+extern std::array<float, 128> conv9_b;
+extern std::array<float, 147456> conv10_w;
+extern std::array<float, 128> conv10_b;
+extern std::array<float, 147456> conv11_w;
+extern std::array<float, 128> conv11_b;
+extern std::array<float, 147456> conv12_w;
+extern std::array<float, 128> conv12_b;
+extern std::array<float, 147456> conv13_w;
+extern std::array<float, 128> conv13_b;
+extern std::array<float, 3456> conv14_w;
+extern std::array<float, 3> conv14_b;
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -165,7 +163,7 @@ void Network::initialize(void) {
 //#define WRITE_WEIGHTS
 #ifdef WRITE_WEIGHTS
     std::ofstream out("weights.txt");
-    out << "#include <boost/tr1/array.hpp>" << std::endl << std::endl;
+    out << "#include <array>" << std::endl << std::endl;
 #endif
 
     int total_weights = 0;
@@ -190,27 +188,27 @@ void Network::initialize(void) {
             if (strcmp((*it)->type(), "Convolution") == 0) {
                 if (pars == blobs.begin()) {
                     conv_count++;
-                    out << "std::tr1::array<float, " << blob.count()
+                    out << "std::array<float, " << blob.count()
                         << "> conv" << conv_count << "_w = {{" << std::endl;
                 } else {
-                    out << "std::tr1::array<float, " << blob.count()
+                    out << "std::array<float, " << blob.count()
                         << "> conv" << conv_count << "_b = {{" << std::endl;
                 }
             } else if (strcmp((*it)->type(), "BatchNorm") == 0) {
-                out << "std::tr1::array<float, " << blob.count()
+                out << "std::array<float, " << blob.count()
                     << "> bn" << conv_count << "_w" << (pars - blobs.begin()) + 1
                     << " = {{" << std::endl;
             } else if (strcmp((*it)->type(), "InnerProduct") == 0) {
                 if (pars == blobs.begin()) {
                     conv_count++;
-                    out << "std::tr1::array<float, " << blob.count()
+                    out << "std::array<float, " << blob.count()
                         << "> ip" << conv_count << "_w = {{" << std::endl;
                 } else {
-                    out << "std::tr1::array<float, " << blob.count()
+                    out << "std::array<float, " << blob.count()
                         << "> ip" << conv_count << "_b = {{" << std::endl;
                 }
             } else {
-                out << "std::tr1::array<float, " << blob.count()
+                out << "std::array<float, " << blob.count()
                     << "> sc" << conv_count << "_w" << (pars - blobs.begin()) + 1
                     << " = {{" << std::endl;
             }
@@ -236,8 +234,8 @@ template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          unsigned long W, unsigned long B>
 void convolve(std::vector<float>& input,
-              std::tr1::array<float, W>& weights,
-              std::tr1::array<float, B>& biases,
+              std::array<float, W>& weights,
+              std::array<float, B>& biases,
               std::vector<float>& output) {
     // fixed for 19x19
     constexpr unsigned int width = 19;
@@ -303,11 +301,11 @@ void softmax(std::vector<float>& input,
 #ifdef USE_OPENCL
 class CallbackData {
 public:
-    boost::atomic<int> * m_nodecount;
+    std::atomic<int> * m_nodecount;
     FastState m_state;
     UCTNode * m_node;
     int m_rotation;
-    boost::atomic<int> * m_thread_results_outstanding;
+    std::atomic<int> * m_thread_results_outstanding;
     std::vector<float> m_output_data;
     std::vector<float> m_input_data;
 };
@@ -317,7 +315,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     CallbackData * cb_data = static_cast<CallbackData*>(data);
 
     // Mark the kernels as available
-    cb_data->m_thread_results_outstanding->fetch_sub(1, boost::memory_order_release);
+    cb_data->m_thread_results_outstanding->fetch_sub(1, std::memory_order_release);
 
     constexpr int width = 19;
     constexpr int height = 19;
@@ -351,7 +349,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     OpenCL::get_OpenCL()->callback_finished();
 }
 
-void Network::async_scored_moves(boost::atomic<int> * nodecount,
+void Network::async_scored_moves(std::atomic<int> * nodecount,
                                  FastState * state,
                                  UCTNode * node,
                                  Ensemble ensemble) {
@@ -899,23 +897,23 @@ void Network::train_network(TrainVector& data,
     size_t train_pos = 0;
     size_t test_pos = 0;
 
-    boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
+    std::unique_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
     std::string dbTrainName("leela_train");
     train_db->Open(dbTrainName.c_str(), caffe::db::WRITE);
-    boost::scoped_ptr<caffe::db::DB> train_label_db(caffe::db::GetDB("leveldb"));
+    std::unique_ptr<caffe::db::DB> train_label_db(caffe::db::GetDB("leveldb"));
     std::string dbTrainLabelName("leela_train_label");
     train_label_db->Open(dbTrainLabelName.c_str(), caffe::db::WRITE);
-    boost::scoped_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
+    std::unique_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
     std::string dbTestName("leela_test");
     test_db->Open(dbTestName.c_str(), caffe::db::WRITE);
-    boost::scoped_ptr<caffe::db::DB> test_label_db(caffe::db::GetDB("leveldb"));
+    std::unique_ptr<caffe::db::DB> test_label_db(caffe::db::GetDB("leveldb"));
     std::string dbTestLabelName("leela_test_label");
     test_label_db->Open(dbTestLabelName.c_str(), caffe::db::WRITE);
 
-    boost::scoped_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
-    boost::scoped_ptr<caffe::db::Transaction> test_txn(test_db->NewTransaction());
-    boost::scoped_ptr<caffe::db::Transaction> train_label_txn(train_label_db->NewTransaction());
-    boost::scoped_ptr<caffe::db::Transaction> test_label_txn(test_label_db->NewTransaction());
+    std::unique_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
+    std::unique_ptr<caffe::db::Transaction> test_txn(test_db->NewTransaction());
+    std::unique_ptr<caffe::db::Transaction> train_label_txn(train_label_db->NewTransaction());
+    std::unique_ptr<caffe::db::Transaction> test_label_txn(test_label_db->NewTransaction());
 
     for (int pass = 0; pass < 1; pass++) {
         std::cout << "Shuffling training data...";
@@ -1024,10 +1022,10 @@ void Network::train_network(TrainVector& data,
 void Network::autotune_from_file(std::string filename) {
 #ifdef USE_CAFFE
     {
-        boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
+        std::unique_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
         std::string dbTrainName("leela_train");
         train_db->Open(dbTrainName.c_str(), caffe::db::NEW);
-        boost::scoped_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
+        std::unique_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
         std::string dbTestName("leela_test");
         test_db->Open(dbTestName.c_str(), caffe::db::NEW);
     }

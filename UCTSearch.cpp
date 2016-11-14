@@ -5,7 +5,12 @@
 #include <limits.h>
 #include <vector>
 #include <utility>
+#include <thread>
+#include <algorithm>
+#ifdef _WIN32
 #include <boost/thread.hpp>
+#include <boost/thread/detail/tss_hooks.hpp>
+#endif
 
 #include "FastBoard.h"
 #include "UCTSearch.h"
@@ -36,7 +41,7 @@ UCTSearch::UCTSearch(GameState & g)
   set_playout_limit(cfg_max_playouts);
 }
 
-void UCTSearch::set_runflag(boost::atomic<bool> * flag) {
+void UCTSearch::set_runflag(std::atomic<bool> * flag) {
     m_runflag = flag;
     m_hasrunflag = true;
 }
@@ -590,6 +595,9 @@ void UCTWorker::operator()() {
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
+#ifdef _WIN32
+    boost::on_thread_exit();
+#endif
 }
 
 float UCTSearch::get_score() {
@@ -651,9 +659,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_run = true;
 
     int cpus = cfg_num_threads;
-    boost::thread_group tg;
+    std::vector<std::thread> tg;
     for (int i = 1; i < cpus; i++) {
-        tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
+        tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
     }
 
     bool keeprunning = true;
@@ -698,7 +706,11 @@ int UCTSearch::think(int color, passflag_t passflag) {
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
-    tg.join_all();
+    for (auto& thread : tg) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
     if (!m_root.has_children()) {
         return FastBoard::PASS;
     }
@@ -777,9 +789,9 @@ void UCTSearch::ponder() {
 #ifdef USE_SEARCH
     m_run = true;
     int cpus = cfg_num_threads;
-    boost::thread_group tg;
+    std::vector<std::thread> tg;
     for (int i = 1; i < cpus; i++) {
-        tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
+        tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
     }
     do {
         KoState currstate = m_rootstate;
@@ -791,7 +803,11 @@ void UCTSearch::ponder() {
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
-    tg.join_all();
+    for (auto& thread : tg) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
     // display search info
     myprintf("\n");
     dump_stats(m_rootstate, m_root);

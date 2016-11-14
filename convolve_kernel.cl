@@ -1,10 +1,10 @@
 __kernel
 void convolve5(
-               __global const float * in,
-               __global float * merge,
-               __global const float * weights,
-               __local float * channel_buff,
-               __local float * row_buff) {
+    __global const float * in,
+    __global float * merge,
+    __global const float * weights,
+    __local float * channel_buff,
+    __local float * row_buff) {
 
     // cl::NDRange global(channels, outputs, row);
     const int c   = get_global_id(0);  // channel
@@ -156,16 +156,17 @@ void convolve5(
 
 __kernel
 void convolve3(
-               __global const float * in,
-               __global float * merge,
-               __global const float * weights,
-               __local float * channel_buff,
-               __local float * row_buff) {
+    __global const float * in,
+    __global float * merge,
+    __global const float * weights,
+    __local float * channel_buff,
+    __local float * row_buff,
+    const int row_tile_size) {
 
     // cl::NDRange global(channels, outputs, row);
     const int c   = get_global_id(0);  // channel
     const int o   = get_global_id(1);  // output
-    const int row = get_global_id(2);  // row
+    const int r   = get_global_id(2);  // row
 
     const int channels = get_global_size(0);
     const int outputs  = get_global_size(1);
@@ -193,49 +194,9 @@ void convolve3(
     // weights = output * channels * filter
     // merge = channels * outputs * height * width
 
-    // Copy the input channels (strips) locally
-    if (out_buff_size < 21 && ly == 0) {
-        // strip-row
-        for (int srow = 0; srow < filter_size; srow++) {
-            int in_row = row - extent + srow;
-            channel_buff[(lx * pad_width + 0) * filter_size + srow]             = 0.0f;
-            if ((unsigned)in_row < height) {
-                for (int w = 0; w < width; w++) {
-                    float val = in[(c * height + in_row) * width + w];
-                    channel_buff[(lx * pad_width + w + extent) * filter_size + srow] = val;
-                }
-            } else {
-                for (int w = 0; w < width; w++) {
-                    channel_buff[(lx * pad_width + w + extent) * filter_size + srow] = 0.0f;
-                }
-            }
-            channel_buff[(lx * pad_width + pad_width - 1) * filter_size + srow] = 0.0f;
-        }
-    } else if (out_buff_size >= 21 && ly < 21) {
-        // Every thread copies a column
-        if (row == 0 || row == 18) {
-            // Every thread copies a column
-            for (int srow = 0; srow < filter_size; srow++) {
-                int in_row = row - extent + srow;
-                float val = 0.0f;
-                if ((unsigned)in_row < height && ly >= 1 && ly <= 19) {
-                    val = in[(c * height + in_row) * width + ly - 1];
-                }
-                channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
-            }
-        } else {
-            for (int srow = 0; srow < filter_size; srow++) {
-                int in_row = row - extent + srow;
-                float val = 0.0f;
-                if (ly >= 1 && ly <= 19) {
-                    val = in[(c * height + in_row) * width + ly - 1];
-                }
-                channel_buff[(lx * pad_width + ly) * filter_size + srow] = val;
-            }
-        }
-    }
-
     __private float filter_buff[9];
+    __private float chan_cache[2];
+    __private float stripe_cache[9];
 
     // Copy the filter we are applying locally
     // output * channel * filter_len
@@ -243,56 +204,119 @@ void convolve3(
         filter_buff[f] = weights[(o * channels + c) * filter_len + f];
     }
 
-    int out_lane = 0;
-    int out_cw   = 0;
-    __local float * out_row_buff = &row_buff[(ly * chan_buff_size + lx) * row_buff_size];
-    int fid = (lx * pad_width) * filter_size;
-    barrier(CLK_LOCAL_MEM_FENCE);
+    for (int tile = 0; tile < row_tile_size; tile++) {
+        int row = r * row_tile_size + tile;
+        if (row > 18) break;
 
-    for (int cw = 0; cw < width; cw++) {
-        // Start filter
-        float out  =
-              channel_buff[fid    ] * filter_buff[0]
-            + channel_buff[fid + 1] * filter_buff[3]
-            + channel_buff[fid + 2] * filter_buff[6]
-            + channel_buff[fid + 3] * filter_buff[1]
-            + channel_buff[fid + 4] * filter_buff[4]
-            + channel_buff[fid + 5] * filter_buff[7]
-            + channel_buff[fid + 6] * filter_buff[2]
-            + channel_buff[fid + 7] * filter_buff[5]
-            + channel_buff[fid + 8] * filter_buff[8];
-        // End filter
-        out_row_buff[out_lane++] = out;
-        fid += filter_size;
-
-        // Row buffer full or last lane?
-        if (out_lane == row_buff_size || (cw == width - 1)) {
-            barrier(CLK_LOCAL_MEM_FENCE);
-            if (lx < out_lane) {
-                // lx = channels 2 or 8, ly = outputs 32
-                // repurpose the lx threads over columns now
-                float val;
-                val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
-                val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
-                val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
-                val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
-                val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
-                val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
-                val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
-                val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
-                merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
+        // Copy the input channels (strips) locally
+        if (out_buff_size < 21 && ly == 0) {
+            // strip-row
+            for (int srow = 0; srow < filter_size; srow++) {
+                int in_row = row - extent + srow;
+                channel_buff[(lx * pad_width + 0) * filter_size + srow]             = 0.0f;
+                if ((unsigned)in_row < height) {
+                    for (int w = 0; w < width; w++) {
+                        float val = in[(c * height + in_row) * width + w];
+                        channel_buff[(lx * pad_width + w + extent) * filter_size + srow] = val;
+                    }
+                } else {
+                    for (int w = 0; w < width; w++) {
+                        channel_buff[(lx * pad_width + w + extent) * filter_size + srow] = 0.0f;
+                    }
+                }
+                channel_buff[(lx * pad_width + pad_width - 1) * filter_size + srow] = 0.0f;
             }
-            out_cw  += row_buff_size;
-            out_lane = 0;
+        } else if (out_buff_size >= 21 && ly < 21) {
+            // Every thread copies a column
+            int copy_idx = (lx * pad_width + ly) * filter_size;
+            if (tile == 0 || row == 18) {
+                // Every thread copies a column
+                for (int srow = 0; srow < filter_size; srow++) {
+                    int in_row = row - extent + srow;
+                    float val = 0.0f;
+                    if ((unsigned)in_row < height && ly >= 1 && ly <= 19) {
+                        val = in[(c * height + in_row) * width + ly - 1];
+                    }
+                    channel_buff[copy_idx + srow] = val;
+                    if (srow > 0) {
+                        chan_cache[srow - 1] = val;
+                    }
+                }
+            } else {
+                int in_row = row - extent + 2;
+                float val = 0.0f;
+                if (ly >= 1 && ly <= 19) {
+                    val = in[(c * height + in_row) * width + ly - 1];
+                }
+                channel_buff[copy_idx + 0] = chan_cache[0];
+                channel_buff[copy_idx + 1] = chan_cache[1];
+                channel_buff[copy_idx + 2] = val;
+                chan_cache[0] = chan_cache[1];
+                chan_cache[1] = val;
+            }
+        }
+
+        int out_lane = 0;
+        int out_cw   = 0;
+        __local float * out_row_buff = &row_buff[(ly * chan_buff_size + lx) * row_buff_size];
+        int fid = (lx * pad_width) * filter_size;
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        for (int rc = 0; rc < 9; rc++) {
+            stripe_cache[rc] = channel_buff[fid + rc];
+        }
+
+        for (int cw = 0; cw < width; cw++) {
+            // Start filter
+            float out  =   stripe_cache[      0] * filter_buff[0]
+                + stripe_cache[      1] * filter_buff[3]
+                + stripe_cache[      2] * filter_buff[6]
+                + stripe_cache[      3] * filter_buff[1]
+                + stripe_cache[      4] * filter_buff[4]
+                + stripe_cache[      5] * filter_buff[7]
+                + stripe_cache[      6] * filter_buff[2]
+                + stripe_cache[      7] * filter_buff[5]
+                + stripe_cache[      8] * filter_buff[8];
+            // End filter
+            out_row_buff[out_lane++] = out;
+            fid += filter_size;
+
+            for (int rc = 0; rc < 6; rc++) {
+                stripe_cache[rc] = stripe_cache[rc + 3];
+            }
+            stripe_cache[6] = channel_buff[fid + 6];
+            stripe_cache[7] = channel_buff[fid + 7];
+            stripe_cache[8] = channel_buff[fid + 8];
+
+            // Row buffer full or last lane?
+            if (out_lane == row_buff_size || (cw == width - 1)) {
+                barrier(CLK_LOCAL_MEM_FENCE);
+                if (lx < out_lane) {
+                    // lx = channels 2 or 8, ly = outputs 32
+                    // repurpose the lx threads over columns now
+                    float val;
+                    val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
+                    merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
+                }
+                out_cw  += row_buff_size;
+                out_lane = 0;
+            }
         }
     }
 }
 
 __kernel void merge(
-                    __global const float * in,
-                    __global float * out,
-                    __constant const float * biases,
-                    __private const int channels) {
+    __global const float * in,
+    __global float * out,
+    __constant const float * biases,
+    __private const int channels) {
 
     // cl::NDRange global(outputs, 19*19);
     const int gx = get_global_id(0);

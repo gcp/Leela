@@ -8,9 +8,8 @@
 #define CL_HPP_ENABLE_EXCEPTIONS
 #include <CL/cl2.hpp>
 
-#include <boost/tr1/array.hpp>
 #include <boost/thread/tss.hpp>
-#include <boost/atomic.hpp>
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -38,7 +37,7 @@ private:
     cl::Buffer m_mergeBuffer;
     cl::Buffer m_outBuffer;
     bool m_buffers_allocated{false};
-    boost::atomic<int> m_results_outstanding{0};
+    std::atomic<int> m_results_outstanding{0};
 };
 
 class OpenCL {
@@ -50,8 +49,8 @@ public:
 
     template <unsigned long W, unsigned long B>
     void push_convolve(unsigned int filter_size,
-                       std::tr1::array<float, W> & weights,
-                       std::tr1::array<float, B> & biases) {
+                       std::array<float, W> & weights,
+                       std::array<float, B> & biases) {
         int layer = get_layer_count();
         push_weights(layer, weights);
         push_weights(layer, biases);
@@ -70,13 +69,13 @@ public:
     bool thread_can_issue();
     void callback_finished();
     void join_outstanding_cb();
-    boost::atomic<int> * get_thread_results_outstanding();
+    std::atomic<int> * get_thread_results_outstanding();
 
 private:
     OpenCL();
     void initialize();
     template <unsigned long W>
-    void push_weights(int layer, std::tr1::array<float, W> & weights) {
+    void push_weights(int layer, std::array<float, W> & weights) {
         add_weights(layer, W, &weights[0]);
     }
     void add_weights(int layer, size_t size, float * weights);
@@ -89,11 +88,13 @@ private:
     std::vector<Layer> m_layers;
     cl::Program m_program;
 
-    int m_wavefront_size{0};
+    size_t m_wavefront_size{0};
+    size_t m_max_workgroup_size{0};
+    std::vector<size_t> m_max_workgroup_dims;
     bool m_init_ok{false};
 
     // Keep track of all async/cb threads we dispatch
-    boost::atomic<int> m_cb_outstanding{0};
+    std::atomic<int> m_cb_outstanding{0};
 };
 
 #endif

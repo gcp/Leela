@@ -6,6 +6,8 @@
 #include <string>
 #include <sstream>
 #include <cmath>
+#include <climits>
+#include <algorithm>
 
 #include "config.h"
 #include "Utils.h"
@@ -22,12 +24,54 @@
 
 using namespace Utils;
 
-// Configuration flags, set by Leela.cpp
+// Configuration flags
 bool cfg_allow_pondering;
 int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
 int cfg_lagbuffer_cs;
+#ifdef USE_OPENCL
+int cfg_rowtiles;
+#endif
+float cfg_crit_mine_1;
+float cfg_crit_mine_2;
+float cfg_crit_his_1;
+float cfg_crit_his_2;
+float cfg_regular_self_atari;
+float cfg_useless_self_atari;
+float cfg_tactical;
+float cfg_bound;
+float cfg_pass_score;
+float cfg_fpu;
+float cfg_cutoff_offset;
+float cfg_cutoff_ratio;
+float cfg_puct;
+float cfg_psa;
+
+void GTP::setup_default_parameters() {
+    cfg_allow_pondering = true;
+    cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
+    cfg_enable_nets = true;
+    cfg_max_playouts = INT_MAX;
+    cfg_lagbuffer_cs = 100;
+#ifdef USE_OPENCL
+    cfg_rowtiles = 5;
+#endif
+    cfg_crit_mine_1 = 4.16f;
+    cfg_crit_mine_2 = 1.81f;
+    cfg_crit_his_1 = 9.03f;
+    cfg_crit_his_2 = 2.58f;
+    cfg_tactical = 10.89f;
+    cfg_bound = 0.168f;
+    cfg_regular_self_atari = 0.768f;
+    cfg_useless_self_atari = 0.0326f;
+    cfg_pass_score = 1.41e-5f;
+    cfg_fpu = 5.2f;
+    cfg_puct = 0.45f;
+    cfg_psa = 0.232f;
+    cfg_cutoff_offset = 25.44f;
+    cfg_cutoff_ratio = 4.72f;
+}
 
 const std::string GTP::s_commands[] = {
     "protocol_version",
@@ -422,7 +466,8 @@ bool GTP::execute(GameState & game, std::string xinput) {
             game.play_move(move);
             game.display_state();
 
-        } while (game.get_passes() < 2);
+        } while (game.get_passes() < 2
+                 && game.get_last_move() != FastBoard::RESIGN);
 
         return true;
     } else if (command.find("bench") == 0) {

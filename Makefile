@@ -1,7 +1,7 @@
 default:
 	$(MAKE) CC=gcc CXX=g++ \
 		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -ffast-math -march=native -flto -std=c++11 -DNDEBUG -D_CONSOLE'  \
-		LDFLAGS='$(LDFLAGS)' \
+		LDFLAGS='$(LDFLAGS) -g' \
 		leela
 
 gcc32b:
@@ -12,7 +12,7 @@ gcc32b:
 
 debug:
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O0 -g -std=c++11 -D_CONSOLE' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -Og -g -std=c++11 -D_CONSOLE' \
 		LDFLAGS='$(LDFLAGS) -g' \
 		leela
 
@@ -29,8 +29,9 @@ asan:
 		leela
 
 LIBS = -lboost_thread -lboost_system -lboost_program_options
-LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
+DYNAMIC_LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
 LIBS += -lopenblas
+DYNAMIC_LIBS += -lpthread
 #DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
@@ -40,6 +41,7 @@ CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include
 CAFFE_LIB = $(CAFFE_BASE)/lib
 CXXFLAGS += -I$(CAFFE_INC) -I/usr/local/cuda/include
+#CXXFLAGS += -I/opt/intel/mkl/include
 #CXXFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Headers
 LDFLAGS  += -L$(CAFFE_LIB)
 #LDFLAGS  += -L/opt/intel/mkl/lib/intel64/
@@ -63,8 +65,8 @@ deps = $(sources:%.cpp=%.d)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 leela: $(objects)
-#	$(CXX) $(LDFLAGS) -o $@ $^ -static-libgcc -static-libstdc++ -Wl,-Bstatic $(LIBS) -Wl,-Bdynamic -lpthread $(DYNAMIC_LIBS)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS) $(DYNAMIC_LIBS)
+	$(CXX) $(LDFLAGS) -o $@ $^ -static-libgcc -static-libstdc++ -Wl,-Bstatic $(LIBS) -Wl,-Bdynamic $(DYNAMIC_LIBS)
+#	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS) $(DYNAMIC_LIBS)
 
 clean:
 	-$(RM) leela $(objects) $(deps)

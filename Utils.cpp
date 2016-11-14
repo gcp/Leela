@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <boost/thread.hpp>
+#include <thread>
 #ifdef WIN32
 #include <windows.h>
 #else
