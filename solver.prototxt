@@ -1,48 +1,50 @@
-# 292952 training positions.
-# 12208 testing positions.
-# 340199 training positions.
-# 17906 testing positions.
+#                    batchsize      128     64      32
+# 32889856 training positions. = 256000 512000 1027808
+# 1370412 testing positions.   =  10000  20000   42800
 # The train/test net protocol buffer definition
 net: "train-test.prototxt"
 
 # test_iter specifies how many forward passes the test should carry out.
-# 128 * 105 per test
-test_iter: 95
+# 1/10th total test items
+test_iter: 1000
 
 # Carry out testing every n training iterations.
-# 20000 * 128 = full pass per test
-test_interval: 2200
+# every 1/10th epoch
+test_interval: 51200
 
 # The base learning rate, momentum and the weight decay of the network.
-momentum: 0.95
+momentum: 0.9
 
 # begin training at a learning rate of 0.01 = 1e-2
-base_lr: 1.0
+#base_lr: 1.0
 
-# learning rate policy: drop the learning rate in "steps"
-# by a factor of gamma every stepsize iterations
-lr_policy: "fixed"
+# Adam
+#base_lr: 0.001
+#momentum: 0.9
+#momentum2: 0.999
+#lr_policy: "fixed"
 
-# drop the learning rate by a factor of 1/gamma
-#gamma: 0.1
-
-# drop the learning rate every n iterations
-# 20 * 100 = 20 epochs
-#stepsize: 2000
+base_lr: 0.001     # begin training at a learning rate of 0.01 = 1e-2
+lr_policy: "step"  # learning rate policy: drop the learning rate in "steps"
+                   # by a factor of gamma every stepsize iterations
+gamma: 0.2         # drop the learning rate by a factor of 5
+                   # (i.e., multiply it by a factor of gamma = 0.2)
+stepsize: 5120000  # drop the learning rate every 10 epochs
 
 # Display every n iterations
-# 1.28M pos
-display: 1100
+display: 512000
 
 # The total number of iterations
-# 100 * 100
-max_iter: 2200000
+# 100 epoch
+max_iter: 51200000
 
 # snapshot intermediate results
-snapshot: 22000
+snapshot: 51200
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
-type: "AdaDelta"
-delta: 1e-6
+type: "Nesterov"
+#type: "AdaDelta"
+#type: "SGD"
+#delta: 1e-6
 solver_mode: GPU

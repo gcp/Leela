@@ -26,7 +26,7 @@ layer {
   }
   data_param {
     source: "leela_test"
-    batch_size: 64
+    batch_size: 64 
     backend: LEVELDB
   }
 }
@@ -56,7 +56,7 @@ layer {
   # learning rate and decay multipliers for the biases
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 32
+    num_output: 128
     kernel_size: 5
     pad: 2
     stride: 1
@@ -70,39 +70,23 @@ layer {
 }
 
 layer {
-  name: "relu1"
-  type: "ReLU"
+  name: "elu1"
+  type: "ELU"
   # in-place
   bottom: "conv1"
   top: "conv1"
 }
 
 layer {
-  name: "bn1"
-  type: "BatchNorm"
-  bottom: "conv1"
-  top: "bn1"
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
-  }
-}
-
-layer {
   name: "conv2"
   type: "Convolution"
   # input -> output
-  bottom: "bn1"
+  bottom: "conv1"
   top: "conv2"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 32
+    num_output: 128 
     kernel_size: 3
     pad: 1
     stride: 1
@@ -116,39 +100,23 @@ layer {
 }
 
 layer {
-  name: "relu2"
-  type:  "ReLU"
+  name: "elu2"
+  type:  "ELU"
   # in-place
   bottom: "conv2"
   top: "conv2"
-}
-
-layer {
-  name: "bn2"
-  type: "BatchNorm"
-  bottom: "conv2"
-  top: "bn2"
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
-  }
 }
 
 layer {
   name: "conv3"
   type: "Convolution"
   # input -> output
-  bottom: "bn2"
+  bottom: "conv2"
   top: "conv3"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 32
+    num_output: 128
     kernel_size: 3
     pad: 1
     stride: 1
@@ -162,39 +130,23 @@ layer {
 }
 
 layer {
-  name: "relu3"
-  type: "ReLU"
+  name: "elu3"
+  type: "ELU"
   # in-place
   bottom: "conv3"
   top: "conv3"
-}
-
-layer {
-  name: "bn3"
-  type: "BatchNorm"
-  bottom: "conv3"
-  top: "bn3"
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
-  }
 }
 
 layer {
   name: "conv4"
   type: "Convolution"
   # input -> output
-  bottom: "bn3"
+  bottom: "conv3"
   top: "conv4"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
-    num_output: 32
+    num_output: 128
     kernel_size: 3
     pad: 1
     stride: 1
@@ -208,35 +160,289 @@ layer {
 }
 
 layer {
-  name: "relu4"
-  type: "ReLU"
+  name: "elu4"
+  type: "ELU"
   # in-place
   bottom: "conv4"
   top: "conv4"
 }
 
 layer {
-  name: "bn4"
-  type: "BatchNorm"
+  name: "conv5"
+  type: "Convolution"
+  # input -> output
   bottom: "conv4"
-  top: "bn4"
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
+  top: "conv5"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
   }
 }
 
 layer {
-  name: "conv5"
+  name: "elu5"
+  type: "ELU"
+  # in-place
+  bottom: "conv5"
+  top: "conv5"
+}
+
+layer {
+  name: "conv6"
   type: "Convolution"
   # input -> output
-  bottom: "bn4"
-  top: "conv5"
+  bottom: "conv5"
+  top: "conv6"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
+  }
+}
+
+layer {
+  name: "elu6"
+  type: "ELU"
+  # in-place
+  bottom: "conv6"
+  top: "conv6"
+}
+
+layer {
+  name: "conv7"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv6"
+  top: "conv7"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
+  }
+}
+
+layer {
+  name: "elu7"
+  type: "ELU"
+  # in-place
+  bottom: "conv7"
+  top: "conv7"
+}
+
+layer {
+  name: "conv8"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv7"
+  top: "conv8"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
+  }
+}
+
+layer {
+  name: "elu8"
+  type: "ELU"
+  # in-place
+  bottom: "conv8"
+  top: "conv8"
+}
+
+layer {
+  name: "conv9"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv8"
+  top: "conv9"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
+  }
+}
+
+layer {
+  name: "elu9"
+  type: "ELU"
+  # in-place
+  bottom: "conv9"
+  top: "conv9"
+}
+
+layer {
+  name: "conv10"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv9"
+  top: "conv10"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
+  }
+}
+
+layer {
+  name: "elu10"
+  type: "ELU"
+  # in-place
+  bottom: "conv10"
+  top: "conv10"
+}
+
+layer {
+  name: "conv11"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv10"
+  top: "conv11"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
+  }
+}
+
+layer {
+  name: "elu11"
+  type: "ELU"
+  # in-place
+  bottom: "conv11"
+  top: "conv11"
+}
+
+layer {
+  name: "conv12"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv11"
+  top: "conv12"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
+  }
+}
+
+layer {
+  name: "elu12"
+  type: "ELU"
+  # in-place
+  bottom: "conv12"
+  top: "conv12"
+}
+
+layer {
+  name: "conv13"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv12"
+  top: "conv13"
+  param { lr_mult: 1 decay_mult: 1 }
+  param { lr_mult: 2 decay_mult: 0 }
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant" # initialize the biases to zero (0)
+    }
+  }
+}
+
+layer {
+  name: "elu13"
+  type: "ELU"
+  # in-place
+  bottom: "conv13"
+  top: "conv13"
+}
+
+layer {
+  name: "conv14"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv13"
+  top: "conv14"
   param { lr_mult: 1 decay_mult: 1 }
   param { lr_mult: 2 decay_mult: 0 }
   convolution_param {
@@ -254,12 +460,20 @@ layer {
 }
 
 layer {
+  name: "elu14"
+  type: "ELU"
+  # in-place
+  bottom: "conv14"
+  top: "conv14"
+}
+
+layer {
   name: "slicer_output"
   type: "Slice"
-  bottom: "conv5"
-  top: "conv5_o1"
-  top: "conv5_o2"
-  top: "conv5_o3"
+  bottom: "conv14"
+  top: "conv14_o1"
+  top: "conv14_o2"
+  top: "conv14_o3"
   slice_param {
     axis: 1
     slice_point: 1
@@ -270,21 +484,21 @@ layer {
 layer {
   name: "flatten_o1"
   type: "Flatten"
-  bottom: "conv5_o1"
+  bottom: "conv14_o1"
   top: "flatten_o1"
 }
 
 layer {
   name: "flatten_o2"
   type: "Flatten"
-  bottom: "conv5_o2"
+  bottom: "conv14_o2"
   top: "flatten_o2"
 }
 
 layer {
   name: "flatten_o3"
   type: "Flatten"
-  bottom: "conv5_o3"
+  bottom: "conv14_o3"
   top: "flatten_o3"
 }
 
@@ -330,7 +544,7 @@ layer {
   bottom: "label_move1"
   # output
   top: "loss"
-  loss_weight: 0.5
+  # loss_weight: 1.0
 }
 
 layer {
@@ -341,7 +555,7 @@ layer {
   bottom: "label_move2_m"
   # output
   top: "loss_2"
-  loss_weight: 0.3
+  # loss_weight: 0.3
 }
 
 layer {
@@ -352,7 +566,7 @@ layer {
   bottom: "label_move3_m"
   # output
   top: "loss_3"
-  loss_weight: 0.2
+  # loss_weight: 0.2
 }
 
 layer {
