@@ -108,7 +108,7 @@ void TimeControl::display_times() {
 
 int TimeControl::max_time_for_move(int color) {
     /*
-        always keep a 2 second margin for net hiccups
+        always keep a 1 second margin for net hiccups
     */
     const int BUFFER_CENTISECS = cfg_lagbuffer_cs;
 
@@ -137,11 +137,8 @@ int TimeControl::max_time_for_move(int color) {
                 timealloc = (m_remaining_time[color] - BUFFER_CENTISECS) / m_byostones;
             } else {
                 assert(m_byoperiods);
-                // Just pretend we have a flat time remaining.
-                int remaining = m_byotime * (m_periods_left[color] - 1);
-                timealloc = (remaining - BUFFER_CENTISECS) / m_moves_expected;
-                // Add back the guaranteed extra seconds
-                timealloc += m_byotime - BUFFER_CENTISECS;
+                // Just use the byo yomi period
+                timealloc = m_byotime - BUFFER_CENTISECS;
             }
         } else {
             /*
