@@ -24,6 +24,7 @@ using namespace Utils;
 
 static std::string sourceCode = R"(
     __kernel
+    __attribute__((reqd_work_group_size(8, 32, 1)))
     void convolve5(
                    __global const float * in,
                    __global float * merge,
@@ -102,6 +103,7 @@ static std::string sourceCode = R"(
 
         int out_lane = 0;
         int out_cw   = 0;
+        #pragma unroll
         for (int cw = 0; cw < width; cw++) {
             int fwstart = cw - extent;
             int fwend   = cw + extent;
@@ -141,6 +143,7 @@ static std::string sourceCode = R"(
             } else {
                 const float * filter_idx = filter_buff;
                 out = 0.0f;
+                #pragma unroll
                 for (int fh = 0; fh < filter_size; fh++) {
                     for (int fw = fwstart; fw <= fwend; fw++) {
                         // "zero padding"
@@ -180,6 +183,7 @@ static std::string sourceCode = R"(
     }
 
     __kernel
+    __attribute__((work_group_size_hint(8, 32, 1)))
     void convolve3(
                    __global const float * in,
                    __global float * merge,
@@ -291,6 +295,7 @@ static std::string sourceCode = R"(
                 stripe_cache[rc] = channel_buff[fid + rc];
             }
 
+            #pragma unroll
             for (int cw = 0; cw < width; cw++) {
                 // Start filter
                 float out  =   stripe_cache[      0] * filter_buff[0]
@@ -573,7 +578,8 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     if (m_max_workgroup_size < 512 || m_max_workgroup_dims[1] < 64) {
         outputGroup = std::min(outputs, 32);
     } else {
-        outputGroup = std::min(outputs, 64);
+        // Can optionally be 64
+        outputGroup = std::min(outputs, 32);
     }
 
     // Total output size after reducing
