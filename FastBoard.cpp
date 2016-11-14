@@ -2028,6 +2028,170 @@ void FastBoard::add_global_captures(int color, movelist_t & moves) {
     m_critical.clear();
 }
 
+void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
+    std::array<int, 6> nakade;
+    std::array<int, 6> empty_counts;
+    std::array<int, 5> nbr_to_coord;
+
+    int nbrs = count_neighbours(EMPTY, vertex);
+    // We're the only empty square in the hood.
+    if (nbrs == 0) return;
+
+    std::fill(empty_counts.begin(), empty_counts.end(), 0);
+    std::fill(nbr_to_coord.begin(), nbr_to_coord.end(), 0);
+
+    // We're on an empty square, set empty neighbours
+    size_t sq_count = 0;
+    nbr_to_coord[nbrs] = vertex;
+    empty_counts[nbrs]++;
+    nakade[sq_count++] = vertex;
+
+    size_t idx = 0;
+
+    do {
+        int new_vertex = nakade[idx];
+        for (int k = 0; k < 4; k++) {
+            int ai = new_vertex + m_dirs[k];
+            if (m_square[ai] == !color) {
+                // Not surrounded, not nakade
+                return;
+            } else if (m_square[ai] == color) {
+                // Fill stops here, but keep looking
+                continue;
+            } else if (m_square[ai] == EMPTY) {
+                // Add eyespace
+                bool found = false;
+                for (size_t j = 0; j < sq_count; j++) {
+                    int sq = nakade[j];
+                    if (sq == ai) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    if (sq_count < nakade.size()) {
+                        int nbrs = count_neighbours(EMPTY, ai);
+                        nbr_to_coord[nbrs] = ai;
+                        empty_counts[nbrs]++;
+                        nakade[sq_count++] = ai;
+                    } else {
+                        // Too much eyespace, always alive
+                        return;
+                    }
+                }
+            }
+        }
+    } while (++idx < sq_count);
+
+    // http://senseis.xmp.net/?KillableEyeShapes
+    if (sq_count <= 2) {
+        return;
+    } else if (sq_count == 3) {
+        assert(nbr_to_coord[2] != 0);
+        moves.push_back(nbr_to_coord[2]);
+    } else if (sq_count == 4) {
+        // Square 4 is dead but doesn't need immediate nakade
+        // Pyramid 4 is dead
+        if (empty_counts[3] == 1) {
+            assert(nbr_to_coord[3] != 0);
+            moves.push_back(nbr_to_coord[3]);
+        } else if (empty_counts[2] == 2 && empty_counts[1] == 2) {
+            // Straight 4 is alive
+            // Bent 4 in the corner is ko
+            int crit_2_lib_pnt = 0;
+            bool bent4 = false;
+            for (size_t j = 0; j < sq_count; j++) {
+                int sq = nakade[j];
+                std::pair<int, int> coords = get_xy(sq);
+                if ((coords.first == 0 || coords.first == get_boardsize() - 1)
+                    && (coords.second == 0 || coords.second == get_boardsize() - 1)) {
+                    // corner square
+                    if (count_neighbours(EMPTY, sq) == 2) {
+                        // must be a bent 4, but we have to play on the other
+                        // 2-lib point
+                        bent4 = true;
+                    }
+                } else {
+                    // Non corner, 2 libs, may be critical point
+                    if (count_neighbours(EMPTY, sq) == 2) {
+                        crit_2_lib_pnt = sq;
+                    }
+                }
+            }
+            if (bent4) {
+                assert(crit_2_lib_pnt);
+                moves.push_back(crit_2_lib_pnt);
+            }
+        }
+        // Everything else lives
+    } else if (sq_count == 5) {
+        if (empty_counts[1] == 1 && empty_counts[3] == 1) {
+            // Bulky 5 is dead
+            assert(nbr_to_coord[3] != 0);
+            moves.push_back(nbr_to_coord[3]);
+        } else if (empty_counts[4] == 1) {
+            // Crossed 5 is dead
+            assert(nbr_to_coord[4] != 0);
+            moves.push_back(nbr_to_coord[4]);
+        }
+        // Everything else lives
+    } else if (sq_count == 6) {
+        // Rabbitty 6
+        if (empty_counts[1] == 2 && empty_counts[4] == 1) {
+            assert(empty_counts[2] == 3);
+            assert(nbr_to_coord[4] != 0);
+            moves.push_back(nbr_to_coord[4]);
+        } else if (empty_counts[2] == 4 && empty_counts[3] == 2) {
+            // Rectangular 6 in the corner is dead
+            int crit_3_lib_pnt = 0;
+            bool rect6 = false;
+            for (size_t j = 0; j < sq_count; j++) {
+                int sq = nakade[j];
+                std::pair<int, int> coords = get_xy(sq);
+                if ((coords.first == 0 || coords.first == get_boardsize() - 1)
+                    && (coords.second == 0 || coords.second == get_boardsize() - 1)) {
+                    // corner square
+                    rect6 = true;
+                } else {
+                    // Non corner, 3 libs, may be critical point
+                    if (count_neighbours(EMPTY, sq) == 3
+                        && count_neighbours(color, sq) == 1
+                        && count_neighbours(!color, sq) == 0) {
+                        crit_3_lib_pnt = sq;
+                    }
+                }
+            }
+            if (rect6) {
+                assert(crit_3_lib_pnt);
+                moves.push_back(crit_3_lib_pnt);
+            }
+        }
+        // Everything else lives
+    }
+}
+
+// add nakade moves for color
+void FastBoard::add_near_nakade_moves(int color, int vertex, movelist_t & moves) {
+    // empty square directly next to last stone?
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+        if (m_square[ai] == EMPTY) {
+            // nakade shape is made by color not to move
+            check_nakade(!color, ai, moves);
+        }
+    }
+}
+
+int FastBoard::replace_if_nakade(int color, int vertex) {
+    movelist_t tmp_moves;
+    check_nakade(!color, vertex, tmp_moves);
+    if (tmp_moves.empty()) {
+        return vertex;
+    } else {
+        return tmp_moves[0];
+    }
+}
+
 int FastBoard::capture_size(int color, int vertex) {
     assert(m_square[vertex] == EMPTY);
     

@@ -127,6 +127,29 @@ int FastState::walk_empty_list(int color, bool allow_sa) {
     return FastBoard::PASS;
 }
 
+int FastState::select_weighted(FastBoard::scoredmoves_t & scoredmoves,
+                                int cumul) {
+    int index = Random::get_Rng()->randint32(cumul);
+
+    for (size_t i = 0; i < scoredmoves.size(); i++) {
+        int point = scoredmoves[i].second;
+        if (index < point) {
+            return play_move_fast(scoredmoves[i].first);
+        }
+    }
+
+    return play_move_fast(FastBoard::PASS);
+}
+
+int FastState::select_uniform(FastBoard::movelist_t & moves) {
+    if (moves.size()) {
+        int index = Random::get_Rng()->randint32(moves.size());
+        return play_move_fast(moves[index]);
+    } else {
+        return play_move_fast(FastBoard::PASS);
+    }
+}
+
 int FastState::play_random_move(int color) {
     board.m_tomove = color;
 
@@ -140,6 +163,9 @@ int FastState::play_random_move(int color) {
         if (board.get_square(m_lastmove) == !color) {
             board.add_global_captures(color, moves);
             board.save_critical_neighbours(color, m_lastmove, moves);
+            if (0.2f > rng->randflt()) {
+                board.add_near_nakade_moves(color, m_lastmove, moves);
+            }
             board.add_pattern_moves(color, m_lastmove, moves);
             moves.erase(std::remove_if(moves.begin(), moves.end(),
                                        [this](int sq){ return sq == m_komove;}),
@@ -149,10 +175,8 @@ int FastState::play_random_move(int color) {
 
     if (moves.size()) {
         float cumul = 0.0f;
-
         for (int sq : moves) {
             assert(sq != m_komove);
-
             int pattern = board.get_pattern_fast_augment(sq);
             float score = matcher->matches(color, pattern);
             std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);

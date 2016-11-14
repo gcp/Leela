@@ -20,11 +20,7 @@ public:
     /*
         largest board supported 
     */
-#ifdef LITEVERSION    
-    static const int MAXBOARDSIZE = 13;
-#else
     static const int MAXBOARDSIZE = 25;
-#endif    
 
     /*
         highest existing square        
@@ -61,7 +57,7 @@ public:
 
     int get_boardsize(void);
     square_t get_square(int x, int y);
-    square_t get_square(int vertex); 
+    square_t get_square(int vertex);
     int get_vertex(int i, int j);
     void set_square(int x, int y, square_t content);
     void set_square(int vertex, square_t content);
@@ -75,6 +71,8 @@ public:
     void save_critical_neighbours(int color, int vertex, movelist_t & moves);
     void add_pattern_moves(int color, int vertex, movelist_t & moves);
     void add_global_captures(int color, movelist_t & moves);
+    void add_near_nakade_moves(int color, int vertex, movelist_t & moves);
+    int replace_if_nakade(int color, int vertex);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
@@ -139,8 +137,8 @@ public:
     void display_board(int lastmove = -1);    
 
     static bool starpoint(int size, int point);
-    static bool starpoint(int size, int x, int y);                           
-                
+    static bool starpoint(int size, int x, int y);
+
 protected:
     /*
         bit masks to detect eyes on neighbors
@@ -178,13 +176,14 @@ protected:
     bool kill_or_connect(int color, int vertex);  
     int in_atari(int vertex);
     bool fast_in_atari(int vertex);
-    template <int N> void add_string_liberties(int vertex, 
+    template <int N> void add_string_liberties(int vertex,
                                                std::array<int, N> & nbr_libs,
                                                int & nbr_libs_cnt);
     void kill_neighbours(int vertex, movelist_t & moves);
     void try_capture(int color, int vertex, movelist_t & moves);
     FastBoard remove_dead();
     bool predict_solid_eye(const int move, const int color, const int vtx);
+    void check_nakade(int color, int vertex, movelist_t & moves);
 };
 
 #endif
