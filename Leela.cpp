@@ -203,6 +203,10 @@ int main (int argc, char *argv[]) {
     float komi = 7.5;
     maingame->init_game(19, komi);
 
+    if (!GTP::perform_self_test(*maingame)) {
+        exit(EXIT_FAILURE);
+    }
+
     while (!done) {
         if (!gtp_mode) {
             maingame->display_state();

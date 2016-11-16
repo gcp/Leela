@@ -73,6 +73,26 @@ void GTP::setup_default_parameters() {
     cfg_cutoff_ratio = 4.72f;
 }
 
+bool GTP::perform_self_test(GameState & state) {
+    bool testPassed = true;
+#ifdef USE_OPENCL
+    myprintf("OpenCL self-test: ");
+    // Perform self-test
+    auto vec = Network::get_Network()->get_scored_moves(
+        &state, Network::Ensemble::DIRECT);
+    testPassed &= vec[60].first > 0.142 && vec[60].first < 0.143;
+    testPassed &= vec[60].second == 88;
+    testPassed &= vec[72].first > 0.143 && vec[72].first < 0.144;
+    testPassed &= vec[72].second == 100;
+    if (testPassed) {
+        myprintf("passed.\n");
+    } else {
+        myprintf("failed. Check your OpenCL drivers.\n");
+    }
+#endif
+    return testPassed;
+}
+
 const std::string GTP::s_commands[] = {
     "protocol_version",
     "name",

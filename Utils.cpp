@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include <thread>
 #ifdef WIN32
+#include <boost/thread.hpp>
 #include <windows.h>
 #else
 #include <sys/select.h>

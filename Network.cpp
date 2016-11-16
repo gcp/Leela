@@ -104,7 +104,7 @@ void Network::initialize(void) {
 #ifdef USE_OPENCL
     std::cerr << "Initializing OpenCL" << std::endl;
     OpenCL * cl = OpenCL::get_OpenCL();
-    std::cerr << "Transfering weights to GPU..." << std::flush;
+    std::cerr << "Transferring weights to GPU..." << std::flush;
     cl->push_convolve(5, conv1_w, conv1_b);
     cl->push_convolve(3, conv2_w, conv2_b);
     cl->push_convolve(3, conv3_w, conv3_b);

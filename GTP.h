@@ -29,8 +29,9 @@ extern float cfg_psa;
 
 class GTP {
 public:
-    static bool execute(GameState &game, std::string xinput);
+    static bool execute(GameState & game, std::string xinput);
     static void setup_default_parameters();
+    static bool perform_self_test(GameState & state);
 private:
     static const int GTP_VERSION = 2;
 
