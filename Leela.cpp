@@ -49,7 +49,7 @@ int main (int argc, char *argv[]) {
         ("nonets", "Disable use of neural networks.")
 #ifdef USE_OPENCL
         ("rowtiles", po::value<int>()->default_value(cfg_rowtiles),
-                     "Split up the board in # tiles")
+                     "Split up the board in # tiles.")
 #endif
 #ifdef USE_TUNER
         ("crit_mine_1", po::value<float>())
