@@ -1,6 +1,9 @@
 #                    batchsize      128     64      32
 # 32889856 training positions. = 256000 512000 1027808
 # 1370412 testing positions.   =  10000  20000   42800
+# value
+# 30952497 training positions. = 241816 x 128
+# 1289690 testing positions.   =  10075 x 128
 # The train/test net protocol buffer definition
 net: "train-test.prototxt"
 
@@ -10,36 +13,23 @@ test_iter: 1000
 
 # Carry out testing every n training iterations.
 # every 1/10th epoch
-test_interval: 51200
+test_interval: 24200
 
-# The base learning rate, momentum and the weight decay of the network.
 momentum: 0.9
+base_lr: 0.01
 
-# begin training at a learning rate of 0.01 = 1e-2
-#base_lr: 1.0
-
-# Adam
-#base_lr: 0.001
-#momentum: 0.9
-#momentum2: 0.999
-#lr_policy: "fixed"
-
-base_lr: 0.001     # begin training at a learning rate of 0.01 = 1e-2
-lr_policy: "step"  # learning rate policy: drop the learning rate in "steps"
-                   # by a factor of gamma every stepsize iterations
-gamma: 0.2         # drop the learning rate by a factor of 5
-                   # (i.e., multiply it by a factor of gamma = 0.2)
-stepsize: 5120000  # drop the learning rate every 10 epochs
+lr_policy: "linear" 
+power: 1.0
 
 # Display every n iterations
-display: 512000
+display: 24200
 
 # The total number of iterations
 # 100 epoch
-max_iter: 51200000
+max_iter: 24200000
 
 # snapshot intermediate results
-snapshot: 51200
+snapshot: 24200
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU

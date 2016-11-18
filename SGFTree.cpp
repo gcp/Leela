@@ -164,18 +164,22 @@ void SGFTree::populate_states(void) {
     it = m_properties.find("RE");
     if (it != m_properties.end()) {
         std::string result = it->second;
-        if (boost::algorithm::starts_with(result, "W+")) {
-            m_winner = FastBoard::WHITE;
-        } else if (boost::algorithm::starts_with(result, "B+")) {
-            m_winner = FastBoard::BLACK;
+        if (boost::algorithm::find_first(result, "Time")) {
+            // std::cerr << "Skipping: " << result << std::endl;
+            m_winner = FastBoard::EMPTY;
         } else {
-            m_winner = FastBoard::INVAL;
-            // std::cerr << "Could not parse game result: " << result << std::endl;
+            if (boost::algorithm::starts_with(result, "W+")) {
+                m_winner = FastBoard::WHITE;
+            } else if (boost::algorithm::starts_with(result, "B+")) {
+                m_winner = FastBoard::BLACK;
+            } else {
+                m_winner = FastBoard::INVAL;
+                // std::cerr << "Could not parse game result: " << result << std::endl;
+            }
         }
     } else {
         m_winner = FastBoard::EMPTY;
     }
-
 
     // handicap stone
     std::pair<PropertyMap::iterator, 

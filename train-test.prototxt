@@ -9,7 +9,7 @@ layer {
   }
   data_param {
     source: "leela_train"
-    batch_size: 256
+    batch_size: 128
     backend: LEVELDB
   }
 }
@@ -24,7 +24,7 @@ layer {
   }
   data_param {
     source: "leela_test"
-    batch_size: 256
+    batch_size: 128
     backend: LEVELDB
   }
 }
@@ -39,7 +39,7 @@ layer {
   }
   data_param {
     source: "leela_train_label"
-    batch_size: 256
+    batch_size: 128
     backend: LEVELDB
   }
 }
@@ -54,7 +54,7 @@ layer {
   }
   data_param {
     source: "leela_test_label"
-    batch_size: 256
+    batch_size: 128
     backend: LEVELDB
   }
 }
