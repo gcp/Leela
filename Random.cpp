@@ -38,7 +38,7 @@ uint32 Random::randint32(const uint32 max) {
 //      Generators", Mathematics of Computation, 65 (1996), pp. 203-213.
 //----------------------------------------------------------------------------//
 
-uint32 Random::random(void) {      
+uint32 Random::random(void) {
     const uint32 mask = 0xffffffff;
     uint32 b;
     b  = (((s1 << 13) & mask) ^ s1) >> 19;
@@ -47,22 +47,22 @@ uint32 Random::random(void) {
     s2 = (((s2 & 0xFFFFFFF8U) <<  4) & mask) ^ b;
     b  = (((s3 << 3) & mask) ^ s3) >> 11;
     s3 = (((s3 & 0xFFFFFFF0U) << 17) & mask) ^ b;
-    return (s1 ^ s2 ^ s3);        
+    return (s1 ^ s2 ^ s3);
 }
 
 void Random::seedrandom(uint32 s) {
     if (s == 0) {
         s = 1;
-    }        
-    
+    }
+
     s1 = (741103597 * s);
     s2 = (741103597 * s1);
     s3 = (741103597 * s2);
-    
+
     s1 |= 2;
     s2 |= 8;
     s3 |= 16;
-} 
+}
 
 float Random::randflt(void) {
     uint32 rnd = random();

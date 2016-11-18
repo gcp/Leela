@@ -3,9 +3,8 @@
 
 #include "config.h"
 
-#include <boost/thread.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/atomic.hpp>
+#include <tuple>
+#include <atomic>
 
 #include "SMP.h"
 #include "GameState.h"
@@ -17,7 +16,7 @@
 
 class UCTNode {
 public:
-    typedef boost::tuple<float, int, UCTNode*> sortnode_t;
+    typedef std::tuple<float, int, UCTNode*> sortnode_t;
 
     UCTNode(int vertex, float score, int expand_treshold);
     ~UCTNode();
@@ -26,9 +25,9 @@ public:
     float get_winrate(int tomove) const;
     float get_raverate() const;
     double get_blackwins() const;
-    void create_children(boost::atomic<int> & nodecount,
+    void create_children(std::atomic<int> & nodecount,
                          FastState & state, bool use_nets, bool at_root);
-    void expansion_cb(boost::atomic<int> * nodecount,
+    void expansion_cb(std::atomic<int> * nodecount,
                       FastState & state,
                       Network::Netresult & netresult,
                       bool use_nets);
@@ -65,7 +64,7 @@ public:
 
 private:
     void link_child(UCTNode * newchild);
-    void link_nodelist(boost::atomic<int> & nodecount,
+    void link_nodelist(std::atomic<int> & nodecount,
                        FastBoard & state,
                        std::vector<Network::scored_node> & nodes,
                        bool use_nets);

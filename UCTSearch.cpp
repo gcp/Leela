@@ -5,7 +5,12 @@
 #include <limits.h>
 #include <vector>
 #include <utility>
+#include <thread>
+#include <algorithm>
+#ifdef _WIN32
 #include <boost/thread.hpp>
+#include <boost/thread/detail/tss_hooks.hpp>
+#endif
 
 #include "FastBoard.h"
 #include "UCTSearch.h"
@@ -36,7 +41,7 @@ UCTSearch::UCTSearch(GameState & g)
   set_playout_limit(cfg_max_playouts);
 }
 
-void UCTSearch::set_runflag(boost::atomic<bool> * flag) {
+void UCTSearch::set_runflag(std::atomic<bool> * flag) {
     m_runflag = flag;
     m_hasrunflag = true;
 }
@@ -75,14 +80,14 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
                     noderesult = play_simulation(currstate, next);
                 } else {
                     next->invalidate();
-                    noderesult.run(currstate);
+                    noderesult.run(currstate, false, true);
                 }
             } else {
                 currstate.play_pass();
                 noderesult = play_simulation(currstate, next);
             }
         } else {
-            noderesult.run(currstate);
+            noderesult.run(currstate, false, true);
         }
 
         // Check whether we have new evals to back up
@@ -98,7 +103,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
         }
         node->updateRAVE(noderesult, color);
     } else {
-        noderesult.run(currstate);
+        noderesult.run(currstate, false, true);
     }
 
     node->update(noderesult, color, update_eval);
@@ -107,7 +112,66 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     return noderesult;
 }
 
+void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
+#ifndef _CONSOLE
+    const int color = state.get_to_move();
+
+    if (!parent.has_children()) {
+        return;
+    }
+
+    // sort children, put best move on top
+    m_root.sort_children(color);
+
+    UCTNode * bestnode = parent.get_first_child();
+
+    if (bestnode->first_visit()) {
+        return;
+    }
+
+    using TRowVector = std::vector<std::pair<std::string, std::string>>;
+    using TDataVector = std::vector<TRowVector>;
+
+    TDataVector* GUIdata = new TDataVector();
+
+    int movecount = 0;
+    UCTNode * node = bestnode;
+
+    while (node != NULL) {
+        if (node->get_score() > 0.005f || node->get_visits() > 0) {
+            std::string tmp = state.move_to_text(node->get_move());
+            std::string pvstring(tmp);
+
+            GameState tmpstate = state;
+
+            tmpstate.play_move(node->get_move());
+            pvstring += " " + get_pv(tmpstate, *node);
+
+            std::vector<std::pair<std::string, std::string>> row;
+            row.push_back(std::make_pair(std::string("Move"), tmp));
+            row.push_back(std::make_pair(std::string("Simulations"),
+                std::to_string(node->get_visits())));
+            row.push_back(std::make_pair(std::string("Win%"),
+                node->get_visits() > 0 ?
+                    std::to_string(node->get_winrate(color)*100.0f) :
+                    std::string("-")));
+            row.push_back(std::make_pair(
+                m_use_nets ? std::string("Net Prob%") : std::string("Eval"),
+                std::to_string(node->get_score() * 100.0f)));
+            row.push_back(std::make_pair(std::string("PV"), pvstring));
+
+            GUIdata->push_back(row);
+        }
+
+        node = node->get_sibling();
+    }
+
+    AnalyzeGUI((void*)GUIdata);
+#endif
+}
+
 void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
+#ifdef _CONSOLE
     const int color = state.get_to_move();
 
     if (!parent.has_children()) {
@@ -130,33 +194,32 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
         if (++movecount > 6) break;
 
         std::string tmp = state.move_to_text(node->get_move());
+        std::string pvstring(tmp);
 
         if (!m_use_nets) {
-            myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: %s ",
+        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: ",
                       tmp.c_str(),
                       node->get_visits(),
                       node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                       node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
                       node->get_ravevisits(),
-                      node->get_score() * 100.0f,
-                      tmp.c_str());
+                      node->get_score() * 100.0f);
         } else {
-            myprintf("%4s -> %7d (U: %5.2f%%) (V: %5.2f%%: %7d) (N: %4.1f%%) PV: %s ",
+            myprintf("%4s -> %7d (U: %5.2f%%) (V: %5.2f%%: %7d) (N: %4.1f%%) PV: ",
                 tmp.c_str(),
                 node->get_visits(),
                 node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                 node->get_evalcount() > 0 ? node->get_eval(color)*100.0f : 0.0f,
                 node->get_evalcount(),
-                node->get_score() * 100.0f,
-                tmp.c_str());
+                node->get_score() * 100.0f);
         }
 
         GameState tmpstate = state;
 
         tmpstate.play_move(node->get_move());
-        myprintf(get_pv(tmpstate, *node).c_str());
+        pvstring += " " + get_pv(tmpstate, *node);
 
-        myprintf("\n");
+        myprintf("%s\n", pvstring.c_str());
 
         node = node->get_sibling();
     }
@@ -173,6 +236,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     myprintf(get_pv(tmpstate, parent).c_str());
 
     myprintf("\n");
+#endif
 }
 
 bool UCTSearch::easy_move() {
@@ -407,32 +471,17 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     } else {
         // Opponents last move was passing
         if (m_rootstate.get_last_move() == FastBoard::PASS) {
-            if (m_root.get_pass_child() != NULL
-                && m_root.get_pass_child()->get_visits() > 100) {
-                float passscore = m_root.get_pass_child()->get_winrate(color);
-
-                // is passing a winning move?
-                if (passscore > 0.90f) {
-                    // is passing within 5% of the best move?
-                    if (bestscore - passscore < 0.05f) {
-                        myprintf("Preferring to pass since it's %5.2f%% compared to %5.2f%%.\n",
-                                    passscore * 100.0f, bestscore * 100.0f);
-                        bestmove = FastBoard::PASS;
-                    }
-                }
+            // We didn't consider passing. Should we have and
+            // end the game immediately?
+            float score = m_rootstate.final_score();
+            // do we lose by passing?
+            if ((score > 0.0f && color == FastBoard::WHITE)
+                ||
+                (score < 0.0f && color == FastBoard::BLACK)) {
+                myprintf("Passing loses, I'll play on\n");
             } else {
-                // We didn't consider passing. Should we have and
-                // end the game immediately?
-                float score = m_rootstate.final_score();
-                // do we lose by passing?
-                if ((score > 0.0f && color == FastBoard::WHITE)
-                    ||
-                    (score < 0.0f && color == FastBoard::BLACK)) {
-                    myprintf("Passing loses, I'll play on\n");
-                } else {
-                    myprintf("Passing wins, I'll pass out\n");
-                    bestmove = FastBoard::PASS;
-                }
+                myprintf("Passing wins, I'll pass out\n");
+                bestmove = FastBoard::PASS;
             }
         }
         // either by forcing or coincidence passing is
@@ -472,7 +521,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
             size_t movetresh= (m_rootstate.board.get_boardsize()
                                 * m_rootstate.board.get_boardsize()) / 3;
             // bad score and visited enough
-            if (bestscore < 0.10f
+            if (bestscore < 0.15f
                 && visits > 90
                 && besteval < 0.25f
                 && m_rootstate.m_movenum > movetresh) {
@@ -534,11 +583,11 @@ std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
 }
 
 void UCTSearch::dump_analysis(void) {
-    GameState tempstate = m_rootstate;   
+    GameState tempstate = m_rootstate;
     int color = tempstate.board.get_to_move();
-                
+
     std::string pvstring = get_pv(tempstate, m_root);
-    
+
     float winrate = m_root.get_winrate(color) * 100.0f;
     winrate = std::max(0.0f, winrate);
     winrate = std::min(100.0f, winrate);
@@ -549,12 +598,12 @@ void UCTSearch::dump_analysis(void) {
 
     winrate = (winrate + wineval) / 2.0f;
 
-    myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n", m_root.get_visits(), 
-             winrate, pvstring.c_str());   
+    myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n", m_root.get_visits(),
+             winrate, pvstring.c_str());
 
     if (!m_quiet) {
-        GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(), 
-                   winrate, pvstring.c_str());   
+        GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(),
+                   winrate, pvstring.c_str());
     } else {
         GUIprintf("%d nodes searched", m_root.get_visits());
     }
@@ -574,6 +623,9 @@ void UCTWorker::operator()() {
     } while(m_search->is_running());
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->join_outstanding_cb();
+#endif
+#ifdef _WIN32
+    boost::on_thread_exit();
 #endif
 }
 
@@ -636,9 +688,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_run = true;
 
     int cpus = cfg_num_threads;
-    boost::thread_group tg;
+    std::vector<std::thread> tg;
     for (int i = 1; i < cpus; i++) {
-        tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
+        tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
     }
 
     bool keeprunning = true;
@@ -658,6 +710,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             if (centiseconds_elapsed - last_update > 250) {
                 last_update = centiseconds_elapsed;
                 dump_analysis();
+                dump_GUI_stats(m_rootstate, m_root);
             }
             keeprunning = (centiseconds_elapsed < time_for_move
                            && (!m_hasrunflag || (*m_runflag)));
@@ -671,6 +724,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             if (centiseconds_elapsed - last_update > 100) {
                 last_update = centiseconds_elapsed;
                 dump_analysis();
+                dump_GUI_stats(m_rootstate, m_root);
             }
             keeprunning = (!m_hasrunflag || (*m_runflag));
         }
@@ -681,7 +735,11 @@ int UCTSearch::think(int color, passflag_t passflag) {
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
-    tg.join_all();
+    for (auto& thread : tg) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
     if (!m_root.has_children()) {
         return FastBoard::PASS;
     }
@@ -729,6 +787,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     myprintf("\n");
 
     dump_stats(m_rootstate, m_root);
+    dump_GUI_stats(m_rootstate, m_root);
 
     Time elapsed;
     int centiseconds_elapsed = Time::timediff(start, elapsed);
@@ -759,9 +818,9 @@ void UCTSearch::ponder() {
 #ifdef USE_SEARCH
     m_run = true;
     int cpus = cfg_num_threads;
-    boost::thread_group tg;
+    std::vector<std::thread> tg;
     for (int i = 1; i < cpus; i++) {
-        tg.create_thread(UCTWorker(m_rootstate, this, &m_root));
+        tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
     }
     do {
         KoState currstate = m_rootstate;
@@ -773,10 +832,15 @@ void UCTSearch::ponder() {
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
-    tg.join_all();
+    for (auto& thread : tg) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
     // display search info
     myprintf("\n");
     dump_stats(m_rootstate, m_root);
+    dump_GUI_stats(m_rootstate, m_root);
 
     myprintf("\n%d visits, %d nodes\n\n", m_root.get_visits(), (int)m_nodes);
 #endif

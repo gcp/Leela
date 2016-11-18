@@ -23,12 +23,22 @@ players = {
 				"time_settings 600 0 0",
                            ],
                     ),
-    'leela-063' : Player("./leela-063 --gtp --threads 1 --noponder ",
+    'leela-xxx' : Player("./leela-xxx --gtp --threads 1 --noponder ",
                            startup_gtp_commands=[
 				"time_settings 600 0 0",
                            ],
                     ),
-    'leela-064' : Player("./leela-064 --gtp --threads 1 --noponder ",
+    'leela-073e' : Player("./leela-073e --gtp --threads 1 --noponder ",
+                           startup_gtp_commands=[
+				"time_settings 600 0 0",
+                           ],
+                    ),
+    'leela-077b' : Player("./leela-077b --gtp --threads 1 --noponder ",
+                           startup_gtp_commands=[
+				"time_settings 600 0 0",
+                           ],
+                    ),
+    'leela-077bb' : Player("./leela-077bb --gtp --threads 1 --noponder ",
                            startup_gtp_commands=[
 				"time_settings 600 0 0",
                            ],
@@ -46,10 +56,16 @@ board_size = 19
 komi = 7.5
 
 matchups = [
-	Matchup('leela-063', 'leela-064',
+	Matchup('leela-077b', 'leela-077bb',
                 scorer='players', number_of_games=1000),
-	Matchup('pachi', 'leela-063', alternating=False, handicap=7,
-                scorer='players', number_of_games=1000),
-	Matchup('pachi', 'leela-064', alternating=False, handicap=7,
-                scorer='players', number_of_games=1000),
+#	Matchup('leela-073e', 'leela-075j',
+#                scorer='players', number_of_games=1000),
+#	Matchup('leela-075i', 'leela-075j',
+#               scorer='players', number_of_games=1000),
+#	Matchup('pachi', 'leela-073e', alternating=False, handicap=8,
+#               scorer='players', number_of_games=1000),
+#	Matchup('pachi', 'leela-075i', alternating=False, handicap=8,
+#               scorer='players', number_of_games=1000),
+#	Matchup('pachi', 'leela-075j', alternating=False, handicap=8,
+#                scorer='players', number_of_games=1000),
 ]

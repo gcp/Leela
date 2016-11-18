@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <thread>
 #ifdef WIN32
+#include <boost/thread.hpp>
 #include <windows.h>
 #else
 #include <sys/select.h>
@@ -72,28 +74,50 @@ bool Utils::input_pending(void) {
 }
 
 #ifndef _CONSOLE
-static wxEvtHandler * GUIQ = NULL;
+static wxEvtHandler * GUIQ = nullptr;
+static wxEvtHandler * ANALQ = nullptr;
 static int GUIQ_T = 0;
+static int ANALQ_T = 0;
+boost::mutex GUImutex;
 
 void Utils::setGUIQueue(wxEvtHandler * evt, int evt_type) {
-    GUIQ = evt; 
+    boost::lock_guard<boost::mutex> guard(GUImutex);
+    GUIQ = evt;
     GUIQ_T = evt_type;
+}
+
+void Utils::setAnalysisQueue(wxEvtHandler * evt, int evt_type) {
+    boost::lock_guard<boost::mutex> guard(GUImutex);
+    ANALQ = evt;
+    ANALQ_T = evt_type;
 }
 #endif
 
-void Utils::GUIprintf(const char *fmt, ...) {
-    va_list ap;      
-
-    va_start(ap, fmt);      
+void Utils::AnalyzeGUI(void* data) {
 #ifndef _CONSOLE
-    if (GUIQ != NULL) { 
-        char buffer[512];
-        vsprintf_s(buffer, 512, fmt, ap); 
-        wxCommandEvent myevent(GUIQ_T);
-        myevent.SetString(wxString(buffer));                       
-        ::wxPostEvent(GUIQ, myevent);                   
+    boost::lock_guard<boost::mutex> guard(GUImutex);
+    if (ANALQ != NULL) {
+        wxCommandEvent* myevent = new wxCommandEvent(ANALQ_T);
+        myevent->SetClientData(data);
+        ::wxQueueEvent(ANALQ, myevent);
     }
-#endif    
+#endif
+}
+
+void Utils::GUIprintf(const char *fmt, ...) {
+    va_list ap;
+
+    va_start(ap, fmt);
+#ifndef _CONSOLE
+    boost::lock_guard<boost::mutex> guard(GUImutex);
+    if (GUIQ != nullptr) {
+        char buffer[512];
+        vsprintf_s(buffer, 512, fmt, ap);
+        wxCommandEvent* myevent = new wxCommandEvent(GUIQ_T);
+        myevent->SetString(wxString(buffer));
+        ::wxQueueEvent(GUIQ, myevent);
+    }
+#endif
     va_end(ap);
 }
 

@@ -4,12 +4,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include <math.h>
+#include <cmath>
 
+#include <iostream>
 #include <vector>
 #include <functional>
-#include <boost/thread.hpp>
-#include <boost/tuple/tuple.hpp>
+#include <algorithm>
 
 #include "FastState.h"
 #include "Playout.h"
@@ -18,6 +18,7 @@
 #include "Utils.h"
 #include "Matcher.h"
 #include "Network.h"
+#include "GTP.h"
 #ifdef USE_OPENCL
 #include "OpenCL.h"
 #endif
@@ -61,7 +62,7 @@ SMP::Mutex & UCTNode::get_mutex() {
     return m_nodemutex;
 }
 
-void UCTNode::create_children(boost::atomic<int> & nodecount,
+void UCTNode::create_children(std::atomic<int> & nodecount,
                               FastState & state, bool use_nets, bool at_root) {
     // acquire the lock
     SMP::Lock lock(get_mutex());
@@ -107,6 +108,7 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
 #else
             Network::get_Network()->async_scored_moves(
                 &nodecount, &state, this, Network::Ensemble::RANDOM_ROTATION);
+            link_nodelist(nodecount, board, nodelist, use_nets);
 #endif
         }
     } else {
@@ -134,12 +136,12 @@ void UCTNode::create_children(boost::atomic<int> & nodecount,
                 passscore = 0;
             }
             nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
-            link_nodelist(nodecount, board, nodelist, false);
+            link_nodelist(nodecount, board, nodelist, use_nets);
         }
     }
 }
 
-void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
+void UCTNode::expansion_cb(std::atomic<int> * nodecount,
                            FastState & state,
                            Network::Netresult & netresult,
                            bool use_nets) {
@@ -171,7 +173,7 @@ void UCTNode::expansion_cb(boost::atomic<int> * nodecount,
     }
 }
 
-void UCTNode::link_nodelist(boost::atomic<int> & nodecount,
+void UCTNode::link_nodelist(std::atomic<int> & nodecount,
                             FastBoard & board,
                             std::vector<Network::scored_node> & nodelist,
                             bool use_nets) {
@@ -405,8 +407,8 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             }
             childcount++;
         }
-        numerator = std::sqrt((float)parentvisits);
-        cutoff_ratio = std::max(2.0f, std::log((float)parentvisits));
+        numerator = std::log((float)parentvisits);
+        cutoff_ratio = cfg_cutoff_offset + cfg_cutoff_ratio * std::log((float)parentvisits);
     }
 
     childcount = 0;
@@ -429,9 +431,6 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 break;
             }
 
-            float c_puct = 2.0f;
-            float c_perbias = 0.02f;
-
             if (!child->first_visit()) {
                 // "UCT" part
                 float winrate = child->get_winrate(color);
@@ -442,15 +441,23 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                     winmix *= 0.5f;
                 }
                 float psa = child->get_score();
-                float denom = 1.0f + child->get_visits();
+                float denom = child->get_visits();
 
-                value = winmix + c_puct * psa * (numerator / denom) + c_perbias * psa;
+                float cts = std::sqrt(cfg_puct * (numerator / denom));
+                float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
+
+                 value = winmix + cts - mti;
             } else {
-                float winrate = 1.0f;
+                float winrate = cfg_fpu;
                 float psa = child->get_score();
-                float denom = 1.0f;
+                float mti;
+                if (parentvisits > 1) {
+                    mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
+                } else {
+                    mti = (cfg_psa / psa);
+                }
 
-                value = winrate + c_puct * psa * (numerator / denom) + c_perbias + psa;
+                value = winrate - mti;
             }
         } else {
             float uctvalue;
@@ -496,53 +503,53 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
 class NodeComp : public std::binary_function<UCTNode::sortnode_t, UCTNode::sortnode_t, bool> {   
 private:
     const int m_maxvisits;
-public:   
+public:
     NodeComp(const int maxvisits) : m_maxvisits(maxvisits) {}
-   
-    bool operator()(const UCTNode::sortnode_t a, const UCTNode::sortnode_t b) {                      
+
+    bool operator()(const UCTNode::sortnode_t a, const UCTNode::sortnode_t b) {
         // edge cases, one playout or none
-        if (!a.get<1>() && b.get<1>()) {
+        if (!std::get<1>(a) && std::get<1>(b)) {
             return false;
-        }  
-        
-        if (!b.get<1>() && a.get<1>()) {
+        }
+
+        if (!std::get<1>(b) && std::get<1>(a)) {
             return true;
         }
-        
-        if (!a.get<1>() && !b.get<1>()) {
-            if ((a.get<2>())->get_score() > (b.get<2>())->get_score()) {
+
+        if (!std::get<1>(a) && !std::get<1>(b)) {
+            if ((std::get<2>(a))->get_score() > (std::get<2>(b))->get_score()) {
                 return true;
             } else {
                 return false;
             }
-        }            
-        
+        }
+
         // first check: are playouts comparable and sufficient?
         // then winrate counts
 
-        if (a.get<1>() > UCTSearch::MCTS_MATURE_TRESHOLD
-            && b.get<1>() > UCTSearch::MCTS_MATURE_TRESHOLD
-            && a.get<1>() * 2 > m_maxvisits
-            && b.get<1>() * 2 > m_maxvisits) {
+        if (std::get<1>(a) > UCTSearch::MCTS_MATURE_TRESHOLD
+            && std::get<1>(b) > UCTSearch::MCTS_MATURE_TRESHOLD
+            && std::get<1>(a) * 2 > m_maxvisits
+            && std::get<1>(b) * 2 > m_maxvisits) {
 
-            if (a.get<0>() == b.get<0>()) {
-                if (a.get<1> ()> b.get<1>()) {
+            if (std::get<0>(a) == std::get<0>(b)) {
+                if (std::get<1>(a) > std::get<1>(b)) {
                     return true;
                 } else {
                     return false;
                 }
-            } else if (a.get<0>() > b.get<0>()) {
+            } else if (std::get<0>(a) > std::get<0>(b)) {
                 return true;
             } else {
                 return false;
-            } 
-        } else {        
-            // playout amount differs greatly, prefer playouts                       
-            if (a.get<1>() > b.get<1>()) {
+            }
+        } else {
+            // playout amount differs greatly, prefer playouts
+            if (std::get<1>(a) > std::get<1>(b)) {
                 return true;
             } else {
                 return false;
-            }                     
+            }
         }
     }
 };
@@ -550,39 +557,38 @@ public:
 /*
     sort children by converting linked list to vector,
     sorting the vector, and reconstructing to linked list again
-*/        
+*/
 void UCTNode::sort_children(int color) {
-    SMP::Lock lock(get_mutex());             
+    SMP::Lock lock(get_mutex());
     std::vector<sortnode_t> tmp;
-    
-    UCTNode * child = m_firstchild;    
+
+    UCTNode * child = m_firstchild;
     int maxvisits = 0;
-    
-    while (child != NULL) {        
+
+    while (child != NULL) {
         int visits = child->get_visits();
-		if (visits) {
-			tmp.push_back(boost::make_tuple(child->get_winrate(color), visits, child));
-		} else {
-			tmp.push_back(boost::make_tuple(0.0f, 0, child));
-		}
-        
-        maxvisits = std::max(maxvisits, visits);                
-                        
-        child = child->m_nextsibling;       
-    }        
-    
+	if (visits) {
+	    tmp.push_back(std::make_tuple(child->get_winrate(color), visits, child));
+	} else {
+	    tmp.push_back(std::make_tuple(0.0f, 0, child));
+	}
+
+        maxvisits = std::max(maxvisits, visits);
+        child = child->m_nextsibling;
+    }
+
     // reverse sort, because list reconstruction is backwards
     // XXX can be combined?
-    std::stable_sort(tmp.begin(), tmp.end(), NodeComp(maxvisits));        
+    std::stable_sort(tmp.begin(), tmp.end(), NodeComp(maxvisits));
     std::reverse(tmp.begin(), tmp.end());
-    
+
     m_firstchild = NULL;
-    
+
     std::vector<sortnode_t>::iterator it;
-    
+
     for (it = tmp.begin(); it != tmp.end(); ++it) {
-        link_child(it->get<2>());   
-    }       
+        link_child(std::get<2>(*it));
+    }
 }
 
 UCTNode* UCTNode::get_first_child() {

@@ -1,50 +1,50 @@
-# 55 195 601 training positions.
-#  2 299 819 testing positions.
-# 64 x 862431
-# 64 x  35934
-
+#                    batchsize      128     64      32
+# 32889856 training positions. = 256000 512000 1027808
+# 1370412 testing positions.   =  10000  20000   42800
 # The train/test net protocol buffer definition
 net: "train-test.prototxt"
 
 # test_iter specifies how many forward passes the test should carry out.
-# 64 * 1500 per test
-test_iter: 3600
+# 1/10th total test items
+test_iter: 1000
 
 # Carry out testing every n training iterations.
-test_interval: 86240
+# every 1/10th epoch
+test_interval: 51200
 
-base_lr: 0.001
+# The base learning rate, momentum and the weight decay of the network.
 momentum: 0.9
-momentum2: 0.999
 
-#momentum: 0.5
+# begin training at a learning rate of 0.01 = 1e-2
+#base_lr: 1.0
+
+# Adam
 #base_lr: 0.001
+#momentum: 0.9
+#momentum2: 0.999
+#lr_policy: "fixed"
 
-# learning rate policy: drop the learning rate in "steps"
-# by a factor of gamma every stepsize iterations
-lr_policy: "fixed"
-
-# drop the learning rate by a factor of 1/gamma
-#gamma: 0.1
-
-# drop the learning rate every n iterations
-# 20 * 100 = 20 epochs
-#stepsize: 2000
+base_lr: 0.001     # begin training at a learning rate of 0.01 = 1e-2
+lr_policy: "step"  # learning rate policy: drop the learning rate in "steps"
+                   # by a factor of gamma every stepsize iterations
+gamma: 0.2         # drop the learning rate by a factor of 5
+                   # (i.e., multiply it by a factor of gamma = 0.2)
+stepsize: 5120000  # drop the learning rate every 10 epochs
 
 # Display every n iterations
-# 1.28M pos
-display: 86240
+display: 512000
 
 # The total number of iterations
-# 100 * 100
-max_iter: 8620000
+# 100 epoch
+max_iter: 51200000
 
 # snapshot intermediate results
-snapshot: 86240
+snapshot: 51200
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
+type: "Nesterov"
+#type: "AdaDelta"
 #type: "SGD"
-type: "Adam"
 #delta: 1e-6
 solver_mode: GPU

@@ -3,10 +3,10 @@
 
 #include "config.h"
 
+#include <array>
 #include <string>
 #include <vector>
 #include <queue>
-#include <boost/tr1/array.hpp>
 
 class FastBoard {
     friend class FastState;
@@ -20,11 +20,7 @@ public:
     /*
         largest board supported 
     */
-#ifdef LITEVERSION    
-    static const int MAXBOARDSIZE = 13;
-#else
     static const int MAXBOARDSIZE = 25;
-#endif    
 
     /*
         highest existing square        
@@ -55,13 +51,13 @@ public:
     /*
         move generation types
     */
-    typedef std::tr1::array<int, 24> movelist_t;
-    typedef std::pair<int, int> movescore_t;
-    typedef std::tr1::array<movescore_t, 24> scoredlist_t;
-    
+    using movescore_t = std::pair<int, float>;
+    using movelist_t = std::vector<int>;
+    using scoredmoves_t = std::vector<movescore_t>;
+
     int get_boardsize(void);
     square_t get_square(int x, int y);
-    square_t get_square(int vertex); 
+    square_t get_square(int vertex);
     int get_vertex(int i, int j);
     void set_square(int x, int y, square_t content);
     void set_square(int vertex, square_t content);
@@ -72,9 +68,11 @@ public:
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
     int update_board_fast(const int color, const int i);
-    void save_critical_neighbours(int color, int vertex, movelist_t & moves, size_t & movecnt);
-    void add_pattern_moves(int color, int vertex, movelist_t & moves, size_t & movecnt);
-    void add_global_captures(int color, movelist_t & moves, size_t & movecnt);
+    void save_critical_neighbours(int color, int vertex, movelist_t & moves);
+    void add_pattern_moves(int color, int vertex, movelist_t & moves);
+    void add_global_captures(int color, movelist_t & moves);
+    void add_near_nakade_moves(int color, int vertex, movelist_t & moves);
+    int replace_if_nakade(int color, int vertex);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
@@ -127,7 +125,8 @@ public:
     void set_to_move(int color);
 
     std::string move_to_text(int move);
-    std::string move_to_text_sgf(int move);    
+    std::string move_to_text_sgf(int move);
+    int text_to_move(std::string move);
     std::string get_stone_list(); 
     int string_size(int vertex);
     std::vector<int> get_string_stones(int vertex);    
@@ -139,28 +138,28 @@ public:
     void display_board(int lastmove = -1);    
 
     static bool starpoint(int size, int point);
-    static bool starpoint(int size, int x, int y);                           
-                
+    static bool starpoint(int size, int x, int y);
+
 protected:
     /*
         bit masks to detect eyes on neighbors
-    */        
-    static const std::tr1::array<int,      2> s_eyemask; 
-    static const std::tr1::array<square_t, 4> s_cinvert; /* color inversion */
-    
-    std::tr1::array<square_t,  MAXSQ>           m_square;      /* board contents */            
-    std::tr1::array<unsigned short, MAXSQ+1>    m_next;        /* next stone in string */ 
-    std::tr1::array<unsigned short, MAXSQ+1>    m_parent;      /* parent node of string */            
-    std::tr1::array<unsigned short, MAXSQ+1>    m_libs;        /* liberties per string parent */        
-    std::tr1::array<unsigned short, MAXSQ+1>    m_stones;      /* stones per string parent */        
-    std::tr1::array<unsigned short, MAXSQ>      m_neighbours;  /* counts of neighboring stones */       
-    std::tr1::array<int, 4>          m_dirs;        /* movement directions 4 way */    
-    std::tr1::array<int, 8>          m_extradirs;   /* movement directions 8 way */
-    std::tr1::array<int, 2>          m_prisoners;   /* prisoners per color */
-    std::tr1::array<int, 2>          m_totalstones; /* stones per color */                 
-    std::vector<int>                 m_critical;    /* queue of critical points */    
-    std::tr1::array<unsigned short, MAXSQ> m_empty;       /* empty squares */
-    std::tr1::array<unsigned short, MAXSQ> m_empty_idx;   /* indexes of square */
+    */
+    static const std::array<int,      2> s_eyemask;
+    static const std::array<square_t, 4> s_cinvert; /* color inversion */
+
+    std::array<square_t,  MAXSQ>           m_square;      /* board contents */
+    std::array<unsigned short, MAXSQ+1>    m_next;        /* next stone in string */
+    std::array<unsigned short, MAXSQ+1>    m_parent;      /* parent node of string */
+    std::array<unsigned short, MAXSQ+1>    m_libs;        /* liberties per string parent */
+    std::array<unsigned short, MAXSQ+1>    m_stones;      /* stones per string parent */
+    std::array<unsigned short, MAXSQ>      m_neighbours;  /* counts of neighboring stones */
+    std::array<int, 4>          m_dirs;        /* movement directions 4 way */
+    std::array<int, 8>          m_extradirs;   /* movement directions 8 way */
+    std::array<int, 2>          m_prisoners;   /* prisoners per color */
+    std::array<int, 2>          m_totalstones; /* stones per color */
+    std::vector<int>                 m_critical;    /* queue of critical points */
+    std::array<unsigned short, MAXSQ> m_empty;       /* empty squares */
+    std::array<unsigned short, MAXSQ> m_empty_idx;   /* indexes of square */
     int m_empty_cnt;                                      /* count of empties */
 
     int m_tomove;
@@ -178,13 +177,14 @@ protected:
     bool kill_or_connect(int color, int vertex);  
     int in_atari(int vertex);
     bool fast_in_atari(int vertex);
-    template <int N> void add_string_liberties(int vertex, 
-                                               std::tr1::array<int, N> & nbr_libs, 
+    template <int N> void add_string_liberties(int vertex,
+                                               std::array<int, N> & nbr_libs,
                                                int & nbr_libs_cnt);
-    void kill_neighbours(int vertex, movelist_t & moves, size_t & movecnt);
-    void try_capture(int color, int vertex, movelist_t & moves, size_t & movecnt);
+    void kill_neighbours(int vertex, movelist_t & moves);
+    void try_capture(int color, int vertex, movelist_t & moves);
     FastBoard remove_dead();
     bool predict_solid_eye(const int move, const int color, const int vtx);
+    void check_nakade(int color, int vertex, movelist_t & moves);
 };
 
 #endif

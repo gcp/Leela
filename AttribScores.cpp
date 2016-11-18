@@ -3,8 +3,8 @@
 #include <set>
 #include <fstream>
 #include <memory>
-#include <boost/tr1/array.hpp>
-#include <boost/lexical_cast.hpp>
+#include <array>
+#include <functional>
 
 #include "config.h"
 
@@ -377,7 +377,7 @@ void AttribScores::autotune_from_file(std::string filename) {
         myprintf("Pass %d done\n", pass);
         
         std::ofstream fp_out;
-        std::string fname = "r_fparam" + boost::lexical_cast<std::string>(pass) + ".txt";
+        std::string fname = "r_fparam" + std::to_string(pass) + ".txt";
         fp_out.open(fname.c_str());
         
         for (size_t i = 0; i < m_fweight.size(); i++) {

@@ -3,9 +3,9 @@
 #include "Random.h"
 #include "Zobrist.h"
 
-std::tr1::array<std::tr1::array<uint64, FastBoard::MAXSQ>,     4> Zobrist::zobrist;
-std::tr1::array<std::tr1::array<uint64, FastBoard::MAXSQ * 2>, 2> Zobrist::zobrist_pris;
-std::tr1::array<uint64, 5>                                        Zobrist::zobrist_pass;
+std::array<std::array<uint64, FastBoard::MAXSQ>,     4> Zobrist::zobrist;
+std::array<std::array<uint64, FastBoard::MAXSQ * 2>, 2> Zobrist::zobrist_pris;
+std::array<uint64, 5>                                   Zobrist::zobrist_pass;
 
 void Zobrist::init_zobrist(Random & rng) {                        
     for (int i = 0; i < 4; i++) {

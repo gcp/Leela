@@ -1,13 +1,15 @@
 #include <algorithm>
+#include <cstdlib>
+#include <cmath>
 
 #include "Attributes.h"
 #include "FastBoard.h"
 #include "MCOTable.h"
 
-int BaseAttributes::move_distance(std::pair<int, int> xy1, 
-                              std::pair<int, int> xy2) {
-    int dx = abs(xy1.first  - xy2.first);
-    int dy = abs(xy1.second - xy2.second);
+int BaseAttributes::move_distance(std::pair<int, int> xy1,
+                                  std::pair<int, int> xy2) {
+    int dx = std::abs(xy1.first  - xy2.first);
+    int dy = std::abs(xy1.second - xy2.second);
 
     return dx + dy + std::max(dx, dy);
 }

@@ -9,8 +9,6 @@
 #include <cmath>
 #include <array>
 #include <boost/utility.hpp>
-#include <boost/tr1/array.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/format.hpp>
 
 #ifdef USE_CAFFE
@@ -22,16 +20,16 @@
 using namespace caffe;
 #endif
 #ifdef USE_BLAS
+#include "Im2Col.h"
 #ifdef __APPLE__
-#include <Accelerate.h>
-#else
-#ifdef _WIN32
-#include <cblas.h>
-#else
+#include <Accelerate/Accelerate.h>
+#endif
+#ifdef USE_MKL
+#include <mkl.h>
+#endif
+#ifdef USE_OPENBLAS
 #include <openblas/cblas.h>
 #endif
-#endif
-#include "Im2Col.h"
 #endif
 #ifdef USE_OPENCL
 #include "OpenCL.h"
@@ -49,63 +47,36 @@ using namespace Utils;
 
 Network* Network::s_Net = nullptr;
 
-extern std::tr1::array<float, 102400> conv1_w;
-extern std::tr1::array<float, 128> conv1_b;
-extern std::tr1::array<float, 128> bn1_w1;
-extern std::tr1::array<float, 128> bn1_w2;
-extern std::tr1::array<float, 1>  bn1_w3;
-extern std::tr1::array<float, 147456> conv2_w;
-extern std::tr1::array<float, 128> conv2_b;
-extern std::tr1::array<float, 128> bn2_w1;
-extern std::tr1::array<float, 128> bn2_w2;
-extern std::tr1::array<float, 1>  bn2_w3;
-extern std::tr1::array<float, 147456> conv3_w;
-extern std::tr1::array<float, 128> conv3_b;
-extern std::tr1::array<float, 128> bn3_w1;
-extern std::tr1::array<float, 128> bn3_w2;
-extern std::tr1::array<float, 1>  bn3_w3;
-extern std::tr1::array<float, 147456> conv4_w;
-extern std::tr1::array<float, 128> conv4_b;
-extern std::tr1::array<float, 128> bn4_w1;
-extern std::tr1::array<float, 128> bn4_w2;
-extern std::tr1::array<float, 1>  bn4_w3;
-extern std::tr1::array<float, 147456> conv5_w;
-extern std::tr1::array<float, 128> conv5_b;
-extern std::tr1::array<float, 128> bn5_w1;
-extern std::tr1::array<float, 128> bn5_w2;
-extern std::tr1::array<float, 1>  bn5_w3;
-extern std::tr1::array<float, 147456> conv6_w;
-extern std::tr1::array<float, 128> conv6_b;
-extern std::tr1::array<float, 128> bn6_w1;
-extern std::tr1::array<float, 128> bn6_w2;
-extern std::tr1::array<float, 1>  bn6_w3;
-extern std::tr1::array<float, 147456> conv7_w;
-extern std::tr1::array<float, 128> conv7_b;
-extern std::tr1::array<float, 128> bn7_w1;
-extern std::tr1::array<float, 128> bn7_w2;
-extern std::tr1::array<float, 1>  bn7_w3;
-extern std::tr1::array<float, 147456> conv8_w;
-extern std::tr1::array<float, 128> conv8_b;
-extern std::tr1::array<float, 128> bn8_w1;
-extern std::tr1::array<float, 128> bn8_w2;
-extern std::tr1::array<float, 1>  bn8_w3;
-extern std::tr1::array<float, 147456> conv9_w;
-extern std::tr1::array<float, 128> conv9_b;
-extern std::tr1::array<float, 128> bn9_w1;
-extern std::tr1::array<float, 128> bn9_w2;
-extern std::tr1::array<float, 1>  bn9_w3;
-extern std::tr1::array<float, 4608> conv10_w;
-extern std::tr1::array<float, 4> conv10_b;
-extern std::tr1::array<float, 3> bn10_w1;
-extern std::tr1::array<float, 3> bn10_w2;
-extern std::tr1::array<float, 1> bn10_w3;
-extern std::tr1::array<float, 277248> ip11_w;
-extern std::tr1::array<float, 256> ip11_b;
-extern std::tr1::array<float, 256> bn11_w1;
-extern std::tr1::array<float, 256> bn11_w2;
-extern std::tr1::array<float, 1> bn11_w3;
-extern std::tr1::array<float, 256> ip12_w;
-extern std::tr1::array<float, 1> ip12_b;
+extern std::array<float, 76800> conv1_w;
+extern std::array<float, 128> conv1_b;
+extern std::array<float, 147456> conv2_w;
+extern std::array<float, 128> conv2_b;
+extern std::array<float, 147456> conv3_w;
+extern std::array<float, 128> conv3_b;
+extern std::array<float, 147456> conv4_w;
+extern std::array<float, 128> conv4_b;
+extern std::array<float, 147456> conv5_w;
+extern std::array<float, 128> conv5_b;
+extern std::array<float, 147456> conv6_w;
+extern std::array<float, 128> conv6_b;
+extern std::array<float, 147456> conv7_w;
+extern std::array<float, 128> conv7_b;
+extern std::array<float, 147456> conv8_w;
+extern std::array<float, 128> conv8_b;
+extern std::array<float, 147456> conv9_w;
+extern std::array<float, 128> conv9_b;
+extern std::array<float, 147456> conv10_w;
+extern std::array<float, 128> conv10_b;
+extern std::array<float, 147456> conv11_w;
+extern std::array<float, 128> conv11_b;
+extern std::array<float, 147456> conv12_w;
+extern std::array<float, 128> conv12_b;
+extern std::array<float, 147456> conv13_w;
+extern std::array<float, 128> conv13_b;
+extern std::array<float, 3456> conv14_w;
+extern std::array<float, 3> conv14_b;
+extern std::array<float, 256> ip15_w;
+extern std::array<float, 1> ip16_b;
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -135,37 +106,38 @@ void Network::initialize(void) {
 #ifdef USE_OPENCL
     std::cerr << "Initializing OpenCL" << std::endl;
     OpenCL * cl = OpenCL::get_OpenCL();
-    std::cerr << "Transfering weights to GPU..." << std::flush;
+    std::cerr << "Transferring weights to GPU..." << std::flush;
     cl->push_convolve(5, conv1_w, conv1_b);
-    cl->push_batchnorm(361, bn1_w1, bn1_w2, bn1_w3);
     cl->push_convolve(3, conv2_w, conv2_b);
-    cl->push_batchnorm(361, bn2_w1, bn2_w2, bn2_w3);
     cl->push_convolve(3, conv3_w, conv3_b);
-    cl->push_batchnorm(361, bn3_w1, bn3_w2, bn3_w3);
     cl->push_convolve(3, conv4_w, conv4_b);
-    cl->push_batchnorm(361, bn4_w1, bn4_w2, bn4_w3);
     cl->push_convolve(3, conv5_w, conv5_b);
-    cl->push_batchnorm(361, bn5_w1, bn5_w2, bn5_w3);
     cl->push_convolve(3, conv6_w, conv6_b);
-    cl->push_batchnorm(361, bn6_w1, bn6_w2, bn6_w3);
     cl->push_convolve(3, conv7_w, conv7_b);
-    cl->push_batchnorm(361, bn7_w1, bn7_w2, bn7_w3);
     cl->push_convolve(3, conv8_w, conv8_b);
-    cl->push_batchnorm(361, bn8_w1, bn8_w2, bn8_w3);
     cl->push_convolve(3, conv9_w, conv9_b);
-    cl->push_batchnorm(361, bn9_w1, bn9_w2, bn9_w3);
     cl->push_convolve(3, conv10_w, conv10_b);
-    cl->push_split(1);
-    cl->push_batchnorm(361, bn10_w1, bn10_w2, bn10_w3);
-    cl->push_innerproduct(ip11_w, ip11_b);
-    cl->push_batchnorm(1, bn11_w1, bn11_w2, bn11_w3);
-    cl->push_innerproduct(ip12_w, ip12_b);
+    cl->push_convolve(3, conv11_w, conv11_b);
+    cl->push_convolve(3, conv12_w, conv12_b);
+    cl->push_convolve(3, conv13_w, conv13_b);
+    cl->push_convolve(3, conv14_w, conv14_b);
+    cl->push_innerproduct(ip15_w, ip15_b);
+    cl->push_innerproduct(ip16_w, ip16_b);
     std::cerr << "done" << std::endl;
 #endif
 #ifdef USE_BLAS
 #ifndef __APPLE__
+#ifdef USE_OPENBLAS
     openblas_set_num_threads(1);
     std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
+#endif
+#ifdef USE_MKL
+    //mkl_set_threading_layer(MKL_THREADING_SEQUENTIAL);
+    mkl_set_num_threads(1);
+    MKLVersion Version;
+    mkl_get_version(&Version);
+    myprintf("BLAS core: MKL %s\n", Version.Processor);
+#endif
 #endif
 #endif
 #ifdef USE_CAFFE
@@ -213,7 +185,7 @@ void Network::initialize(void) {
 
 #ifdef WRITE_WEIGHTS
             out << "// " << blob.shape_string() << std::endl;
-            out << "std::tr1::array<float, " << blob.count()
+            out << "std::array<float, " << blob.count()
                 << "> weights = {{" << std::endl;
             for (int idx = 0; idx < blob.count(); idx++) {
                 out << blob.cpu_data()[idx];
@@ -237,8 +209,8 @@ template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          unsigned long W, unsigned long B>
 void convolve(std::vector<float>& input,
-              std::tr1::array<float, W>& weights,
-              std::tr1::array<float, B>& biases,
+              std::array<float, W>& weights,
+              std::array<float, B>& biases,
               std::vector<float>& output) {
     // fixed for 19x19
     constexpr unsigned int width = 19;
@@ -270,13 +242,19 @@ void convolve(std::vector<float>& input,
                 &col[0], spatial_out,
                 0.0f, &output[0], spatial_out);
 
-    auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
+    auto lambda_ELU = [](float val) { return (val > 0.0f) ?
+                                      val : 1.0f * (std::exp(val) - 1.0f); };
 
     for (unsigned int o = 0; o < outputs; o++) {
-        if (outputs > 4 || o > 0) {
+        if (outputs > 4) {
             for (unsigned int b = 0; b < spatial_out; b++) {
                 output[(o * spatial_out) + b] =
-                    lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
+                    lambda_ELU(biases[o] + output[(o * spatial_out) + b]);
+            }
+        } else {
+            for (unsigned int b = 0; b < spatial_out; b++) {
+                output[(o * spatial_out) + b] =
+                    biases[o] + output[(o * spatial_out) + b];
             }
         }
     }
@@ -286,8 +264,8 @@ template<unsigned int inputs,
          unsigned int outputs,
          unsigned long W, unsigned long B>
 void innerproduct(std::vector<float>& input,
-                  std::tr1::array<float, W>& weights,
-                  std::tr1::array<float, B>& biases,
+                  std::array<float, W>& weights,
+                  std::array<float, B>& biases,
                   std::vector<float>& output) {
     assert(B == outputs);
 
@@ -298,12 +276,13 @@ void innerproduct(std::vector<float>& input,
                 &input[0], 1,
                 0.0f, &output[0], 1);
 
-    auto lambda_ReLU = [](float val) { return (val > 0.0f) ? val : 0.0f; };
+    auto lambda_ELU = [](float val) { return (val > 0.0f) ?
+                                      val : 1.0f * (std::exp(val) - 1.0f); };
 
     for (unsigned int o = 0; o < outputs; o++) {
         float val = biases[o] + output[o];
         if (outputs > 1) {
-            val = lambda_ReLU(val);
+            val = lambda_ELU(val);
         }
         output[o] = val;
     }
@@ -313,9 +292,9 @@ void innerproduct(std::vector<float>& input,
 template<unsigned int channels,
          unsigned int spatial_size>
 void batchnorm(std::vector<float>& input,
-               std::tr1::array<float, channels>& means,
-               std::tr1::array<float, channels>& variances,
-               std::tr1::array<float, 1> scale,
+               std::array<float, channels>& means,
+               std::array<float, channels>& variances,
+               std::array<float, 1> scale,
                std::vector<float>& output)
 {
     constexpr float epsilon = 1e-5;
@@ -341,29 +320,26 @@ void softmax(std::vector<float>& input,
     float alpha = *std::max_element(input.begin(),
                                     input.begin() + output.size());
 
+    float denom = 0.0f;
     std::vector<float> helper(output.size());
     for (size_t i = 0; i < output.size(); i++) {
-        helper[i] = std::exp(input[i] - alpha);
+        float val  = std::exp(input[i] - alpha);
+        helper[i]  = val;
+        denom     += val;
     }
-
     for (size_t i = 0; i < output.size(); i++) {
-        float numer = helper[i];
-        float denom = 0.0f;
-        for (size_t j = 0; j < output.size(); j++) {
-            denom += helper[j];
-        }
-        output[i] = numer / denom;
+        output[i] = helper[i] / denom;
     }
 }
 
 #ifdef USE_OPENCL
 class CallbackData {
 public:
-    boost::atomic<int> * m_nodecount;
+    std::atomic<int> * m_nodecount;
     FastState m_state;
     UCTNode * m_node;
     int m_rotation;
-    boost::atomic<int> * m_thread_results_outstanding;
+    std::atomic<int> * m_thread_results_outstanding;
     std::vector<float> m_output_data;
     std::vector<float> m_input_data;
 };
@@ -373,7 +349,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     CallbackData * cb_data = static_cast<CallbackData*>(data);
 
     // Mark the kernels as available
-    cb_data->m_thread_results_outstanding->fetch_sub(1, boost::memory_order_release);
+    cb_data->m_thread_results_outstanding->fetch_sub(1, std::memory_order_release);
 
     constexpr int width = 19;
     constexpr int height = 19;
@@ -409,7 +385,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     OpenCL::get_OpenCL()->callback_finished();
 }
 
-void Network::async_scored_moves(boost::atomic<int> * nodecount,
+void Network::async_scored_moves(std::atomic<int> * nodecount,
                                  FastState * state,
                                  UCTNode * node,
                                  Ensemble ensemble) {
@@ -470,7 +446,8 @@ Network::Netresult Network::get_scored_moves(
     }
 
     NNPlanes planes;
-    gather_features(state, planes);
+    BoardPlane* ladder;
+    gather_features(state, planes, &ladder);
 
     if (ensemble == DIRECT) {
         result = get_scored_moves_internal(state, planes, 0);
@@ -492,9 +469,22 @@ Network::Netresult Network::get_scored_moves(
         result.eval /= 8.0f;
     }
 
-    if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-        show_heatmap(state, result);
+    /* prune losing ladders completely */
+    for (auto & sm : result) {
+        std::pair<int, int> xy = state->board.get_xy(sm.second);
+        int bitmappos = (xy.second * 19) + xy.first;
+        if ((*ladder)[bitmappos]) {
+            // myprintf("Ladder at %s (%d) score %f\n",
+            //          state->board.move_to_text(sm.second).c_str(),
+            //          sm.second,
+            //         sm.first);
+            sm.first = 0.0f;
+        }
     }
+
+    // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+    //     show_heatmap(state, result);
+    // }
 
     return result;
 }
@@ -518,7 +508,7 @@ Network::Netresult Network::get_scored_moves_internal(
     constexpr int max_channels = MAX_CHANNELS;
     std::vector<float> input_data(max_channels * width * height);
     std::vector<float> output_data(max_channels * width * height);
-    std::vector<float> winrate_data(3 * width * height);
+    std::vector<float> winrate_data(256);
     std::vector<float> softmax_data(width * height);
 #endif
     for (int c = 0; c < channels; ++c) {
@@ -532,45 +522,38 @@ Network::Netresult Network::get_scored_moves_internal(
     }
 #if defined(USE_BLAS)
     convolve<5,  32, 128>(input_data, conv1_w, conv1_b, output_data);
-    batchnorm<128, 361>(output_data, bn1_w1, bn1_w2, bn1_w3, input_data);
+    std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv2_w, conv2_b, output_data);
-    batchnorm<128, 361>(output_data, bn2_w1, bn2_w2, bn2_w3, input_data);
+    std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv3_w, conv3_b, output_data);
-    batchnorm<128, 361>(output_data, bn3_w1, bn3_w2, bn3_w3, input_data);
+    std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv4_w, conv4_b, output_data);
-    batchnorm<128, 361>(output_data, bn4_w1, bn4_w2, bn4_w3, input_data);
+    std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv5_w, conv5_b, output_data);
-    batchnorm<128, 361>(output_data, bn5_w1, bn5_w2, bn5_w3, input_data);
+    std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv6_w, conv6_b, output_data);
-    batchnorm<128, 361>(output_data, bn6_w1, bn6_w2, bn6_w3, input_data);
+    std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv7_w, conv7_b, output_data);
-    batchnorm<128, 361>(output_data, bn7_w1, bn7_w2, bn7_w3, input_data);
+    std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv8_w, conv8_b, output_data);
-    batchnorm<128, 361>(output_data, bn8_w1, bn8_w2, bn8_w3, input_data);
+    std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv9_w, conv9_b, output_data);
-    batchnorm<128, 361>(output_data, bn9_w1, bn9_w2, bn9_w3, input_data);
-    convolve<3, 128,   4>(input_data, conv10_w, conv10_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128,   3>(input_data, conv10_w, conv10_b, output_data);
     softmax(output_data, softmax_data);
 
     std::vector<float>& outputs = softmax_data;
 
     // Now get the score
-    // Skip move output
-    std::copy(output_data.cbegin() + (width * height),
-              output_data.cbegin() + (4 * width * height),
-              winrate_data.begin());
-    // BN, ReLU was done for the part of the conv data we use
-    batchnorm<3, 361>(winrate_data, bn10_w1, bn10_w2, bn10_w3, input_data);
     innerproduct<3 * 361, 256>(input_data, ip11_w, ip11_b, winrate_data);
-    batchnorm<256, 1>(winrate_data, bn11_w1, bn11_w2, bn11_w3, input_data);
     innerproduct<256,       1>(input_data, ip12_w, ip12_b, winrate_data);
     // Sigmoid
     winrate_data[0] = 1.0f / (1.0f + exp(-winrate_data[0]));
     result.eval = winrate_data[0];
 #endif
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->forward_async(input_data, output_data,
-                                        nullptr, nullptr);
+    OpenCL::get_OpenCL()->thread_init();
+    OpenCL::get_OpenCL()->forward(input_data, output_data);
     softmax(output_data, softmax_data);
     std::vector<float>& outputs = softmax_data;
     // output data + 1
@@ -651,7 +634,8 @@ void Network::show_heatmap(FastState * state, Netresult& result) {
               << std::endl;
 }
 
-void Network::gather_features(FastState * state, NNPlanes & planes) {
+void Network::gather_features(FastState * state, NNPlanes & planes,
+                              BoardPlane** ladder_out) {
     planes.resize(32);
     BoardPlane& empt_color    = planes[0];
     BoardPlane& move_color    = planes[1];
@@ -659,41 +643,41 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
     BoardPlane& libs_1        = planes[3];
     BoardPlane& libs_2        = planes[4];
     BoardPlane& libs_3        = planes[5];
-    BoardPlane& libs_4        = planes[6];
-    BoardPlane& libs_5        = planes[7];
-    BoardPlane& libs_6p       = planes[8];
-    BoardPlane& after_1       = planes[9];
-    BoardPlane& after_2       = planes[10];
-    BoardPlane& after_3       = planes[11];
-    BoardPlane& after_4p      = planes[12];
-    BoardPlane& after_1_e     = planes[13];
-    BoardPlane& after_2_e     = planes[14];
-    BoardPlane& after_3_e     = planes[15];
-    BoardPlane& after_4p_e    = planes[16];
-    BoardPlane& ladderloss    = planes[17];
-    BoardPlane& ladderwin     = planes[18];
-    BoardPlane& komove        = planes[19];
-    BoardPlane& movehist1     = planes[20];
-    BoardPlane& movehist2     = planes[21];
-    BoardPlane& black_to_move = planes[22];
-    BoardPlane& komi          = planes[23];
-    BoardPlane& handicap2     = planes[24];
-    BoardPlane& handicap3     = planes[25];
-    BoardPlane& handicap4     = planes[26];
-    BoardPlane& handicap5     = planes[27];
-    BoardPlane& handicap6     = planes[28];
-    BoardPlane& handicap7     = planes[29];
-    BoardPlane& handicap8     = planes[30];
-    BoardPlane& handicap9p    = planes[31];
+    BoardPlane& libs_4p       = planes[6];
+    BoardPlane& libs_1_e      = planes[7];
+    BoardPlane& libs_2_e      = planes[8];
+    BoardPlane& libs_3_e      = planes[9];
+    BoardPlane& libs_4p_e     = planes[10];
+    BoardPlane& after_1       = planes[11];
+    BoardPlane& after_2       = planes[12];
+    BoardPlane& after_3       = planes[13];
+    BoardPlane& after_4p      = planes[14];
+    BoardPlane& after_1_e     = planes[15];
+    BoardPlane& after_2_e     = planes[16];
+    BoardPlane& after_3_e     = planes[17];
+    BoardPlane& after_4p_e    = planes[18];
+    BoardPlane& ladder        = planes[19];
+    BoardPlane& komove        = planes[20];
+    BoardPlane& movehist1     = planes[21];
+    BoardPlane& movehist2     = planes[22];
+    BoardPlane& has_komi      = planes[23];
+    BoardPlane& black_to_move = planes[24];
+    BoardPlane& handicap2     = planes[25];
+    BoardPlane& handicap3     = planes[26];
+    BoardPlane& handicap4     = planes[27];
+    BoardPlane& handicap5     = planes[28];
+    BoardPlane& handicap6     = planes[29];
+    BoardPlane& handicap7     = planes[30];
+    BoardPlane& handicap8p    = planes[31];
 
-    int tomove = state->get_to_move();
-
-    if (tomove == FastBoard::BLACK) {
-        black_to_move.set();
+    if (ladder_out) {
+        *ladder_out = &ladder;
     }
 
-    if (std::fabs(state->get_komi()) > 0.75f) {
-        komi.set();
+        bool white_has_komi = true;
+    if (std::fabs(state->get_komi()) <= 0.5f
+        || state->get_handicap() != 0) {
+        white_has_komi = false;
     }
 
     int handicap = state->get_handicap();
@@ -710,10 +694,7 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
                         if (handicap >= 7) {
                             handicap7.set();
                             if (handicap >= 8) {
-                                handicap8.set();
-                                if (handicap >= 9) {
-                                    handicap9p.set();
-                                }
+                                handicap8p.set();
                             }
                         }
                     }
@@ -722,6 +703,7 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
         }
     }
 
+    int tomove = state->get_to_move();
     // collect white, black occupation planes
     for (int j = 0; j < 19; j++) {
         for(int i = 0; i < 19; i++) {
@@ -730,24 +712,42 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
                 state->board.get_square(vtx);
             int idx = j * 19 + i;
             if (color != FastBoard::EMPTY) {
-                if (color == tomove) {
-                    move_color[idx] = true;
-                } else {
-                    othr_color[idx] = true;
+                if (color == FastBoard::WHITE && white_has_komi) {
+                    has_komi[idx] = true;
                 }
                 int rlibs = state->board.count_rliberties(vtx);
                 if (rlibs == 1) {
-                    libs_1[idx] = true;
+                    if (color == tomove) {
+                        libs_1[idx] = true;
+                        move_color[idx] = true;
+                    } else {
+                        libs_1_e[idx] = true;
+                        othr_color[idx] = true;
+                    }
                 } else if (rlibs == 2) {
-                    libs_2[idx] = true;
+                    if (color == tomove) {
+                        libs_2[idx] = true;
+                        move_color[idx] = true;
+                    } else {
+                        libs_2_e[idx] = true;
+                        othr_color[idx] = true;
+                    }
                 } else if (rlibs == 3) {
-                    libs_3[idx] = true;
-                } else if (rlibs == 4) {
-                    libs_4[idx] = true;
-                } else if (rlibs == 5) {
-                    libs_5[idx] = true;
-                } else if (rlibs >= 6) {
-                    libs_6p[idx] = true;
+                    if (color == tomove) {
+                        libs_3[idx] = true;
+                        move_color[idx] = true;
+                    } else {
+                        libs_3_e[idx] = true;
+                        othr_color[idx] = true;
+                    }
+                } else if (rlibs >= 4) {
+                    if (color == tomove) {
+                        libs_4p[idx] = true;
+                        move_color[idx] = true;
+                    } else {
+                        libs_4p_e[idx] = true;
+                        othr_color[idx] = true;
+                    }
                 }
             } else {
                 empt_color[idx] = true;
@@ -783,17 +783,9 @@ void Network::gather_features(FastState * state, NNPlanes & planes) {
                             //std::cerr << "losing ladder: "
                             //          << state->board.move_to_text(state->board.get_vertex(i, j))
                             //          << std::endl;
-                            ladderloss[idx] = true;
+                            ladder[idx] = true;
                         }
                     }
-                }
-                bool wl = state->board.check_winning_ladder(tomove, vtx);
-                if (wl) {
-                    ladderwin[idx] = true;
-                    //std::cerr << "winning ladder: "
-                    //          << state->board.move_to_text(state->board.get_vertex(i, j))
-                    //          << std::endl;
-
                 }
             }
         }
@@ -1142,7 +1134,14 @@ void Network::autotune_from_file(std::string filename) {
 std::string Network::get_backend() {
 #ifdef USE_BLAS
 #ifndef __APPLE__
+#ifdef USE_OPENBLAS
     return std::string("BLAS core: " + std::string(openblas_get_corename()));
+#endif
+#ifdef USE_MKL
+    MKLVersion Version;
+    mkl_get_version(&Version);
+    return std::string("BLAS core: " + std::string(Version.Processor));
+#endif
 #else
     return std::string("BLAS core: Apple Accelerate");
 #endif

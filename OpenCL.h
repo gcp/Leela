@@ -8,9 +8,8 @@
 #define CL_HPP_ENABLE_EXCEPTIONS
 #include <CL/cl2.hpp>
 
-#include <boost/tr1/array.hpp>
 #include <boost/thread/tss.hpp>
-#include <boost/atomic.hpp>
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -24,7 +23,6 @@ private:
     unsigned int filter_size{0};
     bool is_batchnorm{false};
     bool is_innerproduct{false};
-    bool is_splitter{false};
     std::vector<cl::Buffer> weights;
 };
 
@@ -38,7 +36,12 @@ private:
     cl::Kernel m_batchnorm_kernel;
     cl::Kernel m_innerproduct_kernel;
     cl::Event m_complete_event;
-    boost::atomic<int> m_results_outstanding{0};
+    cl::Buffer m_inBuffer;
+    cl::Buffer m_tmpBuffer;
+    cl::Buffer m_mergeBuffer;
+    cl::Buffer m_outBuffer;
+    bool m_buffers_allocated{false};
+    std::atomic<int> m_results_outstanding{0};
 };
 
 class OpenCL {
@@ -65,8 +68,8 @@ public:
 
     template <unsigned long W, unsigned long B>
     void push_convolve(unsigned int filter_size,
-                       std::tr1::array<float, W> & weights,
-                       std::tr1::array<float, B> & biases) {
+                       std::array<float, W> & weights,
+                       std::array<float, B> & biases) {
         int layer = get_layer_count();
         push_weights(layer, weights);
         push_weights(layer, biases);
@@ -86,13 +89,6 @@ public:
         m_layers[layer].outputs = B;
     }
 
-    void push_split(int index) {
-        int layer = get_layer_count();
-        push_noweight_layer(layer);
-        m_layers[layer].is_splitter = true;
-        m_layers[layer].channels = index;
-    }
-
     size_t get_layer_count() {
         return m_layers.size();
     }
@@ -103,16 +99,15 @@ public:
     bool thread_can_issue();
     void callback_finished();
     void join_outstanding_cb();
-    boost::atomic<int> * get_thread_results_outstanding();
+    std::atomic<int> * get_thread_results_outstanding();
 
 private:
     OpenCL();
     void initialize();
     template <unsigned long W>
-    void push_weights(int layer, std::tr1::array<float, W> & weights) {
+    void push_weights(int layer, std::array<float, W> & weights) {
         add_weights(layer, W, &weights[0]);
     }
-    void push_noweight_layer(int layer);
     void add_weights(int layer, size_t size, float * weights);
     void convolve(int filter_size, int channels, int outputs,
                   cl::Buffer& input, cl::Buffer& output, cl::Buffer& merge,
@@ -127,11 +122,13 @@ private:
     std::vector<Layer> m_layers;
     cl::Program m_program;
 
-    int m_wavefront_size{0};
+    size_t m_wavefront_size{0};
+    size_t m_max_workgroup_size{0};
+    std::vector<size_t> m_max_workgroup_dims;
     bool m_init_ok{false};
 
     // Keep track of all async/cb threads we dispatch
-    boost::atomic<int> m_cb_outstanding{0};
+    std::atomic<int> m_cb_outstanding{0};
 };
 
 #endif

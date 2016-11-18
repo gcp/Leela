@@ -10,7 +10,7 @@
 #include <array>
 
 #ifdef USE_OPENCL
-#include <boost/atomic.hpp>
+#include <atomic>
 class UCTNode;
 #endif
 #ifdef USE_CAFFE
@@ -48,7 +48,7 @@ public:
     static constexpr int MAX_CHANNELS = 128;
 
 #ifdef USE_OPENCL
-    void async_scored_moves(boost::atomic<int> * nodecount,
+    void async_scored_moves(std::atomic<int> * nodecount,
                             FastState * state, UCTNode * node,
                             Ensemble ensemble);
 #endif
@@ -67,10 +67,11 @@ private:
 #endif
 
     Netresult get_scored_moves_internal(
-        FastState * state, NNPlanes & planes, int rotation);
+      FastState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
-    static void gather_features(FastState * state, NNPlanes & planes);
+    static void gather_features(FastState * state, NNPlanes & planes,
+                                BoardPlane** ladder = nullptr);
 
     static Network* s_Net;
 };

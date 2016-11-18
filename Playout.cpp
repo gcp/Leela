@@ -1,5 +1,5 @@
 #include <vector>
-#include <boost/tr1/array.hpp>
+#include <array>
 #include <cstdlib>
 #include <cassert>
 #include "config.h"
@@ -45,7 +45,7 @@ bool Playout::has_eval() {
     return m_eval_valid;
 }
 
-void Playout::run(FastState & state, bool resigning) {
+void Playout::run(FastState & state, bool postpassout, bool resigning) {
     assert(!m_run);
 
     const int boardsize = state.board.get_boardsize();
@@ -53,10 +53,13 @@ void Playout::run(FastState & state, bool resigning) {
     const int resign = (boardsize * boardsize) / 3;
     const int playoutlen = (boardsize * boardsize) * 2;
 
+    // 2 passes end the game, except when we're marking
+    const int maxpasses = postpassout ? 4 : 2;
+
     int counter = 0;
 
     // do the main loop
-    while (state.get_passes() < 2
+    while (state.get_passes() < maxpasses
         && state.get_movenum() < playoutlen
         && (!resigning || abs(state.estimate_mc_score()) < resign)) {
         int vtx = state.play_random_move();
@@ -161,7 +164,7 @@ float Playout::mc_owner(FastState & state, int iterations, float* points) {
 
         Playout p;
 
-        p.run(tmp, false);
+        p.run(tmp, true, false);
 
         float score = p.get_score();
         if (score == 0.0f) {
