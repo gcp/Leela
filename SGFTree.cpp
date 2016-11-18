@@ -176,7 +176,8 @@ void SGFTree::populate_states(void) {
         m_winner = FastBoard::EMPTY;
     }
 
-    // handicap stone    
+
+    // handicap stone
     std::pair<PropertyMap::iterator, 
               PropertyMap::iterator> abrange = m_properties.equal_range("AB");
     for (it = abrange.first; it != abrange.second; ++it) {
@@ -226,7 +227,6 @@ void SGFTree::populate_states(void) {
 void SGFTree::set_state(KoState & state) {
     m_state = state;
 }
-
 
 void SGFTree::apply_move(int color, int move) {      
     if (move != FastBoard::PASS && m_state.board.get_square(move) != FastBoard::EMPTY) {

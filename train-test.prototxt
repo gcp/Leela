@@ -3,14 +3,13 @@ layer {
   type: "Data"
   name: "data"
   # outputs
-  top: "data_unsliced"
-  top: "label_move1"
+  top: "data"
   include {
     phase: TRAIN
   }
   data_param {
     source: "leela_train"
-    batch_size: 64
+    batch_size: 256
     backend: LEVELDB
   }
 }
@@ -19,14 +18,43 @@ layer {
   type: "Data"
   name: "data"
   # outputs
-  top: "data_unsliced"
-  top: "label_move1"
+  top: "data"
   include {
     phase: TEST
   }
   data_param {
     source: "leela_test"
-    batch_size: 64
+    batch_size: 256
+    backend: LEVELDB
+  }
+}
+
+layer {
+  type: "Data"
+  name: "label"
+  # outputs
+  top: "label_unsliced"
+  include {
+    phase: TRAIN
+  }
+  data_param {
+    source: "leela_train_label"
+    batch_size: 256
+    backend: LEVELDB
+  }
+}
+
+layer {
+  type: "Data"
+  name: "label"
+  # outputs
+  top: "label_unsliced"
+  include {
+    phase: TEST
+  }
+  data_param {
+    source: "leela_test_label"
+    batch_size: 256
     backend: LEVELDB
   }
 }
@@ -34,15 +62,28 @@ layer {
 layer {
   name: "slicer_label"
   type: "Slice"
-  bottom: "data_unsliced"
-  top: "data"
+  bottom: "label_unsliced"
+  top: "label_move1"
   top: "label_move2"
   top: "label_move3"
+  top: "winpc"
+  top: "won"
   slice_param {
     axis: 1
-    slice_point: 24
-    slice_point: 25
+    slice_point: 1
+    slice_point: 2
+    slice_point: 3
+    slice_point: 4
   }
+}
+
+layer {
+  name: "silence"
+  type: "Silence"
+  bottom: "winpc"
+  bottom: "label_move1"
+  bottom: "label_move2"
+  bottom: "label_move3"
 }
 
 layer {

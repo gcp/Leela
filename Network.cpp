@@ -167,12 +167,16 @@ void Network::initialize(void) {
 //#define WRITE_WEIGHTS
 #ifdef WRITE_WEIGHTS
     std::ofstream out("weights.txt");
+    out << "#include <array>" << std::endl << std::endl;
 #endif
 
     int total_weights = 0;
     auto & layers = net->layers();
     myprintf("%d layers:\n", layers.size());
     int layer_num = 1;
+#ifdef WRITE_WEIGHTS
+    int conv_count = 0;
+#endif
     for (auto it = layers.begin(); it != layers.end(); ++it, ++layer_num) {
         myprintf("layer %d (%s)", layer_num, (*it)->type());
         auto & blobs = (*it)->blobs();
@@ -185,8 +189,33 @@ void Network::initialize(void) {
 
 #ifdef WRITE_WEIGHTS
             out << "// " << blob.shape_string() << std::endl;
-            out << "std::array<float, " << blob.count()
-                << "> weights = {{" << std::endl;
+            if (strcmp((*it)->type(), "Convolution") == 0) {
+                if (pars == blobs.begin()) {
+                    conv_count++;
+                    out << "std::array<float, " << blob.count()
+                        << "> conv" << conv_count << "_w = {{" << std::endl;
+                } else {
+                    out << "std::array<float, " << blob.count()
+                        << "> conv" << conv_count << "_b = {{" << std::endl;
+                }
+            } else if (strcmp((*it)->type(), "BatchNorm") == 0) {
+                out << "std::array<float, " << blob.count()
+                    << "> bn" << conv_count << "_w" << (pars - blobs.begin()) + 1
+                    << " = {{" << std::endl;
+            } else if (strcmp((*it)->type(), "InnerProduct") == 0) {
+                if (pars == blobs.begin()) {
+                    conv_count++;
+                    out << "std::array<float, " << blob.count()
+                        << "> ip" << conv_count << "_w = {{" << std::endl;
+                } else {
+                    out << "std::array<float, " << blob.count()
+                        << "> ip" << conv_count << "_b = {{" << std::endl;
+                }
+            } else {
+                out << "std::array<float, " << blob.count()
+                    << "> sc" << conv_count << "_w" << (pars - blobs.begin()) + 1
+                    << " = {{" << std::endl;
+            }
             for (int idx = 0; idx < blob.count(); idx++) {
                 out << blob.cpu_data()[idx];
                 if (idx != blob.count() - 1) out << ", ";
@@ -553,7 +582,8 @@ Network::Netresult Network::get_scored_moves_internal(
 #endif
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->thread_init();
-    OpenCL::get_OpenCL()->forward(input_data, output_data);
+    OpenCL::get_OpenCL()->forward_async(input_data, output_data,
+                                        nullptr, nullptr);
     softmax(output_data, softmax_data);
     std::vector<float>& outputs = softmax_data;
     // output data + 1
@@ -675,8 +705,7 @@ void Network::gather_features(FastState * state, NNPlanes & planes,
     }
 
         bool white_has_komi = true;
-    if (std::fabs(state->get_komi()) <= 0.5f
-        || state->get_handicap() != 0) {
+    if (std::fabs(state->get_komi()) <= 0.75f) {
         white_has_komi = false;
     }
 
@@ -712,6 +741,7 @@ void Network::gather_features(FastState * state, NNPlanes & planes,
                 state->board.get_square(vtx);
             int idx = j * 19 + i;
             if (color != FastBoard::EMPTY) {
+                // White gets extra points in scoring
                 if (color == FastBoard::WHITE && white_has_komi) {
                     has_komi[idx] = true;
                 }
@@ -845,70 +875,68 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
             if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE)
                 break;
 
-            // check every 3rd move
             //int skip = Random::get_Rng()->randint(10);
             if (/*skip == 0*/1) {
-                KoState * state = treewalk->get_state();
-                int tomove = state->get_to_move();
-                int move;
+            KoState * state = treewalk->get_state();
+            int tomove = state->get_to_move();
+            int move;
 
-                if (treewalk->get_child(0) != NULL) {
-                    move = treewalk->get_child(0)->get_move(tomove);
-                    if (move == SGFTree::EOT) {
-                        break;
-                    }
-                } else {
+            if (treewalk->get_child(0) != NULL) {
+                move = treewalk->get_child(0)->get_move(tomove);
+                if (move == SGFTree::EOT) {
                     break;
                 }
+            } else {
+                break;
+            }
 
-                assert(move == tree_moves[counter]);
+            assert(move == tree_moves[counter]);
 
-                TrainPosition position;
+            TrainPosition position;
 
-                std::vector<int> moves = state->generate_moves(tomove);
-                bool moveseen = false;
-                for(auto it = moves.begin(); it != moves.end(); ++it) {
-                    if (*it == move) {
-                        if (move != FastBoard::PASS) {
-                            // get x y coords for actual move
-                            std::pair<int, int> xy = state->board.get_xy(move);
-                            position.moves[0] = (xy.second * 19) + xy.first;
-                        }
-                        moveseen = true;
+            std::vector<int> moves = state->generate_moves(tomove);
+            bool moveseen = false;
+            for(auto it = moves.begin(); it != moves.end(); ++it) {
+                if (*it == move) {
+                    if (move != FastBoard::PASS) {
+                        // get x y coords for actual move
+                        std::pair<int, int> xy = state->board.get_xy(move);
+                        position.moves[0] = (xy.second * 19) + xy.first;
                     }
+                    moveseen = true;
                 }
+            }
 
-                bool has_next_moves = counter + 2 < tree_moves.size();
-                if (!has_next_moves) {
-                    goto skipnext;
-                }
+            bool has_next_moves = counter + 2 < tree_moves.size();
+            if (!has_next_moves) {
+                goto skipnext;
+            }
 
-                has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
-                has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
+            has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
+            has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
 
-                if (!has_next_moves) {
-                    goto skipnext;
-                }
+            if (!has_next_moves) {
+                goto skipnext;
+            }
 
-                if (moveseen && move != FastBoard::PASS && has_next_moves) {
-                    position.stm_won = (tomove == who_won);
-                    float frac = (float)counter / (float)movecount;
-                    position.stm_score = (frac * position.stm_won)
-                                          + ((1.0f - frac) * 0.5f);
-                    gather_features(state, position.planes);
-                    // add next 2 moves to position
-                    // we do not check them for legality
-                    int next_move = tree_moves[counter + 1];
-                    int next_next_move = tree_moves[counter + 2];
-                    std::pair<int, int> xy = state->board.get_xy(next_move);
-                    position.moves[1] = (xy.second * 19) + xy.first;
-                    xy = state->board.get_xy(next_next_move);
-                    position.moves[2] = (xy.second * 19) + xy.first;
-                    data.push_back(position);
-                } else if (move != FastBoard::PASS) {
-                    myprintf("Mainline move not found: %d\n", move);
-                    goto skipnext;
-                }
+            if (moveseen && move != FastBoard::PASS && has_next_moves) {
+                position.stm_won = (tomove == who_won);
+                float frac = (float)counter / (float)movecount;
+                position.stm_score = (frac * position.stm_won)
+                                      + ((1.0f - frac) * 0.5f);
+                gather_features(state, position.planes);
+                // add next 2 moves to position
+                // we do not check them for legality
+                int next_move = tree_moves[counter + 1];
+                int next_next_move = tree_moves[counter + 2];
+                std::pair<int, int> xy = state->board.get_xy(next_move);
+                position.moves[1] = (xy.second * 19) + xy.first;
+                xy = state->board.get_xy(next_next_move);
+                position.moves[2] = (xy.second * 19) + xy.first;
+                data.push_back(position);
+            } else if (move != FastBoard::PASS) {
+                myprintf("Mainline move not found: %d\n", move);
+                goto skipnext;
             }
 
             counter++;
@@ -922,16 +950,13 @@ skipnext:
                      gamecount, data.size(), train_pos + data.size());
         }
         if (gamecount % 50000 == 0) {
-            std::cout << "Shuffling training data...";
+            train_network(data, train_pos, test_pos);
             std::random_shuffle(data.begin(), data.end());
             std::cout << "writing: ";
             train_network(data, train_pos, test_pos);
         }
     }
 
-    std::cout << "Shuffling training data...";
-    std::random_shuffle(data.begin(), data.end());
-    std::cout << "writing: ";
     train_network(data, train_pos, test_pos);
 
     std::cout << train_pos << " training positions." << std::endl;
@@ -990,35 +1015,34 @@ void Network::train_network(TrainVector& data,
     size_t train_pos = 0;
     size_t test_pos = 0;
 
-    boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
+    std::unique_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
     std::string dbTrainName("leela_train");
     train_db->Open(dbTrainName.c_str(), caffe::db::WRITE);
     boost::scoped_ptr<caffe::db::DB> train_label_db(caffe::db::GetDB("leveldb"));
     std::string dbTrainLabelName("leela_train_label");
     train_label_db->Open(dbTrainLabelName.c_str(), caffe::db::WRITE);
 
-    boost::scoped_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
     std::string dbTestName("leela_test");
     test_db->Open(dbTestName.c_str(), caffe::db::WRITE);
     boost::scoped_ptr<caffe::db::DB> test_label_db(caffe::db::GetDB("leveldb"));
     std::string dbTestLabelName("leela_test_label");
     test_label_db->Open(dbTestLabelName.c_str(), caffe::db::WRITE);
 
-    boost::scoped_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
-    boost::scoped_ptr<caffe::db::Transaction> test_txn(test_db->NewTransaction());
+    std::unique_ptr<caffe::db::Transaction> train_txn(train_db->NewTransaction());
+    std::unique_ptr<caffe::db::Transaction> test_txn(test_db->NewTransaction());
     boost::scoped_ptr<caffe::db::Transaction> train_label_txn(train_label_db->NewTransaction());
     boost::scoped_ptr<caffe::db::Transaction> test_label_txn(test_label_db->NewTransaction());
 
     for (int pass = 0; pass < 1; pass++) {
-        size_t data_pos = 0;
-        for (auto it = data.begin(); it != data.end(); ++it) {
-            TrainPosition& position = *it;
-            int move = position.moves[0];
-            NNPlanes& nnplanes = position.planes;
-            float stm_won = position.stm_won;
-            float stm_score = position.stm_score;
+        std::cout << "Shuffling training data...";
+        std::random_shuffle(data.begin(), data.end());
+        std::cout << "writing: ";
+        TrainPosition& position = *it;
+        NNPlanes& nnplanes = position.planes;
+        float stm_won = position.stm_won;
+        float stm_score = position.stm_score;
 
-            // train data
+             // train data
             caffe::Datum datum;
             size_t datum_channels = nnplanes.size();
             datum.set_channels(datum_channels);
@@ -1026,12 +1050,9 @@ void Network::train_network(TrainVector& data,
             datum.set_width(19);
             std::string buffer(datum_channels * 19 * 19, '\0');
             // check whether to rotate the position
-            int symmetry;
-            if (pass == 0) {
+            int symmetry = Random::get_Rng()->randint(8);
                 symmetry = Random::get_Rng()->randint(8);
             } /*else {
-                assert(pass == 1);
-                symmetry = Random::get_Rng()->randint(4) + 4;
                 }*/
             // set (rotated) bitmaps
             for (size_t p = 0; p < nnplanes.size(); p++) {
@@ -1060,7 +1081,7 @@ void Network::train_network(TrainVector& data,
             datum_label.set_height(1);
             datum_label.set_width(1);
 
-            int this_move = rotate_nn_idx(move, symmetry);
+            int this_move = rotate_nn_idx(position.moves[0], symmetry);
             int next_move = rotate_nn_idx(position.moves[1], symmetry);
             int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
 
@@ -1119,10 +1140,10 @@ void Network::train_network(TrainVector& data,
 void Network::autotune_from_file(std::string filename) {
 #ifdef USE_CAFFE
     {
-        boost::scoped_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
+        std::unique_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
         std::string dbTrainName("leela_train");
         train_db->Open(dbTrainName.c_str(), caffe::db::NEW);
-        boost::scoped_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
+        std::unique_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
         std::string dbTestName("leela_test");
         test_db->Open(dbTestName.c_str(), caffe::db::NEW);
     }
