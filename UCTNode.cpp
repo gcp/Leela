@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include <math.h>
+#include <cmath>
 
 #include <iostream>
 #include <vector>

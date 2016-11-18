@@ -22,7 +22,7 @@ using namespace caffe;
 #ifdef USE_BLAS
 #include "Im2Col.h"
 #ifdef __APPLE__
-#include <Accelerate.h>
+#include <Accelerate/Accelerate.h>
 #endif
 #ifdef USE_MKL
 #include <mkl.h>
