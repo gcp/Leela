@@ -45,7 +45,7 @@ public:
     Netresult get_scored_moves(FastState * state,
                                Ensemble ensemble);
     static constexpr int CHANNELS = 32;
-    static constexpr int MAX_CHANNELS = 160;
+    static constexpr int MAX_CHANNELS = 128;
 
 #ifdef USE_OPENCL
     void async_scored_moves(std::atomic<int> * nodecount,

@@ -75,8 +75,39 @@ extern std::array<float, 147456> conv13_w;
 extern std::array<float, 128> conv13_b;
 extern std::array<float, 3456> conv14_w;
 extern std::array<float, 3> conv14_b;
-extern std::array<float, 256> ip15_w;
-extern std::array<float, 1> ip16_b;
+
+extern std::array<float, 25600> val_conv1_w;
+extern std::array<float, 32> val_conv1_b;
+extern std::array<float, 9216> val_conv2_w;
+extern std::array<float, 32> val_conv2_b;
+extern std::array<float, 9216> val_conv3_w;
+extern std::array<float, 32> val_conv3_b;
+extern std::array<float, 9216> val_conv4_w;
+extern std::array<float, 32> val_conv4_b;
+extern std::array<float, 9216> val_conv5_w;
+extern std::array<float, 32> val_conv5_b;
+extern std::array<float, 9216> val_conv6_w;
+extern std::array<float, 32> val_conv6_b;
+extern std::array<float, 9216> val_conv7_w;
+extern std::array<float, 32> val_conv7_b;
+extern std::array<float, 9216> val_conv8_w;
+extern std::array<float, 32> val_conv8_b;
+extern std::array<float, 9216> val_conv9_w;
+extern std::array<float, 32> val_conv9_b;
+extern std::array<float, 9216> val_conv10_w;
+extern std::array<float, 32> val_conv10_b;
+extern std::array<float, 9216> val_conv11_w;
+extern std::array<float, 32> val_conv11_b;
+extern std::array<float, 9216> val_conv12_w;
+extern std::array<float, 32> val_conv12_b;
+extern std::array<float, 9216> val_conv13_w;
+extern std::array<float, 32> val_conv13_b;
+extern std::array<float, 9216> val_conv14_w;
+extern std::array<float, 32> val_conv14_b;
+extern std::array<float, 2957312> val_ip15_w;
+extern std::array<float, 256> val_ip15_b;
+extern std::array<float, 256> val_ip16_w;
+extern std::array<float, 1> val_ip16_b;
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -144,8 +175,8 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::GPU);
 
-    net.reset(new Net<float>("model_5084.txt", TEST));
-    net->CopyTrainedLayersFrom("model_5084.caffemodel");
+    net.reset(new Net<float>("model_value.txt", TEST));
+    net->CopyTrainedLayersFrom("model_value.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         net->num_inputs(), net->num_outputs());
@@ -193,27 +224,27 @@ void Network::initialize(void) {
                 if (pars == blobs.begin()) {
                     conv_count++;
                     out << "std::array<float, " << blob.count()
-                        << "> conv" << conv_count << "_w = {{" << std::endl;
+                        << "> val_conv" << conv_count << "_w = {{" << std::endl;
                 } else {
                     out << "std::array<float, " << blob.count()
-                        << "> conv" << conv_count << "_b = {{" << std::endl;
+                        << "> val_conv" << conv_count << "_b = {{" << std::endl;
                 }
             } else if (strcmp((*it)->type(), "BatchNorm") == 0) {
                 out << "std::array<float, " << blob.count()
-                    << "> bn" << conv_count << "_w" << (pars - blobs.begin()) + 1
+                    << "> val_bn" << conv_count << "_w" << (pars - blobs.begin()) + 1
                     << " = {{" << std::endl;
             } else if (strcmp((*it)->type(), "InnerProduct") == 0) {
                 if (pars == blobs.begin()) {
                     conv_count++;
                     out << "std::array<float, " << blob.count()
-                        << "> ip" << conv_count << "_w = {{" << std::endl;
+                        << "> val_ip" << conv_count << "_w = {{" << std::endl;
                 } else {
                     out << "std::array<float, " << blob.count()
-                        << "> ip" << conv_count << "_b = {{" << std::endl;
+                        << "> val_ip" << conv_count << "_b = {{" << std::endl;
                 }
             } else {
                 out << "std::array<float, " << blob.count()
-                    << "> sc" << conv_count << "_w" << (pars - blobs.begin()) + 1
+                    << "> val_sc" << conv_count << "_w" << (pars - blobs.begin()) + 1
                     << " = {{" << std::endl;
             }
             for (int idx = 0; idx < blob.count(); idx++) {
@@ -275,16 +306,9 @@ void convolve(std::vector<float>& input,
                                       val : 1.0f * (std::exp(val) - 1.0f); };
 
     for (unsigned int o = 0; o < outputs; o++) {
-        if (outputs > 4) {
-            for (unsigned int b = 0; b < spatial_out; b++) {
-                output[(o * spatial_out) + b] =
-                    lambda_ELU(biases[o] + output[(o * spatial_out) + b]);
-            }
-        } else {
-            for (unsigned int b = 0; b < spatial_out; b++) {
-                output[(o * spatial_out) + b] =
-                    biases[o] + output[(o * spatial_out) + b];
-            }
+        for (unsigned int b = 0; b < spatial_out; b++) {
+            output[(o * spatial_out) + b] =
+                lambda_ELU(biases[o] + output[(o * spatial_out) + b]);
         }
     }
 }
@@ -511,9 +535,9 @@ Network::Netresult Network::get_scored_moves(
         }
     }
 
-    // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-    //     show_heatmap(state, result);
-    // }
+    if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+       show_heatmap(state, result);
+    }
 
     return result;
 }
@@ -535,22 +559,27 @@ Network::Netresult Network::get_scored_moves_internal(
     constexpr int width = 19;
     constexpr int height = 19;
     constexpr int max_channels = MAX_CHANNELS;
+    std::vector<float> orig_input_data(planes.size() * width * height);
     std::vector<float> input_data(max_channels * width * height);
     std::vector<float> output_data(max_channels * width * height);
     std::vector<float> winrate_data(256);
+    std::vector<float> winrate_out(1);
     std::vector<float> softmax_data(width * height);
 #endif
     for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
                 int vtx = rotate_nn_idx(h * 19 + w, rotation);
-                input_data[(c * height + h) * width + w] =
+                orig_input_data[(c * height + h) * width + w] =
                     (float)planes[c][vtx];
             }
         }
     }
 #if defined(USE_BLAS)
-    convolve<5,  32, 128>(input_data, conv1_w, conv1_b, output_data);
+    // XXX really only need the first 24
+    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
+
+    convolve<5,  24, 128>(input_data, conv1_w, conv1_b, output_data);
     std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv2_w, conv2_b, output_data);
     std::swap(input_data, output_data);
@@ -568,17 +597,55 @@ Network::Netresult Network::get_scored_moves_internal(
     std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv9_w, conv9_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128,   3>(input_data, conv10_w, conv10_b, output_data);
+    convolve<3, 128, 128>(input_data, conv10_w, conv10_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv11_w, conv11_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv12_w, conv12_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128, 128>(input_data, conv13_w, conv13_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 128,   3>(input_data, conv14_w, conv14_b, output_data);
     softmax(output_data, softmax_data);
 
+    // Move scores
     std::vector<float>& outputs = softmax_data;
 
+    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
+
+    convolve<5,  32, 32>(input_data, val_conv1_w, val_conv1_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv2_w, val_conv2_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv3_w, val_conv3_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv4_w, val_conv4_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv5_w, val_conv5_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv6_w, val_conv6_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv7_w, val_conv7_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv8_w, val_conv8_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv9_w, val_conv9_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv10_w, val_conv10_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv11_w, val_conv11_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv12_w, val_conv12_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv13_w, val_conv13_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv14_w, val_conv14_b, output_data);
     // Now get the score
-    innerproduct<3 * 361, 256>(input_data, ip11_w, ip11_b, winrate_data);
-    innerproduct<256,       1>(input_data, ip12_w, ip12_b, winrate_data);
+    innerproduct<32 * 361, 256>(output_data, val_ip15_w, val_ip15_b, winrate_data);
+    innerproduct<256,        1>(winrate_data, val_ip16_w, val_ip16_b, winrate_out);
     // Sigmoid
-    winrate_data[0] = 1.0f / (1.0f + exp(-winrate_data[0]));
-    result.eval = winrate_data[0];
+    float winrate_sig = 1.0f / (1.0f + exp(-winrate_out[0]));
+    result.eval = winrate_sig;
 #endif
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->thread_init();
@@ -592,11 +659,11 @@ Network::Netresult Network::get_scored_moves_internal(
 #endif
 #ifdef USE_CAFFE
     net->Forward();
-    Blob<float>* output_layer = net->output_blobs()[0];
-    const float* begin = output_layer->cpu_data();
-    const float* end = begin + output_layer->channels();
-    auto outputs = std::vector<float>(begin, end);
-    Blob<float>* score_layer = net->output_blobs()[1];
+    //Blob<float>* output_layer = net->output_blobs()[0];
+    //const float* begin = output_layer->cpu_data();
+    //const float* end = begin + output_layer->channels();
+    //auto outputs = std::vector<float>(begin, end);
+    Blob<float>* score_layer = net->output_blobs()[0];
     float winrate = score_layer->cpu_data()[0];
     result.eval = winrate;
 #endif

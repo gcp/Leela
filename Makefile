@@ -29,10 +29,10 @@ asan:
 		leela
 
 LIBS = -lboost_thread -lboost_system -lboost_program_options
-DYNAMIC_LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
+#DYNAMIC_LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
 LIBS += -lopenblas
 DYNAMIC_LIBS += -lpthread
-DYNAMIC_LIBS += -lOpenCL
+#DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
 #LIBS += -lmkl_rt
@@ -54,7 +54,7 @@ sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
 	  GameState.cpp Leela.cpp PNNode.cpp SGFParser.cpp Timing.cpp \
 	  Utils.cpp FastBoard.cpp Genetic.cpp Matcher.cpp PNSearch.cpp \
 	  SGFTree.cpp TTable.cpp Zobrist.cpp FastState.cpp GTP.cpp \
-	  MCOTable.cpp Random.cpp SMP.cpp UCTNode.cpp NN.cpp OpenCL.cpp
+	  MCOTable.cpp Random.cpp SMP.cpp UCTNode.cpp NN.cpp NNValue.cpp OpenCL.cpp
 
 objects = $(sources:.cpp=.o)
 deps = $(sources:%.cpp=%.d)
