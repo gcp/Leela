@@ -879,7 +879,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
             if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE)
                 break;
 
-            int skip = Random::get_Rng()->randint(8);
+            int skip = Random::get_Rng()->randint(16);
             if (skip == 0) {
                 KoState * state = treewalk->get_state();
                 int tomove = state->get_to_move();
@@ -954,7 +954,7 @@ skipnext:
             myprintf("Game %d, %d new positions, %d total\n",
                      gamecount, data.size(), train_pos + data.size());
         }
-        if (gamecount % (8*50000) == 0) {
+        if (gamecount % (16*50000) == 0) {
             train_network(data, train_pos, test_pos);
         }
     }

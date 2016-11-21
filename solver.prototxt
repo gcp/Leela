@@ -3,7 +3,11 @@
 # 1370412 testing positions.   =  10000  20000   42800
 # value
 # 30952497 training positions. = 241816 x 128
-# 1289690 testing positions.   =  10075 x 128
+#  1289690 testing positions.   =  10075 x 128
+# New
+# 16489194 training positions.
+#  687052 testing positions.
+
 # The train/test net protocol buffer definition
 net: "train-test.prototxt"
 
@@ -18,7 +22,7 @@ test_interval: 24200
 momentum: 0.9
 base_lr: 0.01
 
-lr_policy: "linear" 
+lr_policy: "poly"
 power: 1.0
 
 # Display every n iterations
@@ -29,7 +33,7 @@ display: 24200
 max_iter: 24200000
 
 # snapshot intermediate results
-snapshot: 24200
+snapshot: 242000
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU

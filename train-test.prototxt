@@ -518,27 +518,29 @@ layer {
   top: "ip16"
 }
 
-#layer {
-#  name: "sigmoid"
-#  type: "Sigmoid"
-#  bottom: "ip14"
-#  top: "winrate"
-#  include { phase: TEST }
-#}
+layer {
+  name: "sigmoid"
+  type: "Sigmoid"
+  bottom: "ip16"
+  top: "winrate"
+  include { phase: TEST }
+}
 
 layer {
   name: "loss"
   type: "SigmoidCrossEntropyLoss"
   bottom: "ip16"
   bottom: "won"
-  top: "win_ce_loss"
+  top: "ce_loss"
   loss_weight: 1
 }
 
 layer {
   name: "loss_ec"
   type: "EuclideanLoss"
-  bottom: "ip16"
+  bottom: "winrate"
   bottom: "won"
-  top: "win_mse_loss"
+  top: "mse_loss"
+  loss_weight: 0
+  include { phase: TEST }
 }
