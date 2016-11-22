@@ -491,6 +491,37 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
 }
 #endif
 
+float Network::get_value(FastState * state, Ensemble ensemble) {
+    if (state->board.get_boardsize() != 19) {
+        assert(false);
+        return 0.5f;
+    }
+
+    NNPlanes planes;
+    gather_features(state, planes, nullptr);
+    float result;
+
+    if (ensemble == DIRECT) {
+        result = get_value_internal(state, planes, 0);
+    } else if (ensemble == RANDOM_ROTATION) {
+        int rotation = Random::get_Rng()->randint(8);
+        result = get_value_internal(state, planes, rotation);
+    } else if (ensemble == AVERAGE_ALL) {
+        result = get_value_internal(state, planes, 0);
+        for (int r = 1; r < 8; r++) {
+            float sum_res = get_value_internal(state, planes, r);
+            result += sum_res;
+        }
+        result /= 8.0f;
+    }
+
+    //if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+    //    std::cerr << "Eval: " << boost::format("%5.4f") % result << std::endl;
+    //}
+
+    return result;
+}
+
 Network::Netresult Network::get_scored_moves(
     FastState * state, Ensemble ensemble) {
     Netresult result;
@@ -515,11 +546,9 @@ Network::Netresult Network::get_scored_moves(
                 assert(result.movescores[i].second == sum_res.movescores[i].second);
                 result.movescores[i].first += sum_res.movescores[i].first;
             }
-            result.eval += sum_res.eval;
         }
         std::for_each(result.movescores.begin(), result.movescores.end(),
                       [](scored_node & sn){ sn.first /= 8.0f; });
-        result.eval /= 8.0f;
     }
 
     /* prune losing ladders completely */
@@ -538,6 +567,69 @@ Network::Netresult Network::get_scored_moves(
     if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
        show_heatmap(state, result);
     }
+
+    return result;
+}
+
+float Network::get_value_internal(
+    FastState * state, NNPlanes & planes, int rotation) {
+    assert(rotation >= 0 && rotation < 7);
+    float result;
+
+    constexpr int channels = CHANNELS;
+    constexpr int width = 19;
+    constexpr int height = 19;
+    constexpr int max_channels = MAX_VALUE_CHANNELS;
+    std::vector<float> orig_input_data(planes.size() * width * height);
+    std::vector<float> input_data(max_channels * width * height);
+    std::vector<float> output_data(max_channels * width * height);
+    std::vector<float> winrate_data(256);
+    std::vector<float> winrate_out(1);
+
+    for (int c = 0; c < channels; ++c) {
+        for (int h = 0; h < height; ++h) {
+            for (int w = 0; w < width; ++w) {
+                int vtx = rotate_nn_idx(h * 19 + w, rotation);
+                orig_input_data[(c * height + h) * width + w] =
+                    (float)planes[c][vtx];
+            }
+        }
+    }
+    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
+
+    convolve<5,  32, 32>(input_data, val_conv1_w, val_conv1_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv2_w, val_conv2_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv3_w, val_conv3_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv4_w, val_conv4_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv5_w, val_conv5_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv6_w, val_conv6_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv7_w, val_conv7_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv8_w, val_conv8_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv9_w, val_conv9_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv10_w, val_conv10_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv11_w, val_conv11_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv12_w, val_conv12_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,  32>(input_data, val_conv13_w, val_conv13_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32,   1>(input_data, val_conv14_w, val_conv14_b, output_data);
+    // Now get the score
+    innerproduct<1 * 361, 256>(output_data, val_ip15_w, val_ip15_b, winrate_data);
+    innerproduct<256,        1>(winrate_data, val_ip16_w, val_ip16_b, winrate_out);
+    // Sigmoid
+    float winrate_sig = 1.0f / (1.0f + exp(-winrate_out[0]));
+    result = winrate_sig;
 
     return result;
 }
@@ -611,42 +703,6 @@ Network::Netresult Network::get_scored_moves_internal(
 
     // Move scores
     std::vector<float>& outputs = softmax_data;
-
-    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
-
-    convolve<5,  32, 32>(input_data, val_conv1_w, val_conv1_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv2_w, val_conv2_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv3_w, val_conv3_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv4_w, val_conv4_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv5_w, val_conv5_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv6_w, val_conv6_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv7_w, val_conv7_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv8_w, val_conv8_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv9_w, val_conv9_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv10_w, val_conv10_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv11_w, val_conv11_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv12_w, val_conv12_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv13_w, val_conv13_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,   1>(input_data, val_conv14_w, val_conv14_b, output_data);
-    // Now get the score
-    innerproduct<1 * 361, 256>(output_data, val_ip15_w, val_ip15_b, winrate_data);
-    innerproduct<256,        1>(winrate_data, val_ip16_w, val_ip16_b, winrate_out);
-    // Sigmoid
-    float winrate_sig = 1.0f / (1.0f + exp(-winrate_out[0]));
-    result.eval = winrate_sig;
 #endif
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->thread_init();
@@ -664,9 +720,6 @@ Network::Netresult Network::get_scored_moves_internal(
     const float* begin = output_layer->cpu_data();
     const float* end = begin + output_layer->channels();
     auto outputs = std::vector<float>(begin, end);
-    Blob<float>* score_layer = net->output_blobs()[0];
-    float winrate = score_layer->cpu_data()[0];
-    result.eval = winrate;
 #endif
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         int rot_idx = rev_rotate_nn_idx(idx, rotation);
@@ -727,9 +780,6 @@ void Network::show_heatmap(FastState * state, Netresult& result) {
         cum += moves[tried].first;
         tried++;
     }
-
-    std::cerr << "Eval: " << boost::format("%5.4f") % result.eval
-              << std::endl;
 }
 
 void Network::gather_features(FastState * state, NNPlanes & planes,

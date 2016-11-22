@@ -26,6 +26,8 @@ extern float cfg_cutoff_offset;
 extern float cfg_cutoff_ratio;
 extern float cfg_puct;
 extern float cfg_psa;
+extern float cfg_mix;
+extern int cfg_eval_thresh;
 
 class GTP {
 public:

@@ -29,7 +29,7 @@ UCTNode::UCTNode(int vertex, float score, int expand_treshold)
     : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0), m_visits(0),
       m_score(score), m_eval_propagated(false), m_blackevals(0.0f),
       m_evalcount(0), m_valid(true), m_expand_cnt(expand_treshold),
-      m_is_expanding(false) {
+      m_is_expanding(false), m_is_evaluating(false) {
     m_ravevisits = 20;
     m_ravestmwins = 10.0;
 }
@@ -88,6 +88,7 @@ void UCTNode::create_children(std::atomic<int> & nodecount,
     }
     // We'll be the one queueing this node for expansion, stop others
     m_is_expanding = true;
+    // Let simulations proceed
     lock.unlock();
 
     FastBoard & board = state.board;
@@ -160,16 +161,6 @@ void UCTNode::expansion_cb(std::atomic<int> * nodecount,
     nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
 
     link_nodelist(*nodecount, board, nodelist, use_nets);
-
-    if (use_nets) {
-        // DCNN returns winrate as side to move
-        int tomove = board.get_to_move();
-        if (tomove == FastBoard::WHITE) {
-            netresult.eval = 1.0f - netresult.eval;
-        }
-        SMP::Lock lock(get_mutex());
-        accumulate_eval(netresult.eval);
-    }
 }
 
 void UCTNode::link_nodelist(std::atomic<int> & nodecount,
@@ -214,6 +205,36 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     }
 
     nodecount += childrenadded;
+}
+
+void UCTNode::run_value_net(FastState & state) {
+    // acquire the lock
+    SMP::Lock lock(get_mutex());
+    // check whether somebody beat us to it
+    if (get_evalcount()) {
+        return;
+    }
+    if (m_is_evaluating) {
+        return;
+    }
+    assert(!has_eval_propagated());
+
+    // We'll be the one evaluating this node, stop others
+    m_is_evaluating = true;
+    // Let simulations proceed
+    lock.unlock();
+
+    float eval =
+        Network::get_Network()->get_value(&state,
+                                          Network::Ensemble::RANDOM_ROTATION);
+
+    // DCNN returns winrate as side to move
+    int tomove = state.board.get_to_move();
+    if (tomove == FastBoard::WHITE) {
+        eval = 1.0f - eval;
+    }
+    lock.lock();
+    accumulate_eval(eval);
 }
 
 void UCTNode::kill_superkos(KoState & state) {        
@@ -436,11 +457,12 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             if (!child->first_visit()) {
                 // "UCT" part
                 float winrate = child->get_winrate(color);
-                float winmix  = winrate;
+                float winmix;
                 if (child->get_evalcount()) {
                     float eval = child->get_eval(color);
-                    winmix += eval;
-                    winmix *= 0.5f;
+                    winmix = eval * cfg_mix + winrate * (1.0f - cfg_mix);
+                } else {
+                    winmix = winrate;
                 }
                 float psa = child->get_score();
                 float denom = child->get_visits();
@@ -528,7 +550,6 @@ public:
 
         // first check: are playouts comparable and sufficient?
         // then winrate counts
-
         if (std::get<1>(a) > UCTSearch::MCTS_MATURE_TRESHOLD
             && std::get<1>(b) > UCTSearch::MCTS_MATURE_TRESHOLD
             && std::get<1>(a) * 2 > m_maxvisits
@@ -569,11 +590,18 @@ void UCTNode::sort_children(int color) {
 
     while (child != NULL) {
         int visits = child->get_visits();
-	if (visits) {
-	    tmp.push_back(std::make_tuple(child->get_winrate(color), visits, child));
-	} else {
-	    tmp.push_back(std::make_tuple(0.0f, 0, child));
-	}
+        if (visits) {
+            float winrate;
+            if (child->get_evalcount()) {
+                float eval = child->get_eval(color);
+                winrate = cfg_mix * eval + (1.0f - cfg_mix) * winrate;
+            } else {
+                winrate = child->get_winrate(color);
+            }
+            tmp.push_back(std::make_tuple(winrate, visits, child));
+        } else {
+            tmp.push_back(std::make_tuple(0.0f, 0, child));
+        }
 
         maxvisits = std::max(maxvisits, visits);
         child = child->m_nextsibling;

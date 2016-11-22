@@ -47,6 +47,8 @@ float cfg_cutoff_offset;
 float cfg_cutoff_ratio;
 float cfg_puct;
 float cfg_psa;
+float cfg_mix;
+int cfg_eval_thresh;
 
 void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
@@ -71,6 +73,8 @@ void GTP::setup_default_parameters() {
     cfg_psa = 0.232f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
+    cfg_mix = 0.5f;
+    cfg_eval_thresh = 50;
 }
 
 bool GTP::perform_self_test(GameState & state) {

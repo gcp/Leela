@@ -39,13 +39,15 @@ public:
 
     struct Netresult {
         std::vector<scored_node> movescores;
-        float eval;
     };
 
     Netresult get_scored_moves(FastState * state,
                                Ensemble ensemble);
+    float get_value(FastState *state,
+                    Ensemble ensemble);
     static constexpr int CHANNELS = 32;
     static constexpr int MAX_CHANNELS = 128;
+    static constexpr int MAX_VALUE_CHANNELS = 32;
 
 #ifdef USE_OPENCL
     void async_scored_moves(std::atomic<int> * nodecount,
@@ -67,6 +69,8 @@ private:
 #endif
 
     Netresult get_scored_moves_internal(
+      FastState * state, NNPlanes & planes, int rotation);
+    float get_value_internal(
       FastState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);

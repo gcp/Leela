@@ -61,6 +61,12 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
 
     TTable::get_TT()->sync(hash, node);
 
+    if (m_use_nets
+        && !node->get_evalcount()
+        && node->get_visits() > cfg_eval_thresh) {
+        node->run_value_net(currstate);
+    }
+
     if (!node->has_children()
         && node->should_expand()
         && m_nodes < MAX_TREE_SIZE) {
@@ -207,7 +213,8 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
             myprintf("%4s -> %7d (W: %5.2f%%) (U: %5.2f%%) (V: %5.2f%%: %6d) (N: %4.1f%%) PV: ",
                 tmp.c_str(),
                 node->get_visits(),
-                node->get_evalcount() > 0 ? node->get_eval(color)*50.0f + node->get_winrate(color)*50.0f
+                 node->get_evalcount() > 0 ? (100.0f * (node->get_eval(color)*cfg_mix
+                                                     + node->get_winrate(color) * (1.0f - cfg_mix)))
                                           : node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                 node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                 node->get_evalcount() > 0 ? node->get_eval(color)*100.0f : 0.0f,
@@ -597,7 +604,7 @@ void UCTSearch::dump_analysis(void) {
     wineval = std::max(0.0f, wineval);
     wineval = std::min(100.0f, wineval);
 
-    winrate = (winrate + wineval) / 2.0f;
+    winrate = wineval * cfg_mix + winrate * (1.0f - cfg_mix);
 
     myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n", m_root.get_visits(),
              winrate, pvstring.c_str());
@@ -671,7 +678,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     MCOwnerTable::clear();
     float territory;
     float mc_score = Playout::mc_owner(m_rootstate, 64, &territory);
-    myprintf("MC winrate=%f score=", mc_score);
+    float net_score = Network::get_Network()->get_value(&m_rootstate,
+                                                        Network::Ensemble::AVERAGE_ALL);
+    myprintf("MC winrate=%f, NN eval=%f, score=", mc_score, net_score);
     if (territory > 0.0f) {
         myprintf("B+%3.1f\n", territory);
     } else {

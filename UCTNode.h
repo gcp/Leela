@@ -27,6 +27,7 @@ public:
     double get_blackwins() const;
     void create_children(std::atomic<int> & nodecount,
                          FastState & state, bool use_nets, bool at_root);
+    void run_value_net(FastState & state);
     void expansion_cb(std::atomic<int> * nodecount,
                       FastState & state,
                       Network::Netresult & netresult,
@@ -93,6 +94,7 @@ private:
     // extend node
     int m_expand_cnt;
     bool m_is_expanding;
+    bool m_is_evaluating;
     // mutex
     SMP::Mutex m_nodemutex;
 };

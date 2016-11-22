@@ -12,6 +12,10 @@ SMP::Mutex::~Mutex() {
 
 SMP::Lock::Lock(Mutex & m) {
     m_mutex = &m;
+    lock();
+}
+
+void SMP::Lock::lock() {
     while (m_mutex->m_lock.exchange(true, std::memory_order_acquire) == true);
 }
 

@@ -20,6 +20,7 @@ namespace SMP {
     public:
         explicit Lock(Mutex & m);
         ~Lock();
+        void lock();
         void unlock();
     private:
         Mutex * m_mutex;

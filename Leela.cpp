@@ -66,6 +66,8 @@ int main (int argc, char *argv[]) {
         ("psa", po::value<float>())
         ("cutoff_offset", po::value<float>())
         ("cutoff_ratio", po::value<float>())
+        ("mix", po::value<float>())
+        ("eval_thresh", po::value<int>())
 #endif
         ;
     po::variables_map vm;
@@ -125,6 +127,12 @@ int main (int argc, char *argv[]) {
     }
     if (vm.count("cutoff_ratio")) {
         cfg_cutoff_ratio = vm["cutoff_ratio"].as<float>();
+    }
+    if (vm.count("mix")) {
+        cfg_mix = vm["mix"].as<float>();
+    }
+    if (vm.count("eval_thresh")) {
+        cfg_eval_thresh = vm["eval_thresh"].as<int>();
     }
 #endif
 
