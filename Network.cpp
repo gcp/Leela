@@ -102,9 +102,9 @@ extern std::array<float, 9216> val_conv12_w;
 extern std::array<float, 32> val_conv12_b;
 extern std::array<float, 9216> val_conv13_w;
 extern std::array<float, 32> val_conv13_b;
-extern std::array<float, 9216> val_conv14_w;
-extern std::array<float, 32> val_conv14_b;
-extern std::array<float, 2957312> val_ip15_w;
+extern std::array<float, 288> val_conv14_w;
+extern std::array<float, 1> val_conv14_b;
+extern std::array<float, 92416> val_ip15_w;
 extern std::array<float, 256> val_ip15_b;
 extern std::array<float, 256> val_ip16_w;
 extern std::array<float, 1> val_ip16_b;
@@ -553,7 +553,7 @@ Network::Netresult Network::get_scored_moves_internal(
     assert(channels == (int)planes.size());
     assert(width == state->board.get_boardsize());
     assert(height == state->board.get_boardsize());
-    float* input_data = input_layer->mutable_cpu_data();
+    float* orig_input_data = input_layer->mutable_cpu_data();
 #else
     constexpr int channels = CHANNELS;
     constexpr int width = 19;
@@ -639,9 +639,9 @@ Network::Netresult Network::get_scored_moves_internal(
     std::swap(input_data, output_data);
     convolve<3, 32,  32>(input_data, val_conv13_w, val_conv13_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv14_w, val_conv14_b, output_data);
+    convolve<3, 32,   1>(input_data, val_conv14_w, val_conv14_b, output_data);
     // Now get the score
-    innerproduct<32 * 361, 256>(output_data, val_ip15_w, val_ip15_b, winrate_data);
+    innerproduct<1 * 361, 256>(output_data, val_ip15_w, val_ip15_b, winrate_data);
     innerproduct<256,        1>(winrate_data, val_ip16_w, val_ip16_b, winrate_out);
     // Sigmoid
     float winrate_sig = 1.0f / (1.0f + exp(-winrate_out[0]));
@@ -649,7 +649,7 @@ Network::Netresult Network::get_scored_moves_internal(
 #endif
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->thread_init();
-    OpenCL::get_OpenCL()->forward_async(input_data, output_data,
+    OpenCL::get_OpenCL()->forward_async(orig_input_data, output_data,
                                         nullptr, nullptr);
     softmax(output_data, softmax_data);
     std::vector<float>& outputs = softmax_data;
@@ -659,10 +659,10 @@ Network::Netresult Network::get_scored_moves_internal(
 #endif
 #ifdef USE_CAFFE
     net->Forward();
-    //Blob<float>* output_layer = net->output_blobs()[0];
-    //const float* begin = output_layer->cpu_data();
-    //const float* end = begin + output_layer->channels();
-    //auto outputs = std::vector<float>(begin, end);
+    Blob<float>* output_layer = net->output_blobs()[0];
+    const float* begin = output_layer->cpu_data();
+    const float* end = begin + output_layer->channels();
+    auto outputs = std::vector<float>(begin, end);
     Blob<float>* score_layer = net->output_blobs()[0];
     float winrate = score_layer->cpu_data()[0];
     result.eval = winrate;

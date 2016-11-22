@@ -457,7 +457,7 @@ layer {
   bottom: "conv13"
   top: "conv14"
   convolution_param {
-    num_output: 32
+    num_output: 1
     kernel_size: 3
     pad: 1
     stride: 1

@@ -33,12 +33,12 @@ players = {
 				"time_settings 600 0 0",
                            ],
                     ),
-    'leela-077b' : Player("./leela-077b --gtp --threads 1 --noponder ",
+    'leela-080' : Player("./leela-080 --gtp --threads 1 --noponder ",
                            startup_gtp_commands=[
 				"time_settings 600 0 0",
                            ],
                     ),
-    'leela-077bb' : Player("./leela-077bb --gtp --threads 1 --noponder ",
+    'leela-080va' : Player("./leela-080va --gtp --threads 1 --noponder ",
                            startup_gtp_commands=[
 				"time_settings 600 0 0",
                            ],
@@ -56,7 +56,7 @@ board_size = 19
 komi = 7.5
 
 matchups = [
-	Matchup('leela-077b', 'leela-077bb',
+	Matchup('leela-080', 'leela-080va',
                 scorer='players', number_of_games=1000),
 #	Matchup('leela-073e', 'leela-075j',
 #                scorer='players', number_of_games=1000),
