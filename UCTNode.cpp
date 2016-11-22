@@ -591,12 +591,10 @@ void UCTNode::sort_children(int color) {
     while (child != NULL) {
         int visits = child->get_visits();
         if (visits) {
-            float winrate;
+            float winrate = child->get_winrate(color);
             if (child->get_evalcount()) {
                 float eval = child->get_eval(color);
                 winrate = cfg_mix * eval + (1.0f - cfg_mix) * winrate;
-            } else {
-                winrate = child->get_winrate(color);
             }
             tmp.push_back(std::make_tuple(winrate, visits, child));
         } else {

@@ -401,7 +401,7 @@ layer {
   bottom: "conv11"
   top: "conv12"
   convolution_param {
-    num_output: 32
+    num_output: 1
     kernel_size: 3
     pad: 1
     stride: 1
@@ -423,63 +423,7 @@ layer {
 }
 
 layer {
-  name: "conv13"
-  type: "Convolution"
-  # input -> output
-  bottom: "conv12"
-  top: "conv13"
-  convolution_param {
-    num_output: 32
-    kernel_size: 3
-    pad: 1
-    stride: 1
-    weight_filler {
-      type: "xavier"
-    }
-    bias_filler {
-      type: "constant" # initialize the biases to zero (0)
-    }
-  }
-}
-
-layer {
-  name: "elu13"
-  type: "ELU"
-  # in-place
-  bottom: "conv13"
-  top: "conv13"
-}
-
-layer {
-  name: "conv14"
-  type: "Convolution"
-  # input -> output
-  bottom: "conv13"
-  top: "conv14"
-  convolution_param {
-    num_output: 1
-    kernel_size: 3
-    pad: 1
-    stride: 1
-    weight_filler {
-      type: "xavier"
-    }
-    bias_filler {
-      type: "constant" # initialize the biases to zero (0)
-    }
-  }
-}
-
-layer {
-  name: "elu14"
-  type: "ELU"
-  # in-place
-  bottom: "conv14"
-  top: "conv14"
-}
-
-layer {
-  name: "ip15"
+  name: "ip13"
   type: "InnerProduct"
   inner_product_param {
     num_output: 256
@@ -490,20 +434,20 @@ layer {
       type: "constant"
     }
   }
-  bottom: "conv14"
-  top: "ip15"
+  bottom: "conv12"
+  top: "ip13"
 }
 
 layer {
-  name: "elu15"
+  name: "elu13"
   type: "ELU"
   # in-place
-  bottom: "ip15"
-  top: "ip15"
+  bottom: "ip13"
+  top: "ip13"
 }
 
 layer {
-  name: "ip16"
+  name: "ip14"
   type: "InnerProduct"
   inner_product_param {
     num_output: 1
@@ -514,33 +458,13 @@ layer {
       type: "constant"
     }
   }
-  bottom: "ip15"
-  top: "ip16"
+  bottom: "ip13"
+  top: "ip14"
 }
 
 layer {
   name: "sigmoid"
   type: "Sigmoid"
-  bottom: "ip16"
+  bottom: "ip14"
   top: "winrate"
-  include { phase: TEST }
-}
-
-layer {
-  name: "loss"
-  type: "SigmoidCrossEntropyLoss"
-  bottom: "ip16"
-  bottom: "won"
-  top: "ce_loss"
-  loss_weight: 1
-}
-
-layer {
-  name: "loss_ec"
-  type: "EuclideanLoss"
-  bottom: "winrate"
-  bottom: "won"
-  top: "mse_loss"
-  loss_weight: 0
-  include { phase: TEST }
 }

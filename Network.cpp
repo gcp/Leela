@@ -19,7 +19,6 @@
 
 using namespace caffe;
 #endif
-#ifdef USE_BLAS
 #include "Im2Col.h"
 #ifdef __APPLE__
 #include <Accelerate/Accelerate.h>
@@ -29,7 +28,6 @@ using namespace caffe;
 #endif
 #ifdef USE_OPENBLAS
 #include <openblas/cblas.h>
-#endif
 #endif
 #ifdef USE_OPENCL
 #include "OpenCL.h"
@@ -98,16 +96,12 @@ extern std::array<float, 9216> val_conv10_w;
 extern std::array<float, 32> val_conv10_b;
 extern std::array<float, 9216> val_conv11_w;
 extern std::array<float, 32> val_conv11_b;
-extern std::array<float, 9216> val_conv12_w;
-extern std::array<float, 32> val_conv12_b;
-extern std::array<float, 9216> val_conv13_w;
-extern std::array<float, 32> val_conv13_b;
-extern std::array<float, 288> val_conv14_w;
-extern std::array<float, 1> val_conv14_b;
-extern std::array<float, 92416> val_ip15_w;
-extern std::array<float, 256> val_ip15_b;
-extern std::array<float, 256> val_ip16_w;
-extern std::array<float, 1> val_ip16_b;
+extern std::array<float, 288> val_conv12_w;
+extern std::array<float, 1> val_conv12_b;
+extern std::array<float, 92416> val_ip13_w;
+extern std::array<float, 256> val_ip13_b;
+extern std::array<float, 256> val_ip14_w;
+extern std::array<float, 1> val_ip14_b;
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -169,8 +163,6 @@ void Network::initialize(void) {
     cl->push_convolve(3, conv12_w, conv12_b);
     cl->push_convolve(3, conv13_w, conv13_b);
     cl->push_convolve(3, conv14_w, conv14_b);
-    cl->push_innerproduct(ip15_w, ip15_b);
-    cl->push_innerproduct(ip16_w, ip16_b);
     std::cerr << "done" << std::endl;
 #endif
 #ifdef USE_BLAS
@@ -281,7 +273,6 @@ void Network::initialize(void) {
 #endif
 }
 
-#ifdef USE_BLAS
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          unsigned long W, unsigned long B>
@@ -357,7 +348,6 @@ void innerproduct(std::vector<float>& input,
         output[o] = val;
     }
 }
-#endif
 
 template<unsigned int channels,
          unsigned int spatial_size>
@@ -523,7 +513,8 @@ float Network::get_value(FastState * state, Ensemble ensemble) {
     } else if (ensemble == RANDOM_ROTATION) {
         int rotation = Random::get_Rng()->randint(8);
         result = get_value_internal(state, planes, rotation);
-    } else if (ensemble == AVERAGE_ALL) {
+    } else {
+        assert(ensemble == AVERAGE_ALL);
         result = get_value_internal(state, planes, 0);
         for (int r = 1; r < 8; r++) {
             float sum_res = get_value_internal(state, planes, r);
@@ -555,7 +546,8 @@ Network::Netresult Network::get_scored_moves(
     } else if (ensemble == RANDOM_ROTATION) {
         int rotation = Random::get_Rng()->randint(8);
         result = get_scored_moves_internal(state, planes, rotation);
-    } else if (ensemble == AVERAGE_ALL) {
+    } else {
+        assert(ensemble == AVERAGE_ALL);
         result = get_scored_moves_internal(state, planes, 0);
         for (int r = 1; r < 8; r++) {
             auto sum_res = get_scored_moves_internal(state, planes, r);
@@ -636,14 +628,10 @@ float Network::get_value_internal(
     std::swap(input_data, output_data);
     convolve<3, 32,  32>(input_data, val_conv11_w, val_conv11_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv12_w, val_conv12_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,  32>(input_data, val_conv13_w, val_conv13_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 32,   1>(input_data, val_conv14_w, val_conv14_b, output_data);
+    convolve<3, 32,   1>(input_data, val_conv12_w, val_conv12_b, output_data);
     // Now get the score
-    innerproduct<1 * 361, 256>(output_data, val_ip15_w, val_ip15_b, winrate_data);
-    innerproduct<256,        1>(winrate_data, val_ip16_w, val_ip16_b, winrate_out);
+    innerproduct<1 * 361, 256>(output_data, val_ip13_w, val_ip13_b, winrate_data);
+    innerproduct<256,        1>(winrate_data, val_ip14_w, val_ip14_b, winrate_out);
     // Sigmoid
     float winrate_sig = 1.0f / (1.0f + exp(-winrate_out[0]));
     result = winrate_sig;
@@ -654,7 +642,7 @@ float Network::get_value_internal(
 Network::Netresult Network::get_scored_moves_internal(
     FastState * state, NNPlanes & planes, int rotation) {
     Netresult result;
-    assert(rotation >= 0 && rotation < 7);
+    assert(rotation >= 0 && rotation <= 7);
 #ifdef USE_CAFFE
     Blob<float>* input_layer = net->input_blobs()[0];
     int channels = input_layer->channels();
