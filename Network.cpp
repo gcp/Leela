@@ -118,19 +118,36 @@ Network * Network::get_Network(void) {
 }
 
 void Network::benchmark(FastState * state) {
-    static const int BENCH_AMOUNT = 1000;
-    Time start;
+    constexpr int POL_BENCH_AMOUNT = 1000;
+    constexpr int VAL_BENCH_AMOUNT = 1000;
+    {
+        Time start;
 
-    for (int loop = 0; loop < BENCH_AMOUNT; loop++) {
-        auto vec = get_scored_moves(state, Ensemble::RANDOM_ROTATION);
+        for (int loop = 0; loop < POL_BENCH_AMOUNT; loop++) {
+            auto vec = get_scored_moves(state, Ensemble::RANDOM_ROTATION);
+        }
+
+        Time end;
+
+        myprintf("%d predictions in %5.2f seconds -> %d p/s\n",
+                 POL_BENCH_AMOUNT,
+                 (float)Time::timediff(start,end)/100.0,
+                 (int)((float)POL_BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
     }
+    {
+        Time start;
 
-    Time end;
+        for (int loop = 0; loop < VAL_BENCH_AMOUNT; loop++) {
+            auto vec = get_value(state, Ensemble::RANDOM_ROTATION);
+        }
 
-    myprintf("%d predictions in %5.2f seconds -> %d p/s\n",
-             BENCH_AMOUNT,
-             (float)Time::timediff(start,end)/100.0,
-             (int)((float)BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
+        Time end;
+
+        myprintf("%d evaluations in %5.2f seconds -> %d p/s\n",
+                 VAL_BENCH_AMOUNT,
+                 (float)Time::timediff(start,end)/100.0,
+                 (int)((float)VAL_BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
+    }
 }
 
 void Network::initialize(void) {
