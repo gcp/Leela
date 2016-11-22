@@ -1,7 +1,10 @@
+backup/
+build-*/
 cachegrind*
 callgrind*
 massif*
 leela-*
+leela_*
 leela
 leela_test
 leela_train
@@ -11,8 +14,14 @@ leela_train_label
 *.d
 *.caffemodel
 *.solverstate
+*.sgf
 tools/*.sgf
+clop/clop-console
 clop/clopgtp
 clop/Makefile
 clop/*.user
+clop/clopgtp-old.dat
+clop/clopgtp.log
+tools/gomill.*
+!tools/gomill.ctl
 snapshot_*
