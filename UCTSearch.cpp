@@ -94,10 +94,9 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
         if (!node->has_eval_propagated() && node->get_evalcount()) {
             SMP::Lock lock(node->get_mutex());
             if (!node->has_eval_propagated()) {
-                assert(node->get_eval_count() == 1);
                 noderesult.set_eval(node->get_blackevals());
                 node->set_eval_propagated();
-                // Don't count our eval twice
+                // Don't accumulate our own eval twice
                 update_eval = false;
             }
         }
@@ -205,9 +204,11 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
                       node->get_ravevisits(),
                       node->get_score() * 100.0f);
         } else {
-            myprintf("%4s -> %7d (U: %5.2f%%) (V: %5.2f%%: %7d) (N: %4.1f%%) PV: ",
+            myprintf("%4s -> %7d (W: %5.2f%%) (U: %5.2f%%) (V: %5.2f%%: %6d) (N: %4.1f%%) PV: ",
                 tmp.c_str(),
                 node->get_visits(),
+                node->get_evalcount() > 0 ? node->get_eval(color)*50.0f + node->get_winrate(color)*50.0f
+                                          : node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                 node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                 node->get_evalcount() > 0 ? node->get_eval(color)*100.0f : 0.0f,
                 node->get_evalcount(),

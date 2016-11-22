@@ -545,6 +545,7 @@ Network::Netresult Network::get_scored_moves(
 Network::Netresult Network::get_scored_moves_internal(
     FastState * state, NNPlanes & planes, int rotation) {
     Netresult result;
+    assert(rotation >= 0 && rotation < 7);
 #ifdef USE_CAFFE
     Blob<float>* input_layer = net->input_blobs()[0];
     int channels = input_layer->channels();

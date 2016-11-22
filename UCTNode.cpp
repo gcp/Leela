@@ -168,8 +168,7 @@ void UCTNode::expansion_cb(std::atomic<int> * nodecount,
             netresult.eval = 1.0f - netresult.eval;
         }
         SMP::Lock lock(get_mutex());
-        m_blackevals += netresult.eval;
-        m_evalcount  += 1;
+        accumulate_eval(netresult.eval);
     }
 }
 
@@ -279,11 +278,8 @@ void UCTNode::update(Playout & gameresult, int color, bool update_eval) {
     }
 
     // evals
-    if (gameresult.has_eval()) {
-        if (update_eval) {
-            m_evalcount  += 1;
-            m_blackevals += gameresult.get_eval();
-        }
+    if (gameresult.has_eval() && update_eval) {
+        accumulate_eval(gameresult.get_eval());
     }
 }
 
@@ -351,6 +347,18 @@ double UCTNode::get_blackevals() const {
     return m_blackevals;
 }
 
+void UCTNode::set_blackevals(double blackevals) {
+    m_blackevals = blackevals;
+}
+
+void UCTNode::set_evalcount(int evalcount) {
+    m_evalcount = evalcount;
+    // Set from TT. We don't need to re-eval if from hash.
+    if (evalcount) {
+        set_eval_propagated();
+    }
+}
+
 int UCTNode::get_evalcount() const {
     return m_evalcount;
 }
@@ -363,15 +371,9 @@ void UCTNode::set_eval_propagated() {
     m_eval_propagated = true;
 }
 
-void UCTNode::set_blackevals(double eval_sum) {
-    m_blackevals = eval_sum;
-}
-
-void UCTNode::set_evalcount(int count) {
-    m_evalcount = count;
-    if (m_evalcount > 0) {
-        set_eval_propagated();
-    }
+void UCTNode::accumulate_eval(float eval) {
+    m_blackevals += eval;
+    m_evalcount  += 1;
 }
 
 UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {

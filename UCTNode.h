@@ -49,9 +49,11 @@ public:
     void set_move(int move);
     void set_visits(int visits);
     void set_blackwins(double wins);
+    void set_blackevals(double blacevals);
+    void set_evalcount(int evalcount);
     void set_expand_cnt(int runs);
-    void set_blackevals(double eval_sum);
-    void set_evalcount(int count);
+    void set_eval(float eval);
+    void accumulate_eval(float eval);
     void update(Playout & gameresult, int color, bool update_eval);
     void updateRAVE(Playout & playout, int color);
     UCTNode* uct_select_child(int color, bool use_nets);
