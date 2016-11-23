@@ -573,16 +573,16 @@ Network::Netresult Network::get_scored_moves(
         }
     }
 
-    if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-       show_heatmap(state, result);
-    }
+    // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+    //   show_heatmap(state, result);
+    //}
 
     return result;
 }
 
 float Network::get_value_internal(
     FastState * state, NNPlanes & planes, int rotation) {
-    assert(rotation >= 0 && rotation < 7);
+    assert(rotation >= 0 && rotation <= 7);
     float result;
 
     constexpr int channels = CHANNELS;

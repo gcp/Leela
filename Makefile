@@ -24,8 +24,8 @@ clang:
 
 llvm:
 	$(MAKE) CC=~/svn/llvm/build/bin/clang CXX=~/svn/llvm/build/bin/clang++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -g -march=native -std=c++11 -D_CONSOLE' \
-		LDFLAGS='$(LDFLAGS)' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -g -march=native -flto -std=c++11 -D_CONSOLE -DNDEBUG' \
+		LDFLAGS='$(LDFLAGS) -flto' \
 		leela
 
 asan:
