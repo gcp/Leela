@@ -204,7 +204,7 @@ void Network::initialize(void) {
         myprintf("Output: channels=%d, width=%d, height=%d\n", num_out_channels, width, height);
     }
 
-//#define WRITE_WEIGHTS
+#define WRITE_WEIGHTS
 #ifdef WRITE_WEIGHTS
     std::ofstream out("weights.txt");
     out << "#include <array>" << std::endl << std::endl;
@@ -312,11 +312,18 @@ void convolve(std::vector<float>& input,
 
     auto lambda_ELU = [](float val) { return (val > 0.0f) ?
                                       val : 1.0f * (std::exp(val) - 1.0f); };
+    auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
+                                       val : 0.0f; };
 
     for (unsigned int o = 0; o < outputs; o++) {
         for (unsigned int b = 0; b < spatial_out; b++) {
-            output[(o * spatial_out) + b] =
-                lambda_ELU(biases[o] + output[(o * spatial_out) + b]);
+            if (outputs == 32 || outputs == 1) {
+                output[(o * spatial_out) + b] =
+                    lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
+            } else {
+                output[(o * spatial_out) + b] =
+                    lambda_ELU(biases[o] + output[(o * spatial_out) + b]);
+            }
         }
     }
 }
@@ -337,13 +344,15 @@ void innerproduct(std::vector<float>& input,
                 &input[0], 1,
                 0.0f, &output[0], 1);
 
-    auto lambda_ELU = [](float val) { return (val > 0.0f) ?
-                                      val : 1.0f * (std::exp(val) - 1.0f); };
+    //auto lambda_ELU = [](float val) { return (val > 0.0f) ?
+    //                                  val : 1.0f * (std::exp(val) - 1.0f); };
+    auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
+                                       val : 0.0f; };
 
     for (unsigned int o = 0; o < outputs; o++) {
         float val = biases[o] + output[o];
         if (outputs > 1) {
-            val = lambda_ELU(val);
+            val = lambda_ReLU(val);
         }
         output[o] = val;
     }

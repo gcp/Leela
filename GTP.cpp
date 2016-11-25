@@ -74,7 +74,7 @@ void GTP::setup_default_parameters() {
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.5f;
-    cfg_eval_thresh = 50;
+    cfg_eval_thresh = 125;
 }
 
 bool GTP::perform_self_test(GameState & state) {
