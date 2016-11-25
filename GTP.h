@@ -26,6 +26,7 @@ extern float cfg_cutoff_offset;
 extern float cfg_cutoff_ratio;
 extern float cfg_puct;
 extern float cfg_psa;
+extern std::string cfg_logfile;
 
 class GTP {
 public:

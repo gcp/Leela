@@ -102,9 +102,9 @@ void Network::benchmark(FastState * state) {
 
 void Network::initialize(void) {
 #ifdef USE_OPENCL
-    std::cerr << "Initializing OpenCL" << std::endl;
+    myprintf("Initializing OpenCL\n");
     OpenCL * cl = OpenCL::get_OpenCL();
-    std::cerr << "Transferring weights to GPU..." << std::flush;
+    myprintf("Transferring weights to GPU...");
     cl->push_convolve(5, conv1_w, conv1_b);
     cl->push_convolve(3, conv2_w, conv2_b);
     cl->push_convolve(3, conv3_w, conv3_b);
@@ -119,13 +119,13 @@ void Network::initialize(void) {
     cl->push_convolve(3, conv12_w, conv12_b);
     cl->push_convolve(3, conv13_w, conv13_b);
     cl->push_convolve(3, conv14_w, conv14_b);
-    std::cerr << "done" << std::endl;
+    myprintf("done\n");
 #endif
 #ifdef USE_BLAS
 #ifndef __APPLE__
 #ifdef USE_OPENBLAS
     openblas_set_num_threads(1);
-    std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
+    myprintf("BLAS Core: %s\n", openblas_get_corename());
 #endif
 #ifdef USE_MKL
     //mkl_set_threading_layer(MKL_THREADING_SEQUENTIAL);
@@ -540,7 +540,7 @@ void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
     }
 
     for (int i = display_map.size() - 1; i >= 0; --i) {
-        std::cerr << display_map[i] << std::endl;
+        myprintf("%s\n", display_map[i].c_str());
     }
 
     std::stable_sort(moves.rbegin(), moves.rend());
@@ -549,9 +549,9 @@ void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
     size_t tried = 0;
     while (cum < 0.85f && tried < moves.size()) {
         if (moves[tried].first < 0.01f) break;
-        std::cerr << boost::format("%1.3f (") % moves[tried].first
-            << state->board.move_to_text(moves[tried].second)
-            << ")" << std::endl;
+        myprintf("%1.3f (%s)\n",
+                 moves[tried].first,
+                 state->board.move_to_text(moves[tried].second));
         cum += moves[tried].first;
         tried++;
     }

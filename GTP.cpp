@@ -47,6 +47,7 @@ float cfg_cutoff_offset;
 float cfg_cutoff_ratio;
 float cfg_puct;
 float cfg_psa;
+std::string cfg_logfile;
 
 void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
@@ -71,6 +72,7 @@ void GTP::setup_default_parameters() {
     cfg_psa = 0.232f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
+    cfg_logfile.clear();
 }
 
 bool GTP::perform_self_test(GameState & state) {
