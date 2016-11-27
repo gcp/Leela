@@ -1218,9 +1218,9 @@ void Network::train_network(TrainVector& data,
         int next_move = rotate_nn_idx(position.moves[1], symmetry);
         int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
 
-        datum_label.add_float_data((float)this_move);
-        datum_label.add_float_data((float)next_move);
-        datum_label.add_float_data((float)next_next_move);
+        datum_label.add_data(this_move);
+        datum_label.add_data(next_move);
+        datum_label.add_data(next_next_move);
         datum_label.add_float_data((float)stm_score);
         datum_label.add_float_data((float)stm_won);
         std::string label_out;
