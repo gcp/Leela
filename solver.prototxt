@@ -1,44 +1,40 @@
-#                    batchsize      128     64      32
-# 32889856 training positions. = 256000 512000 1027808
-# 1370412 testing positions.   =  10000  20000   42800
-# value
-# 30952497 training positions. = 241816 x 128
-#  1289690 testing positions.   =  10075 x 128
-# New
-# 16489194 training positions.
-#  687052 testing positions.
-
+# 9752746 training positions.
+# 406366 testing positions.
+# 128 x 76167
+# 128 x  3173
 # The train/test net protocol buffer definition
 net: "train-test.prototxt"
 
 # test_iter specifies how many forward passes the test should carry out.
 # 1/10th total test items
-test_iter: 1000
+test_iter: 1600
 
 # Carry out testing every n training iterations.
 # every 1/10th epoch
-test_interval: 24200
+test_interval: 38000
 
+base_lr: 0.001
 momentum: 0.9
-base_lr: 0.01
+momentum2: 0.999
 
-lr_policy: "poly"
-power: 1.0
+lr_policy: "fixed"
+#lr_policy: "poly"
+#power: 1.0
 
 # Display every n iterations
-display: 24200
+display: 3800
 
 # The total number of iterations
 # 100 epoch
-max_iter: 24200000
+max_iter: 7616700
 
 # snapshot intermediate results
-snapshot: 242000
+snapshot: 38000
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
-type: "Nesterov"
-#type: "AdaDelta"
+#type: "Nesterov"
+type: "Adam"
 #type: "SGD"
 #delta: 1e-6
 solver_mode: GPU

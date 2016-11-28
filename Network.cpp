@@ -798,7 +798,7 @@ void Network::show_heatmap(FastState * state, Netresult& result) {
 
 void Network::gather_features(FastState * state, NNPlanes & planes,
                               BoardPlane** ladder_out) {
-    planes.resize(32);
+    planes.resize(24);
     BoardPlane& empt_color    = planes[0];
     BoardPlane& move_color    = planes[1];
     BoardPlane& othr_color    = planes[2];
@@ -823,14 +823,6 @@ void Network::gather_features(FastState * state, NNPlanes & planes,
     BoardPlane& movehist1     = planes[21];
     BoardPlane& movehist2     = planes[22];
     BoardPlane& has_komi      = planes[23];
-    BoardPlane& black_to_move = planes[24];
-    BoardPlane& handicap2     = planes[25];
-    BoardPlane& handicap3     = planes[26];
-    BoardPlane& handicap4     = planes[27];
-    BoardPlane& handicap5     = planes[28];
-    BoardPlane& handicap6     = planes[29];
-    BoardPlane& handicap7     = planes[30];
-    BoardPlane& handicap8p    = planes[31];
 
     if (ladder_out) {
         *ladder_out = &ladder;
@@ -841,34 +833,7 @@ void Network::gather_features(FastState * state, NNPlanes & planes,
         white_has_komi = false;
     }
 
-    int handicap = state->get_handicap();
-    if (handicap >= 2) {
-        handicap2.set();
-        if (handicap >= 3) {
-            handicap3.set();
-            if (handicap >= 4) {
-                handicap4.set();
-                if (handicap >= 5) {
-                    handicap5.set();
-                    if (handicap >= 6) {
-                        handicap6.set();
-                        if (handicap >= 7) {
-                            handicap7.set();
-                            if (handicap >= 8) {
-                                handicap8p.set();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     int tomove = state->get_to_move();
-    if (tomove == FastBoard::BLACK) {
-        black_to_move.set();
-    }
-
     // collect white, black occupation planes
     for (int j = 0; j < 19; j++) {
         for(int i = 0; i < 19; i++) {
@@ -995,12 +960,15 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
         } catch (...) {
         };
 
+        SGFTree * treewalk = &(*sgftree);
+        size_t counter = 0;
+
         size_t movecount = sgftree->count_mainline_moves();
         std::vector<int> tree_moves = sgftree->get_mainline();
         int who_won = sgftree->get_winner();
-
-        SGFTree * treewalk = &(*sgftree);
-        size_t counter = 0;
+        int handicap = sgftree->get_state()->get_handicap();
+        float komi = sgftree->get_state()->get_komi();
+        if (handicap || std::abs(komi) < 5.5f || std::abs(komi) >= 8.0f) goto skipnext;
 
         while (counter < movecount) {
             assert(treewalk != NULL);
@@ -1009,9 +977,9 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 break;
 
             if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE)
-                break;
+                goto skipnext;
 
-            int skip = Random::get_Rng()->randint(16);
+            int skip = Random::get_Rng()->randint(8);
             if (skip == 0) {
                 KoState * state = treewalk->get_state();
                 int tomove = state->get_to_move();
@@ -1056,10 +1024,10 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 }
 
                 if (moveseen && move != FastBoard::PASS && has_next_moves) {
-                    position.stm_won = (tomove == who_won);
+                    position.stm_won = (tomove == who_won ? 1.0f : -1.0f);
                     float frac = (float)counter / (float)movecount;
                     position.stm_score = (frac * position.stm_won)
-                        + ((1.0f - frac) * 0.5f);
+                        + ((1.0f - frac) * 0.0f);
                     gather_features(state, position.planes);
                     // add next 2 moves to position
                     // we do not check them for legality
@@ -1086,7 +1054,7 @@ skipnext:
             myprintf("Game %d, %d new positions, %d total\n",
                      gamecount, data.size(), train_pos + data.size());
         }
-        if (gamecount % (16*50000) == 0) {
+        if (gamecount % (8*50000) == 0) {
             train_network(data, train_pos, test_pos);
         }
     }
@@ -1210,17 +1178,17 @@ void Network::train_network(TrainVector& data,
 
         // labels
         caffe::Datum datum_label;
-        datum_label.set_channels(5);
+        datum_label.set_channels(2);
         datum_label.set_height(1);
         datum_label.set_width(1);
 
-        int this_move = rotate_nn_idx(position.moves[0], symmetry);
-        int next_move = rotate_nn_idx(position.moves[1], symmetry);
-        int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
+        //int this_move = rotate_nn_idx(position.moves[0], symmetry);
+        //int next_move = rotate_nn_idx(position.moves[1], symmetry);
+        //int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
 
-        datum_label.add_data(this_move);
-        datum_label.add_data(next_move);
-        datum_label.add_data(next_next_move);
+        //datum_label.add_data(this_move);
+        //datum_label.add_data(next_move);
+        //datum_label.add_data(next_next_move);
         datum_label.add_float_data((float)stm_score);
         datum_label.add_float_data((float)stm_won);
         std::string label_out;

@@ -63,17 +63,11 @@ layer {
   name: "slicer_label"
   type: "Slice"
   bottom: "label_unsliced"
-  top: "label_move1"
-  top: "label_move2"
-  top: "label_move3"
   top: "winpc"
   top: "won"
   slice_param {
     axis: 1
     slice_point: 1
-    slice_point: 2
-    slice_point: 3
-    slice_point: 4
   }
 }
 
@@ -81,9 +75,6 @@ layer {
   name: "silence"
   type: "Silence"
   bottom: "winpc"
-  bottom: "label_move1"
-  bottom: "label_move2"
-  bottom: "label_move3"
 }
 
 layer {
@@ -107,8 +98,8 @@ layer {
 }
 
 layer {
-  name: "elu1"
-  type: "ELU"
+  name: "relu1"
+  type: "ReLU"
   # in-place
   bottom: "conv1"
   top: "conv1"
@@ -135,8 +126,8 @@ layer {
 }
 
 layer {
-  name: "elu2"
-  type:  "ELU"
+  name: "relu2"
+  type:  "ReLU"
   # in-place
   bottom: "conv2"
   top: "conv2"
@@ -163,8 +154,8 @@ layer {
 }
 
 layer {
-  name: "elu3"
-  type: "ELU"
+  name: "relu3"
+  type: "ReLU"
   # in-place
   bottom: "conv3"
   top: "conv3"
@@ -191,8 +182,8 @@ layer {
 }
 
 layer {
-  name: "elu4"
-  type: "ELU"
+  name: "relu4"
+  type: "ReLU"
   # in-place
   bottom: "conv4"
   top: "conv4"
@@ -219,8 +210,8 @@ layer {
 }
 
 layer {
-  name: "elu5"
-  type: "ELU"
+  name: "relu5"
+  type: "ReLU"
   # in-place
   bottom: "conv5"
   top: "conv5"
@@ -247,8 +238,8 @@ layer {
 }
 
 layer {
-  name: "elu6"
-  type: "ELU"
+  name: "relu6"
+  type: "ReLU"
   # in-place
   bottom: "conv6"
   top: "conv6"
@@ -275,8 +266,8 @@ layer {
 }
 
 layer {
-  name: "elu7"
-  type: "ELU"
+  name: "relu7"
+  type: "ReLU"
   # in-place
   bottom: "conv7"
   top: "conv7"
@@ -303,8 +294,8 @@ layer {
 }
 
 layer {
-  name: "elu8"
-  type: "ELU"
+  name: "relu8"
+  type: "ReLU"
   # in-place
   bottom: "conv8"
   top: "conv8"
@@ -331,8 +322,8 @@ layer {
 }
 
 layer {
-  name: "elu9"
-  type: "ELU"
+  name: "relu9"
+  type: "ReLU"
   # in-place
   bottom: "conv9"
   top: "conv9"
@@ -359,8 +350,8 @@ layer {
 }
 
 layer {
-  name: "elu10"
-  type: "ELU"
+  name: "relu10"
+  type: "ReLU"
   # in-place
   bottom: "conv10"
   top: "conv10"
@@ -387,8 +378,8 @@ layer {
 }
 
 layer {
-  name: "elu11"
-  type: "ELU"
+  name: "relu11"
+  type: "ReLU"
   # in-place
   bottom: "conv11"
   top: "conv11"
@@ -415,8 +406,8 @@ layer {
 }
 
 layer {
-  name: "elu12"
-  type: "ELU"
+  name: "relu12"
+  type: "ReLU"
   # in-place
   bottom: "conv12"
   top: "conv12"
@@ -439,8 +430,8 @@ layer {
 }
 
 layer {
-  name: "elu13"
-  type: "ELU"
+  name: "relu13"
+  type: "ReLU"
   # in-place
   bottom: "ip13"
   top: "ip13"
@@ -463,8 +454,15 @@ layer {
 }
 
 layer {
-  name: "sigmoid"
-  type: "Sigmoid"
+  name: "tanh"
+  type: "TanH"
   bottom: "ip14"
   top: "winrate"
+}
+
+layer {
+  name: "mse_loss"
+  type: "EuclideanLoss"
+  bottom: "winrate"
+  bottom: "won"
 }

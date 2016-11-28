@@ -32,7 +32,7 @@ public:
         NNPlanes planes;
         PredMoves moves;
         float stm_score;
-        bool stm_won;
+        float stm_won;
     };
     using TrainVector = std::vector<TrainPosition>;
     using scored_node = std::pair<float, int>;
