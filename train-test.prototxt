@@ -106,10 +106,17 @@ layer {
 }
 
 layer {
+ name: "bn1"
+ type: "BatchNorm"
+ bottom: "conv1"
+ top: "bn1"
+}
+
+layer {
   name: "conv2"
   type: "Convolution"
   # input -> output
-  bottom: "conv1"
+  bottom: "bn1"
   top: "conv2"
   convolution_param {
     num_output: 32
@@ -132,12 +139,18 @@ layer {
   bottom: "conv2"
   top: "conv2"
 }
+layer {
+ name: "bn2"
+ type: "BatchNorm"
+ bottom: "conv2"
+ top: "bn2"
+}
 
 layer {
   name: "conv3"
   type: "Convolution"
   # input -> output
-  bottom: "conv2"
+  bottom: "bn2"
   top: "conv3"
   convolution_param {
     num_output: 32
@@ -160,12 +173,18 @@ layer {
   bottom: "conv3"
   top: "conv3"
 }
+layer {
+ name: "bn3"
+ type: "BatchNorm"
+ bottom: "conv3"
+ top: "bn3"
+}
 
 layer {
   name: "conv4"
   type: "Convolution"
   # input -> output
-  bottom: "conv3"
+  bottom: "bn3"
   top: "conv4"
   convolution_param {
     num_output: 32
@@ -188,12 +207,18 @@ layer {
   bottom: "conv4"
   top: "conv4"
 }
+layer {
+ name: "bn4"
+ type: "BatchNorm"
+ bottom: "conv4"
+ top: "bn4"
+}
 
 layer {
   name: "conv5"
   type: "Convolution"
   # input -> output
-  bottom: "conv4"
+  bottom: "bn4"
   top: "conv5"
   convolution_param {
     num_output: 32
@@ -216,12 +241,18 @@ layer {
   bottom: "conv5"
   top: "conv5"
 }
+layer {
+ name: "bn5"
+ type: "BatchNorm"
+ bottom: "conv5"
+ top: "bn5"
+}
 
 layer {
   name: "conv6"
   type: "Convolution"
   # input -> output
-  bottom: "conv5"
+  bottom: "bn5"
   top: "conv6"
   convolution_param {
     num_output: 32
@@ -244,12 +275,18 @@ layer {
   bottom: "conv6"
   top: "conv6"
 }
+layer {
+ name: "bn6"
+ type: "BatchNorm"
+ bottom: "conv6"
+ top: "bn6"
+}
 
 layer {
   name: "conv7"
   type: "Convolution"
   # input -> output
-  bottom: "conv6"
+  bottom: "bn6"
   top: "conv7"
   convolution_param {
     num_output: 32
@@ -272,12 +309,18 @@ layer {
   bottom: "conv7"
   top: "conv7"
 }
+layer {
+ name: "bn7"
+ type: "BatchNorm"
+ bottom: "conv7"
+ top: "bn7"
+}
 
 layer {
   name: "conv8"
   type: "Convolution"
   # input -> output
-  bottom: "conv7"
+  bottom: "bn7"
   top: "conv8"
   convolution_param {
     num_output: 32
@@ -300,12 +343,18 @@ layer {
   bottom: "conv8"
   top: "conv8"
 }
+layer {
+ name: "bn8"
+ type: "BatchNorm"
+ bottom: "conv8"
+ top: "bn8"
+}
 
 layer {
   name: "conv9"
   type: "Convolution"
   # input -> output
-  bottom: "conv8"
+  bottom: "bn8"
   top: "conv9"
   convolution_param {
     num_output: 32
@@ -328,12 +377,18 @@ layer {
   bottom: "conv9"
   top: "conv9"
 }
+layer {
+ name: "bn9"
+ type: "BatchNorm"
+ bottom: "conv9"
+ top: "bn9"
+}
 
 layer {
   name: "conv10"
   type: "Convolution"
   # input -> output
-  bottom: "conv9"
+  bottom: "bn9"
   top: "conv10"
   convolution_param {
     num_output: 32
@@ -356,12 +411,18 @@ layer {
   bottom: "conv10"
   top: "conv10"
 }
+layer {
+ name: "bn10"
+ type: "BatchNorm"
+ bottom: "conv10"
+ top: "bn10"
+}
 
 layer {
   name: "conv11"
   type: "Convolution"
   # input -> output
-  bottom: "conv10"
+  bottom: "bn10"
   top: "conv11"
   convolution_param {
     num_output: 32
@@ -384,12 +445,18 @@ layer {
   bottom: "conv11"
   top: "conv11"
 }
+layer {
+ name: "bn11"
+ type: "BatchNorm"
+ bottom: "conv11"
+ top: "bn11"
+}
 
 layer {
   name: "conv12"
   type: "Convolution"
   # input -> output
-  bottom: "conv11"
+  bottom: "bn11"
   top: "conv12"
   convolution_param {
     num_output: 1
@@ -414,6 +481,13 @@ layer {
 }
 
 layer {
+ name: "bn12"
+ type: "BatchNorm"
+ bottom: "conv12"
+ top: "bn12"
+}
+
+layer {
   name: "ip13"
   type: "InnerProduct"
   inner_product_param {
@@ -425,7 +499,7 @@ layer {
       type: "constant"
     }
   }
-  bottom: "conv12"
+  bottom: "bn12"
   top: "ip13"
 }
 
@@ -435,6 +509,13 @@ layer {
   # in-place
   bottom: "ip13"
   top: "ip13"
+}
+
+layer {
+ name: "bn13"
+ type: "BatchNorm"
+ bottom: "ip13"
+ top: "bn13"
 }
 
 layer {
@@ -449,7 +530,7 @@ layer {
       type: "constant"
     }
   }
-  bottom: "ip13"
+  bottom: "bn13"
   top: "ip14"
 }
 

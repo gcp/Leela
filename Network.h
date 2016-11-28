@@ -45,7 +45,7 @@ public:
                                Ensemble ensemble);
     float get_value(FastState *state,
                     Ensemble ensemble);
-    static constexpr int CHANNELS = 32;
+    static constexpr int CHANNELS = 24;
     static constexpr int MAX_CHANNELS = 128;
     static constexpr int MAX_VALUE_CHANNELS = 32;
 
