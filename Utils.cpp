@@ -205,7 +205,7 @@ void Utils::log_input(std::string input) {
         std::lock_guard<std::mutex> lock(IOmutex);
         FILE * log = fopen(cfg_logfile.c_str(), "a");
         if (log) {
-            fprintf(log, ">>%s\n", input);
+            fprintf(log, ">>%s\n", input.c_str());
             fclose(log);
         }
     }

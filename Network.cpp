@@ -551,7 +551,7 @@ void Network::show_heatmap(FastState * state, std::vector<scored_node>& moves) {
         if (moves[tried].first < 0.01f) break;
         myprintf("%1.3f (%s)\n",
                  moves[tried].first,
-                 state->board.move_to_text(moves[tried].second));
+                 state->board.move_to_text(moves[tried].second).c_str());
         cum += moves[tried].first;
         tried++;
     }

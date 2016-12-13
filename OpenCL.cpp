@@ -745,7 +745,7 @@ void OpenCL::initialize(void) {
 
     cl::Platform::setDefault(best_platform);
     myprintf("Selected platform: %s\n", best_platform.getInfo<CL_PLATFORM_NAME>().c_str());
-    myprintf("Selected device: %s\n", trim(best_device.getInfo<CL_DEVICE_NAME>().c_str()));
+    myprintf("Selected device: %s\n", trim(best_device.getInfo<CL_DEVICE_NAME>()).c_str());
     myprintf("with OpenCL %2.1f capability\n", best_version);
 
     cl::Context context(best_device);

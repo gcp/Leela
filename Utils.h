@@ -6,6 +6,8 @@
 #include <wx/event.h>
 #endif
 
+#include <string>
+
 #ifdef _MSC_VER
 #define ASSUME_ALIGNED(p, n) \
 __assume((reinterpret_cast<std::size_t>(p) & ((n) - 1)) == 0)
