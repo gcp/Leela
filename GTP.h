@@ -27,6 +27,7 @@ extern float cfg_cutoff_ratio;
 extern float cfg_puct;
 extern float cfg_psa;
 extern std::string cfg_logfile;
+extern bool cfg_quiet;
 
 class GTP {
 public:

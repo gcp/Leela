@@ -126,8 +126,9 @@ void Utils::GUIprintf(const char *fmt, ...) {
 }
 
 void Utils::myprintf(const char *fmt, ...) {
-    va_list ap;
+    if (cfg_quiet) return;
 
+    va_list ap;
     va_start(ap, fmt);
 
 #ifdef _CONSOLE
@@ -164,6 +165,11 @@ void Utils::gtp_printf(int id, const char *fmt, ...) {
         std::lock_guard<std::mutex> lock(IOmutex);
         FILE * log = fopen(cfg_logfile.c_str(), "a");
         if (log) {
+            if (id != -1) {
+                fprintf(log, "=%d ", id);
+            } else {
+                fprintf(log, "= ");
+            }
             vfprintf(log, fmt, ap);
             fprintf(log, "\n\n");
             fclose(log);
@@ -191,6 +197,11 @@ void Utils::gtp_fail_printf(int id, const char *fmt, ...) {
         std::lock_guard<std::mutex> lock(IOmutex);
         FILE * log = fopen(cfg_logfile.c_str(), "a");
         if (log) {
+            if (id != -1) {
+                fprintf(log, "?%d ", id);
+            } else {
+                fprintf(log, "? ");
+            }
             vfprintf(log, fmt, ap);
             fprintf(log, "\n\n");
             fclose(log);

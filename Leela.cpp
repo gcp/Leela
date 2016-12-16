@@ -35,6 +35,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("lagbuffer,b", po::value<int>()->default_value(cfg_lagbuffer_cs),
                         "Safety margin for time usage in centiseconds.")
         ("logfile,l", po::value<std::string>(), "File to log input/output to.")
+        ("quiet,q", "Disable all diagnostic output.")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
 #ifdef USE_OPENCL
@@ -71,6 +72,11 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("help")) {
         std::cout << desc << std::endl;
         exit(EXIT_SUCCESS);
+    }
+
+    if (vm.count("quiet")) {
+        myprintf("Quiet mode enabled.\n");
+        cfg_quiet = true;
     }
 
 #ifdef USE_TUNER
@@ -120,7 +126,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
 
     if (vm.count("logfile")) {
         cfg_logfile = vm["logfile"].as<std::string>();
-        myprintf("Logging to %s\n", cfg_logfile.c_str());
+        myprintf("Logging to %s.\n", cfg_logfile.c_str());
     }
 
     if (vm.count("gtp")) {
