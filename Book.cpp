@@ -18,6 +18,8 @@
 
 using namespace Utils;
 
+// #define DUMP_BOOK
+
 void Book::bookgen_from_file(std::string filename) {
     std::unordered_map<uint64, int> hash_book;
     std::vector<std::string> games = SGFParser::chop_all(filename);
@@ -134,8 +136,9 @@ int Book::get_book_move(FastState & state) {
 #ifdef DUMP_BOOK
     std::sort(display_moves.rbegin(), display_moves.rend());
     for (int i = 0; i < display_moves.size(); i++) {
-        std::cerr << display_moves[i].first << " "
-                  << state.move_to_text(display_moves[i].second) << std::endl;
+        myprintf("%d %s\n",
+                 display_moves[i].first,
+                 state.move_to_text(display_moves[i].second).c_str());
     }
 #endif
 
@@ -143,9 +146,8 @@ int Book::get_book_move(FastState & state) {
     size_t candidate_count = candidate_moves.size();
 
     if (candidate_count > 0) {
-        std::cerr << boost::format("%d book moves, %d total positions")
-                                   % candidate_count % cumul
-                  << std::endl;
+        myprintf("%d book moves, %d total positions\n",
+                 candidate_count, cumul);
     }
 
     for (size_t i = 0; i < candidate_count; i++) {

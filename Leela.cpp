@@ -21,19 +21,7 @@
 
 using namespace Utils;
 
-#ifdef _CONSOLE
-int main (int argc, char *argv[]) {
-    int done = false;
-    int gtp_mode;
-    std::string input;
-
-#ifdef USE_CAFFE
-    ::google::InitGoogleLogging(argv[0]);
-#endif
-    // Defaults
-    gtp_mode = false;
-    GTP::setup_default_parameters();
-
+void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     namespace po = boost::program_options;
     // Declare the supported options.
     po::options_description desc("Allowed options");
@@ -42,9 +30,12 @@ int main (int argc, char *argv[]) {
         ("gtp,g", "Enable GTP mode.")
         ("threads,t", po::value<int>()->default_value(cfg_num_threads),
                       "Number of threads to use.")
-        ("playouts,p", po::value<int>(), "Limit number of playouts.")
+        ("playouts,p", po::value<int>(),
+                       "Limit number of playouts.")
         ("lagbuffer,b", po::value<int>()->default_value(cfg_lagbuffer_cs),
-                      "Safety margin for time usage in centiseconds.")
+                        "Safety margin for time usage in centiseconds.")
+        ("logfile,l", po::value<std::string>(), "File to log input/output to.")
+        ("quiet,q", "Disable all diagnostic output.")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
 #ifdef USE_OPENCL
@@ -75,14 +66,19 @@ int main (int argc, char *argv[]) {
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
     }  catch(boost::program_options::error& e) {
-        std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-        return 1;
+        myprintf("ERROR: %s\n", e.what());
+        exit(EXIT_FAILURE);
     }
 
     // Handle commandline options
     if (vm.count("help")) {
         std::cout << desc << std::endl;
-        return 1;
+        exit(EXIT_SUCCESS);
+    }
+
+    if (vm.count("quiet")) {
+        myprintf("Quiet mode enabled.\n");
+        cfg_quiet = true;
     }
 
 #ifdef USE_TUNER
@@ -136,6 +132,11 @@ int main (int argc, char *argv[]) {
     }
 #endif
 
+    if (vm.count("logfile")) {
+        cfg_logfile = vm["logfile"].as<std::string>();
+        myprintf("Logging to %s.\n", cfg_logfile.c_str());
+    }
+
     if (vm.count("gtp")) {
         gtp_mode = true;
     }
@@ -143,10 +144,9 @@ int main (int argc, char *argv[]) {
     if (vm.count("threads")) {
         int num_threads = vm["threads"].as<int>();
         if (num_threads > cfg_num_threads) {
-            std::cerr << "Clamping threads to maximum = " << cfg_num_threads
-                      << std::endl;
+            myprintf("Clamping threads to maximum = %d\n", cfg_num_threads);
         } else if (num_threads != cfg_num_threads) {
-            std::cerr << "Using " << num_threads << " thread(s)." << std::endl;
+            myprintf("Using %d thread(s).\n", num_threads);
             cfg_num_threads = num_threads;
         }
     }
@@ -166,8 +166,7 @@ int main (int argc, char *argv[]) {
     if (vm.count("lagbuffer")) {
         int lagbuffer = vm["lagbuffer"].as<int>();
         if (lagbuffer != cfg_lagbuffer_cs) {
-            std::cerr << boost::format("Using per-move time margin of %.2fs.\n")
-                % (lagbuffer/100.0f);
+            myprintf("Using per-move time margin of %.2fs.\n", lagbuffer/100.0f);
             cfg_lagbuffer_cs = lagbuffer;
         }
     }
@@ -178,13 +177,26 @@ int main (int argc, char *argv[]) {
         rowtiles = std::min(19, rowtiles);
         rowtiles = std::max(1, rowtiles);
         if (rowtiles != cfg_rowtiles) {
-            std::cerr << "Splitting the board in " << rowtiles
-                      << " tiles." << std::endl;
+            myprintf("Splitting the board in %d tiles.\n", rowtiles);
             cfg_rowtiles = rowtiles;
         }
     }
 #endif
+}
 
+#ifdef _CONSOLE
+int main (int argc, char *argv[]) {
+    bool gtp_mode = false;
+    std::string input;
+
+#ifdef USE_CAFFE
+    ::google::InitGoogleLogging(argv[0]);
+#endif
+    // Set up engine parameters
+    GTP::setup_default_parameters();
+    parse_commandline(argc, argv, gtp_mode);
+
+    // Disable IO buffering as much as possible
     std::cout.setf(std::ios::unitbuf);
     std::cerr.setf(std::ios::unitbuf);
     std::cin.setf(std::ios::unitbuf);
@@ -201,6 +213,8 @@ int main (int argc, char *argv[]) {
 
     // Now seed with something more random
     rng.reset(new Random());
+
+    // Initialize things
     AttribScores::get_attribscores();
     Matcher::get_Matcher();
     Network::get_Network();
@@ -215,15 +229,21 @@ int main (int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    while (!done) {
+    for(;;) {
         if (!gtp_mode) {
             maingame->display_state();
             std::cout << "Leela: ";
         }
 
-        std::getline(std::cin, input);
-        GTP::execute(*maingame, input);
+        if (std::getline(std::cin, input)) {
+            Utils::log_input(input);
+            GTP::execute(*maingame, input);
+        } else {
+            // eof or other error
+            break;
+        }
     }
+
     return 0;
 }
 #endif

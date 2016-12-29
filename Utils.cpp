@@ -1,18 +1,20 @@
 #include "config.h"
 
 #include <iostream>
+#include <fstream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <thread>
+#include <mutex>
 #ifdef WIN32
-#include <boost/thread.hpp>
 #include <windows.h>
 #else
 #include <sys/select.h>
 #endif
 
 #include "Utils.h"
+#include "GTP.h"
 
 bool Utils::input_causes_stop() {
     return true;
@@ -49,7 +51,7 @@ bool Utils::input_pending(void) {
     if (pipe) {
         if (!PeekNamedPipe(inh, NULL, 0, NULL, &dw, NULL)) {
             myprintf("Nothing at other end - exiting\n");
-            exit(EXIT_FAILURE); 
+            exit(EXIT_FAILURE);
         }
 
         if (dw) {
@@ -78,24 +80,26 @@ static wxEvtHandler * GUIQ = nullptr;
 static wxEvtHandler * ANALQ = nullptr;
 static int GUIQ_T = 0;
 static int ANALQ_T = 0;
-boost::mutex GUImutex;
+std::mutex GUImutex;
 
 void Utils::setGUIQueue(wxEvtHandler * evt, int evt_type) {
-    boost::lock_guard<boost::mutex> guard(GUImutex);
+    std::lock_guard<std::mutex> guard(GUImutex);
     GUIQ = evt;
     GUIQ_T = evt_type;
 }
 
 void Utils::setAnalysisQueue(wxEvtHandler * evt, int evt_type) {
-    boost::lock_guard<boost::mutex> guard(GUImutex);
+    std::lock_guard<std::mutex> guard(GUImutex);
     ANALQ = evt;
     ANALQ_T = evt_type;
 }
+#else
+std::mutex IOmutex;
 #endif
 
 void Utils::AnalyzeGUI(void* data) {
 #ifndef _CONSOLE
-    boost::lock_guard<boost::mutex> guard(GUImutex);
+    std::lock_guard<std::mutex> guard(GUImutex);
     if (ANALQ != NULL) {
         wxCommandEvent* myevent = new wxCommandEvent(ANALQ_T);
         myevent->SetClientData(data);
@@ -109,7 +113,7 @@ void Utils::GUIprintf(const char *fmt, ...) {
 
     va_start(ap, fmt);
 #ifndef _CONSOLE
-    boost::lock_guard<boost::mutex> guard(GUImutex);
+    std::lock_guard<std::mutex> guard(GUImutex);
     if (GUIQ != nullptr) {
         char buffer[512];
         vsprintf_s(buffer, 512, fmt, ap);
@@ -122,47 +126,98 @@ void Utils::GUIprintf(const char *fmt, ...) {
 }
 
 void Utils::myprintf(const char *fmt, ...) {
-    va_list ap;      
-  
-    va_start(ap, fmt);      
+    if (cfg_quiet) return;
 
-#ifdef _CONSOLE    
+    va_list ap;
+    va_start(ap, fmt);
+
+#ifdef _CONSOLE
     vfprintf(stderr, fmt, ap);
-#endif  
-  
+
+    if (!cfg_logfile.empty()) {
+        std::lock_guard<std::mutex> lock(IOmutex);
+        FILE * log = fopen(cfg_logfile.c_str(), "a");
+        if (log) {
+            vfprintf(log, fmt, ap);
+            fclose(log);
+        }
+    }
+#endif
+
     va_end(ap);
 }
 
 void Utils::gtp_printf(int id, const char *fmt, ...) {
-    va_list ap;  
-  
+    va_list ap;
+
     if (id != -1) {
         fprintf(stdout, "=%d ", id);
     } else {
         fprintf(stdout, "= ");
-    }        
-  
-    va_start(ap, fmt);  
-    
+    }
+
+    va_start(ap, fmt);
+
     vfprintf(stdout, fmt, ap);
     printf("\n\n");
-  
+
+    if (!cfg_logfile.empty()) {
+        std::lock_guard<std::mutex> lock(IOmutex);
+        FILE * log = fopen(cfg_logfile.c_str(), "a");
+        if (log) {
+            if (id != -1) {
+                fprintf(log, "=%d ", id);
+            } else {
+                fprintf(log, "= ");
+            }
+            vfprintf(log, fmt, ap);
+            fprintf(log, "\n\n");
+            fclose(log);
+        }
+    }
+
     va_end(ap);
 }
 
 void Utils::gtp_fail_printf(int id, const char *fmt, ...) {
-    va_list ap;  
-      
-    if (id != -1) { 
+    va_list ap;
+
+    if (id != -1) {
         fprintf(stdout, "?%d ", id);
     } else {
         fprintf(stdout, "? ");
     }
-  
-    va_start(ap, fmt);       
-        
+
+    va_start(ap, fmt);
+
     vfprintf(stdout, fmt, ap);
-    printf("\n\n");                   
-  
+    printf("\n\n");
+
+    if (!cfg_logfile.empty()) {
+        std::lock_guard<std::mutex> lock(IOmutex);
+        FILE * log = fopen(cfg_logfile.c_str(), "a");
+        if (log) {
+            if (id != -1) {
+                fprintf(log, "?%d ", id);
+            } else {
+                fprintf(log, "? ");
+            }
+            vfprintf(log, fmt, ap);
+            fprintf(log, "\n\n");
+            fclose(log);
+        }
+    }
+
     va_end(ap);
+}
+
+void Utils::log_input(std::string input) {
+    if (!cfg_logfile.empty()) {
+        std::lock_guard<std::mutex> lock(IOmutex);
+        FILE * log = fopen(cfg_logfile.c_str(), "a");
+        if (log) {
+            fprintf(log, ">>%s\n", input.c_str());
+            fclose(log);
+        }
+    }
 }

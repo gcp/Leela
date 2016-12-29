@@ -119,28 +119,18 @@ extern std::array<float, 32> val_conv9_b;
 extern std::array<float, 32> val_bn9_w1;
 extern std::array<float, 32> val_bn9_w2;
 extern std::array<float, 1> val_bn9_w3;
-extern std::array<float, 9216> val_conv10_w;
-extern std::array<float, 32> val_conv10_b;
-extern std::array<float, 32> val_bn10_w1;
-extern std::array<float, 32> val_bn10_w2;
+extern std::array<float, 576> val_conv10_w;
+extern std::array<float, 2> val_conv10_b;
+extern std::array<float, 2> val_bn10_w1;
+extern std::array<float, 2> val_bn10_w2;
 extern std::array<float, 1> val_bn10_w3;
-extern std::array<float, 9216> val_conv11_w;
-extern std::array<float, 32> val_conv11_b;
-extern std::array<float, 32> val_bn11_w1;
-extern std::array<float, 32> val_bn11_w2;
+extern std::array<float, 69312> val_ip11_w;
+extern std::array<float, 96> val_ip11_b;
+extern std::array<float, 96> val_bn11_w1;
+extern std::array<float, 96> val_bn11_w2;
 extern std::array<float, 1> val_bn11_w3;
-extern std::array<float, 288> val_conv12_w;
-extern std::array<float, 1> val_conv12_b;
-extern std::array<float, 1> val_bn12_w1;
-extern std::array<float, 1> val_bn12_w2;
-extern std::array<float, 1> val_bn12_w3;
-extern std::array<float, 92416> val_ip13_w;
-extern std::array<float, 256> val_ip13_b;
-extern std::array<float, 256> val_bn13_w1;
-extern std::array<float, 256> val_bn13_w2;
-extern std::array<float, 1> val_bn13_w3;
-extern std::array<float, 256> val_ip14_w;
-extern std::array<float, 1> val_ip14_b;
+extern std::array<float, 96> val_ip12_w;
+extern std::array<float, 1> val_ip12_b;
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -185,9 +175,9 @@ void Network::benchmark(FastState * state) {
 
 void Network::initialize(void) {
 #ifdef USE_OPENCL
-    std::cerr << "Initializing OpenCL" << std::endl;
+    myprintf("Initializing OpenCL\n");
     OpenCL * cl = OpenCL::get_OpenCL();
-    std::cerr << "Transferring weights to GPU..." << std::flush;
+    myprintf("Transferring weights to GPU...");
     cl->push_convolve(5, conv1_w, conv1_b);
     cl->push_convolve(3, conv2_w, conv2_b);
     cl->push_convolve(3, conv3_w, conv3_b);
@@ -202,13 +192,13 @@ void Network::initialize(void) {
     cl->push_convolve(3, conv12_w, conv12_b);
     cl->push_convolve(3, conv13_w, conv13_b);
     cl->push_convolve(3, conv14_w, conv14_b);
-    std::cerr << "done" << std::endl;
+    myprintf("done\n");
 #endif
 #ifdef USE_BLAS
 #ifndef __APPLE__
 #ifdef USE_OPENBLAS
     openblas_set_num_threads(1);
-    std::cerr << "BLAS Core: " << openblas_get_corename() << std::endl;
+    myprintf("BLAS Core: %s\n", openblas_get_corename());
 #endif
 #ifdef USE_MKL
     //mkl_set_threading_layer(MKL_THREADING_SEQUENTIAL);
@@ -672,16 +662,12 @@ float Network::get_value_internal(
     batchnorm<32, 361>(output_data, val_bn8_w1, val_bn8_w2, val_bn8_w3, input_data);
     convolve<3, 32,  32>(input_data, val_conv9_w, val_conv9_b, output_data);
     batchnorm<32, 361>(output_data, val_bn9_w1, val_bn9_w2, val_bn9_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv10_w, val_conv10_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn10_w1, val_bn10_w2, val_bn10_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv11_w, val_conv11_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn11_w1, val_bn11_w2, val_bn11_w3, input_data);
-    convolve<3, 32,   1>(input_data, val_conv12_w, val_conv12_b, output_data);
-    batchnorm<1,  361>(output_data, val_bn12_w1, val_bn12_w2, val_bn12_w3, input_data);
+    convolve<3, 32,   2>(input_data, val_conv10_w, val_conv10_b, output_data);
+    batchnorm<2,  361>(output_data, val_bn10_w1, val_bn10_w2, val_bn10_w3, input_data);
     // Now get the score
-    innerproduct<361, 256>(input_data, val_ip13_w, val_ip13_b, output_data);
-    batchnorm<256, 1>(output_data, val_bn13_w1, val_bn13_w2, val_bn13_w3, winrate_data);
-    innerproduct<256,        1>(winrate_data, val_ip14_w, val_ip14_b, winrate_out);
+    innerproduct<2*361, 96>(input_data, val_ip11_w, val_ip11_b, output_data);
+    batchnorm<96, 1>(output_data, val_bn11_w1, val_bn11_w2, val_bn11_w3, winrate_data);
+    innerproduct<96, 1>(winrate_data, val_ip12_w, val_ip12_b, winrate_out);
     // Sigmoid
     float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
     result = winrate_sig;
@@ -820,7 +806,7 @@ void Network::show_heatmap(FastState * state, Netresult& result) {
     }
 
     for (int i = display_map.size() - 1; i >= 0; --i) {
-        std::cerr << display_map[i] << std::endl;
+        myprintf("%s\n", display_map[i].c_str());
     }
 
     std::stable_sort(moves.rbegin(), moves.rend());
@@ -829,9 +815,9 @@ void Network::show_heatmap(FastState * state, Netresult& result) {
     size_t tried = 0;
     while (cum < 0.85f && tried < moves.size()) {
         if (moves[tried].first < 0.01f) break;
-        std::cerr << boost::format("%1.3f (") % moves[tried].first
-            << state->board.move_to_text(moves[tried].second)
-            << ")" << std::endl;
+        myprintf("%1.3f (%s)\n",
+                 moves[tried].first,
+                 state->board.move_to_text(moves[tried].second).c_str());
         cum += moves[tried].first;
         tried++;
     }
