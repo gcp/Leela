@@ -25,6 +25,14 @@ void TimeControl::reset_clocks() {
     m_periods_left[1] = m_byoperiods;
     m_inbyo[0] = m_maintime <= 0;
     m_inbyo[1] = m_maintime <= 0;
+    // Now that byo-yomi status is set, add time
+    // back to our clocks
+    if (m_inbyo[0]) {
+        m_remaining_time[0] = m_byotime;
+    }
+    if (m_inbyo[1]) {
+        m_remaining_time[1] = m_byotime;
+    }
 }
 
 void TimeControl::start(int color) {
