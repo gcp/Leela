@@ -75,7 +75,6 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
 
     if (vm.count("quiet")) {
-        myprintf("Quiet mode enabled.\n");
         cfg_quiet = true;
     }
 
