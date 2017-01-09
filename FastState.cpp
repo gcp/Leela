@@ -274,7 +274,7 @@ int FastState::play_random_move(int color) {
 
     for (size_t i = 0; i < scoredmoves.size(); i++) {
         float point = scoredmoves[i].second;
-        if (index < point) {
+        if (index <= point) {
             return play_move_fast(scoredmoves[i].first);
         }
     }
