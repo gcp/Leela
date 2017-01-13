@@ -72,8 +72,9 @@ layer {
 }
 
 #layer {
-#  name: "silence"
-#  type: "Silence"
+  #name: "silence"
+  #type: "Silence"
+  #bottom: "wonpc"
 #}
 
 layer {
@@ -380,10 +381,11 @@ layer {
 layer {
   name: "conv10"
   type: "Convolution"
+  # input -> output
   bottom: "conv9"
   top: "conv10"
   convolution_param {
-    num_output: 2
+    num_output: 32
     kernel_size: 3
     pad: 1
     weight_filler {
@@ -398,6 +400,7 @@ layer {
 layer {
   name: "relu10"
   type: "ReLU"
+  # in-place
   bottom: "conv10"
   top: "conv10"
 }
@@ -410,11 +413,123 @@ layer {
 }
 
 layer {
+  name: "conv11"
+  type: "Convolution"
+  # input -> output
+  bottom: "conv10"
+  top: "conv11"
+  convolution_param {
+    num_output: 32
+    kernel_size: 3
+    pad: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "relu11"
+  type: "ReLU"
+  # in-place
+  bottom: "conv11"
+  top: "conv11"
+}
+
+layer {
+ name: "bn11"
+ type: "BatchNorm"
+ bottom: "conv11"
+ top: "conv11"
+}
+
+layer {
+  name: "conv12"
+  type: "Convolution"
+  bottom: "conv11"
+  top: "conv12"
+  convolution_param {
+    num_output: 1
+    kernel_size: 1
+    pad: 0
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "relu12"
+  type: "ReLU"
+  bottom: "conv12"
+  top: "conv12"
+}
+
+layer {
+ name: "bn12"
+ type: "BatchNorm"
+ bottom: "conv12"
+ top: "conv12"
+}
+
+layer {
+  name: "ip13"
+  type: "InnerProduct"
+  inner_product_param {
+    num_output: 256
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+  bottom: "conv12"
+  top: "ip13"
+}
+
+layer {
+  name: "relu13"
+  type: "ReLU"
+  bottom: "ip13"
+  top: "ip13"
+}
+
+layer {
+ name: "bn13"
+ type: "BatchNorm"
+ bottom: "ip13"
+ top: "ip13"
+}
+
+layer {
+  name: "ip14"
+  type: "InnerProduct"
+  inner_product_param {
+    num_output: 2
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+  bottom: "ip13"
+  top: "ip14"
+}
+
+layer {
   name: "slicer_output"
   type: "Slice"
-  bottom: "conv10"
-  top: "conv10_o1"
-  top: "conv10_o2"
+  bottom: "ip14"
+  top: "ip14_o1"
+  top: "ip14_o2"
   slice_param {
     axis: 1
     slice_point: 1
@@ -422,116 +537,24 @@ layer {
 }
 
 layer {
-  name: "ip11"
-  type: "InnerProduct"
-  inner_product_param {
-    num_output: 128
-    weight_filler {
-      type: "xavier"
-    }
-    bias_filler {
-      type: "constant"
-    }
-  }
-  bottom: "conv10_o1"
-  top: "ip11"
-}
-
-layer {
-  name: "relu11"
-  type: "ReLU"
-  bottom: "ip11"
-  top: "ip11"
-}
-
-layer {
- name: "bn11"
- type: "BatchNorm"
- bottom: "ip11"
- top: "ip11"
-}
-
-layer {
-  name: "ip12"
-  type: "InnerProduct"
-  inner_product_param {
-    num_output: 1
-    weight_filler {
-      type: "xavier"
-    }
-    bias_filler {
-      type: "constant"
-    }
-  }
-  bottom: "ip11"
-  top: "ip12"
-}
-
-layer {
   name: "tanh"
   type: "TanH"
-  bottom: "ip12"
-  top: "winrate"
+  bottom: "ip14_o1"
+  top: "win"
 }
 
 layer {
   name: "mse_loss_win"
   type: "EuclideanLoss"
-  bottom: "winrate"
+  bottom: "win"
   bottom: "won"
   top: "mse_win"
 }
 
 layer {
-  name: "ip11_2"
-  type: "InnerProduct"
-  inner_product_param {
-    num_output: 128
-    weight_filler {
-      type: "xavier"
-    }
-    bias_filler {
-      type: "constant"
-    }
-  }
-  bottom: "conv10_o2"
-  top: "ip11_2"
-}
-
-layer {
-  name: "relu11_2"
-  type: "ReLU"
-  bottom: "ip11_2"
-  top: "ip11_2"
-}
-
-layer {
- name: "bn11_2"
- type: "BatchNorm"
- bottom: "ip11_2"
- top: "ip11_2"
-}
-
-layer {
-  name: "ip12_2"
-  type: "InnerProduct"
-  inner_product_param {
-    num_output: 1
-    weight_filler {
-      type: "xavier"
-    }
-    bias_filler {
-      type: "constant"
-    }
-  }
-  bottom: "ip11_2"
-  top: "ip12_2"
-}
-
-layer {
   name: "tanh"
   type: "TanH"
-  bottom: "ip12_2"
+  bottom: "ip14_o2"
   top: "winpc"
 }
 
@@ -540,5 +563,5 @@ layer {
   type: "EuclideanLoss"
   bottom: "winpc"
   bottom: "wonpc"
-  top: "mse_winpc"
+  top: "mse_win_pc"
 }

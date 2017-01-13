@@ -11,24 +11,25 @@ test_iter: 6350
 
 # Carry out testing every n training iterations.
 # every 1/10th epoch
-test_interval: 152400
+test_interval: 50000
 
-base_lr: 0.005
+base_lr: 0.0005
 momentum: 0.9
+weight_decay: 0.0004
 
 lr_policy: "fixed"
 #lr_policy: "poly"
 #power: 1.0
 
 # Display every n iterations
-display: 15240
+display: 10000
 
 # The total number of iterations
 # 100 epoch
 max_iter: 15240000
 
 # snapshot intermediate results
-snapshot: 152400
+snapshot: 50000
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
