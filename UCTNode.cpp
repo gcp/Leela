@@ -458,7 +458,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 // "UCT" part
                 float winrate = child->get_winrate(color);
                 float winmix;
-                if (child->get_evalcount()) {
+                if (child->get_evalcount() >= cfg_eval_use_thresh) {
                     float eval = child->get_eval(color);
                     winmix = eval * cfg_mix + winrate * (1.0f - cfg_mix);
                 } else {

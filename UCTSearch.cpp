@@ -213,8 +213,8 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
             myprintf("%4s -> %7d (W: %5.2f%%) (U: %5.2f%%) (V: %5.2f%%: %6d) (N: %4.1f%%) PV: ",
                 tmp.c_str(),
                 node->get_visits(),
-                 node->get_evalcount() > 0 ? (100.0f * (node->get_eval(color)*cfg_mix
-                                                     + node->get_winrate(color) * (1.0f - cfg_mix)))
+                 node->get_evalcount() >= cfg_eval_use_thresh ? (100.0f * (node->get_eval(color)*cfg_mix
+                                                                 + node->get_winrate(color) * (1.0f - cfg_mix)))
                                           : node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                 node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
                 node->get_evalcount() > 0 ? node->get_eval(color)*100.0f : 0.0f,

@@ -13,7 +13,7 @@ test_iter: 6350
 # every 1/10th epoch
 test_interval: 152400
 
-base_lr: 0.002
+base_lr: 0.005
 momentum: 0.9
 
 lr_policy: "fixed"

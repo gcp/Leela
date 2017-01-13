@@ -76,60 +76,27 @@ extern std::array<float, 3> conv14_b;
 
 extern std::array<float, 19200> val_conv1_w;
 extern std::array<float, 32> val_conv1_b;
-extern std::array<float, 32> val_bn1_w1;
-extern std::array<float, 32> val_bn1_w2;
-extern std::array<float, 1> val_bn1_w3;
 extern std::array<float, 9216> val_conv2_w;
 extern std::array<float, 32> val_conv2_b;
-extern std::array<float, 32> val_bn2_w1;
-extern std::array<float, 32> val_bn2_w2;
-extern std::array<float, 1> val_bn2_w3;
 extern std::array<float, 9216> val_conv3_w;
 extern std::array<float, 32> val_conv3_b;
-extern std::array<float, 32> val_bn3_w1;
-extern std::array<float, 32> val_bn3_w2;
-extern std::array<float, 1> val_bn3_w3;
 extern std::array<float, 9216> val_conv4_w;
 extern std::array<float, 32> val_conv4_b;
-extern std::array<float, 32> val_bn4_w1;
-extern std::array<float, 32> val_bn4_w2;
-extern std::array<float, 1> val_bn4_w3;
 extern std::array<float, 9216> val_conv5_w;
 extern std::array<float, 32> val_conv5_b;
-extern std::array<float, 32> val_bn5_w1;
-extern std::array<float, 32> val_bn5_w2;
-extern std::array<float, 1> val_bn5_w3;
 extern std::array<float, 9216> val_conv6_w;
 extern std::array<float, 32> val_conv6_b;
-extern std::array<float, 32> val_bn6_w1;
-extern std::array<float, 32> val_bn6_w2;
-extern std::array<float, 1> val_bn6_w3;
 extern std::array<float, 9216> val_conv7_w;
 extern std::array<float, 32> val_conv7_b;
-extern std::array<float, 32> val_bn7_w1;
-extern std::array<float, 32> val_bn7_w2;
-extern std::array<float, 1> val_bn7_w3;
 extern std::array<float, 9216> val_conv8_w;
 extern std::array<float, 32> val_conv8_b;
-extern std::array<float, 32> val_bn8_w1;
-extern std::array<float, 32> val_bn8_w2;
-extern std::array<float, 1> val_bn8_w3;
 extern std::array<float, 9216> val_conv9_w;
 extern std::array<float, 32> val_conv9_b;
-extern std::array<float, 32> val_bn9_w1;
-extern std::array<float, 32> val_bn9_w2;
-extern std::array<float, 1> val_bn9_w3;
-extern std::array<float, 576> val_conv10_w;
-extern std::array<float, 2> val_conv10_b;
-extern std::array<float, 2> val_bn10_w1;
-extern std::array<float, 2> val_bn10_w2;
-extern std::array<float, 1> val_bn10_w3;
-extern std::array<float, 69312> val_ip11_w;
-extern std::array<float, 96> val_ip11_b;
-extern std::array<float, 96> val_bn11_w1;
-extern std::array<float, 96> val_bn11_w2;
-extern std::array<float, 1> val_bn11_w3;
-extern std::array<float, 96> val_ip12_w;
+extern std::array<float, 32> val_conv10_w;
+extern std::array<float, 1> val_conv10_b;
+extern std::array<float, 92416> val_ip11_w;
+extern std::array<float, 256> val_ip11_b;
+extern std::array<float, 256> val_ip12_w;
 extern std::array<float, 1> val_ip12_b;
 
 Network * Network::get_Network(void) {
@@ -373,8 +340,6 @@ void innerproduct(std::vector<float>& input,
                 &input[0], 1,
                 0.0f, &output[0], 1);
 
-    //auto lambda_ELU = [](float val) { return (val > 0.0f) ?
-    //                                  val : 1.0f * (std::exp(val) - 1.0f); };
     auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
                                        val : 0.0f; };
 
@@ -554,16 +519,18 @@ float Network::get_value(FastState * state, Ensemble ensemble) {
     } else {
         assert(ensemble == AVERAGE_ALL);
         result = get_value_internal(state, planes, 0);
+        myprintf("%5.4f,", result);
         for (int r = 1; r < 8; r++) {
             float sum_res = get_value_internal(state, planes, r);
+            myprintf("%5.4f,", sum_res);
             result += sum_res;
         }
         result /= 8.0f;
     }
 
-    // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-    //    std::cerr << "Eval: " << boost::format("%5.4f") % result << std::endl;
-    // }
+    if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+        myprintf("==> %5.4f\n", result);
+    }
 
     return result;
 }
@@ -645,29 +612,27 @@ float Network::get_value_internal(
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
 
     convolve<5, 24, 32>(input_data, val_conv1_w, val_conv1_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn1_w1, val_bn1_w2, val_bn1_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv2_w, val_conv2_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn2_w1, val_bn2_w2, val_bn2_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv3_w, val_conv3_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn3_w1, val_bn3_w2, val_bn3_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv4_w, val_conv4_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn4_w1, val_bn4_w2, val_bn4_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv5_w, val_conv5_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn5_w1, val_bn5_w2, val_bn5_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv6_w, val_conv6_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn6_w1, val_bn6_w2, val_bn6_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv7_w, val_conv7_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn7_w1, val_bn7_w2, val_bn7_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv8_w, val_conv8_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn8_w1, val_bn8_w2, val_bn8_w3, input_data);
-    convolve<3, 32,  32>(input_data, val_conv9_w, val_conv9_b, output_data);
-    batchnorm<32, 361>(output_data, val_bn9_w1, val_bn9_w2, val_bn9_w3, input_data);
-    convolve<3, 32,   2>(input_data, val_conv10_w, val_conv10_b, output_data);
-    batchnorm<2,  361>(output_data, val_bn10_w1, val_bn10_w2, val_bn10_w3, input_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32, 32>(input_data, val_conv2_w, val_conv2_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32, 32>(input_data, val_conv3_w, val_conv3_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32, 32>(input_data, val_conv4_w, val_conv4_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32, 32>(input_data, val_conv5_w, val_conv5_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32, 32>(input_data, val_conv6_w, val_conv6_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32, 32>(input_data, val_conv7_w, val_conv7_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32, 32>(input_data, val_conv8_w, val_conv8_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<3, 32, 32>(input_data, val_conv9_w, val_conv9_b, output_data);
+    std::swap(input_data, output_data);
+    convolve<1, 32,  1>(input_data, val_conv10_w, val_conv10_b, output_data);
     // Now get the score
-    innerproduct<2*361, 96>(input_data, val_ip11_w, val_ip11_b, output_data);
-    batchnorm<96, 1>(output_data, val_bn11_w1, val_bn11_w2, val_bn11_w3, winrate_data);
-    innerproduct<96, 1>(winrate_data, val_ip12_w, val_ip12_b, winrate_out);
+    innerproduct<361, 256>(output_data, val_ip11_w, val_ip11_b, winrate_data);
+    innerproduct<256, 1>(winrate_data, val_ip12_w, val_ip12_b, winrate_out);
     // Sigmoid
     float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
     result = winrate_sig;

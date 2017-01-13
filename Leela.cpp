@@ -59,6 +59,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("cutoff_ratio", po::value<float>())
         ("mix", po::value<float>())
         ("eval_thresh", po::value<int>())
+        ("eval_use_thresh", po::value<int>())
 #endif
         ;
     po::variables_map vm;
@@ -129,6 +130,9 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
     if (vm.count("eval_thresh")) {
         cfg_eval_thresh = vm["eval_thresh"].as<int>();
+    }
+    if (vm.count("eval_use_thresh")) {
+        cfg_eval_use_thresh = vm["eval_use_thresh"].as<int>();
     }
 #endif
 
