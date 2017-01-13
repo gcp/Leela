@@ -96,18 +96,18 @@ bool GameState::play_textmove(std::string color, std::string vertex) {
     int who;
     int column, row;
     int boardsize = board.get_boardsize();
-        
+
     if (color == "w" || color == "white") {
         who = FullBoard::WHITE;
     } else if (color == "b" || color == "black") {
         who = FullBoard::BLACK;
     } else return false;
-    
-    if (vertex.size() < 2) return 0;    
+
+    if (vertex.size() < 2) return 0;
     if (!std::isalpha(vertex[0])) return 0;
-    if (!std::isdigit(vertex[1])) return 0;    
+    if (!std::isdigit(vertex[1])) return 0;
     if (vertex[0] == 'i') return 0;
-        
+
     if (vertex[0] >= 'A' && vertex[0] <= 'Z') {
         if (vertex[0] < 'I') {
             column = 25 + vertex[0] - 'A';
@@ -120,22 +120,22 @@ bool GameState::play_textmove(std::string color, std::string vertex) {
         } else {
             column = (vertex[0] - 'a')-1;
         }
-    }    
-        
-    std::string rowstring(vertex); 
+    }
+
+    std::string rowstring(vertex);
     rowstring.erase(0, 1);
-    std::istringstream parsestream(rowstring); 
-        
+    std::istringstream parsestream(rowstring);
+
     parsestream >> row;
     row--;
-    
+
     if (row >= boardsize) return false;
-    if (column >= boardsize) return false; 
-    
-    int move = board.get_vertex(column, row);       
-        
-    play_move(who, move);                           
-                   
+    if (column >= boardsize) return false;
+
+    int move = board.get_vertex(column, row);
+
+    play_move(who, move);
+
     return true;
 }
 

@@ -988,35 +988,29 @@ bool FastBoard::no_eye_fill(const int i) {
     return !is_eye(m_tomove, i);
 }
 
-std::string FastBoard::move_to_text(int move) {    
+std::string FastBoard::move_to_text(int move) {
     std::ostringstream result;
-    
+
     int column = move % (m_boardsize + 2);
     int row = move / (m_boardsize + 2);
-    
+
     column--;
     row--;
-    
+
     assert(move == FastBoard::PASS || move == FastBoard::RESIGN || (row >= 0 && row < m_boardsize));
     assert(move == FastBoard::PASS || move == FastBoard::RESIGN || (column >= 0 && column < m_boardsize));
-    
+
     if (move >= 0 && move <= m_maxsq) {
-        if (column <= 24) {
-            result << static_cast<char>(column < 8 ? 'a' + column : 'a' + column + 1);
-            result << (row + 1);        
-        } else {            
-            column -= 25;
-            result << static_cast<char>(column < 8 ? 'A' + column : 'A' + column + 1);
-            result << (row + 1);        
-        }
+        result << static_cast<char>(column < 8 ? 'A' + column : 'A' + column + 1);
+        result << (row + 1);
     } else if (move == FastBoard::PASS) {
         result << "pass";
     } else if (move == FastBoard::RESIGN) {
-	result << "resign";
+        result << "resign";
     } else {
-	result << "error";
+        result << "error";
     }
-    	
+
     return result.str();
 }
 

@@ -303,13 +303,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_printf(id, "");
         } else {
             std::istringstream cmdstream(command);
-            std::string tmp;            
+            std::string tmp;
             std::string color, vertex;
-            
+
             cmdstream >> tmp;   //eat play
             cmdstream >> color;
             cmdstream >> vertex;
-            
+
             if (!cmdstream.fail()) {    
                 if (!game.play_textmove(color, vertex)) {
                     gtp_fail_printf(id, "illegal move");
@@ -319,7 +319,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             } else {
                 gtp_fail_printf(id, "syntax not understood");
             }
-        } 
+        }
         return true;
     } else if (command.find("genmove") == 0) {
         std::istringstream cmdstream(command);

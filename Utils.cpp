@@ -161,6 +161,7 @@ void Utils::gtp_printf(int id, const char *fmt, ...) {
     vfprintf(stdout, fmt, ap);
     printf("\n\n");
 
+#ifdef _CONSOLE
     if (!cfg_logfile.empty()) {
         std::lock_guard<std::mutex> lock(IOmutex);
         FILE * log = fopen(cfg_logfile.c_str(), "a");
@@ -175,6 +176,7 @@ void Utils::gtp_printf(int id, const char *fmt, ...) {
             fclose(log);
         }
     }
+#endif
 
     va_end(ap);
 }
@@ -193,6 +195,7 @@ void Utils::gtp_fail_printf(int id, const char *fmt, ...) {
     vfprintf(stdout, fmt, ap);
     printf("\n\n");
 
+#ifdef _CONSOLE
     if (!cfg_logfile.empty()) {
         std::lock_guard<std::mutex> lock(IOmutex);
         FILE * log = fopen(cfg_logfile.c_str(), "a");
@@ -207,11 +210,13 @@ void Utils::gtp_fail_printf(int id, const char *fmt, ...) {
             fclose(log);
         }
     }
+#endif
 
     va_end(ap);
 }
 
 void Utils::log_input(std::string input) {
+#ifdef _CONSOLE
     if (!cfg_logfile.empty()) {
         std::lock_guard<std::mutex> lock(IOmutex);
         FILE * log = fopen(cfg_logfile.c_str(), "a");
@@ -220,4 +225,5 @@ void Utils::log_input(std::string input) {
             fclose(log);
         }
     }
+#endif
 }

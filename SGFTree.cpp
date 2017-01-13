@@ -105,9 +105,9 @@ void SGFTree::load_from_string(std::string gamebuff) {
 }
 
 // load a single game from a file
-void SGFTree::load_from_file(std::string filename, int index) {           
-    std::string gamebuff = SGFParser::chop_from_file(filename, index); 
-    
+void SGFTree::load_from_file(std::string filename, int index) {
+    std::string gamebuff = SGFParser::chop_from_file(filename, index);
+
     //myprintf("Parsing: %s\n", gamebuff.c_str());
 
     load_from_string(gamebuff);
@@ -115,15 +115,20 @@ void SGFTree::load_from_file(std::string filename, int index) {
 
 void SGFTree::populate_states(void) {
     PropertyMap::iterator it;
-    
-    // first check for go game setup in properties    
+
+    // first check for go game setup in properties
     it = m_properties.find("GM");
     if (it != m_properties.end()) {
         if (it->second != "1") {
             throw new std::runtime_error("SGF Game is not a Go game");
-        }        
+        } else {
+            if (!m_properties.count("SZ")) {
+                // No size, but SGF spec defines default size for Go
+                m_properties.insert(std::make_pair("SZ", "19"));
+            }
+        }
     }
-    
+
     // board size
     it = m_properties.find("SZ");
     if (it != m_properties.end()) {
@@ -136,8 +141,8 @@ void SGFTree::populate_states(void) {
         } else {
             throw std::runtime_error("Board size not supported.");
         }
-    } 
-    
+    }
+
     // komi
     it = m_properties.find("KM");
     if (it != m_properties.end()) {
