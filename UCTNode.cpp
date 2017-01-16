@@ -397,6 +397,24 @@ void UCTNode::accumulate_eval(float eval) {
     m_evalcount  += 1;
 }
 
+float UCTNode::get_mixed_score(int tomove) {
+    if (first_visit()) {
+        return 0.0f;
+    }
+    float winrate = get_winrate(tomove);
+    int evalcount = get_evalcount();
+    if (!evalcount) {
+        return winrate;
+    }
+    float eval = get_eval(tomove);
+    if (evalcount >= cfg_eval_scale) {
+        return eval * cfg_mix + winrate * (1.0f - cfg_mix);
+    }
+    float scaling = (float)evalcount/(float)cfg_eval_scale;
+    float mix_factor = scaling * cfg_mix;
+    return eval * mix_factor + winrate * (1.0f - mix_factor);
+}
+
 UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     UCTNode * best = NULL;
     float best_value = -1000.0f;
@@ -456,21 +474,14 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
 
             if (!child->first_visit()) {
                 // "UCT" part
-                float winrate = child->get_winrate(color);
-                float winmix;
-                if (child->get_evalcount() >= cfg_eval_use_thresh) {
-                    float eval = child->get_eval(color);
-                    winmix = eval * cfg_mix + winrate * (1.0f - cfg_mix);
-                } else {
-                    winmix = winrate;
-                }
+                float winrate = child->get_mixed_score(color);
                 float psa = child->get_score();
                 float denom = child->get_visits();
 
                 float cts = std::sqrt(cfg_puct * (numerator / denom));
                 float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
 
-                 value = winmix + cts - mti;
+                 value = winrate + cts - mti;
             } else {
                 float winrate = cfg_fpu;
                 float psa = child->get_score();
@@ -591,11 +602,7 @@ void UCTNode::sort_children(int color) {
     while (child != NULL) {
         int visits = child->get_visits();
         if (visits) {
-            float winrate = child->get_winrate(color);
-            if (child->get_evalcount()) {
-                float eval = child->get_eval(color);
-                winrate = cfg_mix * eval + (1.0f - cfg_mix) * winrate;
-            }
+            float winrate = child->get_mixed_score(color);
             tmp.push_back(std::make_tuple(winrate, visits, child));
         } else {
             tmp.push_back(std::make_tuple(0.0f, 0, child));

@@ -49,7 +49,7 @@ float cfg_puct;
 float cfg_psa;
 float cfg_mix;
 int cfg_eval_thresh;
-int cfg_eval_use_thresh;
+int cfg_eval_scale;
 std::string cfg_logfile;
 bool cfg_quiet;
 
@@ -78,7 +78,7 @@ void GTP::setup_default_parameters() {
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.20f;
     cfg_eval_thresh = 55;
-    cfg_eval_use_thresh = 1;
+    cfg_eval_scale = 1;
     cfg_logfile.clear();
     cfg_quiet = false;
 }

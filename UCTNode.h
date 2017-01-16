@@ -42,6 +42,7 @@ public:
     int get_ravevisits() const;
     float get_score() const;
     float get_eval(int tomove) const;
+    float get_mixed_score(int tomove);
     double get_blackevals() const;
     int get_evalcount() const;
     int do_extend() const;
