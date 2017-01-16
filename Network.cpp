@@ -94,9 +94,9 @@ extern std::array<float, 9216> val_conv9_w;
 extern std::array<float, 32> val_conv9_b;
 extern std::array<float, 32> val_conv10_w;
 extern std::array<float, 1> val_conv10_b;
-extern std::array<float, 92416> val_ip11_w;
-extern std::array<float, 256> val_ip11_b;
-extern std::array<float, 256> val_ip12_w;
+extern std::array<float, 46208> val_ip11_w;
+extern std::array<float, 128> val_ip11_b;
+extern std::array<float, 128> val_ip12_w;
 extern std::array<float, 1> val_ip12_b;
 
 Network * Network::get_Network(void) {
@@ -519,10 +519,10 @@ float Network::get_value(FastState * state, Ensemble ensemble) {
     } else {
         assert(ensemble == AVERAGE_ALL);
         result = get_value_internal(state, planes, 0);
-        myprintf("%5.4f,", result);
+        myprintf("%5.4f ", result);
         for (int r = 1; r < 8; r++) {
             float sum_res = get_value_internal(state, planes, r);
-            myprintf("%5.4f,", sum_res);
+            myprintf("%5.4f ", sum_res);
             result += sum_res;
         }
         result /= 8.0f;
@@ -597,7 +597,7 @@ float Network::get_value_internal(
     std::vector<float> orig_input_data(planes.size() * width * height);
     std::vector<float> input_data(max_channels * width * height);
     std::vector<float> output_data(max_channels * width * height);
-    std::vector<float> winrate_data(256);
+    std::vector<float> winrate_data(128);
     std::vector<float> winrate_out(1);
 
     for (int c = 0; c < channels; ++c) {
@@ -631,8 +631,8 @@ float Network::get_value_internal(
     std::swap(input_data, output_data);
     convolve<1, 32,  1>(input_data, val_conv10_w, val_conv10_b, output_data);
     // Now get the score
-    innerproduct<361, 256>(output_data, val_ip11_w, val_ip11_b, winrate_data);
-    innerproduct<256, 1>(winrate_data, val_ip12_w, val_ip12_b, winrate_out);
+    innerproduct<361, 128>(output_data, val_ip11_w, val_ip11_b, winrate_data);
+    innerproduct<128, 1>(winrate_data, val_ip12_w, val_ip12_b, winrate_out);
     // Sigmoid
     float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
     result = winrate_sig;

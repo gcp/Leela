@@ -76,9 +76,9 @@ void GTP::setup_default_parameters() {
     cfg_psa = 0.232f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix = 0.5f;
-    cfg_eval_thresh = 125;
-    cfg_eval_use_thresh = 8;
+    cfg_mix = 0.20f;
+    cfg_eval_thresh = 55;
+    cfg_eval_use_thresh = 1;
     cfg_logfile.clear();
     cfg_quiet = false;
 }
