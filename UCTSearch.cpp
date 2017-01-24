@@ -65,6 +65,17 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
         && !node->get_evalcount()
         && node->get_visits() > cfg_eval_thresh) {
         node->run_value_net(currstate);
+
+        // Check whether we have new evals to back up
+        if (!node->has_eval_propagated() && node->get_evalcount()) {
+            SMP::Lock lock(node->get_mutex());
+            if (!node->has_eval_propagated()) {
+                noderesult.set_eval(node->get_blackevals());
+                node->set_eval_propagated();
+                // Don't accumulate our own eval twice
+                update_eval = false;
+            }
+        }
     }
 
     if (!node->has_children()
@@ -94,17 +105,6 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
             }
         } else {
             noderesult.run(currstate, false, true);
-        }
-
-        // Check whether we have new evals to back up
-        if (!node->has_eval_propagated() && node->get_evalcount()) {
-            SMP::Lock lock(node->get_mutex());
-            if (!node->has_eval_propagated()) {
-                noderesult.set_eval(node->get_blackevals());
-                node->set_eval_propagated();
-                // Don't accumulate our own eval twice
-                update_eval = false;
-            }
         }
         node->updateRAVE(noderesult, color);
     } else {
