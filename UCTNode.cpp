@@ -25,9 +25,10 @@
 
 using namespace Utils;
 
-UCTNode::UCTNode(int vertex, float score, int expand_treshold)
+UCTNode::UCTNode(int vertex, float score, int expand_threshold, int netscore_threshold)
     : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
-      m_valid(true), m_expand_cnt(expand_treshold), m_is_expanding(false) {
+      m_valid(true), m_expand_cnt(expand_threshold), m_is_expanding(false),
+      m_has_netscore(false), m_netscore_cnt(netscore_threshold), m_is_netscoring(false) {
     m_ravevisits = 20;
     m_ravestmwins = 10.0;
 }
@@ -51,6 +52,11 @@ bool UCTNode::should_expand() const {
     return m_visits > m_expand_cnt;
 }
 
+
+bool UCTNode::should_netscore() const {
+    return m_visits > m_netscore_cnt;
+}
+
 void UCTNode::link_child(UCTNode * newchild) {
     newchild->m_nextsibling = m_firstchild;
     m_firstchild = newchild;
@@ -60,16 +66,12 @@ SMP::Mutex & UCTNode::get_mutex() {
     return m_nodemutex;
 }
 
-void UCTNode::create_children(std::atomic<int> & nodecount,
-                              FastState & state, bool use_nets, bool at_root) {
+void UCTNode::netscore_children(std::atomic<int> & nodecount,
+                                FastState & state, bool at_root) {
     // acquire the lock
     SMP::Lock lock(get_mutex());
     // check whether somebody beat us to it
-    if (has_children()) {
-        return;
-    }
-    // no successors in final state
-    if (state.get_passes() >= 2) {
+    if (m_has_netscore) {
         return;
     }
 #ifdef USE_OPENCL
@@ -81,6 +83,44 @@ void UCTNode::create_children(std::atomic<int> & nodecount,
     }
 #endif
     // Someone else is running the expansion
+    if (m_is_netscoring) {
+        return;
+    }
+    // We'll be the one queueing this node for expansion, stop others
+    m_is_netscoring = true;
+    lock.unlock();
+
+    std::vector<Network::scored_node> nodelist;
+#ifdef USE_OPENCL
+    if (at_root) {
+        auto raw_netlist = Network::get_Network()->get_scored_moves(
+            &state, Network::Ensemble::AVERAGE_ALL);
+        scoring_cb(&nodecount, state, raw_netlist);
+    } else {
+        Network::get_Network()->async_scored_moves(
+            &state, this, Network::Ensemble::RANDOM_ROTATION);
+    }
+#else
+    auto raw_netlist = Network::get_Network()->get_scored_moves(
+        &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
+                           Network::Ensemble::RANDOM_ROTATION));
+    scoring_cb(&nodecount, state, nodelist);
+#endif
+}
+
+void UCTNode::create_children(std::atomic<int> & nodecount,
+                              FastState & state, bool at_root, bool use_nets) {
+    // acquire the lock
+    SMP::Lock lock(get_mutex());
+    // check whether somebody beat us to it
+    if (has_children()) {
+        return;
+    }
+    // no successors in final state
+    if (state.get_passes() >= 2) {
+        return;
+    }
+    // Someone else is running the expansion
     if (m_is_expanding) {
         return;
     }
@@ -91,66 +131,35 @@ void UCTNode::create_children(std::atomic<int> & nodecount,
     FastBoard & board = state.board;
     std::vector<Network::scored_node> nodelist;
 
-    if (use_nets) {
-#ifdef USE_OPENCL
-        if (at_root) {
-           auto raw_netlist = Network::get_Network()->get_scored_moves(
-               &state, Network::Ensemble::AVERAGE_ALL);
-           expansion_cb(&nodecount, state, raw_netlist);
-        } else {
-            Network::get_Network()->async_scored_moves(
-                &nodecount, &state, this, Network::Ensemble::RANDOM_ROTATION);
-        }
-#else
-        std::vector<Network::scored_node> raw_netlist;
-        if (state.get_passes() < 2) {
-            raw_netlist = Network::get_Network()->get_scored_moves(
-              &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
-                                 Network::Ensemble::RANDOM_ROTATION));
-            for (auto it = raw_netlist.begin(); it != raw_netlist.end(); ++it) {
-                int vertex = it->second;
-                if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
-                    if (!board.is_suicide(vertex, board.get_to_move())) {
-                        nodelist.push_back(*it);
-                    }
-                }
-            }
-            nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
-        }
-        link_nodelist(nodecount, board, nodelist, use_nets);
-#endif
-    } else {
-        std::vector<int> territory = state.board.influence();
-        std::vector<int> moyo = state.board.moyo();
+    std::vector<int> territory = state.board.influence();
+    std::vector<int> moyo = state.board.moyo();
 
-        if (state.get_passes() < 2) {
-            for (int i = 0; i < board.get_empty(); i++) {
-                int vertex = board.get_empty_vertex(i);
-                assert(board.get_square(vertex) == FastBoard::EMPTY);
-                // add and score a node
-                if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
-                    if (!board.is_suicide(vertex, board.get_to_move())) {
-                        float score = state.score_move(territory, moyo, vertex);
-                        nodelist.push_back(std::make_pair(score, vertex));
-                    }
+    if (state.get_passes() < 2) {
+        for (int i = 0; i < board.get_empty(); i++) {
+            int vertex = board.get_empty_vertex(i);
+            assert(board.get_square(vertex) == FastBoard::EMPTY);
+            // add and score a node
+            if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
+                if (!board.is_suicide(vertex, board.get_to_move())) {
+                    float score = state.score_move(territory, moyo, vertex);
+                    nodelist.push_back(std::make_pair(score, vertex));
                 }
             }
-            float passscore;
-            if (at_root) {
-                passscore = state.score_move(territory, moyo, FastBoard::PASS);
-            } else {
-                passscore = 0;
-            }
-            nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
-            link_nodelist(nodecount, board, nodelist, use_nets);
         }
+        float passscore;
+        if (at_root) {
+            passscore = state.score_move(territory, moyo, FastBoard::PASS);
+        } else {
+            passscore = 0;
+        }
+        nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
+        link_nodelist(nodecount, board, nodelist, use_nets);
     }
 }
 
-#ifdef USE_OPENCL
-void UCTNode::expansion_cb(std::atomic<int> * nodecount,
-                           FastState & state,
-                           std::vector<Network::scored_node> & raw_netlist) {
+void UCTNode::scoring_cb(std::atomic<int> * nodecount,
+                         FastState & state,
+                         std::vector<Network::scored_node> & raw_netlist) {
     FastBoard & board = state.board;
     std::vector<Network::scored_node> nodelist;
 
@@ -164,9 +173,63 @@ void UCTNode::expansion_cb(std::atomic<int> * nodecount,
     }
     nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
 
-    link_nodelist(*nodecount, board, nodelist, true);
+    rescore_nodelist(*nodecount, board, nodelist);
 }
-#endif
+
+void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
+                               FastBoard & board,
+                               std::vector<Network::scored_node> & nodelist) {
+
+    // sort (this will reverse scores, but linking is backwards too)
+    std::sort(nodelist.begin(), nodelist.end());
+
+    int childrenadded = 0;
+    if (nodelist.empty()) return;
+
+    const int max_net_childs = 35;
+    int expand_treshold = UCTSearch::MCTS_MATURE_TRESHOLD;
+    int netscore_threshold = cfg_mature_threshold;
+
+    SMP::Lock lock(get_mutex());
+
+    for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
+        // Check for duplicate moves, O(N^2)
+        bool found = false;
+        UCTNode * child = m_firstchild;
+        while (child != NULL) {
+            if (child->get_move() == it->second) {
+                found = true;
+                break;
+            }
+            child = child->m_nextsibling;
+        }
+        if (!found) {
+            // Not added yet, is it highly scored?
+            if (std::distance(it, nodelist.cend()) <= max_net_childs) {
+                UCTNode * vtx = new UCTNode(it->second, it->first,
+                                            expand_treshold, netscore_threshold);
+                if (it->second != FastBoard::PASS) {
+                    // atari giving
+                    // was == 2, == 1
+                    if (board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
+                        vtx->set_expand_cnt(expand_treshold / 3, netscore_threshold / 3);
+                    }
+                    if (board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
+                        vtx->set_expand_cnt(expand_treshold / 3, netscore_threshold / 3);
+                    }
+                }
+                link_child(vtx);
+                childrenadded++;
+            }
+        } else {
+            // Found, overwrite score with netscore
+            child->set_score(it->first);
+        }
+    }
+
+    nodecount += childrenadded;
+    sort_children();
+}
 
 void UCTNode::link_nodelist(std::atomic<int> & nodecount,
                             FastBoard & board,
@@ -174,33 +237,35 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
                             bool use_nets) {
 
     // sort (this will reverse scores, but linking is backwards too)
-    std::stable_sort(nodelist.begin(), nodelist.end());
+    std::sort(nodelist.begin(), nodelist.end());
 
     // link the nodes together, we only really link the last few
-    const int maxchilds = 35;   // about 35 -> 4M visits
+    int maxchilds = 35;     // about 35 -> 4M visits
+    if (use_nets) {
+        maxchilds = 10;     // XXX: run formula but can't be much
+    }
     int childrenadded = 0;
     int childrenseen = 0;
     int totalchildren = nodelist.size();
     if (!totalchildren) return;
 
-    int expand_treshold = UCTSearch::MCTS_MATURE_TRESHOLD;
-    if (use_nets) {
-        expand_treshold = cfg_mature_threshold;
-    }
+    int expand_threshold = UCTSearch::MCTS_MATURE_TRESHOLD;
+    int netscore_threshold = cfg_mature_threshold;
 
     SMP::Lock lock(get_mutex());
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         if (totalchildren - childrenseen <= maxchilds) {
-            UCTNode * vtx = new UCTNode(it->second, it->first, expand_treshold);
+            UCTNode * vtx = new UCTNode(it->second, it->first,
+                                        expand_threshold, netscore_threshold);
             if (it->second != FastBoard::PASS) {
                 // atari giving
                 // was == 2, == 1
                 if (board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
-                    vtx->set_expand_cnt(expand_treshold / 3);
+                    vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
                 }
                 if (board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
-                    vtx->set_expand_cnt(expand_treshold / 3);
+                    vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
                 }
             }
             link_child(vtx);
@@ -241,8 +306,9 @@ void UCTNode::set_move(int move) {
     m_move = move;
 }
 
-void UCTNode::set_expand_cnt(int runs) {
+void UCTNode::set_expand_cnt(int runs, int netscore_cnt) {
     m_expand_cnt = runs;
+    m_netscore_cnt = netscore_cnt;
 }
 
 void UCTNode::update(Playout & gameresult, int color) {
@@ -294,6 +360,10 @@ float UCTNode::get_score() const {
     return m_score;
 }
 
+void UCTNode::set_score(float score) {
+    m_score = score;
+}
+
 float UCTNode::get_winrate(int tomove) const {    
     assert(!first_visit());
 
@@ -320,17 +390,13 @@ int UCTNode::get_ravevisits() const {
     return m_ravevisits;
 }
 
-int UCTNode::do_extend() const {
-    return m_expand_cnt;
-}
-
-UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
+UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;
     float best_value = -1000.0f;
     int childbound;
     int parentvisits = 1; // XXX: this can be 0 now that we sqrt
     float best_probability = 0.0f;
-    if (use_nets) {
+    if (has_netscore()) {
         childbound = 35;
     } else {
         childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
@@ -343,7 +409,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     // count parentvisits
     float numerator;
     float cutoff_ratio;
-    if (use_nets) {
+    if (has_netscore()) {
         // make sure we are at a valid successor
         while (child != NULL && !child->valid()) {
             child = child->m_nextsibling;
@@ -367,7 +433,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     while (child != NULL && !child->valid()) {
         child = child->m_nextsibling;
     }
-    if (use_nets) {
+    if (has_netscore()) {
         // first move
         if (child != NULL) {
             best_probability = child->get_score();
@@ -376,7 +442,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     while (child != NULL && childcount < childbound) {
         float value;
 
-        if (use_nets) {
+        if (has_netscore()) {
             if (child->get_score() * cutoff_ratio < best_probability) {
                 break;
             }
@@ -501,8 +567,28 @@ public:
 /*
     sort children by converting linked list to vector,
     sorting the vector, and reconstructing to linked list again
+    Requires node mutex to be held.
 */
-void UCTNode::sort_children(int color) {
+void UCTNode::sort_children() {
+    std::vector<std::tuple<float, UCTNode*>> tmp;
+
+    UCTNode * child = m_firstchild;
+
+    while (child != NULL) {
+        tmp.push_back(std::make_tuple(child->get_score(), child));
+        child = child->m_nextsibling;
+    }
+
+    std::sort(tmp.rbegin(), tmp.rend());
+
+    m_firstchild = NULL;
+
+    for (auto it = tmp.begin(); it != tmp.end(); ++it) {
+        link_child(std::get<1>(*it));
+    }
+}
+
+void UCTNode::sort_root_children(int color) {
     SMP::Lock lock(get_mutex());
     std::vector<sortnode_t> tmp;
 
@@ -511,26 +597,21 @@ void UCTNode::sort_children(int color) {
 
     while (child != NULL) {
         int visits = child->get_visits();
-	if (visits) {
-	    tmp.push_back(std::make_tuple(child->get_winrate(color), visits, child));
-	} else {
-	    tmp.push_back(std::make_tuple(0.0f, 0, child));
-	}
-
+        if (visits) {
+            tmp.push_back(std::make_tuple(child->get_winrate(color), visits, child));
+        } else {
+            tmp.push_back(std::make_tuple(0.0f, 0, child));
+        }
         maxvisits = std::max(maxvisits, visits);
         child = child->m_nextsibling;
     }
 
     // reverse sort, because list reconstruction is backwards
-    // XXX can be combined?
-    std::stable_sort(tmp.begin(), tmp.end(), NodeComp(maxvisits));
-    std::reverse(tmp.begin(), tmp.end());
+    std::stable_sort(tmp.rbegin(), tmp.rend(), NodeComp(maxvisits));
 
     m_firstchild = NULL;
 
-    std::vector<sortnode_t>::iterator it;
-
-    for (it = tmp.begin(); it != tmp.end(); ++it) {
+    for (auto it = tmp.begin(); it != tmp.end(); ++it) {
         link_child(std::get<2>(*it));
     }
 }

@@ -30,7 +30,7 @@ using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
 : m_rootstate(g),
-  m_root(FastBoard::PASS, 0.0f, 1),
+  m_root(FastBoard::PASS, 0.0f, 1, 1),
   m_nodes(0),
   m_score(0.0f),
   m_hasrunflag(false),
@@ -63,11 +63,15 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     if (!node->has_children()
         && node->should_expand()
         && m_nodes < MAX_TREE_SIZE) {
-        node->create_children(m_nodes, currstate, m_use_nets, false);
+        node->create_children(m_nodes, currstate, false, m_use_nets);
+    } else if (m_use_nets
+               && node->has_children()
+               && node->should_netscore()) {
+        node->netscore_children(m_nodes, currstate, false);
     }
 
     if (node->has_children()) {
-        UCTNode * next = node->uct_select_child(color, m_use_nets);
+        UCTNode * next = node->uct_select_child(color);
 
         if (next != NULL) {
             int move = next->get_move();
@@ -110,7 +114,7 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
     }
 
     // sort children, put best move on top
-    m_root.sort_children(color);
+    m_root.sort_root_children(color);
 
     UCTNode * bestnode = parent.get_first_child();
 
@@ -168,7 +172,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     }
 
     // sort children, put best move on top
-    m_root.sort_children(color);
+    m_root.sort_root_children(color);
 
     UCTNode * bestnode = parent.get_first_child();
 
@@ -254,7 +258,7 @@ bool UCTSearch::allow_early_exit() {
         return false;
     }
     
-    m_root.sort_children(color);
+    m_root.sort_root_children(color);
     
     // do we have statistics on the moves?
     UCTNode * first = m_root.get_first_child();
@@ -412,7 +416,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     int color = m_rootstate.board.get_to_move();    
 
     // make sure best is first
-    m_root.sort_children(color);
+    m_root.sort_root_children(color);
     
     int bestmove = m_root.get_first_child()->get_move();    
     
@@ -541,7 +545,7 @@ std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
         return std::string();
     }
 
-    parent.sort_children(state.get_to_move());
+    parent.sort_root_children(state.get_to_move());
 
     UCTNode * bestchild = parent.get_first_child();
     int bestmove = bestchild->get_move();
@@ -651,7 +655,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
 #ifdef USE_SEARCH
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)
-    m_root.create_children(m_nodes, m_rootstate, m_use_nets, true);
+    m_root.create_children(m_nodes, m_rootstate, true, m_use_nets);
+    m_root.netscore_children(m_nodes, m_rootstate, true);
     m_root.kill_superkos(m_rootstate);
 
     bool easy_move_flag = easy_move();
