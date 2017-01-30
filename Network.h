@@ -30,7 +30,7 @@ public:
     using PredMoves = std::array<int, 3>;
     struct TrainPosition {
         NNPlanes planes;
-        PredMoves moves;
+        // PredMoves moves;
         float stm_score;
         float stm_won;
     };

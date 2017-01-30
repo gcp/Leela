@@ -968,16 +968,22 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
         int who_won = sgftree->get_winner();
         int handicap = sgftree->get_state()->get_handicap();
         float komi = sgftree->get_state()->get_komi();
-        if (handicap || std::abs(komi) < 5.5f || std::abs(komi) >= 8.0f) goto skipnext;
+        if (handicap) {
+            goto skipnext;
+        }
+        // 5.5, 6.5, 7.5
+        if (std::abs(komi) > 0.75f && (std::abs(komi) < 5.25f || std::abs(komi) > 7.75f)) {
+            goto skipnext;
+        }
+        if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE) {
+            goto skipnext;
+        }
 
         while (counter < movecount) {
             assert(treewalk != NULL);
             assert(treewalk->get_state() != NULL);
             if (treewalk->get_state()->board.get_boardsize() != 19)
                 break;
-
-            if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE)
-                goto skipnext;
 
             int skip = Random::get_Rng()->randint(8);
             if (skip == 0) {
@@ -1004,39 +1010,39 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                     if (*it == move) {
                         if (move != FastBoard::PASS) {
                             // get x y coords for actual move
-                            std::pair<int, int> xy = state->board.get_xy(move);
-                            position.moves[0] = (xy.second * 19) + xy.first;
+                            //std::pair<int, int> xy = state->board.get_xy(move);
+                            //position.moves[0] = (xy.second * 19) + xy.first;
                         }
                         moveseen = true;
                     }
                 }
 
-                bool has_next_moves = counter + 2 < tree_moves.size();
-                if (!has_next_moves) {
-                    goto skipnext;
-                }
+                //bool has_next_moves = counter + 2 < tree_moves.size();
+                //if (!has_next_moves) {
+                //    goto skipnext;
+                //}
 
-                has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
-                has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
+                //has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
+                //has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
 
-                if (!has_next_moves) {
-                    goto skipnext;
-                }
+                //if (!has_next_moves) {
+                //    goto skipnext;
+                //}
 
-                if (moveseen && move != FastBoard::PASS && has_next_moves) {
-                    position.stm_won = (tomove == who_won ? 1.0f : -1.0f);
+                if (moveseen && move != FastBoard::PASS /*&& has_next_moves*/) {
+                    position.stm_won = (tomove == who_won ? 1.0f : 0.0f);
                     float frac = (float)counter / (float)movecount;
                     position.stm_score = (frac * position.stm_won)
-                        + ((1.0f - frac) * 0.0f);
+                        + ((1.0f - frac) * 0.5f);
                     gather_features(state, position.planes);
                     // add next 2 moves to position
                     // we do not check them for legality
-                    int next_move = tree_moves[counter + 1];
+                    /*int next_move = tree_moves[counter + 1];
                     int next_next_move = tree_moves[counter + 2];
                     std::pair<int, int> xy = state->board.get_xy(next_move);
                     position.moves[1] = (xy.second * 19) + xy.first;
                     xy = state->board.get_xy(next_next_move);
-                    position.moves[2] = (xy.second * 19) + xy.first;
+                    position.moves[2] = (xy.second * 19) + xy.first;*/
                     data.push_back(position);
                 } else if (move != FastBoard::PASS) {
                     myprintf("Mainline move not found: %d\n", move);
@@ -1197,7 +1203,7 @@ void Network::train_network(TrainVector& data,
         data_pos++;
         if (data_pos > traincut) {
             std::stringstream ss;
-            ss << test_pos;
+            ss << (total_test_pos + test_pos);
             test_pos++;
             test_txn->Put(ss.str(), out);
             test_label_txn->Put(ss.str(), label_out);
@@ -1210,7 +1216,7 @@ void Network::train_network(TrainVector& data,
             }
         } else {
             std::stringstream ss;
-            ss << train_pos;
+            ss << (total_train_pos + train_pos);
             train_pos++;
             train_txn->Put(ss.str(), out);
             train_label_txn->Put(ss.str(), label_out);
