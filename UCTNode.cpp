@@ -185,7 +185,7 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
 
     int expand_treshold = UCTSearch::MCTS_MATURE_TRESHOLD;
     if (use_nets) {
-        expand_treshold = UCTSearch::MCNN_MATURE_TRESHOLD;
+        expand_treshold = cfg_mature_threshold;
     }
 
     SMP::Lock lock(get_mutex());

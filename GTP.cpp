@@ -29,6 +29,7 @@ bool cfg_allow_pondering;
 int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
+int cfg_mature_threshold;
 int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
 int cfg_rowtiles;
@@ -54,6 +55,11 @@ void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
     cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
     cfg_enable_nets = true;
+#ifdef USE_OPENCL
+    cfg_mature_threshold = 15;
+#else
+    cfg_mature_threshold = 250;
+#endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
 #ifdef USE_OPENCL
