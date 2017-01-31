@@ -71,11 +71,11 @@ layer {
   }
 }
 
-#layer {
-  #name: "silence"
-  #type: "Silence"
-  #bottom: "wonpc"
-#}
+layer {
+  name: "silence"
+  type: "Silence"
+  bottom: "wonpc"
+}
 
 layer {
   name: "conv1"
@@ -102,13 +102,6 @@ layer {
   # in-place
   bottom: "conv1"
   top: "conv1"
-}
-
-layer {
- name: "bn1"
- type: "BatchNorm"
- bottom: "conv1"
- top: "conv1"
 }
 
 layer {
@@ -139,13 +132,6 @@ layer {
 }
 
 layer {
- name: "bn2"
- type: "BatchNorm"
- bottom: "conv2"
- top: "conv2"
-}
-
-layer {
   name: "conv3"
   type: "Convolution"
   # input -> output
@@ -169,13 +155,6 @@ layer {
   type: "ReLU"
   bottom: "conv3"
   top: "conv3"
-}
-
-layer {
- name: "bn3"
- type: "BatchNorm"
- bottom: "conv3"
- top: "conv3"
 }
 
 layer {
@@ -206,13 +185,6 @@ layer {
 }
 
 layer {
- name: "bn4"
- type: "BatchNorm"
- bottom: "conv4"
- top: "conv4"
-}
-
-layer {
   name: "conv5"
   type: "Convolution"
   # input -> output
@@ -236,13 +208,6 @@ layer {
   type: "ReLU"
   bottom: "conv5"
   top: "conv5"
-}
-
-layer {
- name: "bn5"
- type: "BatchNorm"
- bottom: "conv5"
- top: "conv5"
 }
 
 layer {
@@ -273,13 +238,6 @@ layer {
 }
 
 layer {
- name: "bn6"
- type: "BatchNorm"
- bottom: "conv6"
- top: "conv6"
-}
-
-layer {
   name: "conv7"
   type: "Convolution"
   # input -> output
@@ -306,13 +264,6 @@ layer {
 }
 
 layer {
- name: "bn7"
- type: "BatchNorm"
- bottom: "conv7"
- top: "conv7"
-}
-
-layer {
   name: "conv8"
   type: "Convolution"
   bottom: "conv7"
@@ -335,13 +286,6 @@ layer {
   type: "ReLU"
   bottom: "conv8"
   top: "conv8"
-}
-
-layer {
- name: "bn8"
- type: "BatchNorm"
- bottom: "conv8"
- top: "conv8"
 }
 
 layer {
@@ -372,13 +316,6 @@ layer {
 }
 
 layer {
- name: "bn9"
- type: "BatchNorm"
- bottom: "conv9"
- top: "conv9"
-}
-
-layer {
   name: "conv10"
   type: "Convolution"
   # input -> output
@@ -403,13 +340,6 @@ layer {
   # in-place
   bottom: "conv10"
   top: "conv10"
-}
-
-layer {
- name: "bn10"
- type: "BatchNorm"
- bottom: "conv10"
- top: "conv10"
 }
 
 layer {
@@ -440,13 +370,6 @@ layer {
 }
 
 layer {
- name: "bn11"
- type: "BatchNorm"
- bottom: "conv11"
- top: "conv11"
-}
-
-layer {
   name: "conv12"
   type: "Convolution"
   bottom: "conv11"
@@ -469,13 +392,6 @@ layer {
   type: "ReLU"
   bottom: "conv12"
   top: "conv12"
-}
-
-layer {
- name: "bn12"
- type: "BatchNorm"
- bottom: "conv12"
- top: "conv12"
 }
 
 layer {
@@ -502,17 +418,10 @@ layer {
 }
 
 layer {
- name: "bn13"
- type: "BatchNorm"
- bottom: "ip13"
- top: "ip13"
-}
-
-layer {
   name: "ip14"
   type: "InnerProduct"
   inner_product_param {
-    num_output: 2
+    num_output: 1
     weight_filler {
       type: "xavier"
     }
@@ -525,43 +434,26 @@ layer {
 }
 
 layer {
-  name: "slicer_output"
-  type: "Slice"
+  name: "sigmoid"
+  type: "Sigmoid"
   bottom: "ip14"
-  top: "ip14_o1"
-  top: "ip14_o2"
-  slice_param {
-    axis: 1
-    slice_point: 1
-  }
+  top: "winrate"
 }
 
 layer {
-  name: "tanh"
-  type: "TanH"
-  bottom: "ip14_o1"
-  top: "win"
-}
-
-layer {
-  name: "mse_loss_win"
-  type: "EuclideanLoss"
-  bottom: "win"
+  name: "loss_ce"
+  type: "SigmoidCrossEntropyLoss"
+  bottom: "ip14"
   bottom: "won"
-  top: "mse_win"
+  top: "loss_ce"
+  loss_weight: 1
 }
 
 layer {
-  name: "tanh"
-  type: "TanH"
-  bottom: "ip14_o2"
-  top: "winpc"
-}
-
-layer {
-  name: "mse_loss_winpc"
+  name: "loss_mse"
   type: "EuclideanLoss"
-  bottom: "winpc"
-  bottom: "wonpc"
-  top: "mse_win_pc"
+  bottom: "winrate"
+  bottom: "won"
+  top: "loss_mse"
+  loss_weight: 0
 }
