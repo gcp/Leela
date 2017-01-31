@@ -186,7 +186,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
     if (nodelist.empty()) return;
 
     const int max_net_childs = 35;
-    int expand_treshold = UCTSearch::MCTS_MATURE_TRESHOLD;
+    int expand_treshold = cfg_expand_threshold;
     int netscore_threshold = cfg_mature_threshold;
 
     SMP::Lock lock(get_mutex());
@@ -249,7 +249,7 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     int totalchildren = nodelist.size();
     if (!totalchildren) return;
 
-    int expand_threshold = UCTSearch::MCTS_MATURE_TRESHOLD;
+    int expand_threshold = cfg_expand_threshold;
     int netscore_threshold = cfg_mature_threshold;
 
     SMP::Lock lock(get_mutex());
@@ -478,16 +478,16 @@ UCTNode* UCTNode::uct_select_child(int color) {
                 // "UCT" part
                 float winrate = child->get_winrate(color);
                 uctvalue = winrate;
-                patternbonus = sqrtf((child->get_score() * 0.005f) / child->get_visits());
+                patternbonus = sqrtf((child->get_score() * cfg_patternbonus) / child->get_visits());
             } else {
                 uctvalue = 1.1f;
-                patternbonus = sqrtf(child->get_score() * 0.005f);
+                patternbonus = sqrtf(child->get_score() * cfg_patternbonus);
             }
 
             // RAVE part
             float ravewinrate = child->get_raverate();
             float ravevalue = ravewinrate + patternbonus;
-            float beta = std::max(0.0, 1.0 - log(1.0 + child->get_visits()) / 11.0);
+            float beta = std::max(0.0, 1.0 - log(1.0 + child->get_visits()) / cfg_beta);
 
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
             assert(value > -1e20f);
@@ -539,8 +539,8 @@ public:
         // first check: are playouts comparable and sufficient?
         // then winrate counts
 
-        if (std::get<1>(a) > UCTSearch::MCTS_MATURE_TRESHOLD
-            && std::get<1>(b) > UCTSearch::MCTS_MATURE_TRESHOLD
+        if (std::get<1>(a) > cfg_expand_threshold
+            && std::get<1>(b) > cfg_expand_threshold
             && std::get<1>(a) * 2 > m_maxvisits
             && std::get<1>(b) * 2 > m_maxvisits) {
 

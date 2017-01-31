@@ -30,6 +30,7 @@ int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
 int cfg_mature_threshold;
+int cfg_expand_threshold;
 int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
 int cfg_rowtiles;
@@ -48,6 +49,8 @@ float cfg_cutoff_offset;
 float cfg_cutoff_ratio;
 float cfg_puct;
 float cfg_psa;
+float cfg_beta;
+float cfg_patternbonus;
 std::string cfg_logfile;
 bool cfg_quiet;
 
@@ -60,6 +63,7 @@ void GTP::setup_default_parameters() {
 #else
     cfg_mature_threshold = 250;
 #endif
+    cfg_expand_threshold = 15;
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
 #ifdef USE_OPENCL
@@ -77,6 +81,8 @@ void GTP::setup_default_parameters() {
     cfg_fpu = 5.2f;
     cfg_puct = 0.45f;
     cfg_psa = 0.232f;
+    cfg_beta = 11.0f;
+    cfg_patternbonus = 0.005f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_logfile.clear();
