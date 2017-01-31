@@ -90,7 +90,6 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     m_is_netscoring = true;
     lock.unlock();
 
-    std::vector<Network::scored_node> nodelist;
 #ifdef USE_OPENCL
     if (at_root) {
         auto raw_netlist = Network::get_Network()->get_scored_moves(
@@ -104,7 +103,7 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     auto raw_netlist = Network::get_Network()->get_scored_moves(
         &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
                            Network::Ensemble::RANDOM_ROTATION));
-    scoring_cb(&nodecount, state, nodelist);
+    scoring_cb(&nodecount, state, raw_netlist);
 #endif
 }
 
@@ -229,6 +228,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
 
     nodecount += childrenadded;
     sort_children();
+    m_has_netscore = true;
 }
 
 void UCTNode::link_nodelist(std::atomic<int> & nodecount,
@@ -392,7 +392,7 @@ int UCTNode::get_ravevisits() const {
 
 UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;
-    float best_value = -1000.0f;
+    float best_value = -1e20f;
     int childbound;
     int parentvisits = 1; // XXX: this can be 0 now that we sqrt
     float best_probability = 0.0f;
@@ -468,6 +468,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
                 }
 
                 value = winrate - mti;
+                assert(value > -1e20f);
             }
         } else {
             float uctvalue;
@@ -489,8 +490,9 @@ UCTNode* UCTNode::uct_select_child(int color) {
             float beta = std::max(0.0, 1.0 - log(1.0 + child->get_visits()) / 11.0);
 
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
+            assert(value > -1e20f);
         }
-        assert(value > -1000.0f);
+        assert(value > -1e20f);
 
         if (value > best_value) {
             best_value = value;
