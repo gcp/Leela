@@ -26,7 +26,8 @@
 using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score, int expand_threshold, int netscore_threshold)
-    : m_firstchild(NULL), m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
+    : m_firstchild(nullptr), m_nextsibling(nullptr),
+      m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
       m_valid(true), m_expand_cnt(expand_threshold), m_is_expanding(false),
       m_has_netscore(false), m_netscore_cnt(netscore_threshold), m_is_netscoring(false) {
     m_ravevisits = 20;
@@ -392,7 +393,7 @@ int UCTNode::get_ravevisits() const {
 
 UCTNode* UCTNode::uct_select_child(int color) {
     UCTNode * best = NULL;
-    float best_value = -1e20f;
+    float best_value = -1000.0f;
     int childbound;
     int parentvisits = 1; // XXX: this can be 0 now that we sqrt
     float best_probability = 0.0f;
@@ -438,6 +439,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
         if (child != NULL) {
             best_probability = child->get_score();
         }
+        assert(best_probability > 0.001f);
     }
     while (child != NULL && childcount < childbound) {
         float value;
@@ -468,7 +470,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
                 }
 
                 value = winrate - mti;
-                assert(value > -1e20f);
+                assert(value > -1000.0f);
             }
         } else {
             float uctvalue;
@@ -490,9 +492,9 @@ UCTNode* UCTNode::uct_select_child(int color) {
             float beta = std::max(0.0, 1.0 - log(1.0 + child->get_visits()) / cfg_beta);
 
             value = beta * ravevalue + (1.0f - beta) * uctvalue;
-            assert(value > -1e20f);
+            assert(value > -1000.0f);
         }
-        assert(value > -1e20f);
+        assert(value > -1000.0f);
 
         if (value > best_value) {
             best_value = value;
@@ -581,7 +583,7 @@ void UCTNode::sort_children() {
         child = child->m_nextsibling;
     }
 
-    std::sort(tmp.rbegin(), tmp.rend());
+    std::sort(tmp.begin(), tmp.end());
 
     m_firstchild = NULL;
 

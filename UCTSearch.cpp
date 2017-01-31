@@ -545,6 +545,7 @@ std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
         return std::string();
     }
 
+    // This breaks best probility = first in tree assumption
     parent.sort_root_children(state.get_to_move());
 
     UCTNode * bestchild = parent.get_first_child();
@@ -557,8 +558,10 @@ std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
     state.play_move(bestmove);
 
     std::string next = get_pv(state, *bestchild);
-
     res.append(next);
+
+    // Resort according to move probability
+    parent.sort_children();
 
     return res;
 }
