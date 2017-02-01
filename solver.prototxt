@@ -23,6 +23,7 @@ lr_policy: "fixed"
 
 # Display every n iterations
 display: 10000
+average_loss: 10000
 
 # The total number of iterations
 # 100 epoch
@@ -33,6 +34,6 @@ snapshot: 50000
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
-type: "Nesterov"
+type: "Adam"
 #type: "SGD"
 solver_mode: GPU

@@ -1031,9 +1031,12 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
 
                 if (moveseen && move != FastBoard::PASS /*&& has_next_moves*/) {
                     position.stm_won = (tomove == who_won ? 1.0f : 0.0f);
+                    position.stm_won_tanh = (tomove == who_won ? 1.0f : -1.0f);
                     float frac = (float)counter / (float)movecount;
                     position.stm_score = (frac * position.stm_won)
                         + ((1.0f - frac) * 0.5f);
+                    position.stm_score_tanh = (frac * position.stm_won_tanh)
+                        + ((1.0f - frac) * 0.0f);
                     gather_features(state, position.planes);
                     // add next 2 moves to position
                     // we do not check them for legality
@@ -1150,8 +1153,6 @@ void Network::train_network(TrainVector& data,
     for (auto it = data.begin(); it != data.end(); ++it) {
         TrainPosition& position = *it;
         NNPlanes& nnplanes = position.planes;
-        float stm_won = position.stm_won;
-        float stm_score = position.stm_score;
 
         // train data
         caffe::Datum datum;
@@ -1184,7 +1185,7 @@ void Network::train_network(TrainVector& data,
 
         // labels
         caffe::Datum datum_label;
-        datum_label.set_channels(2);
+        datum_label.set_channels(4);
         datum_label.set_height(1);
         datum_label.set_width(1);
 
@@ -1195,8 +1196,10 @@ void Network::train_network(TrainVector& data,
         //datum_label.add_data(this_move);
         //datum_label.add_data(next_move);
         //datum_label.add_data(next_next_move);
-        datum_label.add_float_data((float)stm_score);
-        datum_label.add_float_data((float)stm_won);
+        datum_label.add_float_data((float)position.stm_score);
+        datum_label.add_float_data((float)position.stm_won);
+        datum_label.add_float_data((float)position.stm_score_tanh);
+        datum_label.add_float_data((float)position.stm_won_tanh);
         std::string label_out;
         datum_label.SerializeToString(&label_out);
 
