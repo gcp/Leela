@@ -115,6 +115,7 @@ void SGFTree::load_from_file(std::string filename, int index) {
 
 void SGFTree::populate_states(void) {
     PropertyMap::iterator it;
+    bool valid_size = false;
 
     // first check for go game setup in properties
     it = m_properties.find("GM");
@@ -125,6 +126,7 @@ void SGFTree::populate_states(void) {
             if (!m_properties.count("SZ")) {
                 // No size, but SGF spec defines default size for Go
                 m_properties.insert(std::make_pair("SZ", "19"));
+                valid_size = true;
             }
         }
     }
@@ -138,6 +140,7 @@ void SGFTree::populate_states(void) {
         strm >> bsize;
         if (bsize <= FastBoard::MAXBOARDSIZE) {
             m_state.init_game(bsize);
+            valid_size = true;
         } else {
             throw std::runtime_error("Board size not supported.");
         }
@@ -151,7 +154,12 @@ void SGFTree::populate_states(void) {
         float komi;
         strm >> komi;
         int handicap = m_state.get_handicap();
-        m_state.init_game(m_state.board.get_boardsize(), komi);
+        // last ditch effort: if no GM or SZ, assume 19x19 Go here
+        int bsize = 19;
+        if (valid_size) {
+            bsize = m_state.board.get_boardsize();
+        }
+        m_state.init_game(bsize, komi);
         m_state.set_handicap(handicap);
     }
 

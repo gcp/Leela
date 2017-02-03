@@ -12,7 +12,7 @@ gcc32b:
 
 debug:
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O0 -g -std=c++11 -D_CONSOLE' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -Og -g -std=c++11 -D_CONSOLE' \
 		LDFLAGS='$(LDFLAGS) -g' \
 		leela
 
@@ -35,7 +35,8 @@ asan:
 		leela
 
 LIBS = -lboost_thread -lboost_system -lboost_program_options
-#DYNAMIC_LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
+
+#LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
 LIBS += -lopenblas
 DYNAMIC_LIBS += -lpthread
 #DYNAMIC_LIBS += -lOpenCL

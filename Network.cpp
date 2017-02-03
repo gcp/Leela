@@ -438,7 +438,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
 
     // Network::show_heatmap(&cb_data->m_state, result);
 
-    cb_data->m_node->expansion_cb(cb_data->m_nodecount, cb_data->m_state,
+    cb_data->m_node->scoring_cb(cb_data->m_nodecount, cb_data->m_state,
                                   result, true);
 
     delete cb_data;
@@ -557,17 +557,17 @@ Network::Netresult Network::get_scored_moves(
         result = get_scored_moves_internal(state, planes, 0);
         for (int r = 1; r < 8; r++) {
             auto sum_res = get_scored_moves_internal(state, planes, r);
-            for (size_t i = 0; i < sum_res.movescores.size(); i++) {
-                assert(result.movescores[i].second == sum_res.movescores[i].second);
-                result.movescores[i].first += sum_res.movescores[i].first;
+            for (size_t i = 0; i < sum_res.size(); i++) {
+                assert(result[i].second == sum_res[i].second);
+                result[i].first += sum_res[i].first;
             }
         }
-        std::for_each(result.movescores.begin(), result.movescores.end(),
+        std::for_each(result.begin(), result.end(),
                       [](scored_node & sn){ sn.first /= 8.0f; });
     }
 
     /* prune losing ladders completely */
-    for (auto & sm : result.movescores) {
+    for (auto & sm : result) {
         std::pair<int, int> xy = state->board.get_xy(sm.second);
         int bitmappos = (xy.second * 19) + xy.first;
         if ((*ladder)[bitmappos]) {
@@ -739,7 +739,7 @@ Network::Netresult Network::get_scored_moves_internal(
         int y = idx / 19;
         int vtx = state->board.get_vertex(x, y);
         if (state->board.get_square(vtx) == FastBoard::EMPTY) {
-            result.movescores.push_back(std::make_pair(val, vtx));
+            result.push_back(std::make_pair(val, vtx));
         }
     }
 
@@ -747,7 +747,7 @@ Network::Netresult Network::get_scored_moves_internal(
 }
 
 void Network::show_heatmap(FastState * state, Netresult& result) {
-    auto moves = result.movescores;
+    auto moves = result;
     std::vector<std::string> display_map;
     std::string line;
 

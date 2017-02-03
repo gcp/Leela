@@ -10,15 +10,13 @@
 #include "GameState.h"
 #include "Playout.h"
 #include "Network.h"
-#ifdef USE_OPENCL
-#include "Network.h"
-#endif
 
 class UCTNode {
 public:
     typedef std::tuple<float, int, UCTNode*> sortnode_t;
 
-    UCTNode(int vertex, float score, int expand_treshold);
+    UCTNode(int vertex, float score,
+            int expand_threshold, int netscore_threshold);
     ~UCTNode();
     bool first_visit() const;
     bool has_children() const;
@@ -26,31 +24,36 @@ public:
     float get_raverate() const;
     double get_blackwins() const;
     void create_children(std::atomic<int> & nodecount,
-                         FastState & state, bool use_nets, bool at_root);
+                         FastState & state, bool at_root, bool use_nets);
+    void netscore_children(std::atomic<int> & nodecount,
+                           FastState & state, bool at_root);
+    void scoring_cb(std::atomic<int> * nodecount,
+                    FastState & state,
+                    Network::Netresult & raw_netlist);
     void run_value_net(FastState & state);
-    void expansion_cb(std::atomic<int> * nodecount,
-                      FastState & state,
-                      Network::Netresult & netresult,
-                      bool use_nets);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
     void invalidate();
     bool valid();
     bool should_expand() const;
+    bool should_netscore() const;
     int get_move() const;
     int get_visits() const;
     int get_ravevisits() const;
+    bool has_netscore() const { return m_has_netscore; }
     float get_score() const;
+    void set_score(float score);
     float get_eval(int tomove) const;
     float get_mixed_score(int tomove);
     double get_blackevals() const;
     int get_evalcount() const;
-    int do_extend() const;
     bool has_eval_propagated() const;
     void set_eval_propagated();
     void set_move(int move);
     void set_visits(int visits);
     void set_blackwins(double wins);
+
+    void set_expand_cnt(int runs, int netscore_runs);
     void set_blackevals(double blacevals);
     void set_evalcount(int evalcount);
     void set_expand_cnt(int runs);
@@ -58,21 +61,26 @@ public:
     void accumulate_eval(float eval);
     void update(Playout & gameresult, int color, bool update_eval);
     void updateRAVE(Playout & playout, int color);
-    UCTNode* uct_select_child(int color, bool use_nets);
+
+    UCTNode* uct_select_child(int color);
     UCTNode* get_first_child();
     UCTNode* get_pass_child();
     UCTNode* get_nopass_child();
     UCTNode* get_sibling();
-    void sort_children(int color);
+
+    void sort_root_children(int color);
+    void sort_children();
     SMP::Mutex & get_mutex();
 
 private:
     void link_child(UCTNode * newchild);
     void link_nodelist(std::atomic<int> & nodecount,
                        FastBoard & state,
-                       std::vector<Network::scored_node> & nodes,
+                       Network::Netresult & nodes,
                        bool use_nets);
-
+    void rescore_nodelist(std::atomic<int> & nodecount,
+                         FastBoard & state,
+                         Network::Netresult & nodes);
     // Tree data
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;
@@ -90,13 +98,16 @@ private:
     bool m_eval_propagated;
     double m_blackevals;
     int m_evalcount;
+    bool m_is_evaluating;    // mutex
     // alive (superko)
     bool m_valid;
     // extend node
     int m_expand_cnt;
     bool m_is_expanding;
-    bool m_is_evaluating;
-    // mutex
+    // dcnn node
+    bool m_has_netscore;
+    int m_netscore_cnt;
+    bool m_is_netscoring;
     SMP::Mutex m_nodemutex;
 };
 

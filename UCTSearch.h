@@ -21,17 +21,6 @@ public:
     static const passflag_t NORESIGN = 1 << 1;
 
     /*
-        Don't expand children until at least this many
-        visits happened.
-    */
-#ifdef USE_OPENCL
-    static constexpr int MCNN_MATURE_TRESHOLD = 15;
-#else
-    static constexpr int MCNN_MATURE_TRESHOLD = 250;
-#endif
-    static constexpr int MCTS_MATURE_TRESHOLD = 15;
-
-    /*
         Maximum size of the tree in memory.
     */
     static constexpr int MAX_TREE_SIZE = 10000000;

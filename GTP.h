@@ -8,6 +8,8 @@ extern bool cfg_allow_pondering;
 extern int cfg_num_threads;
 extern int cfg_max_playouts;
 extern bool cfg_enable_nets;
+extern int cfg_mature_threshold;
+extern int cfg_expand_threshold;
 extern int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
 extern int cfg_rowtiles;
@@ -26,6 +28,8 @@ extern float cfg_cutoff_offset;
 extern float cfg_cutoff_ratio;
 extern float cfg_puct;
 extern float cfg_psa;
+extern float cfg_beta;
+extern float cfg_patternbonus;
 extern float cfg_mix;
 extern int cfg_eval_thresh;
 extern int cfg_eval_scale;
