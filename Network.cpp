@@ -312,18 +312,13 @@ void convolve(std::vector<float>& input,
 
     auto lambda_ELU = [](float val) { return (val > 0.0f) ?
                                       val : 1.0f * (std::exp(val) - 1.0f); };
-    auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
-                                       val : 0.0f; };
+    //auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
+    //                                   val : 0.0f; };
 
     for (unsigned int o = 0; o < outputs; o++) {
         for (unsigned int b = 0; b < spatial_out; b++) {
-            if (outputs == 32 || outputs == 1) {
-                output[(o * spatial_out) + b] =
-                    lambda_ReLU(biases[o] + output[(o * spatial_out) + b]);
-            } else {
-                output[(o * spatial_out) + b] =
-                    lambda_ELU(biases[o] + output[(o * spatial_out) + b]);
-            }
+            output[(o * spatial_out) + b] =
+                lambda_ELU(biases[o] + output[(o * spatial_out) + b]);
         }
     }
 }
@@ -344,13 +339,15 @@ void innerproduct(std::vector<float>& input,
                 &input[0], 1,
                 0.0f, &output[0], 1);
 
-    auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
-                                       val : 0.0f; };
+    auto lambda_ELU = [](float val) { return (val > 0.0f) ?
+                                      val : 1.0f * (std::exp(val) - 1.0f); };
+    //auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
+    //                                   val : 0.0f; };
 
     for (unsigned int o = 0; o < outputs; o++) {
         float val = biases[o] + output[o];
         if (outputs > 1) {
-            val = lambda_ReLU(val);
+            val = lambda_ELU(val);
         }
         output[o] = val;
     }
@@ -712,7 +709,7 @@ Network::Netresult Network::get_scored_moves_internal(
     std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv13_w, conv13_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128,   3>(input_data, conv14_w, conv14_b, output_data);
+    convolve<3, 128,   1>(input_data, conv14_w, conv14_b, output_data);
     softmax(output_data, softmax_data);
 
     // Move scores

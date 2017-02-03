@@ -10,5 +10,6 @@
         "**/*.caffemodel": true,
         "**/*.solverstate": true
     },
-    "workbench.sideBar.location": "right"
+    "workbench.sideBar.location": "right",
+    "files.associations": {}
 }

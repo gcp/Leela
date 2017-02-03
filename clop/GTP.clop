@@ -11,9 +11,12 @@ Script ./clopgtp
 # For GammaParameter, quadratic regression is performed on log(x)
 # Warning: 123 and not 123.0 should be used for IntegerParameter
 
-IntegerGammaParameter eval_thresh    1    1000
-IntegerGammaParameter eval_scale     1    1000
+IntegerGammaParameter eval_thresh    1    2000
+IntegerGammaParameter eval_scale     1     500
 LinearParameter       mix            0     1.0
+GammaParameter        fpu            0.1  20.0
+GammaParameter        psa            0.02  2.0
+GammaParameter        puct           0.05  4.0
 
 Processor cpu1
 Processor cpu2
@@ -21,36 +24,36 @@ Processor cpu3
 Processor cpu4
 Processor cpu5
 Processor cpu6
-Processor cpu7
-Processor cpu8
-Processor cpu9
-Processor cpu10
-Processor cpu11
-Processor cpu12
-Processor cpu13
-Processor cpu14
-Processor cpu15
-Processor cpu16
-Processor cpu17
-Processor cpu18
-Processor cpu19
-Processor cpu20
-Processor cpu21
-Processor cpu22
-Processor cpu23
-Processor cpu24
-Processor cpu25
-Processor cpu26
-Processor cpu27
-Processor cpu28
-Processor cpu29
-Processor cpu30
-Processor cpu31
-Processor cpu32
-Processor cpu33
-Processor cpu34
-Processor cpu35
-Processor cpu36
+#Processor cpu7
+#Processor cpu8
+#Processor cpu9
+#Processor cpu10
+#Processor cpu11
+#Processor cpu12
+#Processor cpu13
+#Processor cpu14
+#Processor cpu15
+#Processor cpu16
+#Processor cpu17
+#Processor cpu18
+#Processor cpu19
+#Processor cpu20
+#Processor cpu21
+#Processor cpu22
+#Processor cpu23
+#Processor cpu24
+#Processor cpu25
+#Processor cpu26
+#Processor cpu27
+#Processor cpu28
+#Processor cpu29
+#Processor cpu30
+#Processor cpu31
+#Processor cpu32
+#Processor cpu33
+#Processor cpu34
+#Processor cpu35
+#Processor cpu36
 
 Replications 1
 DrawElo 0

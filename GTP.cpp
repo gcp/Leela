@@ -71,14 +71,14 @@ void GTP::setup_default_parameters() {
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
-    cfg_fpu = 5.2f;
-    cfg_puct = 0.45f;
-    cfg_psa = 0.232f;
+    cfg_fpu = 1.8f;
+    cfg_puct = 0.55f;
+    cfg_psa = 0.30f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix = 0.20f;
-    cfg_eval_thresh = 55;
-    cfg_eval_scale = 1;
+    cfg_mix = 0.40f;
+    cfg_eval_thresh = 8;
+    cfg_eval_scale = 4;
     cfg_logfile.clear();
     cfg_quiet = false;
 }
