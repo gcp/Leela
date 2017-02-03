@@ -59,11 +59,12 @@ void GTP::setup_default_parameters() {
     cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
     cfg_enable_nets = true;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 15;
+    cfg_mature_threshold = 30;
+    cfg_expand_threshold = 15;
 #else
     cfg_mature_threshold = 250;
-#endif
     cfg_expand_threshold = 15;
+#endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
 #ifdef USE_OPENCL
@@ -81,8 +82,8 @@ void GTP::setup_default_parameters() {
     cfg_fpu = 5.2f;
     cfg_puct = 0.45f;
     cfg_psa = 0.232f;
-    cfg_beta = 11.0f;
-    cfg_patternbonus = 0.005f;
+    cfg_beta = 9.0f;
+    cfg_patternbonus = 0.04f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_logfile.clear();
