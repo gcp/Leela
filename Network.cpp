@@ -422,8 +422,6 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     std::vector<float>& outputs = softmax_data;
 
     Network::Netresult result;
-    result.eval = cb_data->m_output_data[softmax_data.size()];
-    result.eval = 1.0f / (1.0f + exp(-result.eval));
 
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         int rot_idx = Network::rev_rotate_nn_idx(idx, cb_data->m_rotation);
@@ -432,14 +430,14 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
         int y = idx / 19;
         int vtx = cb_data->m_state.board.get_vertex(x, y);
         if (cb_data->m_state.board.get_square(vtx) == FastBoard::EMPTY) {
-            result.movescores.push_back(std::make_pair(val, vtx));
+            result.push_back(std::make_pair(val, vtx));
         }
     }
 
     // Network::show_heatmap(&cb_data->m_state, result);
 
     cb_data->m_node->scoring_cb(cb_data->m_nodecount, cb_data->m_state,
-                                  result, true);
+                                result);
 
     delete cb_data;
 
@@ -666,8 +664,6 @@ Network::Netresult Network::get_scored_moves_internal(
     std::vector<float> orig_input_data(planes.size() * width * height);
     std::vector<float> input_data(max_channels * width * height);
     std::vector<float> output_data(max_channels * width * height);
-    std::vector<float> winrate_data(256);
-    std::vector<float> winrate_out(1);
     std::vector<float> softmax_data(width * height);
 #endif
     for (int c = 0; c < channels; ++c) {
@@ -679,7 +675,14 @@ Network::Netresult Network::get_scored_moves_internal(
             }
         }
     }
-#if defined(USE_BLAS)
+#ifdef USE_OPENCL
+    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
+    OpenCL::get_OpenCL()->thread_init();
+    OpenCL::get_OpenCL()->forward_async(input_data, output_data,
+                                        nullptr, nullptr);
+    softmax(output_data, softmax_data);
+    std::vector<float>& outputs = softmax_data;
+#elif USE_BLAS
     // XXX really only need the first 24
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
 
@@ -714,16 +717,6 @@ Network::Netresult Network::get_scored_moves_internal(
 
     // Move scores
     std::vector<float>& outputs = softmax_data;
-#endif
-#ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->thread_init();
-    OpenCL::get_OpenCL()->forward_async(orig_input_data, output_data,
-                                        nullptr, nullptr);
-    softmax(output_data, softmax_data);
-    std::vector<float>& outputs = softmax_data;
-    // output data + 1
-    result.eval = output_data[softmax_data.size()];
-    result.eval = 1.0f / (1.0f + exp(-result.eval));
 #endif
 #ifdef USE_CAFFE
     net->Forward();

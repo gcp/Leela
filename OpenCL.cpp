@@ -371,6 +371,34 @@ static std::string sourceCode = R"(
         sum = sum > 0 ? sum : 1.0f * (half_exp(sum) - 1.0f);
         out[o * boardsize + b] = sum;
     }
+
+    __kernel void batchnorm(
+                        __global const float * in,
+                        __global float * out,
+                        __constant const float * means,
+                        __constant const float * variances,
+                        __constant const float * scale) {
+
+        // cl::NDRange global(outputs, 19*19);
+        const int gx = get_global_id(0);
+        const int gy = get_global_id(1);
+
+        const int output = gx;
+        const int outputs      = get_global_size(0);
+        const int channel_size = get_global_size(1);
+
+        const unsigned int o = output;
+        const unsigned int b = gy;
+
+        const float epsilon = 1e-5;
+
+        const float mean = means[o] / scale[0];
+        const float variance = epsilon + variances[o] / scale[0];
+        const float scale_stddiv = 1.0f / sqrt(variance);
+
+        out[o * channel_size + b] = scale_stddiv
+                                    * (in[o * channel_size + b] - mean);
+    }
 )";
 
 OpenCL* OpenCL::s_OpenCL = nullptr;
@@ -409,7 +437,6 @@ void OpenCL::thread_init() {
         data->m_convolve5_kernel = cl::Kernel(m_program, "convolve5");
         data->m_merge_kernel = cl::Kernel(m_program, "merge");
         data->m_batchnorm_kernel = cl::Kernel(m_program, "batchnorm");
-        data->m_innerproduct_kernel = cl::Kernel(m_program, "innerproduct");
 
         data->m_commandqueue = cl::CommandQueue(cl::Context::getDefault(),
             cl::Device::getDefault());
@@ -418,7 +445,7 @@ void OpenCL::thread_init() {
     }
 }
 
-void OpenCL::add_weights(int layer,
+void OpenCL::add_weights(size_t layer,
                          size_t size,
                          float * weights) {
     if (layer >= m_layers.size()) {
@@ -486,7 +513,7 @@ void OpenCL::forward_async(std::vector<float>& input,
     if (cb != nullptr) {
         cb(CL_COMPLETE, 0, data);
     } else {
-        thread_data.get()->m_results_outstanding.fetch_sub(1, boost::memory_order_release);
+        thread_data.get()->m_results_outstanding.fetch_sub(1, std::memory_order_release);
         callback_finished();
     }
 }
@@ -636,33 +663,6 @@ void OpenCL::batchnorm(int outputs,
     }
 }
 
-void OpenCL::innerproduct(int inputs,
-                          int outputs,
-                          cl::Buffer & bufferInput,
-                          cl::Buffer & bufferOutput,
-                          std::vector<cl::Buffer>& weights) {
-
-    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
-
-    cl::Kernel innerproduct_kernel = thread_data.get()->m_innerproduct_kernel;
-
-    try {
-        innerproduct_kernel.setArg(0, inputs);
-        innerproduct_kernel.setArg(1, bufferInput);
-        innerproduct_kernel.setArg(2, bufferOutput);
-        innerproduct_kernel.setArg(3, weights[0]);
-        innerproduct_kernel.setArg(4, weights[1]);
-
-        queue.enqueueNDRangeKernel(innerproduct_kernel, cl::NullRange,
-                                   cl::NDRange(outputs),
-                                   cl::NDRange(std::min(16, outputs)));
-    } catch (cl::Error &e) {
-        std::cerr << "Error in innerproduct: " << e.what() << ": "
-            << e.err() << std::endl;
-        return;
-    }
-}
-
 template<class T>
 static std::string opencl_dev_type_to_string(T type) {
     if (type == CL_DEVICE_TYPE_CPU) {
@@ -768,9 +768,9 @@ void OpenCL::initialize(void) {
     cl::Device::setDefault(best_device);
 
     // Read source file
-    std::ifstream sourceFile("convolve_kernel.cl", std::ifstream::in);
-    std::string sourceCode(std::istreambuf_iterator<char>(sourceFile),
-                           (std::istreambuf_iterator<char>()));
+    //std::ifstream sourceFile("convolve_kernel.cl", std::ifstream::in);
+    //std::string sourceCode(std::istreambuf_iterator<char>(sourceFile),
+    //                       (std::istreambuf_iterator<char>()));
 
     // Make program of the source code in the context
     try {

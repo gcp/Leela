@@ -22,7 +22,6 @@ private:
     unsigned int outputs{0};
     unsigned int filter_size{0};
     bool is_batchnorm{false};
-    bool is_innerproduct{false};
     std::vector<cl::Buffer> weights;
 };
 
@@ -34,7 +33,6 @@ private:
     cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;
     cl::Kernel m_batchnorm_kernel;
-    cl::Kernel m_innerproduct_kernel;
     cl::Event m_complete_event;
     cl::Buffer m_inBuffer;
     cl::Buffer m_tmpBuffer;
@@ -56,7 +54,7 @@ public:
                         std::tr1::array<float, M> & means,
                         std::tr1::array<float, V> & variances,
                         std::tr1::array<float, 1> & scale) {
-        int layer = get_layer_count();
+        size_t layer = get_layer_count();
         push_weights(layer, means);
         push_weights(layer, variances);
         push_weights(layer, scale);
@@ -70,23 +68,12 @@ public:
     void push_convolve(unsigned int filter_size,
                        std::array<float, W> & weights,
                        std::array<float, B> & biases) {
-        int layer = get_layer_count();
+        size_t layer = get_layer_count();
         push_weights(layer, weights);
         push_weights(layer, biases);
         m_layers[layer].outputs = B;
         m_layers[layer].filter_size = filter_size;
         m_layers[layer].channels = W / (B * filter_size * filter_size);
-    }
-
-    template <unsigned long W, unsigned long B>
-    void push_innerproduct(std::tr1::array<float, W> & weights,
-                           std::tr1::array<float, B> & biases) {
-        int layer = get_layer_count();
-        push_weights(layer, weights);
-        push_weights(layer, biases);
-        m_layers[layer].is_innerproduct = true;
-        m_layers[layer].channels = W / B;
-        m_layers[layer].outputs = B;
     }
 
     size_t get_layer_count() {
@@ -105,18 +92,15 @@ private:
     OpenCL();
     void initialize();
     template <unsigned long W>
-    void push_weights(int layer, std::array<float, W> & weights) {
+    void push_weights(size_t layer, std::array<float, W> & weights) {
         add_weights(layer, W, &weights[0]);
     }
-    void add_weights(int layer, size_t size, float * weights);
+    void add_weights(size_t layer, size_t size, float * weights);
     void convolve(int filter_size, int channels, int outputs,
                   cl::Buffer& input, cl::Buffer& output, cl::Buffer& merge,
                   std::vector<cl::Buffer>& weights);
     void batchnorm(int outputs, int channel_size, cl::Buffer & input,
                    cl::Buffer & output, std::vector<cl::Buffer>& weights);
-    void innerproduct(int inputs, int outputs,
-                      cl::Buffer& input, cl::Buffer& output,
-                      std::vector<cl::Buffer>& weights);
     static OpenCL* s_OpenCL;
     boost::thread_specific_ptr<ThreadData> thread_data;
     std::vector<Layer> m_layers;

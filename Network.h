@@ -38,10 +38,7 @@ public:
     };
     using TrainVector = std::vector<TrainPosition>;
     using scored_node = std::pair<float, int>;
-
-    struct Netresult {
-        std::vector<scored_node> movescores;
-    };
+    using Netresult = std::vector<scored_node>;
 
     Netresult get_scored_moves(FastState * state,
                                Ensemble ensemble);
