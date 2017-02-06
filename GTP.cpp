@@ -83,15 +83,15 @@ void GTP::setup_default_parameters() {
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 2.0f;
-    cfg_puct = 0.60f;
-    cfg_psa = 0.28f;
+    cfg_puct = 0.65f;
+    cfg_psa = 0.25f;
     cfg_beta = 9.0f;
     cfg_patternbonus = 0.04f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix = 0.40f;
-    cfg_eval_thresh = 10;
-    cfg_eval_scale = 4;
+    cfg_mix = 0.35f;
+    cfg_eval_thresh = 8;
+    cfg_eval_scale = 3;
     cfg_logfile.clear();
     cfg_quiet = false;
 }

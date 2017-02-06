@@ -682,7 +682,7 @@ Network::Netresult Network::get_scored_moves_internal(
                                         nullptr, nullptr);
     softmax(output_data, softmax_data);
     std::vector<float>& outputs = softmax_data;
-#elif USE_BLAS
+#elif defined(USE_BLAS)
     // XXX really only need the first 24
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
 

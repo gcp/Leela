@@ -576,7 +576,7 @@ UCTNode* UCTNode::uct_select_child(int color) {
             assert(child->get_ravevisits() > 0);
             if (!child->first_visit()) {
                 // "UCT" part
-                float winrate = child->get_winrate(color);
+                float winrate = child->get_mixed_score(color);
                 uctvalue = winrate;
                 patternbonus = sqrtf((child->get_score() * cfg_patternbonus) / child->get_visits());
             } else {
