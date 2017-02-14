@@ -65,8 +65,8 @@ void GTP::setup_default_parameters() {
     cfg_mature_threshold = 30;
     cfg_expand_threshold = 15;
 #else
-    cfg_mature_threshold = 250;
-    cfg_expand_threshold = 15;
+    cfg_mature_threshold = 15;
+    cfg_expand_threshold = 45;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -82,15 +82,15 @@ void GTP::setup_default_parameters() {
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
-    cfg_fpu = 2.0f;
-    cfg_puct = 0.65f;
-    cfg_psa = 0.25f;
-    cfg_beta = 9.0f;
-    cfg_patternbonus = 0.04f;
+    cfg_fpu = 3.5f;
+    cfg_puct = 0.425f;
+    cfg_psa = 0.205f;
+    cfg_beta = 4.0f;
+    cfg_patternbonus = 0.005f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix = 0.35f;
-    cfg_eval_thresh = 8;
+    cfg_mix = 0.468f;
+    cfg_eval_thresh = 3;
     cfg_eval_scale = 3;
     cfg_logfile.clear();
     cfg_quiet = false;
