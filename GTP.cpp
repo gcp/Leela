@@ -90,8 +90,8 @@ void GTP::setup_default_parameters() {
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.45f;
-    cfg_eval_thresh = 5;
-    cfg_eval_scale = 2;
+    cfg_eval_thresh = 4;
+    cfg_eval_scale = 1;
     cfg_logfile.clear();
     cfg_quiet = false;
 }
