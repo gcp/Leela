@@ -82,9 +82,12 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
         && node->should_expand()
         && m_nodes < MAX_TREE_SIZE) {
         node->create_children(m_nodes, currstate, false, m_use_nets);
-    } else if (m_use_nets
-               && node->has_children()
-               && node->should_netscore()) {
+    }
+    // This can happen at the same time as the previous one if this
+    // position comes from the TTable.
+    if (m_use_nets
+        && node->has_children()
+        && node->should_netscore()) {
         node->netscore_children(m_nodes, currstate, false);
     }
 

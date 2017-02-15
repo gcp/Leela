@@ -9,7 +9,7 @@ extern int cfg_num_threads;
 extern int cfg_max_playouts;
 extern bool cfg_enable_nets;
 extern int cfg_mature_threshold;
-extern int cfg_expand_threshold;
+extern float cfg_expand_divider;
 extern int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
 extern int cfg_rowtiles;
@@ -33,6 +33,8 @@ extern float cfg_patternbonus;
 extern float cfg_mix;
 extern int cfg_eval_thresh;
 extern int cfg_eval_scale;
+extern int cfg_rave_min;
+extern int cfg_rave_max;
 extern std::string cfg_logfile;
 extern bool cfg_quiet;
 

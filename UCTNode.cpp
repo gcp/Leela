@@ -188,8 +188,8 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
     if (nodelist.empty()) return;
 
     const int max_net_childs = 35;
-    int expand_treshold = cfg_expand_threshold;
     int netscore_threshold = cfg_mature_threshold;
+    int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
 
     SMP::Lock lock(get_mutex());
 
@@ -208,15 +208,15 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
             // Not added yet, is it highly scored?
             if (std::distance(it, nodelist.cend()) <= max_net_childs) {
                 UCTNode * vtx = new UCTNode(it->second, it->first,
-                                            expand_treshold, netscore_threshold);
+                                            expand_threshold, netscore_threshold);
                 if (it->second != FastBoard::PASS) {
                     // atari giving
                     // was == 2, == 1
                     if (board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
-                        vtx->set_expand_cnt(expand_treshold / 3, netscore_threshold / 3);
+                        vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
                     }
                     if (board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
-                        vtx->set_expand_cnt(expand_treshold / 3, netscore_threshold / 3);
+                        vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
                     }
                 }
                 link_child(vtx);
@@ -244,15 +244,15 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     // link the nodes together, we only really link the last few
     int maxchilds = 35;     // about 35 -> 4M visits
     if (use_nets) {
-        maxchilds = 10;     // XXX: run formula but can't be much
+        maxchilds = 15;     // XXX: run formula but can't be much
     }
     int childrenadded = 0;
     int childrenseen = 0;
     int totalchildren = nodelist.size();
     if (!totalchildren) return;
 
-    int expand_threshold = cfg_expand_threshold;
     int netscore_threshold = cfg_mature_threshold;
+    int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
 
     SMP::Lock lock(get_mutex());
 
@@ -498,7 +498,8 @@ UCTNode* UCTNode::uct_select_child(int color) {
     if (has_netscore()) {
         childbound = 35;
     } else {
-        childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
+        childbound = std::max(cfg_rave_min, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
+        childbound = std::min(cfg_rave_min + cfg_rave_max, childbound);
     }
     SMP::Lock lock(get_mutex());
 
@@ -638,8 +639,8 @@ public:
 
         // first check: are playouts comparable and sufficient?
         // then winrate counts
-        if (std::get<1>(a) > cfg_expand_threshold
-            && std::get<1>(b) > cfg_expand_threshold
+        if (std::get<1>(a) > cfg_mature_threshold
+            && std::get<1>(b) > cfg_mature_threshold
             && std::get<1>(a) * 2 > m_maxvisits
             && std::get<1>(b) * 2 > m_maxvisits) {
 

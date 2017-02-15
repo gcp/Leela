@@ -44,7 +44,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
 #endif
 #ifdef USE_TUNER
         ("mature_threshold", po::value<int>())
-        ("expand_threshold", po::value<int>())
+        ("expand_divider", po::value<float>())
         ("beta", po::value<float>())
         ("patternbonus", po::value<float>())
         ("crit_mine_1", po::value<float>())
@@ -64,6 +64,8 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("mix", po::value<float>())
         ("eval_thresh", po::value<int>())
         ("eval_scale", po::value<int>())
+        ("rave_min", po::value<int>())
+        ("rave_max", po::value<int>())
 #endif
         ;
     po::variables_map vm;
@@ -89,8 +91,8 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("mature_threshold")) {
         cfg_mature_threshold = vm["mature_threshold"].as<int>();
     }
-    if (vm.count("expand_threshold")) {
-        cfg_expand_threshold = vm["expand_threshold"].as<int>();
+    if (vm.count("expand_divider")) {
+        cfg_expand_divider = vm["expand_divider"].as<float>();
     }
     if (vm.count("crit_mine_1")) {
         cfg_crit_mine_1 = vm["crit_mine_1"].as<float>();
@@ -148,6 +150,12 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
     if (vm.count("eval_scale")) {
         cfg_eval_scale = vm["eval_scale"].as<int>();
+    }
+    if (vm.count("rave_min")) {
+        cfg_rave_min = vm["rave_min"].as<int>();
+    }
+    if (vm.count("rave_max")) {
+        cfg_rave_max = vm["rave_max"].as<int>();
     }
 #endif
 

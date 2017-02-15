@@ -12,15 +12,11 @@ Script ./clopgtp
 # Warning: 123 and not 123.0 should be used for IntegerParameter
 
 IntegerGammaParameter  mature_threshold   1      1000
-IntegerGammaParameter  expand_threshold   1       100
+LinearParameter        expand_divider     1.0     100.0
 GammaParameter         beta               1.0     100.0
-GammaParameter         patternbonus       0.0001    0.05
-IntegerGammaParameter  eval_thresh        1       100
-IntegerGammaParameter  eval_scale         1        15
-LinearParameter        mix                0       1.0
-GammaParameter         fpu                0.1    20.0
-GammaParameter         psa                0.02    2.0
-GammaParameter         puct               0.05    4.0
+GammaParameter         patternbonus       0.0001    0.5
+IntegerParameter       rave_min           1        15
+IntegerParameter       rave_max           0        15
 
 Processor cpu1
 Processor cpu2
@@ -28,7 +24,7 @@ Processor cpu3
 Processor cpu4
 Processor cpu5
 Processor cpu6
-#Processor cpu7
+Processor cpu7
 #Processor cpu8
 #Processor cpu9
 #Processor cpu10
