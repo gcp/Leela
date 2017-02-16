@@ -57,6 +57,7 @@ float cfg_patternbonus;
 int cfg_rave_min;
 int cfg_rave_max;
 std::string cfg_logfile;
+FILE* cfg_logfile_handle;
 bool cfg_quiet;
 
 void GTP::setup_default_parameters() {
@@ -96,7 +97,7 @@ void GTP::setup_default_parameters() {
     cfg_eval_scale = 2;
     cfg_rave_min = 1;
     cfg_rave_max = 5;
-    cfg_logfile.clear();
+    cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }
 

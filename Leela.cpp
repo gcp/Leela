@@ -160,8 +160,9 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
 #endif
 
     if (vm.count("logfile")) {
-        cfg_logfile = vm["logfile"].as<std::string>();
+        std::string cfg_logfile = vm["logfile"].as<std::string>();
         myprintf("Logging to %s.\n", cfg_logfile.c_str());
+        cfg_logfile_handle = fopen(cfg_logfile.c_str(), "a");
     }
 
     if (vm.count("gtp")) {
