@@ -92,7 +92,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     }
 
     if (node->has_children()) {
-        UCTNode * next = node->uct_select_child(color);
+        UCTNode * next = node->uct_select_child(color, m_use_nets);
 
         if (next != NULL) {
             int move = next->get_move();
@@ -165,8 +165,18 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
                 std::to_string(node->get_visits())));
             row.push_back(std::make_pair(std::string("Win%"),
                 node->get_visits() > 0 ?
+                    std::to_string(node->get_mixed_score(color)*100.0f) :
+                    std::string("-")));
+            if (m_use_nets) {
+                row.push_back(std::make_pair(std::string("MC Win%"),
+                    node->get_visits() > 0 ?
                     std::to_string(node->get_winrate(color)*100.0f) :
                     std::string("-")));
+                row.push_back(std::make_pair(std::string("Net Win%"),
+                    node->get_evalcount() > 0 ?
+                    std::to_string(node->get_eval(color)*100.0f) :
+                    std::string("-")));
+            }
             row.push_back(std::make_pair(
                 m_use_nets ? std::string("Net Prob%") : std::string("Eval"),
                 std::to_string(node->get_score() * 100.0f)));
@@ -271,7 +281,7 @@ bool UCTSearch::easy_move() {
         UCTNode * second = first->get_sibling();
         if (second != NULL) {
             float second_probability = second->get_score();
-            if (second_probability * 5.0f < best_probability) {
+            if (second_probability * 8.0f < best_probability) {
                 return true;
             }
         } else {
@@ -447,21 +457,18 @@ int UCTSearch::get_best_move(passflag_t passflag) {
 
     // make sure best is first
     m_root.sort_root_children(color);
-    
-    int bestmove = m_root.get_first_child()->get_move();    
-    
+
+    int bestmove = m_root.get_first_child()->get_move();
+
     // do we have statistics on the moves?
     if (m_root.get_first_child() != NULL) {
         if (m_root.get_first_child()->first_visit()) {
             return bestmove;
         }
     }
-    
+
     float bestscore = m_root.get_first_child()->get_winrate(color);
-    float besteval = m_root.get_first_child()->get_eval(color);
-    int visits = m_root.get_first_child()->get_visits();
-    
-    m_score = bestscore;        
+    m_score = bestscore;
 
     // do we want to fiddle with the best move because of the rule set?
      if (passflag & UCTSearch::NOPASS) {
@@ -527,6 +534,9 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         }
     }
 
+    float besteval = m_root.get_first_child()->get_eval(color);
+    int visits = m_root.get_first_child()->get_visits();
+
     // if we aren't passing, should we consider resigning?
     if (bestmove != FastBoard::PASS) {
         // resigning allowed
@@ -534,9 +544,9 @@ int UCTSearch::get_best_move(passflag_t passflag) {
             size_t movetresh= (m_rootstate.board.get_boardsize()
                                 * m_rootstate.board.get_boardsize()) / 3;
             // bad score and visited enough
-            if (bestscore < 0.15f
+            if (((bestscore < 0.20f && besteval < 0.15f)
+                 || (bestscore < 0.10f))
                 && visits > 90
-                && besteval < 0.25f
                 && m_rootstate.m_movenum > movetresh) {
                 myprintf("Score looks bad. Resigning.\n");
                 bestmove = FastBoard::RESIGN;
@@ -603,14 +613,17 @@ void UCTSearch::dump_analysis(void) {
     int color = tempstate.board.get_to_move();
 
     std::string pvstring = get_pv(tempstate, m_root);
-    float winrate = 100.0f * m_root.get_mixed_score(color);
+    float winrate = 100.0f * m_root.get_winrate(color);
+    float eval = 100.0f * m_root.get_eval(color);
+    float mixrate = 100.0f * m_root.get_mixed_score(color);
 
-    myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n", m_root.get_visits(),
-             winrate, pvstring.c_str());
+    myprintf("Nodes: %d, Win: %5.2f%% (MC:%5.2f%%/VN:%5.2f%%), PV: %s\n",
+             m_root.get_visits(),
+             mixrate, winrate, eval, pvstring.c_str());
 
     if (!m_quiet) {
         GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(),
-                   winrate, pvstring.c_str());
+                   mixrate, pvstring.c_str());
     } else {
         GUIprintf("%d nodes searched", m_root.get_visits());
     }
@@ -666,6 +679,14 @@ int UCTSearch::think(int color, passflag_t passflag) {
             if (bookmove != FastBoard::PASS) {
                 return bookmove;
             }
+        }
+#endif
+#ifdef KGS
+        if (m_rootstate.get_handicap() > 3
+            || m_rootstate.get_komi() < 0.0f
+            || m_rootstate.get_komi() > 8.0f) {
+            myprintf("Bullshit game parameters, resigning...");
+            return FastBoard::RESIGN;
         }
 #endif
     } else {

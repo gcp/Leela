@@ -62,7 +62,7 @@ public:
     void update(Playout & gameresult, int color, bool update_eval);
     void updateRAVE(Playout & playout, int color);
 
-    UCTNode* uct_select_child(int color);
+    UCTNode* uct_select_child(int color, bool use_nets);
     UCTNode* get_first_child();
     UCTNode* get_pass_child();
     UCTNode* get_nopass_child();

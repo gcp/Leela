@@ -518,18 +518,18 @@ float Network::get_value(FastState * state, Ensemble ensemble) {
     } else {
         assert(ensemble == AVERAGE_ALL);
         result = get_value_internal(state, planes, 0);
-        myprintf("%5.4f ", result);
+        //myprintf("%5.4f ", result);
         for (int r = 1; r < 8; r++) {
             float sum_res = get_value_internal(state, planes, r);
-            myprintf("%5.4f ", sum_res);
+            //myprintf("%5.4f ", sum_res);
             result += sum_res;
         }
         result /= 8.0f;
     }
 
-    if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-        myprintf("==> %5.4f\n", result);
-    }
+    //if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+    //    myprintf("==> %5.4f\n", result);
+    //}
 
     return result;
 }

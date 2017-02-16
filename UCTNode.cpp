@@ -489,7 +489,7 @@ float UCTNode::get_mixed_score(int tomove) {
     return eval * mix_factor + winrate * (1.0f - mix_factor);
 }
 
-UCTNode* UCTNode::uct_select_child(int color) {
+UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     UCTNode * best = NULL;
     float best_value = -1000.0f;
     int childbound;
@@ -498,8 +498,12 @@ UCTNode* UCTNode::uct_select_child(int color) {
     if (has_netscore()) {
         childbound = 35;
     } else {
-        childbound = std::max(cfg_rave_min, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
-        childbound = std::min(cfg_rave_min + cfg_rave_max, childbound);
+        if (use_nets) {
+            childbound = std::max(cfg_rave_min, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
+            childbound = std::min(cfg_rave_min + cfg_rave_max, childbound);
+        } else {
+            childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
+        }
     }
     SMP::Lock lock(get_mutex());
 
