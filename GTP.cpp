@@ -68,8 +68,8 @@ void GTP::setup_default_parameters() {
     cfg_mature_threshold = 30;
     cfg_expand_divider = 2.0f;
 #else
-    cfg_mature_threshold = 50;
-    cfg_expand_divider = 2.0f;
+    cfg_mature_threshold = 80;
+    cfg_expand_divider = 2.5f;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -88,14 +88,14 @@ void GTP::setup_default_parameters() {
     cfg_fpu = 3.5f;
     cfg_puct = 0.425f;
     cfg_psa = 0.205f;
-    cfg_beta = 4.0f;
-    cfg_patternbonus = 0.005f;
+    cfg_beta = 8.5f;
+    cfg_patternbonus = 0.01f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.45f;
     cfg_eval_thresh = 5;
     cfg_eval_scale = 2;
-    cfg_rave_min = 1;
+    cfg_rave_min = 11;
     cfg_rave_max = 5;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
