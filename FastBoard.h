@@ -67,7 +67,7 @@ public:
 
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
-    int update_board_fast(const int color, const int i);
+    int update_board_fast(const int color, const int i, bool & capture);
     void save_critical_neighbours(int color, int vertex, movelist_t & moves);
     void add_pattern_moves(int color, int vertex, movelist_t & moves);
     void add_global_captures(int color, movelist_t & moves);

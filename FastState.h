@@ -53,6 +53,7 @@ public:
     int m_komove;
     size_t m_movenum;
     int m_lastmove;
+    bool m_last_was_capture;
     int m_onebutlastmove;
 
 protected:

@@ -26,6 +26,7 @@ void FastState::init_game(int size, float komi) {
 
     m_komove = 0;
     m_lastmove = 0;
+    m_last_was_capture = false;
     m_onebutlastmove = m_lastmove;
     m_komi = komi;
     m_handicap = 0;
@@ -47,6 +48,7 @@ void FastState::reset_game(void) {
     m_komove = 0;
 
     m_lastmove = 0;
+    m_last_was_capture = false;
     m_onebutlastmove = m_lastmove;
 }
 
@@ -163,7 +165,7 @@ int FastState::play_random_move(int color) {
         if (board.get_square(m_lastmove) == !color) {
             board.add_global_captures(color, moves);
             board.save_critical_neighbours(color, m_lastmove, moves);
-            if (0.2f > rng->randflt()) {
+            if (m_last_was_capture || (0.2f > rng->randflt())) {
                 board.add_near_nakade_moves(color, m_lastmove, moves);
             }
             board.add_pattern_moves(color, m_lastmove, moves);
@@ -291,14 +293,16 @@ float FastState::score_move(std::vector<int> & territory, std::vector<int> & moy
 }
 
 int FastState::play_move_fast(int vertex) {
+    bool capture = false;
     if (vertex == FastBoard::PASS) {                       
         increment_passes();                 
     } else {                                                      
-        m_komove = board.update_board_fast(board.m_tomove, vertex);
+        m_komove = board.update_board_fast(board.m_tomove, vertex, capture);
         set_passes(0);                                            
     }
 
     m_onebutlastmove = m_lastmove;
+    m_last_was_capture = capture;
     m_lastmove = vertex;
     board.m_tomove = !board.m_tomove;
     m_movenum++;
@@ -310,6 +314,7 @@ void FastState::play_pass(void) {
     m_movenum++;
 
     m_onebutlastmove = m_lastmove;
+    m_last_was_capture = false;
     m_lastmove = FastBoard::PASS;
 
     board.hash  ^= 0xABCDABCDABCDABCDULL;
@@ -326,10 +331,12 @@ void FastState::play_move(int vertex) {
 
 void FastState::play_move(int color, int vertex) {
     if (vertex != FastBoard::PASS && vertex != FastBoard::RESIGN) {
-        int kosq = board.update_board(color, vertex);
+        bool capture = false;
+        int kosq = board.update_board(color, vertex, capture);
 
         m_komove = kosq;
         m_onebutlastmove = m_lastmove;
+        m_last_was_capture = capture;
         m_lastmove = vertex;
 
         m_movenum++;

@@ -804,69 +804,71 @@ int FastBoard::update_board_eye(const int color, const int i) {
     return -1;
 }
 
-/*    
+/*
     returns ko square or suicide tag
     does not update side to move
-*/    
-int FastBoard::update_board_fast(const int color, const int i) {                        
-    assert(m_square[i] == EMPTY);    
+*/
+int FastBoard::update_board_fast(const int color, const int i, bool & capture) {
+    assert(m_square[i] == EMPTY);
     assert(color == WHITE || color == BLACK);
-    
-    /* did we play into an opponent eye? */    
-    int eyeplay = (m_neighbours[i] & s_eyemask[!color]);  
-       
+
+    /* did we play into an opponent eye? */
+    int eyeplay = (m_neighbours[i] & s_eyemask[!color]);
+
     // because we check for single stone suicide, we know
-    // its a capture, and it might be a ko capture         
-    if (eyeplay) {          
-        return update_board_eye(color, i);        
-    }        
-    
-    m_square[i]  = (square_t)color;    
-    m_next[i]    = i;     
+    // its a capture, and it might be a ko capture
+    if (eyeplay) {
+        capture = true;
+        return update_board_eye(color, i);
+    }
+
+    m_square[i]  = (square_t)color;
+    m_next[i]    = i;
     m_parent[i]  = i;
-    m_libs[i]    = count_pliberties(i);       
+    m_libs[i]    = count_pliberties(i);
     m_stones[i]  = 1;
-    m_totalstones[color]++;                                    
-        
-    add_neighbour(i, color); 
-        
+    m_totalstones[color]++;
+
+    add_neighbour(i, color);
+
     for (int k = 0; k < 4; k++) {
         int ai = i + m_dirs[k];
-        
-        if (m_square[ai] > WHITE) continue; 
-        
+
+        if (m_square[ai] > WHITE) continue;
+
         assert(ai >= 0 && ai <= m_maxsq);
-                                       
+
         if (m_square[ai] == !color) {
-            if (m_libs[m_parent[ai]] <= 0) {                
+            if (m_libs[m_parent[ai]] <= 0) {
+                capture = true;
                 m_prisoners[color] += remove_string_fast(ai);
             }
-        } else if (m_square[ai] == color) {                                                    
+        } else if (m_square[ai] == color) {
             int ip  = m_parent[i];
-            int aip = m_parent[ai];                    
-            
+            int aip = m_parent[ai];
+
             if (ip != aip) {
-                if (m_stones[ip] >= m_stones[aip]) {                
-                    merge_strings(ip, aip);                                                        
+                if (m_stones[ip] >= m_stones[aip]) {
+                    merge_strings(ip, aip);
                 } else {
-                    merge_strings(aip, ip);                                                        
+                    merge_strings(aip, ip);
                 }
             }
-        }        
-    }                   
-    
-    /* move last vertex in list to our position */    
+        }
+    }
+
+    /* move last vertex in list to our position */
     int lastvertex               = m_empty[--m_empty_cnt];
     m_empty_idx[lastvertex]      = m_empty_idx[i];
-    m_empty[m_empty_idx[i]]      = lastvertex;                      
-        
-    assert(m_libs[m_parent[i]] >= 0);        
+    m_empty[m_empty_idx[i]]      = lastvertex;
 
-    /* check whether we still live (i.e. detect suicide) */    
-    if (m_libs[m_parent[i]] == 0) {                                               
-        remove_string_fast(i);                
-    } 
-        
+    assert(m_libs[m_parent[i]] >= 0);
+
+    /* check whether we still live (i.e. detect suicide) */
+    if (m_libs[m_parent[i]] == 0) {
+        remove_string_fast(i);
+    }
+
     return -1;
 }
 
@@ -2370,11 +2372,12 @@ std::pair<int, int> FastBoard::after_liberties(const int color, const int vtx) {
     FastBoard tmp = *this;
     int mylibs;
     int opplibs;
+    bool dummy;
 
     if (is_suicide(vtx, color)) {
         mylibs = 0;
     } else {
-        tmp.update_board_fast(color, vtx);
+        tmp.update_board_fast(color, vtx, dummy);
         mylibs = tmp.count_rliberties(vtx);
     }
 
@@ -2383,7 +2386,7 @@ std::pair<int, int> FastBoard::after_liberties(const int color, const int vtx) {
     if (is_suicide(vtx, !color)) {
         opplibs = 0;
     } else {
-        tmp.update_board_fast(!color, vtx);
+        tmp.update_board_fast(!color, vtx, dummy);
         opplibs = tmp.count_rliberties(vtx);
     }
 
@@ -2402,8 +2405,9 @@ bool FastBoard::check_winning_ladder(const int color, const int vtx) {
                 if (!self_atari(color, vtx)) {
                     // check escape route
                     // play atari
+                    bool dummy;
                     FastBoard tmp = *this;
-                    tmp.update_board_fast(tmp.m_tomove, vtx);
+                    tmp.update_board_fast(tmp.m_tomove, vtx, dummy);
                     int escape_vtx = tmp.in_atari(ai);
                     assert(escape_vtx);
                     int ae = tmp.count_pliberties(escape_vtx);
@@ -2439,8 +2443,9 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
     }
 
     int atari = vtx;
+    bool dummy;
 
-    tmp.update_board_fast(tmp.m_tomove, vtx);
+    tmp.update_board_fast(tmp.m_tomove, vtx, dummy);
 
     // This loop does not swap the side to move, defender
     // and attacker are always the same.
@@ -2484,13 +2489,13 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
             FastBoard tmp2 = tmp;
 
             // play atari in liberty 1, escape in liberty 2
-            tmp2.update_board_fast(!tmp.m_tomove, libarr[0]);
+            tmp2.update_board_fast(!tmp.m_tomove, libarr[0], dummy);
             bool ladder1 = tmp2.check_losing_ladder(color, libarr[1], branching + 1);
 
             tmp2 = tmp;
 
             // play atari in liberty 2, escape in liberty 1
-            tmp2.update_board_fast(!tmp.m_tomove, libarr[1]);
+            tmp2.update_board_fast(!tmp.m_tomove, libarr[1], dummy);
             bool ladder2 = tmp2.check_losing_ladder(color, libarr[0], branching + 1);
 
             // if one side of the ataris work, the ladder works
@@ -2502,15 +2507,15 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
         } else {
             // non branching, play atari that causes most unpleasant escape move
             if (tmp.count_pliberties(libarr[0]) > tmp.count_pliberties(libarr[1])) {
-                tmp.update_board_fast(!tmp.m_tomove, libarr[0]);
+                tmp.update_board_fast(!tmp.m_tomove, libarr[0], dummy);
             } else if (tmp.count_pliberties(libarr[0]) < tmp.count_pliberties(libarr[1])) {
-                tmp.update_board_fast(!tmp.m_tomove, libarr[1]);
+                tmp.update_board_fast(!tmp.m_tomove, libarr[1], dummy);
             }
         }
 
         // find and play new saving move
         atari = tmp.in_atari(atari);
-        tmp.update_board_fast(tmp.m_tomove, atari);
+        tmp.update_board_fast(tmp.m_tomove, atari, dummy);
     };
 
     return false;

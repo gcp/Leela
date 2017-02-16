@@ -78,18 +78,19 @@ void GameState::play_pass() {
 }
 
 void GameState::play_move(int color, int vertex) {
-    if (vertex != FastBoard::PASS && vertex != FastBoard::RESIGN) {                   
-        KoState::play_move(color, vertex);                
-    } else {        
+    if (vertex != FastBoard::PASS && vertex != FastBoard::RESIGN) {
+        KoState::play_move(color, vertex);
+    } else {
         KoState::play_pass();
         if (vertex == FastBoard::RESIGN) {
             m_lastmove = vertex;
+            m_last_was_capture = false;
         }
-    }    
-    
+    }
+
     // cut off any leftover moves from navigating
     game_history.resize(m_movenum);
-    game_history.push_back(*this);        
+    game_history.push_back(*this);
 }
 
 bool GameState::play_textmove(std::string color, std::string vertex) {
