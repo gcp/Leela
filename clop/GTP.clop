@@ -14,7 +14,7 @@ Script ./clopgtp
 IntegerGammaParameter  mature_threshold   1      1000
 LinearParameter        expand_divider     1.0     100.0
 GammaParameter         beta               1.0     100.0
-GammaParameter         patternbonus       0.0001    0.5
+GammaParameter         patternbonus       0.0001    1.0
 IntegerParameter       rave_min           1        15
 IntegerParameter       rave_max           0        15
 
@@ -25,35 +25,35 @@ Processor cpu4
 Processor cpu5
 Processor cpu6
 Processor cpu7
-#Processor cpu8
-#Processor cpu9
-#Processor cpu10
-#Processor cpu11
-#Processor cpu12
-#Processor cpu13
-#Processor cpu14
-#Processor cpu15
-#Processor cpu16
-#Processor cpu17
-#Processor cpu18
-#Processor cpu19
-#Processor cpu20
-#Processor cpu21
-#Processor cpu22
-#Processor cpu23
-#Processor cpu24
-#Processor cpu25
-#Processor cpu26
-#Processor cpu27
-#Processor cpu28
-#Processor cpu29
-#Processor cpu30
-#Processor cpu31
-#Processor cpu32
-#Processor cpu33
-#Processor cpu34
-#Processor cpu35
-#Processor cpu36
+Processor cpu8
+Processor cpu9
+Processor cpu10
+Processor cpu11
+Processor cpu12
+Processor cpu13
+Processor cpu14
+Processor cpu15
+Processor cpu16
+Processor cpu17
+Processor cpu18
+Processor cpu19
+Processor cpu20
+Processor cpu21
+Processor cpu22
+Processor cpu23
+Processor cpu24
+Processor cpu25
+Processor cpu26
+Processor cpu27
+Processor cpu28
+Processor cpu29
+Processor cpu30
+Processor cpu31
+Processor cpu32
+Processor cpu33
+Processor cpu34
+Processor cpu35
+Processor cpu36
 
 Replications 1
 DrawElo 0
