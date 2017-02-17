@@ -51,9 +51,9 @@ public:
 
     template <unsigned long M, unsigned long V>
     void push_batchnorm(unsigned int channel_size,
-                        std::tr1::array<float, M> & means,
-                        std::tr1::array<float, V> & variances,
-                        std::tr1::array<float, 1> & scale) {
+                        std::array<float, M> & means,
+                        std::array<float, V> & variances,
+                        std::array<float, 1> & scale) {
         size_t layer = get_layer_count();
         push_weights(layer, means);
         push_weights(layer, variances);
