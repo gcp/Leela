@@ -686,7 +686,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         if (m_rootstate.get_handicap() > 3
             || m_rootstate.get_komi() < 0.0f
             || m_rootstate.get_komi() > 8.0f) {
-            myprintf("Bullshit game parameters, resigning...");
+            myprintf("Bullshit game parameters, resigning...\n");
             return FastBoard::RESIGN;
         }
 #endif
