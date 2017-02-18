@@ -251,8 +251,8 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     myprintf("====================================\n"
              "%d visits, score %5.2f%% (from %5.2f%%) PV: ",
              bestnode->get_visits(),
-             bestnode->get_visits() > 0 ? bestnode->get_winrate(color)*100.0f : 0.0f,
-             parent.get_winrate(color) * 100.0f,
+             bestnode->get_visits() > 0 ? bestnode->get_mixed_score(color)*100.0f : 0.0f,
+             parent.get_mixed_score(color) * 100.0f,
              tmp.c_str());
 
     GameState tmpstate = state;
@@ -322,6 +322,7 @@ bool UCTSearch::allow_early_exit() {
         return true;
     }
     
+    // XXX: this should probably use mixrate
     double n1 = first->get_visits();
     double p1 = first->get_winrate(color);
     double n2 = second->get_visits();
