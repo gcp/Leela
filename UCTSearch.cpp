@@ -267,6 +267,9 @@ bool UCTSearch::easy_move() {
         if (m_rootstate.get_last_move() == FastBoard::PASS) {
             return false;
         }
+        if (m_rootstate.get_komove() > 0) {
+            return false;
+        }
 
         float best_probability = 0.0f;
 
