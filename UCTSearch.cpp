@@ -262,35 +262,49 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 #endif
 }
 
-bool UCTSearch::easy_move() {
-    if (m_use_nets) {
-        if (m_rootstate.get_last_move() == FastBoard::PASS) {
+bool UCTSearch::allow_easy_move() {
+    if (!m_use_nets) {
+        return false;
+    }
+    if (m_rootstate.get_komove() > 0) {
+        return false;
+    }
+    int color = m_rootstate.board.get_to_move();
+    if (!m_root.has_children()) {
+        return false;
+    }
+
+    // Order by probability, we need to undo this
+    // before returning.
+    m_root.sort_children();
+
+    float best_probability = 0.0f;
+
+    // do we have statistics on the moves?
+    UCTNode * first = m_root.get_first_child();
+    if (first != NULL) {
+        best_probability = first->get_score();
+        if (best_probability < 0.7f) {
+            m_root.sort_root_children(color);
             return false;
         }
-        if (m_rootstate.get_komove() > 0) {
-            return false;
-        }
+    } else {
+        m_root.sort_root_children(color);
+        return false;
+    }
 
-        float best_probability = 0.0f;
-
-        // do we have statistics on the moves?
-        UCTNode * first = m_root.get_first_child();
-        if (first != NULL) {
-            best_probability = first->get_score();
-        } else {
-            return false;
-        }
-
-        UCTNode * second = first->get_sibling();
-        if (second != NULL) {
-            float second_probability = second->get_score();
-            if (second_probability * 8.0f < best_probability) {
-                return true;
-            }
-        } else {
+    UCTNode * second = first->get_sibling();
+    if (second != NULL) {
+        float second_probability = second->get_score();
+        if (second_probability * 8.0f < best_probability) {
+            m_root.sort_root_children(color);
             return true;
         }
+    } else {
+        m_root.sort_root_children(color);
+        return true;
     }
+    m_root.sort_root_children(color);
     return false;
 }
 
@@ -324,16 +338,16 @@ bool UCTSearch::allow_early_exit() {
         // already searching half the time
         return true;
     }
-    
+
     double n1 = first->get_visits();
-    double p1 = first->get_winrate(color);
+    double p1 = first->get_mixed_score(color);
     double n2 = second->get_visits();
-    double p2 = second->get_winrate(color);
+    double p2 = second->get_mixed_score(color);
     double low, high;
 
     low  = p1 - 3.0 * sqrt(0.25 / n1);
     high = p2 + 3.0 * sqrt(0.25 / n2);
- 
+
     if (low > high) {
         myprintf("Allowing early exit: low: %f%% > high: %f%%\n", low * 100.0, high * 100.0);
         return true;
@@ -717,8 +731,6 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_root.netscore_children(m_nodes, m_rootstate, true);
     m_root.kill_superkos(m_rootstate);
 
-    bool easy_move_flag = easy_move();
-
     m_run = true;
 
     int cpus = cfg_num_threads;
@@ -751,8 +763,13 @@ int UCTSearch::think(int color, passflag_t passflag) {
             keeprunning &= (iterations++ < m_maxplayouts);
 
             // check for early exit
-            if (keeprunning && ((iterations & 127) == 0) && centiseconds_elapsed > time_for_move/2) {
-                keeprunning = !allow_early_exit();
+            if (keeprunning && ((iterations & 127) == 0)) {
+                if (centiseconds_elapsed > time_for_move/4) {
+                    keeprunning = !allow_easy_move();
+                }
+                if (centiseconds_elapsed > time_for_move/2) {
+                    keeprunning = !allow_early_exit();
+                }
             }
         } else {
             if (centiseconds_elapsed - last_update > 100) {
@@ -762,7 +779,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             }
             keeprunning = (!m_hasrunflag || (*m_runflag));
         }
-    } while(keeprunning && (!easy_move_flag || m_analyzing));
+    } while(keeprunning);
 
     // stop the search
     m_run = false;
