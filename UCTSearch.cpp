@@ -618,9 +618,14 @@ void UCTSearch::dump_analysis(void) {
     float eval = 100.0f * m_root.get_eval(color);
     float mixrate = 100.0f * m_root.get_mixed_score(color);
 
-    myprintf("Nodes: %d, Win: %5.2f%% (MC:%5.2f%%/VN:%5.2f%%), PV: %s\n",
-             m_root.get_visits(),
-             mixrate, winrate, eval, pvstring.c_str());
+    if (m_use_nets) {
+        myprintf("Nodes: %d, Win: %5.2f%% (MC:%5.2f%%/VN:%5.2f%%), PV: %s\n",
+                 m_root.get_visits(),
+                 mixrate, winrate, eval, pvstring.c_str());
+    } else {
+        myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n",
+                 m_root.get_visits(), winrate, pvstring.c_str());
+    }
 
     if (!m_quiet) {
         GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(),
@@ -699,9 +704,13 @@ int UCTSearch::think(int color, passflag_t passflag) {
     MCOwnerTable::clear();
     float territory;
     float mc_score = Playout::mc_owner(m_rootstate, 64, &territory);
-    float net_score = Network::get_Network()->get_value(&m_rootstate,
-                                                        Network::Ensemble::AVERAGE_ALL);
-    myprintf("MC winrate=%f, NN eval=%f, score=", mc_score, net_score);
+    if (m_use_nets) {
+        float net_score = Network::get_Network()->get_value(&m_rootstate,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        myprintf("MC winrate=%f, NN eval=%f, score=", mc_score, net_score);
+    } else {
+         myprintf("MC winrate=%f, score=", mc_score);
+    }
     if (territory > 0.0f) {
         myprintf("B+%3.1f\n", territory);
     } else {
