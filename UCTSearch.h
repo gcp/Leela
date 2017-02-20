@@ -49,6 +49,7 @@ private:
                                float score, passflag_t passflag);
     bool allow_early_exit();
     bool allow_easy_move();
+    bool easy_move_precondition();
 
     GameState & m_rootstate;
     UCTNode m_root;

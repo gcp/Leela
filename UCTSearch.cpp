@@ -262,21 +262,13 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 #endif
 }
 
-bool UCTSearch::allow_easy_move() {
-    if (!m_use_nets) {
+bool UCTSearch::easy_move_precondition() {
+   if (!m_use_nets) {
         return false;
     }
-    if (m_rootstate.get_komove() > 0) {
-        return false;
-    }
-    int color = m_rootstate.board.get_to_move();
     if (!m_root.has_children()) {
         return false;
     }
-
-    // Order by probability, we need to undo this
-    // before returning.
-    m_root.sort_children();
 
     float best_probability = 0.0f;
 
@@ -285,11 +277,9 @@ bool UCTSearch::allow_easy_move() {
     if (first != NULL) {
         best_probability = first->get_score();
         if (best_probability < 0.7f) {
-            m_root.sort_root_children(color);
             return false;
         }
     } else {
-        m_root.sort_root_children(color);
         return false;
     }
 
@@ -297,26 +287,46 @@ bool UCTSearch::allow_easy_move() {
     if (second != NULL) {
         float second_probability = second->get_score();
         if (second_probability * 8.0f < best_probability) {
-            m_root.sort_root_children(color);
             return true;
         }
     } else {
-        m_root.sort_root_children(color);
         return true;
     }
-    m_root.sort_root_children(color);
     return false;
 }
 
-bool UCTSearch::allow_early_exit() {    
-    int color = m_rootstate.board.get_to_move();    
-    
+bool UCTSearch::allow_easy_move() {
+    // Precondition failure should mean we don't get here.
+    // We can assume there are at least 2 moves now.
+    assert(m_use_nets);
+
+    UCTNode * first = m_root.get_first_child();
+    float best_probability = first->get_score();
+    // Some other move got to first place.
+    if (best_probability < 0.7f) {
+        return false;
+    }
+
+    UCTNode * second = first->get_sibling();
+    float second_probability = second->get_score();
+    if (second_probability * 8.0f < best_probability) {
+        myprintf("Allowing very early exit: score: %5.2f%% >> %5.2f%%\n",
+                 best_probability * 100.0f, second_probability*100.0f);
+        return true;
+    }
+
+    return false;
+}
+
+bool UCTSearch::allow_early_exit() {
+    int color = m_rootstate.board.get_to_move();
+
     if (!m_root.has_children()) {
         return false;
     }
-    
+
     m_root.sort_root_children(color);
-    
+
     // do we have statistics on the moves?
     UCTNode * first = m_root.get_first_child();
     if (first != NULL) {
@@ -326,8 +336,8 @@ bool UCTSearch::allow_early_exit() {
     } else {
         return false;
     }
-    
-    UCTNode * second = first->get_sibling();    
+
+    UCTNode * second = first->get_sibling();
     if (second != NULL) {
         if (second->first_visit()) {
             // Stil not visited? Seems unlikely to happen then.
@@ -739,6 +749,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
         tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
     }
 
+    // If easy move precondition doesn't hold, pretend we
+    // checked (and failed).
+    bool easy_move_tested = !easy_move_precondition();
     bool keeprunning = true;
     int iterations = 0;
     int last_update = 0;
@@ -765,10 +778,13 @@ int UCTSearch::think(int color, passflag_t passflag) {
             // check for early exit
             if (keeprunning && ((iterations & 127) == 0)) {
                 if (centiseconds_elapsed > time_for_move/4) {
-                    keeprunning = !allow_easy_move();
-                }
-                if (centiseconds_elapsed > time_for_move/2) {
-                    keeprunning = !allow_early_exit();
+                    if (!easy_move_tested) {
+                        keeprunning = !allow_easy_move();
+                        easy_move_tested = true;
+                    }
+                    if (centiseconds_elapsed > time_for_move/2) {
+                        keeprunning = !allow_early_exit();
+                    }
                 }
             }
         } else {
