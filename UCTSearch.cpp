@@ -251,8 +251,8 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
     myprintf("====================================\n"
              "%d visits, score %5.2f%% (from %5.2f%%) PV: ",
              bestnode->get_visits(),
-             bestnode->get_visits() > 0 ? bestnode->get_winrate(color)*100.0f : 0.0f,
-             parent.get_winrate(color) * 100.0f,
+             bestnode->get_visits() > 0 ? bestnode->get_mixed_score(color)*100.0f : 0.0f,
+             parent.get_mixed_score(color) * 100.0f,
              tmp.c_str());
 
     GameState tmpstate = state;
@@ -644,9 +644,14 @@ void UCTSearch::dump_analysis(void) {
     float eval = 100.0f * m_root.get_eval(color);
     float mixrate = 100.0f * m_root.get_mixed_score(color);
 
-    myprintf("Nodes: %d, Win: %5.2f%% (MC:%5.2f%%/VN:%5.2f%%), PV: %s\n",
-             m_root.get_visits(),
-             mixrate, winrate, eval, pvstring.c_str());
+    if (m_use_nets) {
+        myprintf("Nodes: %d, Win: %5.2f%% (MC:%5.2f%%/VN:%5.2f%%), PV: %s\n",
+                 m_root.get_visits(),
+                 mixrate, winrate, eval, pvstring.c_str());
+    } else {
+        myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n",
+                 m_root.get_visits(), winrate, pvstring.c_str());
+    }
 
     if (!m_quiet) {
         GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(),
@@ -712,7 +717,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         if (m_rootstate.get_handicap() > 3
             || m_rootstate.get_komi() < 0.0f
             || m_rootstate.get_komi() > 8.0f) {
-            myprintf("Bullshit game parameters, resigning...");
+            myprintf("Bullshit game parameters, resigning...\n");
             return FastBoard::RESIGN;
         }
 #endif
@@ -725,9 +730,13 @@ int UCTSearch::think(int color, passflag_t passflag) {
     MCOwnerTable::clear();
     float territory;
     float mc_score = Playout::mc_owner(m_rootstate, 64, &territory);
-    float net_score = Network::get_Network()->get_value(&m_rootstate,
-                                                        Network::Ensemble::AVERAGE_ALL);
-    myprintf("MC winrate=%f, NN eval=%f, score=", mc_score, net_score);
+    if (m_use_nets) {
+        float net_score = Network::get_Network()->get_value(&m_rootstate,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        myprintf("MC winrate=%f, NN eval=%f, score=", mc_score, net_score);
+    } else {
+         myprintf("MC winrate=%f, score=", mc_score);
+    }
     if (territory > 0.0f) {
         myprintf("B+%3.1f\n", territory);
     } else {

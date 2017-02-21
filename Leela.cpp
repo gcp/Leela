@@ -160,7 +160,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
 #endif
 
     if (vm.count("logfile")) {
-        std::string cfg_logfile = vm["logfile"].as<std::string>();
+        cfg_logfile = vm["logfile"].as<std::string>();
         myprintf("Logging to %s.\n", cfg_logfile.c_str());
         cfg_logfile_handle = fopen(cfg_logfile.c_str(), "a");
     }
@@ -269,6 +269,12 @@ int main (int argc, char *argv[]) {
         } else {
             // eof or other error
             break;
+        }
+
+        // Force a flush of the logfile
+        if (cfg_logfile_handle) {
+            fclose(cfg_logfile_handle);
+            cfg_logfile_handle = fopen(cfg_logfile.c_str(), "a");
         }
     }
 
