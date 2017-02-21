@@ -29,8 +29,8 @@ SGFTree * SGFTree::get_child(unsigned int count) {
     if (count < m_children.size()) {
         return &(m_children[count]);
     } else {
-        return NULL;
-    }        
+        return nullptr;
+    }
 }
 
 // this follows the entire line, and doesn't really

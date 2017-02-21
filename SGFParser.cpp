@@ -81,7 +81,10 @@ std::string SGFParser::parse_property_name(std::istringstream & strm) {
 
     char c;
     while (strm >> c) {
-        if (!std::isupper(c)) {
+        // SGF property names are guaranteed to be uppercase,
+        // except that some implementations like IGS are retarded
+        // and don't folow the spec. So allow both upper/lowercase.
+        if (!std::isupper(c) && !std::islower(c)) {
             strm.unget();
             break;
         } else {
