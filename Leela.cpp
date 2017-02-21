@@ -66,6 +66,9 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("eval_scale", po::value<int>())
         ("rave_min", po::value<int>())
         ("rave_max", po::value<int>())
+        ("easymove_ratio", po::value<float>())
+        ("easymove_divider", po::value<float>())
+        ("easymove_minprob", po::value<float>())
 #endif
         ;
     po::variables_map vm;
@@ -156,6 +159,15 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
     if (vm.count("rave_max")) {
         cfg_rave_max = vm["rave_max"].as<int>();
+    }
+    if (vm.count("easymove_ratio")) {
+        cfg_easymove_ratio = vm["easymove_ratio"].as<float>();
+    }
+    if (vm.count("easymove_minprob")) {
+        cfg_easymove_minprob = vm["easymove_minprob"].as<float>();
+    }
+    if (vm.count("easymove_divider")) {
+        cfg_easymove_divider = vm["easymove_divider"].as<float>();
     }
 #endif
 

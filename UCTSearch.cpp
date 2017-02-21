@@ -276,7 +276,7 @@ bool UCTSearch::easy_move_precondition() {
     UCTNode * first = m_root.get_first_child();
     if (first != NULL) {
         best_probability = first->get_score();
-        if (best_probability < 0.7f) {
+        if (best_probability < cfg_easymove_minprob) {
             return false;
         }
     } else {
@@ -286,7 +286,7 @@ bool UCTSearch::easy_move_precondition() {
     UCTNode * second = first->get_sibling();
     if (second != NULL) {
         float second_probability = second->get_score();
-        if (second_probability * 8.0f < best_probability) {
+        if (second_probability * cfg_easymove_ratio < best_probability) {
             return true;
         }
     } else {
@@ -303,13 +303,13 @@ bool UCTSearch::allow_easy_move() {
     UCTNode * first = m_root.get_first_child();
     float best_probability = first->get_score();
     // Some other move got to first place.
-    if (best_probability < 0.7f) {
+    if (best_probability < cfg_easymove_minprob) {
         return false;
     }
 
     UCTNode * second = first->get_sibling();
     float second_probability = second->get_score();
-    if (second_probability * 8.0f < best_probability) {
+    if (second_probability * cfg_easymove_ratio < best_probability) {
         myprintf("Allowing very early exit: score: %5.2f%% >> %5.2f%%\n",
                  best_probability * 100.0f, second_probability*100.0f);
         return true;
@@ -786,14 +786,14 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
             // check for early exit
             if (keeprunning && ((iterations & 127) == 0)) {
-                if (centiseconds_elapsed > time_for_move/4) {
+                if (centiseconds_elapsed > ((float)time_for_move)/cfg_easymove_divider) {
                     if (!easy_move_tested) {
                         keeprunning = !allow_easy_move();
                         easy_move_tested = true;
                     }
-                    if (centiseconds_elapsed > time_for_move/2) {
-                        keeprunning = !allow_early_exit();
-                    }
+                }
+                if (centiseconds_elapsed > time_for_move/2) {
+                    keeprunning = !allow_early_exit();
                 }
             }
         } else {
