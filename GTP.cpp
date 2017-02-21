@@ -100,9 +100,9 @@ void GTP::setup_default_parameters() {
     cfg_eval_scale = 2;
     cfg_rave_min = 11;
     cfg_rave_max = 5;
-    cfg_easymove_divider = 4.0f;
-    cfg_easymove_minprob = 0.7f;
-    cfg_easymove_ratio = 8.0f;
+    cfg_easymove_divider = 20.0f;
+    cfg_easymove_minprob = 0.6f;
+    cfg_easymove_ratio = 10.0f;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }
