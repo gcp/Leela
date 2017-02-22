@@ -40,6 +40,7 @@ using namespace caffe;
 #include "FastBoard.h"
 #include "Random.h"
 #include "Network.h"
+#include "GTP.h"
 
 using namespace Utils;
 
@@ -378,16 +379,18 @@ void batchnorm(std::vector<float>& input,
 }
 
 void softmax(std::vector<float>& input,
-             std::vector<float>& output) {
+             std::vector<float>& output,
+             float temperature) {
     assert(&input != &output);
 
     float alpha = *std::max_element(input.begin(),
                                     input.begin() + output.size());
+    alpha /= temperature;
 
     float denom = 0.0f;
     std::vector<float> helper(output.size());
     for (size_t i = 0; i < output.size(); i++) {
-        float val  = std::exp(input[i] - alpha);
+        float val  = std::exp((input[i]/temperature) - alpha);
         helper[i]  = val;
         denom     += val;
     }
@@ -579,7 +582,7 @@ Network::Netresult Network::get_scored_moves(
 
     // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
     //   show_heatmap(state, result);
-    //}
+    // }
 
     return result;
 }
@@ -713,7 +716,7 @@ Network::Netresult Network::get_scored_moves_internal(
     convolve<3, 128, 128>(input_data, conv13_w, conv13_b, output_data);
     std::swap(input_data, output_data);
     convolve<3, 128,   1>(input_data, conv14_w, conv14_b, output_data);
-    softmax(output_data, softmax_data);
+    softmax(output_data, softmax_data, cfg_softmax_temp);
 
     // Move scores
     std::vector<float>& outputs = softmax_data;

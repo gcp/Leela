@@ -49,6 +49,7 @@ float cfg_cutoff_offset;
 float cfg_cutoff_ratio;
 float cfg_puct;
 float cfg_psa;
+float cfg_softmax_temp;
 float cfg_mix;
 int cfg_eval_thresh;
 int cfg_eval_scale;
@@ -88,6 +89,7 @@ void GTP::setup_default_parameters() {
     cfg_fpu = 3.5f;
     cfg_puct = 0.425f;
     cfg_psa = 0.205f;
+    cfg_softmax_temp = 1.0f;
     cfg_beta = 8.5f;
     cfg_patternbonus = 0.01f;
     cfg_cutoff_offset = 25.44f;

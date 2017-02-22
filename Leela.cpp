@@ -62,6 +62,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("cutoff_offset", po::value<float>())
         ("cutoff_ratio", po::value<float>())
         ("mix", po::value<float>())
+        ("softmax_temp", po::value<float>())
         ("eval_thresh", po::value<int>())
         ("eval_scale", po::value<int>())
         ("rave_min", po::value<int>())
@@ -129,6 +130,9 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
     if (vm.count("psa")) {
         cfg_psa = vm["psa"].as<float>();
+    }
+    if (vm.count("softmax_temp")) {
+        cfg_softmax_temp = vm["softmax_temp"].as<float>();
     }
     if (vm.count("beta")) {
         cfg_beta = vm["beta"].as<float>();

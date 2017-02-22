@@ -28,6 +28,7 @@ extern float cfg_cutoff_offset;
 extern float cfg_cutoff_ratio;
 extern float cfg_puct;
 extern float cfg_psa;
+extern float cfg_softmax_temp;
 extern float cfg_beta;
 extern float cfg_patternbonus;
 extern float cfg_mix;
