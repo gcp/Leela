@@ -262,44 +262,70 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 #endif
 }
 
-bool UCTSearch::easy_move() {
-    if (m_use_nets) {
-        if (m_rootstate.get_last_move() == FastBoard::PASS) {
+bool UCTSearch::easy_move_precondition() {
+   if (!m_use_nets) {
+        return false;
+    }
+    if (!m_root.has_children()) {
+        return false;
+    }
+
+    float best_probability = 0.0f;
+
+    // do we have statistics on the moves?
+    UCTNode * first = m_root.get_first_child();
+    if (first != NULL) {
+        best_probability = first->get_score();
+        if (best_probability < 0.60f) {
             return false;
         }
+    } else {
+        return false;
+    }
 
-        float best_probability = 0.0f;
-
-        // do we have statistics on the moves?
-        UCTNode * first = m_root.get_first_child();
-        if (first != NULL) {
-            best_probability = first->get_score();
-        } else {
-            return false;
-        }
-
-        UCTNode * second = first->get_sibling();
-        if (second != NULL) {
-            float second_probability = second->get_score();
-            if (second_probability * 8.0f < best_probability) {
-                return true;
-            }
-        } else {
+    UCTNode * second = first->get_sibling();
+    if (second != NULL) {
+        float second_probability = second->get_score();
+        if (second_probability * 10.0f < best_probability) {
             return true;
         }
+    } else {
+        return true;
     }
     return false;
 }
 
-bool UCTSearch::allow_early_exit() {    
-    int color = m_rootstate.board.get_to_move();    
-    
+bool UCTSearch::allow_easy_move() {
+    // Precondition failure should mean we don't get here.
+    // We can assume there are at least 2 moves now.
+    assert(m_use_nets);
+
+    UCTNode * first = m_root.get_first_child();
+    float best_probability = first->get_score();
+    // Some other move got to first place.
+    if (best_probability < 0.60f) {
+        return false;
+    }
+
+    UCTNode * second = first->get_sibling();
+    float second_probability = second->get_score();
+    if (second_probability * 10.0f < best_probability) {
+        myprintf("Allowing very early exit: score: %5.2f%% >> %5.2f%%\n",
+                 best_probability * 100.0f, second_probability*100.0f);
+        return true;
+    }
+
+    return false;
+}
+
+bool UCTSearch::allow_early_exit() {
     if (!m_root.has_children()) {
         return false;
     }
-    
+
+    int color = m_rootstate.board.get_to_move();
     m_root.sort_root_children(color);
-    
+
     // do we have statistics on the moves?
     UCTNode * first = m_root.get_first_child();
     if (first != NULL) {
@@ -309,8 +335,8 @@ bool UCTSearch::allow_early_exit() {
     } else {
         return false;
     }
-    
-    UCTNode * second = first->get_sibling();    
+
+    UCTNode * second = first->get_sibling();
     if (second != NULL) {
         if (second->first_visit()) {
             // Stil not visited? Seems unlikely to happen then.
@@ -321,23 +347,25 @@ bool UCTSearch::allow_early_exit() {
         // already searching half the time
         return true;
     }
-    
-    // XXX: this should probably use mixrate
+
     double n1 = first->get_visits();
-    double p1 = first->get_winrate(color);
+    double p1 = first->get_mixed_score(color);
     double n2 = second->get_visits();
-    double p2 = second->get_winrate(color);
+    double p2 = second->get_mixed_score(color);
     double low, high;
 
-    low  = p1 - 3.0 * sqrt(0.25 / n1);
-    high = p2 + 3.0 * sqrt(0.25 / n2);
- 
+    // Variance of Bernoulli distribution is p(1-p) = 0.25
+    // Standard error is var/sqrt(n)
+    // Thus standard error on MC = sqrt(0.25)/sqrt(n) = sqrt(0.25/n)
+    low  = p1 - 2.5f * std::sqrt(0.25 / n1);
+    high = p2 + 2.5f * std::sqrt(0.25 / n2);
+
     if (low > high) {
-        myprintf("Allowing early exit: low: %f%% > high: %f%%\n", low * 100.0, high * 100.0);
+        myprintf("Allowing early exit: low: %f%% > high: %f%%\n", low * 100.0f, high * 100.0f);
         return true;
     }
     if (p1 < 0.10 || p1 > 0.95) {
-        myprintf("Allowing early exit: score: %f%%\n", p1 * 100.0);
+        myprintf("Allowing early exit: score: %f%%\n", p1 * 100.0f);
         return true;
     }
 
@@ -724,8 +752,6 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_root.netscore_children(m_nodes, m_rootstate, true);
     m_root.kill_superkos(m_rootstate);
 
-    bool easy_move_flag = easy_move();
-
     m_run = true;
 
     int cpus = cfg_num_threads;
@@ -734,6 +760,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
         tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
     }
 
+    // If easy move precondition doesn't hold, pretend we
+    // checked (and failed).
+    bool easy_move_tested = !easy_move_precondition();
     bool keeprunning = true;
     int iterations = 0;
     int last_update = 0;
@@ -758,8 +787,16 @@ int UCTSearch::think(int color, passflag_t passflag) {
             keeprunning &= (iterations++ < m_maxplayouts);
 
             // check for early exit
-            if (keeprunning && ((iterations & 127) == 0) && centiseconds_elapsed > time_for_move/2) {
-                keeprunning = !allow_early_exit();
+            if (keeprunning && ((iterations & 127) == 0)) {
+                if (centiseconds_elapsed > time_for_move/5) {
+                    if (!easy_move_tested) {
+                        keeprunning &= !allow_easy_move();
+                        easy_move_tested = true;
+                    }
+                    if (centiseconds_elapsed > time_for_move/3) {
+                         keeprunning &= !allow_early_exit();
+                    }
+                }
             }
         } else {
             if (centiseconds_elapsed - last_update > 100) {
@@ -769,7 +806,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
             }
             keeprunning = (!m_hasrunflag || (*m_runflag));
         }
-    } while(keeprunning && (!easy_move_flag || m_analyzing));
+    } while(keeprunning);
 
     // stop the search
     m_run = false;

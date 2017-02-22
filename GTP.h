@@ -35,6 +35,8 @@ extern int cfg_eval_thresh;
 extern int cfg_eval_scale;
 extern int cfg_rave_min;
 extern int cfg_rave_max;
+extern float cfg_easymove_sigma;
+extern float cfg_easymove_divider;
 extern std::string cfg_logfile;
 extern FILE* cfg_logfile_handle;
 extern bool cfg_quiet;
