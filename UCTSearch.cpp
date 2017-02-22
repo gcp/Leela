@@ -262,6 +262,62 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
 #endif
 }
 
+bool UCTSearch::easy_move_precondition() {
+   if (!m_use_nets) {
+        return false;
+    }
+    if (!m_root.has_children()) {
+        return false;
+    }
+
+    float best_probability = 0.0f;
+
+    // do we have statistics on the moves?
+    UCTNode * first = m_root.get_first_child();
+    if (first != NULL) {
+        best_probability = first->get_score();
+        if (best_probability < 0.60f) {
+            return false;
+        }
+    } else {
+        return false;
+    }
+
+    UCTNode * second = first->get_sibling();
+    if (second != NULL) {
+        float second_probability = second->get_score();
+        if (second_probability * 10.0f < best_probability) {
+            return true;
+        }
+    } else {
+        return true;
+    }
+    return false;
+}
+
+bool UCTSearch::allow_easy_move() {
+    // Precondition failure should mean we don't get here.
+    // We can assume there are at least 2 moves now.
+    assert(m_use_nets);
+
+    UCTNode * first = m_root.get_first_child();
+    float best_probability = first->get_score();
+    // Some other move got to first place.
+    if (best_probability < 0.60f) {
+        return false;
+    }
+
+    UCTNode * second = first->get_sibling();
+    float second_probability = second->get_score();
+    if (second_probability * 10.0f < best_probability) {
+        myprintf("Allowing very early exit: score: %5.2f%% >> %5.2f%%\n",
+                 best_probability * 100.0f, second_probability*100.0f);
+        return true;
+    }
+
+    return false;
+}
+
 bool UCTSearch::allow_early_exit() {
     if (!m_root.has_children()) {
         return false;
@@ -301,8 +357,8 @@ bool UCTSearch::allow_early_exit() {
     // Variance of Bernoulli distribution is p(1-p) = 0.25
     // Standard error is var/sqrt(n)
     // Thus standard error on MC = sqrt(0.25)/sqrt(n) = sqrt(0.25/n)
-    low  = p1 - cfg_easymove_sigma * std::sqrt(0.25 / n1);
-    high = p2 + cfg_easymove_sigma * std::sqrt(0.25 / n2);
+    low  = p1 - 2.5f * std::sqrt(0.25 / n1);
+    high = p2 + 2.5f * std::sqrt(0.25 / n2);
 
     if (low > high) {
         myprintf("Allowing early exit: low: %f%% > high: %f%%\n", low * 100.0f, high * 100.0f);
@@ -704,6 +760,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
         tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
     }
 
+    // If easy move precondition doesn't hold, pretend we
+    // checked (and failed).
+    bool easy_move_tested = !easy_move_precondition();
     bool keeprunning = true;
     int iterations = 0;
     int last_update = 0;
@@ -729,8 +788,14 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
             // check for early exit
             if (keeprunning && ((iterations & 127) == 0)) {
-                if (centiseconds_elapsed > ((float)time_for_move)/cfg_easymove_divider) {
-                    keeprunning = !allow_early_exit();
+                if (centiseconds_elapsed > time_for_move/5) {
+                    if (!easy_move_tested) {
+                        keeprunning &= !allow_easy_move();
+                        easy_move_tested = true;
+                    }
+                    if (centiseconds_elapsed > time_for_move/3) {
+                         keeprunning &= !allow_early_exit();
+                    }
                 }
             }
         } else {
