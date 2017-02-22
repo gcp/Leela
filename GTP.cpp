@@ -56,8 +56,7 @@ float cfg_beta;
 float cfg_patternbonus;
 int cfg_rave_min;
 int cfg_rave_max;
-float cfg_easymove_ratio;
-float cfg_easymove_minprob;
+float cfg_easymove_sigma;
 float cfg_easymove_divider;
 std::string cfg_logfile;
 FILE* cfg_logfile_handle;
@@ -100,9 +99,8 @@ void GTP::setup_default_parameters() {
     cfg_eval_scale = 2;
     cfg_rave_min = 11;
     cfg_rave_max = 5;
-    cfg_easymove_divider = 20.0f;
-    cfg_easymove_minprob = 0.6f;
-    cfg_easymove_ratio = 10.0f;
+    cfg_easymove_divider = 2.0f;
+    cfg_easymove_sigma = 3.0f;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }

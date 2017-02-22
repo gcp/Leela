@@ -48,8 +48,6 @@ private:
     int get_best_move_nosearch(std::vector<std::pair<float, int>> moves,
                                float score, passflag_t passflag);
     bool allow_early_exit();
-    bool allow_easy_move();
-    bool easy_move_precondition();
 
     GameState & m_rootstate;
     UCTNode m_root;

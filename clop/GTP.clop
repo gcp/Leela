@@ -11,9 +11,8 @@ Script ./clopgtp
 # For GammaParameter, quadratic regression is performed on log(x)
 # Warning: 123 and not 123.0 should be used for IntegerParameter
 
-GammaParameter         easymove_divider   1.0     100.0
-LinearParameter        easymove_minprob   0.0       1.0
-GammaParameter         easymove_ratio     1.0     100.0
+GammaParameter        easymove_divider   1.0     100.0
+GammaParameter        easymove_sigma     0.1      10.0
 
 Processor cpu1
 Processor cpu2
