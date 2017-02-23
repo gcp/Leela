@@ -1254,7 +1254,17 @@ void Network::autotune_from_file(std::string filename) {
     gather_traindata(filename, data);
 }
 
-std::string Network::get_backend() {
+std::string Network::get_opencl_backend() {
+#if defined(USE_OPENCL)
+    return OpenCL::get_OpenCL()->get_device_name();
+#elif defined(USE_CAFFE)
+    return std::string("Caffe");
+#else
+    return std::string("No GPU acceleration");
+#endif
+}
+
+std::string Network::get_blas_backend() {
 #ifdef USE_BLAS
 #ifndef __APPLE__
 #ifdef USE_OPENBLAS
@@ -1268,9 +1278,6 @@ std::string Network::get_backend() {
 #else
     return std::string("BLAS core: Apple Accelerate");
 #endif
-#elif defined(USE_OPENCL)
-    return OpenCL::get_OpenCL()->get_device_name();
-#elif defined(USE_CAFFE)
-    return std::string("Caffe");
 #endif
+    return std::string("No BLAS backend active");
 }
