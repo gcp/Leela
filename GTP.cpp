@@ -90,17 +90,17 @@ void GTP::setup_default_parameters() {
     cfg_fpu = 3.5f;
     cfg_mcts_fpu = 3.5f;
     cfg_puct = 0.3f;
-    cfg_uct = 0.0f;
+    cfg_uct = 0.7f;
     cfg_psa = 0.1f;
     cfg_softmax_temp = 0.5f;
-    cfg_beta = 8.5f;
-    cfg_patternbonus = 0.01f;
+    cfg_beta = 9.5f;
+    cfg_patternbonus = 0.00075f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.45f;
     cfg_eval_thresh = 5;
     cfg_eval_scale = 2;
-    cfg_rave_moves = 11;
+    cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }
