@@ -45,17 +45,19 @@ float cfg_tactical;
 float cfg_bound;
 float cfg_pass_score;
 float cfg_fpu;
+float cfg_mcts_fpu;
 float cfg_cutoff_offset;
 float cfg_cutoff_ratio;
 float cfg_puct;
+float cfg_uct;
 float cfg_psa;
+float cfg_softmax_temp;
 float cfg_mix;
 int cfg_eval_thresh;
 int cfg_eval_scale;
 float cfg_beta;
 float cfg_patternbonus;
-int cfg_rave_min;
-int cfg_rave_max;
+int cfg_rave_moves;
 std::string cfg_logfile;
 FILE* cfg_logfile_handle;
 bool cfg_quiet;
@@ -68,8 +70,8 @@ void GTP::setup_default_parameters() {
     cfg_mature_threshold = 30;
     cfg_expand_divider = 2.0f;
 #else
-    cfg_mature_threshold = 80;
-    cfg_expand_divider = 2.5f;
+    cfg_mature_threshold = 90;
+    cfg_expand_divider = 2.0f;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -86,17 +88,15 @@ void GTP::setup_default_parameters() {
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 3.5f;
-    cfg_puct = 0.425f;
-    cfg_psa = 0.205f;
-    cfg_beta = 8.5f;
-    cfg_patternbonus = 0.01f;
+    cfg_puct = 0.3f;
+    cfg_psa = 0.1f;
+    cfg_softmax_temp = 0.5f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.45f;
     cfg_eval_thresh = 5;
     cfg_eval_scale = 2;
-    cfg_rave_min = 11;
-    cfg_rave_max = 5;
+    cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }

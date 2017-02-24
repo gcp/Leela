@@ -85,8 +85,8 @@ int main(int argc, char *argv[])
     char readbuff[256];
     int read_cnt;
 
-    orig_process.write(qPrintable("time_settings 600 0 0\n"));
-    tune_process.write(qPrintable("time_settings 600 0 0\n"));
+    orig_process.write(qPrintable("boardsize 13\n"));
+    tune_process.write(qPrintable("boardsize 13\n"));
     orig_process.waitForBytesWritten(-1);
     tune_process.waitForBytesWritten(-1);
     while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
@@ -104,7 +104,31 @@ int main(int argc, char *argv[])
     while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
     read_cnt = tune_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
-    cerr << "Started, time successfully set." << endl;
+    cerr << "Started, board successfully set." << endl;
+
+    orig_process.write(qPrintable("time_settings 300 0 0\n"));
+    tune_process.write(qPrintable("time_settings 300 0 0\n"));
+    orig_process.waitForBytesWritten(-1);
+    tune_process.waitForBytesWritten(-1);
+    while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+    read_cnt = orig_process.readLine(readbuff, 256);
+    Q_ASSERT(read_cnt > 0);
+    Q_ASSERT(readbuff[0] == '=');
+    while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+    read_cnt = tune_process.readLine(readbuff, 256);
+    Q_ASSERT(read_cnt > 0);
+    Q_ASSERT(readbuff[0] == '=');
+    // Eat double newline from GTP protocol
+    while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+    read_cnt = orig_process.readLine(readbuff, 256);
+    Q_ASSERT(read_cnt > 0);
+    while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+    read_cnt = tune_process.readLine(readbuff, 256);
+    Q_ASSERT(read_cnt > 0);
+    cerr << "Time successfully set." << endl;
+
+
+
 
     bool stop = false;
     bool orig_to_move = (qrand() % 2 == 0);

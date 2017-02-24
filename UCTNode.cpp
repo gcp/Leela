@@ -499,8 +499,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
         childbound = 35;
     } else {
         if (use_nets) {
-            childbound = std::max(cfg_rave_min, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
-            childbound = std::min(cfg_rave_min + cfg_rave_max, childbound);
+            childbound = cfg_rave_moves;
         } else {
             childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
         }
@@ -510,27 +509,25 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     int childcount = 0;
     UCTNode * child = m_firstchild;
 
+
     // count parentvisits
-    float numerator;
-    float cutoff_ratio;
-    if (has_netscore()) {
+    // XXX: wtf do we count this??? don't we know?
+    // make sure we are at a valid successor
+    while (child != NULL && !child->valid()) {
+        child = child->m_nextsibling;
+    }
+    while (child != NULL && childcount < childbound) {
+        parentvisits      += child->get_visits();
+        child = child->m_nextsibling;
         // make sure we are at a valid successor
         while (child != NULL && !child->valid()) {
             child = child->m_nextsibling;
         }
-        while (child != NULL && childcount < childbound) {
-            parentvisits      += child->get_visits();
-            child = child->m_nextsibling;
-            // make sure we are at a valid successor
-            while (child != NULL && !child->valid()) {
-                child = child->m_nextsibling;
-            }
-            childcount++;
-        }
-        numerator = std::log((float)parentvisits);
-        cutoff_ratio = cfg_cutoff_offset + cfg_cutoff_ratio * std::log((float)parentvisits);
+        childcount++;
     }
+    float numerator = std::log((float)parentvisits);
 
+    float cutoff_ratio;
     childcount = 0;
     child = m_firstchild;
     // make sure we are at a valid successor
@@ -543,6 +540,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             best_probability = child->get_score();
         }
         assert(best_probability > 0.001f);
+        cutoff_ratio = cfg_cutoff_offset + cfg_cutoff_ratio * numerator;
     }
     while (child != NULL && childcount < childbound) {
         float value;
@@ -582,10 +580,10 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             if (!child->first_visit()) {
                 // "UCT" part
                 float winrate = child->get_mixed_score(color);
-                uctvalue = winrate;
+                uctvalue = winrate + cfg_uct * std::sqrt(numerator / child->get_visits());
                 patternbonus = sqrtf((child->get_score() * cfg_patternbonus) / child->get_visits());
             } else {
-                uctvalue = 1.1f;
+                uctvalue = cfg_mcts_fpu;
                 patternbonus = sqrtf(child->get_score() * cfg_patternbonus);
             }
 

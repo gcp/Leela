@@ -29,16 +29,25 @@
 using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
-: m_rootstate(g),
-  m_root(FastBoard::PASS, 0.0f, 1, 1),
-  m_nodes(0),
-  m_score(0.0f),
-  m_hasrunflag(false),
-  m_runflag(NULL),
-  m_analyzing(false),
-  m_quiet(false) {
-  set_use_nets(cfg_enable_nets);
-  set_playout_limit(cfg_max_playouts);
+    : m_rootstate(g),
+      m_root(FastBoard::PASS, 0.0f, 1, 1),
+      m_nodes(0),
+      m_score(0.0f),
+      m_hasrunflag(false),
+      m_runflag(NULL),
+      m_analyzing(false),
+      m_quiet(false) {
+    set_use_nets(cfg_enable_nets);
+    set_playout_limit(cfg_max_playouts);
+    if (m_use_nets) {
+        cfg_beta = 9.5f;
+        cfg_patternbonus = 0.00075f;
+    } else {
+        cfg_uct = 0.00025f;
+        cfg_mcts_fpu = 1.3f;
+        cfg_beta = 32.0f;
+        cfg_patternbonus = 0.0035f;
+    }
 }
 
 void UCTSearch::set_runflag(std::atomic<bool> * flag) {
