@@ -159,12 +159,6 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("rave_max")) {
         cfg_rave_max = vm["rave_max"].as<int>();
     }
-    if (vm.count("easymove_sigma")) {
-        cfg_easymove_sigma = vm["easymove_sigma"].as<float>();
-    }
-    if (vm.count("easymove_divider")) {
-        cfg_easymove_divider = vm["easymove_divider"].as<float>();
-    }
 #endif
 
     if (vm.count("logfile")) {
