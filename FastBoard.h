@@ -185,6 +185,7 @@ protected:
     FastBoard remove_dead();
     bool predict_solid_eye(const int move, const int color, const int vtx);
     void check_nakade(int color, int vertex, movelist_t & moves);
+    int after_liberties_color(const int color, const int vertex);
 };
 
 #endif

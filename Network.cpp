@@ -569,17 +569,17 @@ Network::Netresult Network::get_scored_moves(
         std::pair<int, int> xy = state->board.get_xy(sm.second);
         int bitmappos = (xy.second * 19) + xy.first;
         if ((*ladder)[bitmappos]) {
-            // myprintf("Ladder at %s (%d) score %f\n",
-            //          state->board.move_to_text(sm.second).c_str(),
-            //          sm.second,
+            //myprintf("Ladder at %s (%d) score %f\n",
+            //         state->board.move_to_text(sm.second).c_str(),
+            //         sm.second,
             //         sm.first);
             sm.first = 0.0f;
         }
     }
 
     // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-    //   show_heatmap(state, result);
-    //}
+    //     show_heatmap(state, result);
+    // }
 
     return result;
 }

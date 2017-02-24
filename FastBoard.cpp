@@ -2368,28 +2368,23 @@ int FastBoard::count_rliberties(int vertex) {
     return m_libs[m_parent[vertex]];
 }
 
-std::pair<int, int> FastBoard::after_liberties(const int color, const int vtx) {
+
+int FastBoard::after_liberties_color(const int color, const int vtx) {
     FastBoard tmp = *this;
-    int mylibs;
-    int opplibs;
+    int libs = 0;
     bool dummy;
 
-    if (is_suicide(vtx, color)) {
-        mylibs = 0;
-    } else {
+    if (!is_suicide(vtx, color)) {
         tmp.update_board_fast(color, vtx, dummy);
-        mylibs = tmp.count_rliberties(vtx);
+        libs = tmp.count_rliberties(vtx);
     }
 
-    tmp = *this;
+    return libs;
+}
 
-    if (is_suicide(vtx, !color)) {
-        opplibs = 0;
-    } else {
-        tmp.update_board_fast(!color, vtx, dummy);
-        opplibs = tmp.count_rliberties(vtx);
-    }
-
+std::pair<int, int> FastBoard::after_liberties(const int color, const int vertex) {
+    int mylibs  = after_liberties_color(color, vertex);
+    int opplibs = after_liberties_color(!color, vertex);
     return std::make_pair(mylibs, opplibs);
 }
 
@@ -2429,19 +2424,34 @@ bool FastBoard::check_winning_ladder(const int color, const int vtx) {
     return false;
 }
 
+#undef LADDER_DEBUG
+
 bool FastBoard::check_losing_ladder(const int color, const int vtx, int branching) {
     FastBoard tmp = *this;
 
+#ifdef LADDER_DEBUG
+    std::cout << "Checking " << move_to_text(vtx) << std::endl;
+#endif
+
     if (branching > 5) {
+#ifdef LADDER_DEBUG
+        myprintf("Excessive branching, giving up");
+#endif
         return false;
     }
 
     // killing opponents?
     int elib = tmp.minimum_elib_count(color, vtx);
     if (elib == 0 || elib == 1) {
+#ifdef LADDER_DEBUG
+        myprintf("Enemy dies, exiting\n");
+#endif
         return false;
     }
 
+#ifdef LADDER_DEBUG
+    display_board(vtx);
+#endif
     int atari = vtx;
     bool dummy;
 
@@ -2464,12 +2474,19 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 
         // escaped ladder
         if (newlibs >= 3) {
+#ifdef LADDER_DEBUG
+            myprintf("3 liberties, exiting\n");
+            tmp.display_board(atari);
+#endif
             return false;
         }
 
         // atari on opponent
         int newelib = tmp.minimum_elib_count(color, atari);
         if (newelib == 1) {
+#ifdef LADDER_DEBUG
+            myprintf("Opponent in atari, exiting\n");
+#endif
             return false;
         }
 
@@ -2481,21 +2498,40 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 
         // 2 good options => always lives
         if (tmp.count_pliberties(libarr[0]) == 3 && tmp.count_pliberties(libarr[1]) == 3) {
+#ifdef LADDER_DEBUG
+            myprintf("2 good liberties, exiting\n");
+#endif
             return false;
         }
 
+        int liberties_arr0 = tmp.after_liberties_color(tmp.get_to_move(), libarr[0]);
+        int liberties_arr1 = tmp.after_liberties_color(tmp.get_to_move(), libarr[1]);
+
+#ifdef LADDER_DEBUG
+        myprintf("liberties at %s = %d, %s = %d\n",
+                 move_to_text(libarr[0]).c_str(), liberties_arr0,
+                 move_to_text(libarr[1]).c_str(), liberties_arr1);
+#endif
         // 2 equal moves => branch
-        if (tmp.count_pliberties(libarr[0]) == tmp.count_pliberties(libarr[1])) {
+        if (liberties_arr0 == liberties_arr1) {
             FastBoard tmp2 = tmp;
 
             // play atari in liberty 1, escape in liberty 2
             tmp2.update_board_fast(!tmp.m_tomove, libarr[0], dummy);
+#ifdef LADDER_DEBUG
+            myprintf("Branch, atari at %s\n", move_to_text(libarr[0]).c_str());
+            tmp2.display_board(libarr[0]);
+#endif
             bool ladder1 = tmp2.check_losing_ladder(color, libarr[1], branching + 1);
 
             tmp2 = tmp;
 
             // play atari in liberty 2, escape in liberty 1
             tmp2.update_board_fast(!tmp.m_tomove, libarr[1], dummy);
+#ifdef LADDER_DEBUG
+            myprintf("Branch, atari at %s\n", move_to_text(libarr[1]).c_str());
+            tmp2.display_board(libarr[1]);
+#endif
             bool ladder2 = tmp2.check_losing_ladder(color, libarr[0], branching + 1);
 
             // if one side of the ataris work, the ladder works
@@ -2506,16 +2542,21 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
             }
         } else {
             // non branching, play atari that causes most unpleasant escape move
-            if (tmp.count_pliberties(libarr[0]) > tmp.count_pliberties(libarr[1])) {
+            if (liberties_arr0 > liberties_arr1) {
                 tmp.update_board_fast(!tmp.m_tomove, libarr[0], dummy);
-            } else if (tmp.count_pliberties(libarr[0]) < tmp.count_pliberties(libarr[1])) {
+            } else if (liberties_arr0 < liberties_arr1) {
                 tmp.update_board_fast(!tmp.m_tomove, libarr[1], dummy);
+            } else {
+                assert(false);
             }
         }
 
         // find and play new saving move
         atari = tmp.in_atari(atari);
         tmp.update_board_fast(tmp.m_tomove, atari, dummy);
+#ifdef LADDER_DEBUG
+        myprintf("Saving through %s\n", move_to_text(atari).c_str());
+#endif
     };
 
     return false;
