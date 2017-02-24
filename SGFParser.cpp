@@ -67,6 +67,11 @@ std::vector<std::string> SGFParser::chop_all(std::string filename,
 
     ins.close();
 
+    // No game found? Assume closing tag was missing (OGS)
+    if (result.size() == 0) {
+        result.push_back(gamebuff);
+    }
+
     return result;
 }
 
