@@ -57,7 +57,9 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("useless_self_atari", po::value<float>())
         ("pass_score", po::value<float>())
         ("fpu", po::value<float>())
+        ("mcts_fpu", po::value<float>())
         ("puct", po::value<float>())
+        ("uct", po::value<float>())
         ("psa", po::value<float>())
         ("cutoff_offset", po::value<float>())
         ("cutoff_ratio", po::value<float>())
@@ -65,10 +67,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("softmax_temp", po::value<float>())
         ("eval_thresh", po::value<int>())
         ("eval_scale", po::value<int>())
-        ("rave_min", po::value<int>())
-        ("rave_max", po::value<int>())
-        ("easymove_sigma", po::value<float>())
-        ("easymove_divider", po::value<float>())
+        ("rave_moves", po::value<int>())
 #endif
         ;
     po::variables_map vm;
@@ -127,8 +126,14 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("fpu")) {
         cfg_fpu = vm["fpu"].as<float>();
     }
+    if (vm.count("mcts_fpu")) {
+        cfg_mcts_fpu = vm["mcts_fpu"].as<float>();
+    }
     if (vm.count("puct")) {
         cfg_puct = vm["puct"].as<float>();
+    }
+    if (vm.count("uct")) {
+        cfg_uct = vm["uct"].as<float>();
     }
     if (vm.count("psa")) {
         cfg_psa = vm["psa"].as<float>();
@@ -157,11 +162,8 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("eval_scale")) {
         cfg_eval_scale = vm["eval_scale"].as<int>();
     }
-    if (vm.count("rave_min")) {
-        cfg_rave_min = vm["rave_min"].as<int>();
-    }
-    if (vm.count("rave_max")) {
-        cfg_rave_max = vm["rave_max"].as<int>();
+    if (vm.count("rave_moves")) {
+        cfg_rave_moves = vm["rave_moves"].as<int>();
     }
 #endif
 
