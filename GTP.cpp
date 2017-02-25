@@ -108,9 +108,9 @@ bool GTP::perform_self_test(GameState & state) {
     // Perform self-test
     auto vec = Network::get_Network()->get_scored_moves(
         &state, Network::Ensemble::DIRECT);
-    testPassed &= vec[60].first > 0.142 && vec[60].first < 0.143;
+    testPassed &= vec[60].first > 0.183 && vec[60].first < 0.184;
     testPassed &= vec[60].second == 88;
-    testPassed &= vec[72].first > 0.143 && vec[72].first < 0.144;
+    testPassed &= vec[72].first > 0.186 && vec[72].first < 0.187;
     testPassed &= vec[72].second == 100;
     if (testPassed) {
         myprintf("passed.\n");
