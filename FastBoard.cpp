@@ -2457,14 +2457,14 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 
     tmp.update_board_fast(tmp.m_tomove, vtx, dummy);
 
+    // suicided
+    if (tmp.get_square(atari) == EMPTY) {
+        return true;
+    }
+
     // This loop does not swap the side to move, defender
     // and attacker are always the same.
     while (1) {
-        // suicided
-        if (tmp.get_square(atari) == EMPTY) {
-            return true;
-        }
-
         int newlibs = tmp.count_rliberties(atari);
 
         // self-atari
@@ -2504,8 +2504,28 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
             return false;
         }
 
+        // Find where to atari next
         int liberties_arr0 = tmp.after_liberties_color(tmp.get_to_move(), libarr[0]);
         int liberties_arr1 = tmp.after_liberties_color(tmp.get_to_move(), libarr[1]);
+        bool suicide_arr0 = tmp.is_suicide(libarr[0], !tmp.get_to_move());
+        bool suicide_arr1 = tmp.is_suicide(libarr[1], !tmp.get_to_move());
+
+        if (suicide_arr0 && suicide_arr1) {
+#ifdef LADDER_DEBUG
+            myprintf("Both ataris are suicides, exiting\n");
+            display_board(atari);
+#endif
+            return false;
+        }
+
+        // Make it more attractive to atari in the other liberty if
+        // one is suiciding.
+        if (suicide_arr0) {
+            liberties_arr1 = liberties_arr0 + 1;
+        }
+        if (suicide_arr1) {
+            liberties_arr0 = liberties_arr1 + 1;
+        }
 
 #ifdef LADDER_DEBUG
         myprintf("liberties at %s = %d, %s = %d\n",
@@ -2516,22 +2536,24 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
         if (liberties_arr0 == liberties_arr1) {
             FastBoard tmp2 = tmp;
 
-            // play atari in liberty 1, escape in liberty 2
+            // play atari in liberty 0, escape in liberty 1
             tmp2.update_board_fast(!tmp.m_tomove, libarr[0], dummy);
 #ifdef LADDER_DEBUG
             myprintf("Branch, atari at %s\n", move_to_text(libarr[0]).c_str());
             tmp2.display_board(libarr[0]);
 #endif
+            assert(tmp2.get_square(libarr[0]) != EMPTY);
             bool ladder1 = tmp2.check_losing_ladder(color, libarr[1], branching + 1);
 
             tmp2 = tmp;
 
-            // play atari in liberty 2, escape in liberty 1
+            // play atari in liberty 1, escape in liberty 0
             tmp2.update_board_fast(!tmp.m_tomove, libarr[1], dummy);
 #ifdef LADDER_DEBUG
             myprintf("Branch, atari at %s\n", move_to_text(libarr[1]).c_str());
             tmp2.display_board(libarr[1]);
 #endif
+            assert(tmp2.get_square(libarr[1]) == EMPTY);
             bool ladder2 = tmp2.check_losing_ladder(color, libarr[0], branching + 1);
 
             // if one side of the ataris work, the ladder works
@@ -2553,6 +2575,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 
         // find and play new saving move
         atari = tmp.in_atari(atari);
+        assert(atari);
         tmp.update_board_fast(tmp.m_tomove, atari, dummy);
 #ifdef LADDER_DEBUG
         myprintf("Saving through %s\n", move_to_text(atari).c_str());
