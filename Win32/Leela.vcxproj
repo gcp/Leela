@@ -209,6 +209,7 @@
     <ClCompile Include="..\Leela.cpp" />
     <ClCompile Include="..\Matcher.cpp" />
     <ClCompile Include="..\MCOTable.cpp" />
+    <ClCompile Include="..\MCPolicy.cpp" />
     <ClCompile Include="..\Network.cpp" />
     <ClCompile Include="..\NN.cpp" />
     <ClCompile Include="..\NNValue.cpp" />
@@ -243,6 +244,7 @@
     <ClInclude Include="..\KoState.h" />
     <ClInclude Include="..\Matcher.h" />
     <ClInclude Include="..\MCOTable.h" />
+    <ClInclude Include="..\MCPolicy.h" />
     <ClInclude Include="..\Network.h" />
     <ClInclude Include="..\OpenCL.h" />
     <ClInclude Include="..\Playout.h" />

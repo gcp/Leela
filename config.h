@@ -18,7 +18,7 @@
 
 
 /* Features */
-#define KGS
+//#define KGS
 #define USE_BLAS
 //#define USE_OPENBLAS
 #define USE_MKL
