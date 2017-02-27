@@ -421,7 +421,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     constexpr int width = 19;
     constexpr int height = 19;
     std::vector<float> softmax_data(width * height);
-    softmax(cb_data->m_output_data, softmax_data);
+    softmax(cb_data->m_output_data, softmax_data, cfg_softmax_temp);
     std::vector<float>& outputs = softmax_data;
 
     Network::Netresult result;
@@ -683,7 +683,7 @@ Network::Netresult Network::get_scored_moves_internal(
     OpenCL::get_OpenCL()->thread_init();
     OpenCL::get_OpenCL()->forward_async(input_data, output_data,
                                         nullptr, nullptr);
-    softmax(output_data, softmax_data);
+    softmax(output_data, softmax_data, cfg_softmax_temp);
     std::vector<float>& outputs = softmax_data;
 #elif defined(USE_BLAS)
     // XXX really only need the first 24
