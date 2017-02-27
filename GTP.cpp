@@ -21,6 +21,7 @@
 #include "PNSearch.h"
 #include "Network.h"
 #include "Book.h"
+#include "MCPolicy.h"
 
 using namespace Utils;
 
@@ -743,6 +744,15 @@ bool GTP::execute(GameState & game, std::string xinput) {
             out.close();
         }
 
+        return true;
+    } else if (command.find("rltune") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp, filename;
+
+        cmdstream >> tmp;   // eat rltune
+        cmdstream >> filename;
+
+        MCPolicy::mse_from_file(filename);
         return true;
     }
 
