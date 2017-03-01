@@ -130,7 +130,7 @@ int FastState::walk_empty_list(int color, bool allow_sa) {
 }
 
 int FastState::select_weighted(FastBoard::scoredmoves_t & scoredmoves,
-                                int cumul) {
+                               int cumul) {
     int index = Random::get_Rng()->randint32(cumul);
 
     for (size_t i = 0; i < scoredmoves.size(); i++) {
@@ -193,7 +193,7 @@ int FastState::play_random_move(int color) {
         } else {
             assert(sq != m_komove);
             int pattern = board.get_pattern_fast_augment(sq);
-            float score = matcher->matches(color, pattern);
+            score = matcher->matches(color, pattern);
             std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
 
             assert(nbr_crit.first != 0);

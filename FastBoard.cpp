@@ -262,17 +262,17 @@ int FastBoard::fast_ss_suicide(const int color, const int i)  {
     return true;
 }
 
-void FastBoard::add_neighbour(const int i, const int color) {       
-    assert(color == WHITE || color == BLACK || color == EMPTY);                                                          
+void FastBoard::add_neighbour(const int i, const int color) {
+    assert(color == WHITE || color == BLACK || color == EMPTY);
 
     std::array<int, 4> nbr_pars;
-    int nbr_par_cnt = 0;    
+    int nbr_par_cnt = 0;
 
     for (int k = 0; k < 4; k++) {
         int ai = i + m_dirs[k];
 
-        m_neighbours[ai] += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));                               
-        
+        m_neighbours[ai] += (1 << (NBR_SHIFT * color)) - (1 << (NBR_SHIFT * EMPTY));
+
         bool found = false;
         for (int i = 0; i < nbr_par_cnt; i++) {
             if (nbr_pars[i] == m_parent[ai]) {
@@ -283,7 +283,7 @@ void FastBoard::add_neighbour(const int i, const int color) {
         if (!found) {
             m_libs[m_parent[ai]]--;
             nbr_pars[nbr_par_cnt++] = m_parent[ai];
-        }        
+        }
     }
 }
 
@@ -1222,6 +1222,7 @@ void FastBoard::kill_neighbours(int vertex, movelist_t & moves) {
             if (m_square[ai] == kcolor) {
                 int par = m_parent[ai];
                 int lib = m_libs[par];
+                assert(lib > 0);
 
                 if (lib <= 1 && nbr_cnt < 4) {
                     bool found = false;
@@ -1277,6 +1278,7 @@ void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & mov
         if (m_square[ai] == color) {
             int par = m_parent[ai];
             int lib = m_libs[par];
+            assert(lib > 0);
 
             if (lib <= 1) {
                 int atari = in_atari(ai);
@@ -2009,7 +2011,9 @@ void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves) {
         int sq = vertex + m_extradirs[i];
 
         if (m_square[sq] == EMPTY) {
-            moves.push_back(MovewFeatures(sq, MWF_FLAG_PATTERN));
+            if (!fast_ss_suicide(color, sq)) {
+                moves.push_back(MovewFeatures(sq, MWF_FLAG_PATTERN));
+            }
         }
     }
 
@@ -2219,6 +2223,7 @@ void FastBoard::try_capture(int color, int vertex, movelist_t & moves) {
             if (m_square[ai] == !color) {
                 int par = m_parent[ai];
                 int lib = m_libs[par];
+                assert(lib > 0);
 
                 if (lib <= 1) {
                     int size = string_size(par);
@@ -2546,7 +2551,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
             myprintf("Branch, atari at %s\n", move_to_text(libarr[1]).c_str());
             tmp2.display_board(libarr[1]);
 #endif
-            assert(tmp2.get_square(libarr[1]) == EMPTY);
+            assert(tmp2.get_square(libarr[1]) != EMPTY);
             bool ladder2 = tmp2.check_losing_ladder(color, libarr[0], branching + 1);
 
             // if one side of the ataris work, the ladder works
