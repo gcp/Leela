@@ -1233,7 +1233,9 @@ void FastBoard::kill_neighbours(int vertex, movelist_t & moves) {
                     if (!found) {
                         int atari = in_atari(ai);
                         assert(m_square[atari] == EMPTY);
-                        moves.push_back(atari);
+                        MovewFeatures move(atari, MWF_FLAG_CAPTURE | MWF_FLAG_SAVING);
+                        move.set_target_size(string_size(par));
+                        moves.push_back(move);
                         nbr_list[nbr_cnt++] = par;
                     }
                 }
@@ -1279,23 +1281,23 @@ void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & mov
             if (lib <= 1) {
                 int atari = in_atari(ai);
 
-                size_t startsize = moves.size();
-
                 // find saving moves for atari square "atari"
                 // we can save by either
                 // 1) playing in the atari if it increases liberties
                 //    i.e. it is not self-atari
                 // 2) capturing an opponent, which means that he should
                 //    also be in atari
-                if (!self_atari(color, atari)) {
-                    moves.push_back(atari);
-                }
+                MovewFeatures move(atari, MWF_FLAG_SAVING);
+                move.set_target_size(string_size(par));
+                moves.push_back(move);
+                bool sa = self_atari(color, atari);
 
+                size_t startsize = moves.size();
                 kill_neighbours(ai, moves);
 
                 // saving moves failed, add this to critical points
                 // to try and capture
-                if (moves.size() == startsize) {
+                if (moves.size() == startsize && sa) {
                     m_critical.push_back(atari);
                 }
             }
@@ -2007,9 +2009,7 @@ void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves) {
         int sq = vertex + m_extradirs[i];
 
         if (m_square[sq] == EMPTY) {
-            if (!self_atari(color, sq)) {
-                moves.push_back(sq);
-            }
+            moves.push_back(MovewFeatures(sq, MWF_FLAG_PATTERN));
         }
     }
 
@@ -2085,13 +2085,13 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
         return;
     } else if (sq_count == 3) {
         assert(nbr_to_coord[2] != 0);
-        moves.push_back(nbr_to_coord[2]);
+        moves.push_back(MovewFeatures(nbr_to_coord[2], MWF_FLAG_NAKADE));
     } else if (sq_count == 4) {
         // Square 4 is dead but doesn't need immediate nakade
         // Pyramid 4 is dead
         if (empty_counts[3] == 1) {
             assert(nbr_to_coord[3] != 0);
-            moves.push_back(nbr_to_coord[3]);
+            moves.push_back(MovewFeatures(nbr_to_coord[3], MWF_FLAG_NAKADE));
         } else if (empty_counts[2] == 2 && empty_counts[1] == 2) {
             // Straight 4 is alive
             // Bent 4 in the corner is ko
@@ -2117,7 +2117,7 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
             }
             if (bent4) {
                 assert(crit_2_lib_pnt);
-                moves.push_back(crit_2_lib_pnt);
+                moves.push_back(MovewFeatures(crit_2_lib_pnt, MWF_FLAG_NAKADE));
             }
         }
         // Everything else lives
@@ -2125,11 +2125,11 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
         if (empty_counts[1] == 1 && empty_counts[3] == 1) {
             // Bulky 5 is dead
             assert(nbr_to_coord[3] != 0);
-            moves.push_back(nbr_to_coord[3]);
+            moves.push_back(MovewFeatures(nbr_to_coord[3], MWF_FLAG_NAKADE));
         } else if (empty_counts[4] == 1) {
             // Crossed 5 is dead
             assert(nbr_to_coord[4] != 0);
-            moves.push_back(nbr_to_coord[4]);
+            moves.push_back(MovewFeatures(nbr_to_coord[4], MWF_FLAG_NAKADE));
         }
         // Everything else lives
     } else if (sq_count == 6) {
@@ -2137,7 +2137,7 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
         if (empty_counts[1] == 2 && empty_counts[4] == 1) {
             assert(empty_counts[2] == 3);
             assert(nbr_to_coord[4] != 0);
-            moves.push_back(nbr_to_coord[4]);
+            moves.push_back(MovewFeatures(nbr_to_coord[4], MWF_FLAG_NAKADE));
         } else if (empty_counts[2] == 4 && empty_counts[3] == 2) {
             // Rectangular 6 in the corner is dead
             int crit_3_lib_pnt = 0;
@@ -2160,7 +2160,7 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
             }
             if (rect6) {
                 assert(crit_3_lib_pnt);
-                moves.push_back(crit_3_lib_pnt);
+                moves.push_back(MovewFeatures(crit_3_lib_pnt, MWF_FLAG_NAKADE));
             }
         }
         // Everything else lives
@@ -2176,16 +2176,6 @@ void FastBoard::add_near_nakade_moves(int color, int vertex, movelist_t & moves)
             // nakade shape is made by color not to move
             check_nakade(!color, ai, moves);
         }
-    }
-}
-
-int FastBoard::replace_if_nakade(int color, int vertex) {
-    movelist_t tmp_moves;
-    check_nakade(!color, vertex, tmp_moves);
-    if (tmp_moves.empty()) {
-        return vertex;
-    } else {
-        return tmp_moves[0];
     }
 }
 
@@ -2231,7 +2221,10 @@ void FastBoard::try_capture(int color, int vertex, movelist_t & moves) {
                 int lib = m_libs[par];
 
                 if (lib <= 1) {
-                    moves.push_back(vertex);
+                    int size = string_size(par);
+                    MovewFeatures move(vertex, MWF_FLAG_CAPTURE);
+                    move.set_target_size(size);
+                    moves.push_back(move);
                     return;
                 }
             }

@@ -29,10 +29,10 @@ void Matcher::set_Matcher(Matcher * m) {
 
 // initialize matcher data
 Matcher::Matcher() {
-    const int max = 1 << ((8 * 2) + 4);
+    constexpr int MAX_PAT_IDX = 1 << ((8 * 2) + 4);
 
-    m_patterns[FastBoard::BLACK].resize(max);
-    m_patterns[FastBoard::WHITE].resize(max);
+    m_patterns[FastBoard::BLACK].resize(MAX_PAT_IDX);
+    m_patterns[FastBoard::WHITE].resize(MAX_PAT_IDX);
 
     // minimal board we need is 3x3
     FastBoard board;
@@ -50,7 +50,7 @@ Matcher::Matcher() {
         patweights.insert(pr);
     }
 
-    for (int i = 0; i < max; i++) {
+    for (int i = 0; i < MAX_PAT_IDX; i++) {
         int w = i;
         // fill board
         for (int k = 7; k >= 0; k--) {

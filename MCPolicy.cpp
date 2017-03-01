@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <cmath>
+#include <omp.h>
 
 #include "MCPolicy.h"
 #include "SGFParser.h"
@@ -36,7 +37,7 @@ void MCPolicy::mse_from_file(std::string filename) {
 
         int movecount = sgftree->count_mainline_moves();
         int move_pick = Random::get_Rng()->randint32(movecount);
-        //GameState state = sgftree->follow_mainline_state(move_pick);
+        // GameState state = sgftree->follow_mainline_state(move_pick);
         KoState * state = sgftree->get_state_from_mainline(move_pick);
 
         if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE) {
@@ -45,7 +46,8 @@ void MCPolicy::mse_from_file(std::string filename) {
         bool blackwon = (who_won == FastBoard::BLACK);
 
         float bwins = 0.0f;
-        int iterations = 256;
+        constexpr int iterations = 128;
+        #pragma omp parallel for reduction (+:bwins)
         for (int i = 0; i < iterations; i++) {
             FastState tmp = *state;
 
@@ -60,21 +62,21 @@ void MCPolicy::mse_from_file(std::string filename) {
         bwins /= (float)iterations;
 
         float nwscore = Network::get_Network()->get_value(
-            state, Network::Ensemble::AVERAGE_ALL);
+            state, Network::Ensemble::RANDOM_ROTATION);
 
         if (state->get_to_move() == FastBoard::WHITE) {
             nwscore = 1.0f - nwscore;
         }
 
-        myprintf("n=%d BW: %d Score: %1.3f NN: %1.3f ",
+        myprintf("n=%d BW: %d Score: %1.4f NN: %1.4f ",
                  count, blackwon, bwins, nwscore);
 
-        sum_sq_pp += std::pow((blackwon ? 1.0f : 0.0f) - bwins,   2.0f);
-        sum_sq_nn += std::pow((blackwon ? 1.0f : 0.0f) - nwscore, 2.0f);
+        sum_sq_pp += std::pow(2.0f*((blackwon ? 1.0f : 0.0f) - bwins),   2.0f);
+        sum_sq_nn += std::pow(2.0f*((blackwon ? 1.0f : 0.0f) - nwscore), 2.0f);
         count++;
 
-        myprintf(" MSE MC=%1.3f MSE NN=%1.3f\n",
-                 sum_sq_pp/(double)count,
-                 sum_sq_nn/(double)count);
+        myprintf(" MSE MC=%1.4f MSE NN=%1.4f\n",
+                 sum_sq_pp/((double)2.0*count),
+                 sum_sq_nn/((double)2.0*count));
     }
 }

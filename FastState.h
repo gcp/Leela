@@ -63,7 +63,6 @@ protected:
     int walk_empty_list(int color, bool allow_sa = false);
     void play_move(int color, int vertex);
     int select_weighted(FastBoard::scoredmoves_t & moves, int cumul);
-    int select_uniform(FastBoard::movelist_t & moves);
 };
 
 #endif
