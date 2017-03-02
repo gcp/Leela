@@ -157,26 +157,28 @@ int FastState::play_random_move(int color) {
         if (board.get_square(m_lastmove) == !color) {
             board.add_global_captures(color, moves);
             board.save_critical_neighbours(color, m_lastmove, moves);
-            if (m_last_was_capture || (0.2f > rng->randflt())) {
+            if (m_last_was_capture || (0.3f > rng->randflt())) {
                 board.add_near_nakade_moves(color, m_lastmove, moves);
             }
             board.add_pattern_moves(color, m_lastmove, moves);
-            moves.erase(std::remove_if(moves.begin(), moves.end(),
-                                       [this](MovewFeatures & mwf) {
-                                           return mwf.get_sq() == m_komove;
-                                       }),
-                        moves.end());
         }
     }
 
+    int loop_amount = 4;
     // Random moves on the board
-    for (int loops = 0; loops < 4; loops++) {
+    for (int loops = 0; loops < loop_amount; loops++) {
         int sq = walk_empty_list(board.m_tomove, true);
         if (sq == FastBoard::PASS) {
             break;
         }
         moves.push_back(MovewFeatures(sq, MWF_FLAG_RANDOM));
     }
+
+    moves.erase(std::remove_if(moves.begin(), moves.end(),
+                               [this](MovewFeatures & mwf) {
+                                   return mwf.get_sq() == m_komove;
+                               }),
+                moves.end());
 
     // Pass as fallback
     moves.push_back(MovewFeatures(FastBoard::PASS, MWF_FLAG_PASS));
@@ -186,59 +188,72 @@ int FastState::play_random_move(int color) {
 
     for (auto & mwf : moves) {
         int sq = mwf.get_sq();
-        float score = 0.0f;
-
         if (sq == FastBoard::PASS) {
-            score = cfg_pass_score;
-        } else {
-            assert(sq != m_komove);
-            int pattern = board.get_pattern_fast_augment(sq);
-            score = matcher->matches(color, pattern);
-            std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
+            continue;
+        }
+        //int pattern = board.get_pattern_fast_augment(sq);
+        //score = matcher->matches(color, pattern);
+        int pattern = board.get_pattern3_augment(sq, false);
+        mwf.set_pattern(pattern);
 
-            assert(nbr_crit.first != 0);
-            assert(nbr_crit.second != 0);
+        std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
 
-            if (nbr_crit.first == 1) {
-                score *= cfg_crit_mine_1;
-            } else  if (nbr_crit.first == 2) {
-                score *= cfg_crit_mine_2;
+        assert(nbr_crit.first != 0);
+        assert(nbr_crit.second != 0);
+
+        if (nbr_crit.first == 1) {
+            mwf.add_flag(MWF_FLAG_CRIT_MINE1);
+        } else  if (nbr_crit.first == 2) {
+            mwf.add_flag(MWF_FLAG_CRIT_MINE2);
+        }
+        if (nbr_crit.second == 1) {
+            mwf.add_flag(MWF_FLAG_CRIT_HIS1);
+        } else if (nbr_crit.second == 2) {
+            mwf.add_flag(MWF_FLAG_CRIT_HIS2);
+        }
+
+        if (board.self_atari(color, sq)) {
+            // Self-atari with a group of 6 stones always leaves behind
+            // a live group due to eyespace of size 7.
+            if (board.enemy_atari_size(!color, sq) >= 6) {
+                continue;
             }
-            if (nbr_crit.second == 1) {
-                score *= cfg_crit_his_1;
-            } else if (nbr_crit.second == 2) {
-                score *= cfg_crit_his_2;
-            }
-
-            bool nearby = false;
-            for (int i = 0; i < 8; i++) {
-                int ai = m_lastmove + board.get_extra_dir(i);
-                if (ai == sq) {
-                    nearby = true;
-                    break;
-                }
-            }
-
-            if (!nearby && !(mwf.get_flags() & MWF_FLAG_RANDOM)) {
-                score *= cfg_tactical;
-            }
-
-            if (board.self_atari(color, sq)) {
-                // Self-atari with a group of 6 stones always leaves behind
-                // a live group due to eyespace of size 7.
-                if (board.enemy_atari_size(!color, sq) >= 6) {
-                    continue;
-                }
-                int enemy_dying = board.enemy_atari_size(color, sq);
-                if (enemy_dying) {
-                    score *= cfg_regular_self_atari;
-                } else {
-                    score *= cfg_useless_self_atari;
-                }
+            int enemy_dying = board.enemy_atari_size(color, sq);
+            if (enemy_dying) {
+                mwf.add_flag(MWF_FLAG_FORCING_SA);
+            } else {
+                mwf.add_flag(MWF_FLAG_SA);
             }
         }
 
-        cumul += score;
+        if (mwf.get_flags() & MWF_FLAG_SAVING) {
+            int ssize = mwf.get_target_size();
+            if (ssize == 1) {
+                mwf.add_flag(MWF_FLAG_SAVING_1);
+            } else if (ssize == 2) {
+                mwf.add_flag(MWF_FLAG_SAVING_2);
+            } else {
+                assert(ssize >= 3);
+                mwf.add_flag(MWF_FLAG_SAVING_3P);
+            }
+        }
+
+        if (mwf.get_flags() & MWF_FLAG_CAPTURE) {
+            int ssize = mwf.get_target_size();
+            if (ssize == 1) {
+                mwf.add_flag(MWF_FLAG_CAPTURE_1);
+            } else if (ssize == 2) {
+                mwf.add_flag(MWF_FLAG_CAPTURE_2);
+            } else {
+                assert(ssize >= 3);
+                mwf.add_flag(MWF_FLAG_CAPTURE_3P);
+            }
+        }
+    }
+
+    for (auto & mwf : moves) {
+        int sq = mwf.get_sq();
+        cumul += mwf.get_score();
         scoredmoves.push_back(std::make_pair(sq, cumul));
     }
 
@@ -247,6 +262,7 @@ int FastState::play_random_move(int color) {
     for (size_t i = 0; i < scoredmoves.size(); i++) {
         float point = scoredmoves[i].second;
         if (index <= point) {
+            MCPolicy::add_to_trace(moves, i);
             return play_move_fast(scoredmoves[i].first);
         }
     }

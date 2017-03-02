@@ -378,9 +378,9 @@ void batchnorm(std::vector<float>& input,
     }
 }
 
-void softmax(std::vector<float>& input,
-             std::vector<float>& output,
-             float temperature) {
+void Network::softmax(std::vector<float>& input,
+                      std::vector<float>& output,
+                      float temperature) {
     assert(&input != &output);
 
     float alpha = *std::max_element(input.begin(),

@@ -1234,9 +1234,7 @@ void FastBoard::kill_neighbours(int vertex, movelist_t & moves) {
                     if (!found) {
                         int atari = in_atari(ai);
                         assert(m_square[atari] == EMPTY);
-                        MovewFeatures move(atari, MWF_FLAG_CAPTURE | MWF_FLAG_SAVING);
-                        move.set_target_size(string_size(par));
-                        moves.push_back(move);
+                        moves.push_back(MovewFeatures(atari, MWF_FLAG_CAPTURE | MWF_FLAG_SAVING, string_size(par)));
                         nbr_list[nbr_cnt++] = par;
                     }
                 }
@@ -1289,9 +1287,7 @@ void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & mov
                 //    i.e. it is not self-atari
                 // 2) capturing an opponent, which means that he should
                 //    also be in atari
-                MovewFeatures move(atari, MWF_FLAG_SAVING);
-                move.set_target_size(string_size(par));
-                moves.push_back(move);
+                moves.push_back(MovewFeatures(atari, MWF_FLAG_SAVING, string_size(par)));
                 bool sa = self_atari(color, atari);
 
                 size_t startsize = moves.size();
@@ -1578,22 +1574,22 @@ int FastBoard::get_pattern3_augment(const int sq, bool invert) {
     sqs6 = m_square[sq + size + 2];
     sqs7 = m_square[sq + size + 2 + 1];
     if (sqs1 == WHITE || sqs1 == BLACK) {
-        lib0 = in_atari(sq - size - 2) != 0;
+        lib0 = fast_in_atari(sq - size - 2);
     } else {
         lib0 = 0;
     }
     if (sqs3 == WHITE || sqs3 == BLACK) {
-        lib1 = in_atari(sq - 1) != 0;
+        lib1 = fast_in_atari(sq - 1);
     } else {
         lib1 = 0;
     }
     if (sqs4 == WHITE || sqs4 == BLACK) {
-        lib2 = in_atari(sq + 1) != 0;
+        lib2 = fast_in_atari(sq + 1);
     } else {
         lib2 = 0;
     }
     if (sqs6 == WHITE || sqs6 == BLACK) {
-        lib3 = in_atari(sq + size + 2) != 0;
+        lib3 = fast_in_atari(sq + size + 2);
     } else {
         lib3 = 0;
     }
@@ -2226,10 +2222,7 @@ void FastBoard::try_capture(int color, int vertex, movelist_t & moves) {
                 assert(lib > 0);
 
                 if (lib <= 1) {
-                    int size = string_size(par);
-                    MovewFeatures move(vertex, MWF_FLAG_CAPTURE);
-                    move.set_target_size(size);
-                    moves.push_back(move);
+                    moves.push_back(MovewFeatures(vertex, MWF_FLAG_CAPTURE, string_size(par)));
                     return;
                 }
             }

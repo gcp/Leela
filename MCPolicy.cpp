@@ -14,6 +14,15 @@
 
 using namespace Utils;
 
+std::unordered_map<uint32_t, float> PolicyWeights::pattern_weights;
+std::array<float, 16> PolicyWeights::feature_weights{
+    0.1f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
+};
+std::unordered_map<uint32_t, float> PolicyWeights::pattern_gradients;
+std::array<float, 16> PolicyWeights::feature_gradients{};
+PolicyTrace MCPolicy::policy_trace;
+
 void MCPolicy::mse_from_file(std::string filename) {
     std::vector<std::string> games = SGFParser::chop_all(filename);
     size_t gametotal = games.size();
@@ -45,12 +54,16 @@ void MCPolicy::mse_from_file(std::string filename) {
         }
         bool blackwon = (who_won == FastBoard::BLACK);
 
+        PolicyWeights::feature_gradients.fill(0.0f);
+
         float bwins = 0.0f;
         constexpr int iterations = 128;
-        #pragma omp parallel for reduction (+:bwins)
+        // Policy Trace per thread
+        //#pragma omp parallel for reduction (+:bwins)
         for (int i = 0; i < iterations; i++) {
             FastState tmp = *state;
 
+            MCPolicy::policy_trace.trace.clear();
             Playout p;
             p.run(tmp, false, true);
 
@@ -58,7 +71,11 @@ void MCPolicy::mse_from_file(std::string filename) {
             if (score > 0.0f) {
                 bwins += 1.0f;
             }
+
+            MCPolicy::trace_process(iterations, blackwon == (score > 0.0f));
         }
+        MCPolicy::adjust_weights();
+
         bwins /= (float)iterations;
 
         float nwscore = Network::get_Network()->get_value(
@@ -78,5 +95,79 @@ void MCPolicy::mse_from_file(std::string filename) {
         myprintf(" MSE MC=%1.4f MSE NN=%1.4f\n",
                  sum_sq_pp/((double)2.0*count),
                  sum_sq_nn/((double)2.0*count));
+
+        if (count % 100 == 0) {
+            for (int w = 0; w < 16; w++) {
+                myprintf("%d = %f\n", w, PolicyWeights::feature_weights[w]);
+            }
+        }
+    }
+}
+
+void MCPolicy::trace_process(int iterations, bool correct) {
+    std::vector<float> policy_gradient;
+    policy_gradient.resize(16);
+
+    for (auto & decision : policy_trace.trace) {
+        std::vector<float> candidate_scores;
+
+        // get real probabilities
+        float sum_scores = 0.0f;
+        for (auto & mwf : decision.candidates) {
+            float score = mwf.get_score();
+            sum_scores += score;
+            candidate_scores.push_back(score);
+        }
+        std::vector<float> candidate_probabilities;
+        candidate_probabilities.resize(candidate_scores.size());
+        for (int i = 0; i < candidate_scores.size(); i++) {
+            candidate_probabilities[i] = candidate_scores[i] / sum_scores;
+        }
+
+        // loop over features, get prob of feature
+        std::vector<float> feature_probabilities;
+        for (int i = 0; i < 16; i++) {
+            float weight_prob = 0.0f;
+            for (int c = 0; c < candidate_probabilities.size(); c++) {
+                if (decision.candidates[c].has_bit(i)) {
+                    weight_prob += candidate_probabilities[c];
+                }
+            }
+            feature_probabilities.push_back(weight_prob);
+        }
+
+        // get policy gradient
+        for (int i = 0; i < 16; i++) {
+            float observed = 0.0f;
+            if (decision.pick.has_bit(i)) {
+                observed = 1.0f;
+            }
+            policy_gradient[i] += (observed - feature_probabilities[i]);
+        }
+    }
+
+    float positions = policy_trace.trace.size();
+    float iters = iterations;
+
+    for (int i = 0; i < 16; i++) {
+        // scale by N*T
+        policy_gradient[i] /= positions * iters;
+        policy_gradient[i] *= (correct ? 1.0f : -1.0f);
+        // accumulate total
+        PolicyWeights::feature_gradients[i] += policy_gradient[i];
+    }
+}
+
+void MCPolicy::adjust_weights() {
+    float alpha = 2.0f;
+
+    for (int i = 0; i < 16; i++) {
+        float orig_weight = PolicyWeights::feature_weights[i];
+        float gradient = PolicyWeights::feature_gradients[i];
+        // Convert to theta
+        float theta = std::log(orig_weight);
+        theta += gradient * alpha;
+        float gamma = std::exp(theta);
+        PolicyWeights::feature_weights[i] = gamma;
     }
 }
