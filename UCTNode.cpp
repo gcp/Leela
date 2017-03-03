@@ -555,12 +555,23 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 float psa = child->get_score();
                 float denom = 1.0f + child->get_visits();
 
+                float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
                 float puct = cfg_puct * psa * (std::sqrt(parentvisits) / denom);
+                // float cts = cfg_puct * std::sqrt(numerator / denom);
+                // Alternate is to remove psa in puct but without log(parentvis)
 
-                value = winrate + puct;
+                value = winrate - mti + puct;
             } else {
+                float winrate = cfg_fpu;
                 float psa = child->get_score();
-                value = cfg_fpu + cfg_puct * psa * std::sqrt(parentvisits);
+                float mti;
+                if (parentvisits > 1) {
+                    mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
+                } else {
+                    mti = (cfg_psa / psa);
+                }
+
+                value = winrate - mti + cfg_puct * psa * std::sqrt(parentvisits);
                 assert(value > -1000.0f);
             }
         } else {
