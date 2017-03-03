@@ -24,7 +24,7 @@
 //#define USE_MKL
 //#define USE_CAFFE
 //#define USE_OPENCL
-#define USE_TUNER
+//#define USE_TUNER
 #define USE_SEARCH
 
 #define PROGRAM_NAME "Leela"

@@ -13,8 +13,8 @@ Script ./clopgtp
 
 GammaParameter         softmax_temp    0.10      10.0
 GammaParameter         puct            0.05      20.0
-GammaParameter         fpu             0.5       10.0
-GammaParameter         psa             0.005     10.0
+GammaParameter         fpu             0.01      10.0
+GammaParameter         psa             0.00001   10.0
 
 Processor cpu1
 Processor cpu2
