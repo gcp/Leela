@@ -509,7 +509,6 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     int childcount = 0;
     UCTNode * child = m_firstchild;
 
-
     // count parentvisits
     // XXX: wtf do we count this??? don't we know?
     // make sure we are at a valid successor
@@ -554,23 +553,14 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 // "UCT" part
                 float winrate = child->get_mixed_score(color);
                 float psa = child->get_score();
-                float denom = child->get_visits();
+                float denom = 1.0f + child->get_visits();
 
-                float cts = std::sqrt(cfg_puct * (numerator / denom));
-                float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
+                float puct = cfg_puct * psa * (std::sqrt(parentvisits) / denom);
 
-                 value = winrate + cts - mti;
+                value = winrate + puct;
             } else {
-                float winrate = cfg_fpu;
                 float psa = child->get_score();
-                float mti;
-                if (parentvisits > 1) {
-                    mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
-                } else {
-                    mti = (cfg_psa / psa);
-                }
-
-                value = winrate - mti;
+                value = cfg_fpu + cfg_puct * psa * std::sqrt(parentvisits);
                 assert(value > -1000.0f);
             }
         } else {
