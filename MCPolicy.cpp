@@ -132,8 +132,11 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
         for (auto & mwf : decision.candidates) {
             float score = mwf.get_score();
             sum_scores += score;
+            assert(!std::isnan(score));
             candidate_scores.push_back(score);
         }
+        assert(sum_scores > 0.0f);
+        assert(!std::isnan(sum_scores));
         std::vector<float> candidate_probabilities;
         candidate_probabilities.resize(candidate_scores.size());
         for (int i = 0; i < candidate_scores.size(); i++) {
@@ -150,6 +153,7 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
                     weight_prob += candidate_probabilities[c];
                 }
             }
+            assert(!std::isnan(weight_prob));
             feature_probabilities.push_back(weight_prob);
         }
 
@@ -185,6 +189,7 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
                 observed = 1.0f;
             }
             policy_feature_gradient[i] += (observed - feature_probabilities[i]);
+            assert(!std::isnan(policy_feature_gradient[i]));
         }
 
         for (int i = 0; i < patterns.size(); i++) {
@@ -196,6 +201,7 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
             }
             policy_pattern_gradient[patterns[i]] +=
                 (observed - pattern_probabilities[i]);
+            assert(!std::isnan(policy_pattern_gradient[i]));
         }
     }
 
@@ -221,7 +227,7 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
 }
 
 void MCPolicy::adjust_weights() {
-    constexpr float alpha = 1.0f;
+    constexpr float alpha = 0.1f;
 
     for (int i = 0; i < NUM_FEATURES; i++) {
         float orig_weight = PolicyWeights::feature_weights[i];
@@ -230,6 +236,9 @@ void MCPolicy::adjust_weights() {
         float theta = std::log(orig_weight);
         theta += gradient * alpha;
         float gamma = std::exp(theta);
+        assert(!std::isnan(gamma));
+        gamma = std::max(gamma, 1e-5f);
+        gamma = std::min(gamma, 1e5f);
         PolicyWeights::feature_weights[i] = gamma;
     }
 
@@ -240,6 +249,9 @@ void MCPolicy::adjust_weights() {
         float theta = std::log(orig_weight);
         theta += gradient * alpha;
         float gamma = std::exp(theta);
+        assert(!std::isnan(gamma));
+        gamma = std::max(gamma, 1e-5f);
+        gamma = std::min(gamma, 1e5f);
         PolicyWeights::set_pattern_weight(pat.first, gamma);
     }
 }
