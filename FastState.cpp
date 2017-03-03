@@ -202,22 +202,28 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
             mwf.add_flag(MWF_FLAG_CRIT_MINE1);
         } else  if (nbr_crit.first == 2) {
             mwf.add_flag(MWF_FLAG_CRIT_MINE2);
+        }  else  if (nbr_crit.first == 3) {
+            mwf.add_flag(MWF_FLAG_CRIT_MINE3);
         }
         if (nbr_crit.second == 1) {
             mwf.add_flag(MWF_FLAG_CRIT_HIS1);
         } else if (nbr_crit.second == 2) {
             mwf.add_flag(MWF_FLAG_CRIT_HIS2);
+        } else if (nbr_crit.second == 3) {
+            mwf.add_flag(MWF_FLAG_CRIT_HIS3);
         }
 
         if (board.self_atari(color, sq)) {
             // Self-atari with a group of 6 stones always leaves behind
             // a live group due to eyespace of size 7.
             if (board.enemy_atari_size(!color, sq) >= 6) {
-                continue;
+                mwf.add_flag(MWF_FLAG_TOOBIG_SA);
             }
             int enemy_dying = board.enemy_atari_size(color, sq);
-            if (enemy_dying) {
-                mwf.add_flag(MWF_FLAG_FORCING_SA);
+            if (enemy_dying >= 5) {
+                mwf.add_flag(MWF_FLAG_FORCEBIG_SA);
+            } else if (enemy_dying) {
+                mwf.add_flag(MWF_FLAG_FORCE_SA);
             } else {
                 mwf.add_flag(MWF_FLAG_SA);
             }

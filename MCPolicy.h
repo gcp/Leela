@@ -8,12 +8,38 @@
 #include <vector>
 #include <unordered_map>
 
+// Scored features
+constexpr int NUM_FEATURES = 20;
+constexpr int MWF_FLAG_PASS         = 1 <<  0;
+constexpr int MWF_FLAG_NAKADE       = 1 <<  1;
+constexpr int MWF_FLAG_PATTERN      = 1 <<  2;
+constexpr int MWF_FLAG_SA           = 1 <<  3;
+constexpr int MWF_FLAG_TOOBIG_SA    = 1 <<  4;
+constexpr int MWF_FLAG_FORCE_SA     = 1 <<  5;
+constexpr int MWF_FLAG_FORCEBIG_SA  = 1 <<  6;
+constexpr int MWF_FLAG_RANDOM       = 1 <<  7;
+constexpr int MWF_FLAG_CRIT_MINE1   = 1 <<  8;
+constexpr int MWF_FLAG_CRIT_MINE2   = 1 <<  9;
+constexpr int MWF_FLAG_CRIT_MINE3   = 1 << 10;
+constexpr int MWF_FLAG_CRIT_HIS1    = 1 << 11;
+constexpr int MWF_FLAG_CRIT_HIS2    = 1 << 12;
+constexpr int MWF_FLAG_CRIT_HIS3    = 1 << 13;
+constexpr int MWF_FLAG_SAVING_1     = 1 << 14;
+constexpr int MWF_FLAG_SAVING_2     = 1 << 15;
+constexpr int MWF_FLAG_SAVING_3P    = 1 << 16;
+constexpr int MWF_FLAG_CAPTURE_1    = 1 << 17;
+constexpr int MWF_FLAG_CAPTURE_2    = 1 << 18;
+constexpr int MWF_FLAG_CAPTURE_3P   = 1 << 19;
+// Fake features
+constexpr int MWF_FLAG_SAVING       = 1 << 29;
+constexpr int MWF_FLAG_CAPTURE      = 1 << 30;
+
 class PolicyWeights {
 public:
-    static std::unordered_map<uint32_t, float> pattern_gradients;
-    static std::array<float, 16> feature_weights;
-    static std::array<float, 16> feature_gradients;
-    static std::unordered_map<uint32_t, float> pattern_weights;
+    static std::unordered_map<int, float> pattern_gradients;
+    static std::unordered_map<int, float> pattern_weights;
+    static std::array<float, NUM_FEATURES> feature_weights;
+    static std::array<float, NUM_FEATURES> feature_gradients;
 
     /* gradients default to 0.0 so everything just works,
        but weights need a default of 1.0
@@ -41,27 +67,6 @@ public:
     }
 };
 
-// Scored features
-constexpr int MWF_FLAG_PASS         = 1 <<  0;
-constexpr int MWF_FLAG_NAKADE       = 1 <<  1;
-constexpr int MWF_FLAG_PATTERN      = 1 <<  2;
-constexpr int MWF_FLAG_SA           = 1 <<  3;
-constexpr int MWF_FLAG_FORCING_SA   = 1 <<  4;
-constexpr int MWF_FLAG_RANDOM       = 1 <<  5;
-constexpr int MWF_FLAG_CRIT_MINE1   = 1 <<  6;
-constexpr int MWF_FLAG_CRIT_MINE2   = 1 <<  7;
-constexpr int MWF_FLAG_CRIT_HIS1    = 1 <<  8;
-constexpr int MWF_FLAG_CRIT_HIS2    = 1 <<  9;
-constexpr int MWF_FLAG_SAVING_1     = 1 << 10;
-constexpr int MWF_FLAG_SAVING_2     = 1 << 11;
-constexpr int MWF_FLAG_SAVING_3P    = 1 << 12;
-constexpr int MWF_FLAG_CAPTURE_1    = 1 << 13;
-constexpr int MWF_FLAG_CAPTURE_2    = 1 << 14;
-constexpr int MWF_FLAG_CAPTURE_3P   = 1 << 15;
-// Fake features
-constexpr int MWF_FLAG_SAVING       = 1 << 29;
-constexpr int MWF_FLAG_CAPTURE      = 1 << 30;
-
 class MovewFeatures {
 public:
     MovewFeatures(int vertex, int flags = 0, int target_size = 0)
@@ -88,7 +93,7 @@ public:
         return m_pattern;
     }
     bool has_bit(int bit) {
-        assert(bit < 16);
+        assert(bit < NUM_FEATURES);
         return m_flags & (1 << bit);
     }
     bool is_pass() {
@@ -96,7 +101,7 @@ public:
     }
     float get_score() {
         float result = 1.0f;
-        for (int bit = 0; bit < 16; bit++) {
+        for (int bit = 0; bit < NUM_FEATURES; bit++) {
             if (has_bit(bit)) {
                 result *= PolicyWeights::feature_weights[bit];
             }

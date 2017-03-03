@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <cmath>
-#include <set>
+#include <unordered_set>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -18,13 +18,14 @@
 
 using namespace Utils;
 
-std::unordered_map<uint32_t, float> PolicyWeights::pattern_weights;
-std::array<float, 16> PolicyWeights::feature_weights{
+std::unordered_map<int, float> PolicyWeights::pattern_weights;
+std::array<float, NUM_FEATURES> PolicyWeights::feature_weights{
     0.1f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f
 };
-std::unordered_map<uint32_t, float> PolicyWeights::pattern_gradients;
-std::array<float, 16> PolicyWeights::feature_gradients{};
+std::unordered_map<int, float> PolicyWeights::pattern_gradients;
+std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients{};
 
 void MCPolicy::mse_from_file(std::string filename) {
     std::vector<std::string> games = SGFParser::chop_all(filename);
@@ -88,14 +89,15 @@ void MCPolicy::mse_from_file(std::string filename) {
             nwscore = 1.0f - nwscore;
         }
 
-        //myprintf("n=%d BW: %d Score: %1.4f NN: %1.4f ",
-        //         count, blackwon, bwins, nwscore);
+       // myprintf("n=%d BW: %d Score: %1.4f NN: %1.4f ",
+       //          count, blackwon, bwins, nwscore);
 
         sum_sq_pp += std::pow(2.0f*((blackwon ? 1.0f : 0.0f) - bwins),   2.0f);
         sum_sq_nn += std::pow(2.0f*((blackwon ? 1.0f : 0.0f) - nwscore), 2.0f);
+
         count++;
 
-        if (count % 100 == 0) {
+        if (count % 1000 == 0) {
             myprintf("n=%d MSE MC=%1.4f MSE NN=%1.4f\n",
                 count,
                 sum_sq_pp/((double)2.0*count),
@@ -104,7 +106,7 @@ void MCPolicy::mse_from_file(std::string filename) {
         if (count % 1000 == 0) {
             std::string filename = "rltune_" + std::to_string(count) + ".txt";
             std::ofstream out(filename);
-            for (int w = 0; w < 16; w++) {
+            for (int w = 0; w < NUM_FEATURES; w++) {
                 out << w << " = " << PolicyWeights::feature_weights[w] << std::endl;
             }
             for (auto & pat : PolicyWeights::pattern_weights) {
@@ -117,13 +119,14 @@ void MCPolicy::mse_from_file(std::string filename) {
 
 void PolicyTrace::trace_process(int iterations, bool correct) {
     std::vector<float> policy_feature_gradient;
-    policy_feature_gradient.resize(16);
-    std::map<int, float> policy_pattern_gradient;
+    policy_feature_gradient.resize(NUM_FEATURES);
+    std::unordered_map<int, float> policy_pattern_gradient;
 
     if (trace.empty()) return;
 
     for (auto & decision : trace) {
         std::vector<float> candidate_scores;
+        candidate_scores.reserve(decision.candidates.size());
         // get real probabilities
         float sum_scores = 0.0f;
         for (auto & mwf : decision.candidates) {
@@ -139,7 +142,8 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
 
         // loop over features, get prob of feature
         std::vector<float> feature_probabilities;
-        for (int i = 0; i < 16; i++) {
+        feature_probabilities.reserve(NUM_FEATURES);
+        for (int i = 0; i < NUM_FEATURES; i++) {
             float weight_prob = 0.0f;
             for (int c = 0; c < candidate_probabilities.size(); c++) {
                 if (decision.candidates[c].has_bit(i)) {
@@ -151,7 +155,7 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
 
         // now deal with patterns
         // get all the ones that occur into a simple list
-        std::set<int> seen_patterns;
+        std::unordered_set<int> seen_patterns;
         for (auto & mwf : decision.candidates) {
             if (!mwf.is_pass()) {
                 seen_patterns.insert(mwf.get_pattern());
@@ -161,6 +165,7 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
 
         // get pat probabilities
         std::vector<float> pattern_probabilities;
+        pattern_probabilities.reserve(patterns.size());
         for (auto & pat : patterns) {
             float weight_prob = 0.0f;
             for (int c = 0; c < candidate_probabilities.size(); c++) {
@@ -174,7 +179,7 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
         }
 
         // get policy gradient
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < NUM_FEATURES; i++) {
             float observed = 0.0f;
             if (decision.pick.has_bit(i)) {
                 observed = 1.0f;
@@ -196,8 +201,9 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
 
     float positions = trace.size();
     float iters = iterations;
+    assert(positions > 0.0f && iters > 0.0f);
 
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < NUM_FEATURES; i++) {
         // scale by N*T
         policy_feature_gradient[i] /= positions * iters;
         policy_feature_gradient[i] *= (correct ? 1.0f : -1.0f);
@@ -215,12 +221,14 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
 }
 
 void MCPolicy::adjust_weights() {
-    for (int i = 0; i < 16; i++) {
+    constexpr float alpha = 1.0f;
+
+    for (int i = 0; i < NUM_FEATURES; i++) {
         float orig_weight = PolicyWeights::feature_weights[i];
         float gradient = PolicyWeights::feature_gradients[i];
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += gradient * 1.0f;
+        theta += gradient * alpha;
         float gamma = std::exp(theta);
         PolicyWeights::feature_weights[i] = gamma;
     }
@@ -230,7 +238,7 @@ void MCPolicy::adjust_weights() {
         float gradient = pat.second;
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += gradient * 1.0f;
+        theta += gradient * alpha;
         float gamma = std::exp(theta);
         PolicyWeights::set_pattern_weight(pat.first, gamma);
     }
