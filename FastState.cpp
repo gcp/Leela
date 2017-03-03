@@ -265,7 +265,9 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
     for (size_t i = 0; i < scoredmoves.size(); i++) {
         float point = scoredmoves[i].second;
         if (index <= point) {
-            if (trace) trace->add_to_trace(moves, i);
+            if (trace) {
+                trace->add_to_trace(color == FastBoard::BLACK, moves, i);
+            }
             return play_move_fast(scoredmoves[i].first);
         }
     }

@@ -94,7 +94,7 @@ public:
     }
     bool has_bit(int bit) {
         assert(bit < NUM_FEATURES);
-        return m_flags & (1 << bit);
+        return (m_flags & (1 << bit)) != 0;
     }
     bool is_pass() {
         return m_flags & MWF_FLAG_PASS;
@@ -122,29 +122,33 @@ private:
 
 class MoveDecision {
 public:
-    MoveDecision(std::vector<MovewFeatures> & p_candidates,
+    MoveDecision(bool p_black_to_move,
+                 std::vector<MovewFeatures> & p_candidates,
                  MovewFeatures & p_pick)
-        : candidates(p_candidates),
+        : black_to_move(p_black_to_move),
+          candidates(p_candidates),
           pick(p_pick) {};
     std::vector<MovewFeatures> candidates;
     MovewFeatures pick;
+    bool black_to_move;
 };
 
 class PolicyTrace {
 public:
     std::vector<MoveDecision> trace;
 
-    void add_to_trace(std::vector<MovewFeatures> & moves,
-        int chosen_idx) {
-        trace.push_back(MoveDecision(moves, moves[chosen_idx]));
+    void add_to_trace(bool black_to_move,
+                      std::vector<MovewFeatures> & moves,
+                      int chosen_idx) {
+        trace.push_back(MoveDecision(black_to_move, moves, moves[chosen_idx]));
     }
 
-    void trace_process(int iterations, bool correct);
+    void trace_process(int iterations, bool blackwin);
 };
 
 class MCPolicy {
 public:
-    static void adjust_weights();
+    static void adjust_weights(bool blackwon, float black_winrate);
     static void mse_from_file(std::string filename);
 };
 

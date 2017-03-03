@@ -76,11 +76,10 @@ void MCPolicy::mse_from_file(std::string filename) {
                 bwins += 1.0f;
             }
 
-            policy_trace.trace_process(iterations, blackwon == (score > 0.0f));
+            policy_trace.trace_process(iterations, score > 0.0f);
         }
-        MCPolicy::adjust_weights();
-
         bwins /= (float)iterations;
+        MCPolicy::adjust_weights(blackwon, bwins);
 
         float nwscore = Network::get_Network()->get_value(
             state, Network::Ensemble::RANDOM_ROTATION);
@@ -117,7 +116,7 @@ void MCPolicy::mse_from_file(std::string filename) {
     }
 }
 
-void PolicyTrace::trace_process(int iterations, bool correct) {
+void PolicyTrace::trace_process(int iterations, bool blackwon) {
     std::vector<float> policy_feature_gradient;
     policy_feature_gradient.resize(NUM_FEATURES);
     std::unordered_map<int, float> policy_pattern_gradient;
@@ -125,6 +124,10 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
     if (trace.empty()) return;
 
     for (auto & decision : trace) {
+        float sign = 1.0f;
+        if (decision.black_to_move != blackwon) {
+            sign = -1.0f;
+        }
         std::vector<float> candidate_scores;
         candidate_scores.reserve(decision.candidates.size());
         // get real probabilities
@@ -188,7 +191,8 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
             if (decision.pick.has_bit(i)) {
                 observed = 1.0f;
             }
-            policy_feature_gradient[i] += (observed - feature_probabilities[i]);
+            policy_feature_gradient[i] += sign *
+                (observed - feature_probabilities[i]);
             assert(!std::isnan(policy_feature_gradient[i]));
         }
 
@@ -199,7 +203,7 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
                     observed = 1.0f;
                 }
             }
-            policy_pattern_gradient[patterns[i]] +=
+            policy_pattern_gradient[patterns[i]] += sign *
                 (observed - pattern_probabilities[i]);
             assert(!std::isnan(policy_pattern_gradient[i]));
         }
@@ -212,7 +216,6 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
     for (int i = 0; i < NUM_FEATURES; i++) {
         // scale by N*T
         policy_feature_gradient[i] /= positions * iters;
-        policy_feature_gradient[i] *= (correct ? 1.0f : -1.0f);
         // accumulate total
         #pragma omp critical(feature_gradients)
         PolicyWeights::feature_gradients[i] += policy_feature_gradient[i];
@@ -220,21 +223,22 @@ void PolicyTrace::trace_process(int iterations, bool correct) {
 
     for (auto & pat : policy_pattern_gradient) {
         pat.second /= positions * iters;
-        pat.second *= (correct ? 1.0f : -1.0f);
         #pragma omp critical(pattern_gradients)
         PolicyWeights::pattern_gradients[pat.first] += pat.second;
     }
 }
 
-void MCPolicy::adjust_weights() {
+void MCPolicy::adjust_weights(bool blackwon, float black_winrate) {
     constexpr float alpha = 0.1f;
+    float Vstar = (blackwon ? 1.0f : 0.0f);
+    float Vdelta = Vstar - black_winrate;
 
     for (int i = 0; i < NUM_FEATURES; i++) {
         float orig_weight = PolicyWeights::feature_weights[i];
         float gradient = PolicyWeights::feature_gradients[i];
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += gradient * alpha;
+        theta += alpha * Vdelta * gradient;
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
         gamma = std::max(gamma, 1e-5f);
@@ -247,7 +251,7 @@ void MCPolicy::adjust_weights() {
         float gradient = pat.second;
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += gradient * alpha;
+        theta += alpha * Vdelta * gradient;
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
         gamma = std::max(gamma, 1e-5f);
