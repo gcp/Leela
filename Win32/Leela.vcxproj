@@ -84,8 +84,8 @@
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.1.143\windows\mkl\include;C:\boost\boost_1_62_0\;C:\Projects\OpenCL-ICD-Loader\inc;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build64;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.1.143\windows\mkl\lib\intel64_win;C:\boost\boost_1_62_0\stage\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.2.187\windows\mkl\include;C:\boost\boost_1_62_0\;C:\Projects\OpenCL-ICD-Loader\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build64;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.2.187\windows\mkl\lib\intel64_win;C:\boost\boost_1_62_0\stage\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -185,6 +185,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
