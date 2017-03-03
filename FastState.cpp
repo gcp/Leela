@@ -15,6 +15,7 @@
 #include "MCOTable.h"
 #include "Genetic.h"
 #include "GTP.h"
+#include "MCPolicy.h"
 
 using namespace Utils;
 
@@ -54,10 +55,6 @@ void FastState::reset_game(void) {
 
 void FastState::reset_board(void) {
     board.reset_board(board.get_boardsize());
-}
-
-int FastState::play_random_move() {
-    return play_random_move(board.m_tomove);
 }
 
 std::vector<int> FastState::generate_moves(int color) {
@@ -143,7 +140,7 @@ int FastState::select_weighted(FastBoard::scoredmoves_t & scoredmoves,
     return play_move_fast(FastBoard::PASS);
 }
 
-int FastState::play_random_move(int color) {
+int FastState::play_random_move(int color, PolicyTrace * trace) {
     board.m_tomove = color;
 
     moves.clear();
@@ -262,7 +259,7 @@ int FastState::play_random_move(int color) {
     for (size_t i = 0; i < scoredmoves.size(); i++) {
         float point = scoredmoves[i].second;
         if (index <= point) {
-            MCPolicy::add_to_trace(moves, i);
+            if (trace) trace->add_to_trace(moves, i);
             return play_move_fast(scoredmoves[i].first);
         }
     }

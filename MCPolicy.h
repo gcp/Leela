@@ -10,12 +10,16 @@
 
 class PolicyWeights {
 public:
-    static std::unordered_map<uint32_t, float> pattern_weights;
     static std::unordered_map<uint32_t, float> pattern_gradients;
     static std::array<float, 16> feature_weights;
     static std::array<float, 16> feature_gradients;
+    static std::unordered_map<uint32_t, float> pattern_weights;
 
+    /* gradients default to 0.0 so everything just works,
+       but weights need a default of 1.0
+    */
     static float get_pattern_weight(int pattern) {
+        assert(pattern >= 0);
         auto it = pattern_weights.find(pattern);
 
         if (it != pattern_weights.end()) {
@@ -26,32 +30,13 @@ public:
     }
 
     static void set_pattern_weight(int pattern, float val) {
+        assert(pattern >= 0);
         auto it = pattern_weights.find(pattern);
 
         if (it != pattern_weights.end()) {
             it->second = val;
         } else {
             pattern_weights.insert(std::make_pair(pattern, val));
-        }
-    }
-
-    static float get_pattern_gradient(int pattern) {
-        auto it = pattern_gradients.find(pattern);
-
-        if (it != pattern_gradients.end()) {
-            return it->second;
-        } else {
-            return 0.0f;
-        }
-    }
-
-    static void set_pattern_gradient(int pattern, float val) {
-        auto it = pattern_gradients.find(pattern);
-
-        if (it != pattern_gradients.end()) {
-            it->second = val;
-        } else {
-            pattern_gradients.insert(std::make_pair(pattern, val));
         }
     }
 };
@@ -99,9 +84,15 @@ public:
     void set_pattern(int pattern) {
         m_pattern = pattern;
     }
+    int get_pattern() {
+        return m_pattern;
+    }
     bool has_bit(int bit) {
         assert(bit < 16);
         return m_flags & (1 << bit);
+    }
+    bool is_pass() {
+        return m_flags & MWF_FLAG_PASS;
     }
     float get_score() {
         float result = 1.0f;
@@ -110,7 +101,9 @@ public:
                 result *= PolicyWeights::feature_weights[bit];
             }
         }
-        result *= PolicyWeights::get_pattern_weight(m_pattern);
+        if (!is_pass()) {
+            result *= PolicyWeights::get_pattern_weight(m_pattern);
+        }
         return result;
     }
 private:
@@ -135,20 +128,18 @@ public:
 class PolicyTrace {
 public:
     std::vector<MoveDecision> trace;
+
+    void add_to_trace(std::vector<MovewFeatures> & moves,
+        int chosen_idx) {
+        trace.push_back(MoveDecision(moves, moves[chosen_idx]));
+    }
+
+    void trace_process(int iterations, bool correct);
 };
 
 class MCPolicy {
 public:
-    static PolicyTrace policy_trace;
-
-    static void add_to_trace(std::vector<MovewFeatures> & moves,
-                             int chosen_idx) {
-        policy_trace.trace.push_back(MoveDecision(moves, moves[chosen_idx]));
-    }
-
-    static void trace_process(int iterations, bool correct);
     static void adjust_weights();
-
     static void mse_from_file(std::string filename);
 };
 

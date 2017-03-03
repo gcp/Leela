@@ -10,9 +10,8 @@ public:
     void init_game(int size = FastBoard::MAXBOARDSIZE, float komi = 7.5f);
     void reset_game();
     void reset_board();  
-            
-    int play_random_move();
-    int play_random_move(int color);    
+
+    int play_random_move(int color, PolicyTrace * trace = nullptr);
     int play_move_fast(int vertex);
     float score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex);
     
