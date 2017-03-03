@@ -16,7 +16,6 @@
 
 /* Hard limits */
 
-
 /* Features */
 //#define KGS
 #define USE_BLAS
@@ -29,9 +28,9 @@
 
 #define PROGRAM_NAME "Leela"
 #ifdef KGS
-#define PROGRAM_VERSION "0.9.2. I will resign when I have lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I have won. You can download the latest stable version at https://sjeng.org/leela"
+#define PROGRAM_VERSION "0.9.4. I will resign when I have lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I have won. You can download the latest stable version at https://sjeng.org/leela"
 #else
-#define PROGRAM_VERSION "0.9.2 agp2"
+#define PROGRAM_VERSION "0.9.4"
 #endif
 
 // OpenBLAS limitation
