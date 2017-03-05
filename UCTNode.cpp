@@ -266,6 +266,9 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
                 if (board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
                     vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
                 }
+                if (board.minimum_elib_count(!board.get_to_move(), it->second) == 2) {
+                    vtx->set_expand_cnt(expand_threshold / 2, netscore_threshold / 2);
+                }
                 if (board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
                     vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
                 }
