@@ -59,25 +59,39 @@ void MCPolicy::mse_from_file(std::string filename) {
         bool blackwon = (who_won == FastBoard::BLACK);
 
         PolicyWeights::feature_gradients.fill(0.0f);
-
-        float bwins = 0.0f;
         constexpr int iterations = 128;
-        // Policy Trace per thread
-        #pragma omp parallel for reduction (+:bwins)
-        for (int i = 0; i < iterations; i++) {
-            FastState tmp = *state;
+        float bwins = 0.0f;
 
-            PolicyTrace policy_trace;
-            Playout p;
-            p.run(tmp, false, true, &policy_trace);
+        #pragma omp parallel
+        {
+            // Get EV (V)
+            #pragma omp for reduction (+:bwins)
+            for (int i = 0; i < iterations; i++) {
+                FastState tmp = *state;
 
-            float score = p.get_score();
-            if (score > 0.0f) {
-                bwins += 1.0f;
+                Playout p;
+                p.run(tmp, false, true, nullptr);
+
+                float score = p.get_score();
+                if (score > 0.0f) {
+                    bwins += 1.0f;
+                }
             }
 
-            policy_trace.trace_process(iterations, score > 0.0f);
+            // Policy Trace per thread
+            #pragma omp for
+            for (int i = 0; i < iterations; i++) {
+                FastState tmp = *state;
+
+                PolicyTrace policy_trace;
+                Playout p;
+                p.run(tmp, false, true, &policy_trace);
+
+                bool black_won = p.get_score() > 0.0f;
+                policy_trace.trace_process(iterations, black_won);
+            }
         }
+
         bwins /= (float)iterations;
         MCPolicy::adjust_weights(blackwon, bwins);
 
