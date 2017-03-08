@@ -131,6 +131,11 @@ void MCPolicy::mse_from_file(std::string filename) {
 }
 
 void PolicyTrace::trace_process(int iterations, bool blackwon) {
+    float sign = 1.0f;
+    if (!blackwon) {
+        return;
+    }
+
     std::vector<float> policy_feature_gradient;
     policy_feature_gradient.resize(NUM_FEATURES);
     std::unordered_map<int, float> policy_pattern_gradient;
@@ -138,10 +143,6 @@ void PolicyTrace::trace_process(int iterations, bool blackwon) {
     if (trace.empty()) return;
 
     for (auto & decision : trace) {
-        float sign = 1.0f;
-        if (decision.black_to_move != blackwon) {
-            sign = -1.0f;
-        }
         std::vector<float> candidate_scores;
         candidate_scores.reserve(decision.candidates.size());
         // get real probabilities

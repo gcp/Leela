@@ -144,7 +144,6 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
     board.m_tomove = color;
 
     moves.clear();
-    scoredmoves.clear();
 
     Matcher * matcher = Matcher::get_Matcher();
     Random * rng = Random::get_Rng();
@@ -181,7 +180,6 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
     moves.push_back(MovewFeatures(FastBoard::PASS, MWF_FLAG_PASS));
 
     assert(moves.size());
-    float cumul = 0.0f;
 
     for (auto & mwf : moves) {
         int sq = mwf.get_sq();
@@ -190,7 +188,11 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
         }
         //int pattern = board.get_pattern_fast_augment(sq);
         //score = matcher->matches(color, pattern);
-        int pattern = board.get_pattern3_augment(sq, false);
+        bool invert_board = false;
+        if (color == FastBoard::WHITE) {
+            invert_board = true;
+        }
+        int pattern = board.get_pattern3_augment(sq, invert_board);
         mwf.set_pattern(pattern);
 
         std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
@@ -254,6 +256,8 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
         }
     }
 
+    float cumul = 0.0f;
+    scoredmoves.clear();
     for (auto & mwf : moves) {
         int sq = mwf.get_sq();
         cumul += mwf.get_score();
@@ -268,6 +272,7 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
             if (trace) {
                 trace->add_to_trace(color == FastBoard::BLACK, moves, i);
             }
+            assert(scoredmoves[i].first == moves[i].get_sq());
             return play_move_fast(scoredmoves[i].first);
         }
     }
