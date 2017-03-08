@@ -58,8 +58,9 @@ void MCPolicy::mse_from_file(std::string filename) {
         }
         bool blackwon = (who_won == FastBoard::BLACK);
 
-        PolicyWeights::feature_gradients.fill(0.0f);
         constexpr int iterations = 128;
+        PolicyWeights::feature_gradients.fill(0.0f);
+        PolicyWeights::pattern_gradients.clear();
         float bwins = 0.0f;
 
         #pragma omp parallel
@@ -157,22 +158,22 @@ void PolicyTrace::trace_process(int iterations, bool blackwon) {
         assert(!std::isnan(sum_scores));
         std::vector<float> candidate_probabilities;
         candidate_probabilities.resize(candidate_scores.size());
-        for (int i = 0; i < candidate_scores.size(); i++) {
+        for (size_t i = 0; i < candidate_scores.size(); i++) {
             candidate_probabilities[i] = candidate_scores[i] / sum_scores;
         }
 
         // loop over features, get prob of feature
         std::vector<float> feature_probabilities;
-        feature_probabilities.reserve(NUM_FEATURES);
-        for (int i = 0; i < NUM_FEATURES; i++) {
+        feature_probabilities.resize(NUM_FEATURES);
+        for (size_t i = 0; i < NUM_FEATURES; i++) {
             float weight_prob = 0.0f;
-            for (int c = 0; c < candidate_probabilities.size(); c++) {
+            for (size_t c = 0; c < candidate_probabilities.size(); c++) {
                 if (decision.candidates[c].has_bit(i)) {
                     weight_prob += candidate_probabilities[c];
                 }
             }
             assert(!std::isnan(weight_prob));
-            feature_probabilities.push_back(weight_prob);
+            feature_probabilities[i] = weight_prob;
         }
 
         // now deal with patterns
@@ -190,13 +191,14 @@ void PolicyTrace::trace_process(int iterations, bool blackwon) {
         pattern_probabilities.reserve(patterns.size());
         for (auto & pat : patterns) {
             float weight_prob = 0.0f;
-            for (int c = 0; c < candidate_probabilities.size(); c++) {
+            for (size_t c = 0; c < candidate_probabilities.size(); c++) {
                 if (!decision.candidates[c].is_pass()) {
                     if (decision.candidates[c].get_pattern() == pat) {
                         weight_prob += candidate_probabilities[c];
                     }
                 }
             }
+            assert(weight_prob > 0.0f);
             pattern_probabilities.push_back(weight_prob);
         }
 
