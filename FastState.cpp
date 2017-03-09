@@ -220,14 +220,21 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
             // a live group due to eyespace of size 7.
             if (board.enemy_atari_size(!color, sq) >= 6) {
                 mwf.add_flag(MWF_FLAG_TOOBIG_SA);
-            }
-            int enemy_dying = board.enemy_atari_size(color, sq);
-            if (enemy_dying >= 5) {
-                mwf.add_flag(MWF_FLAG_FORCEBIG_SA);
-            } else if (enemy_dying) {
-                mwf.add_flag(MWF_FLAG_FORCE_SA);
             } else {
-                mwf.add_flag(MWF_FLAG_SA);
+                int enemy_dying = board.enemy_atari_size(color, sq);
+                if (enemy_dying >= 5) {
+                    mwf.add_flag(MWF_FLAG_FORCEBIG_SA);
+                } else if (enemy_dying) {
+                    mwf.add_flag(MWF_FLAG_FORCE_SA);
+                } else {
+                    mwf.add_flag(MWF_FLAG_SA);
+                }
+            }
+            if (mwf.get_flags() & MWF_FLAG_PATTERN) {
+                mwf.add_flag(MWF_FLAG_PATTERN_SA);
+            }
+            if (mwf.get_flags() & MWF_FLAG_SAVING) {
+                mwf.add_flag(MWF_FLAG_SAVING_SA);
             }
         }
 

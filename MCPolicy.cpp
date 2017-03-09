@@ -19,13 +19,9 @@
 using namespace Utils;
 
 std::unordered_map<int, float> PolicyWeights::pattern_weights;
-std::array<float, NUM_FEATURES> PolicyWeights::feature_weights{
-    0.1f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 1.0f, 1.0f
-};
+std::array<float, NUM_FEATURES> PolicyWeights::feature_weights;
 std::unordered_map<int, float> PolicyWeights::pattern_gradients;
-std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients{};
+std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
 
 void MCPolicy::mse_from_file(std::string filename) {
     std::vector<std::string> games = SGFParser::chop_all(filename);
@@ -35,6 +31,8 @@ void MCPolicy::mse_from_file(std::string filename) {
     double sum_sq_pp = 0.0;
     double sum_sq_nn = 0.0;
     int count = 0;
+
+    PolicyWeights::feature_weights.fill(1.0f);
 
     while (1) {
         int pick = Random::get_Rng()->randint32(gametotal);
@@ -58,7 +56,7 @@ void MCPolicy::mse_from_file(std::string filename) {
         }
         bool blackwon = (who_won == FastBoard::BLACK);
 
-        constexpr int iterations = 128;
+        constexpr int iterations = 256;
         PolicyWeights::feature_gradients.fill(0.0f);
         PolicyWeights::pattern_gradients.clear();
         float bwins = 0.0f;
@@ -114,8 +112,10 @@ void MCPolicy::mse_from_file(std::string filename) {
         if (count % 1000 == 0) {
             myprintf("n=%d MSE MC=%1.4f MSE NN=%1.4f\n",
                 count,
-                sum_sq_pp/((double)2.0*count),
-                sum_sq_nn/((double)2.0*count));
+                sum_sq_pp/((double)2.0*1000.0),
+                sum_sq_nn/((double)2.0*1000.0));
+            sum_sq_pp = 0.0;
+            sum_sq_nn = 0.0;
         }
         if (count % 1000 == 0) {
             std::string filename = "rltune_" + std::to_string(count) + ".txt";
@@ -134,7 +134,7 @@ void MCPolicy::mse_from_file(std::string filename) {
 void PolicyTrace::trace_process(int iterations, bool blackwon) {
     float sign = 1.0f;
     if (!blackwon) {
-        return;
+        sign = -1.0f;
     }
 
     std::vector<float> policy_feature_gradient;
@@ -234,7 +234,7 @@ void PolicyTrace::trace_process(int iterations, bool blackwon) {
         // scale by N*T
         policy_feature_gradient[i] /= positions * iters;
         // accumulate total
-        #pragma omp critical(feature_gradients)
+        #pragma omp atomic
         PolicyWeights::feature_gradients[i] += policy_feature_gradient[i];
     }
 
@@ -246,7 +246,7 @@ void PolicyTrace::trace_process(int iterations, bool blackwon) {
 }
 
 void MCPolicy::adjust_weights(bool blackwon, float black_winrate) {
-    constexpr float alpha = 0.1f;
+    constexpr float alpha = 10.0f;
     float Vstar = (blackwon ? 1.0f : 0.0f);
     float Vdelta = Vstar - black_winrate;
 

@@ -9,27 +9,29 @@
 #include <unordered_map>
 
 // Scored features
-constexpr int NUM_FEATURES = 20;
+constexpr int NUM_FEATURES = 22;
 constexpr int MWF_FLAG_PASS         = 1 <<  0;
 constexpr int MWF_FLAG_NAKADE       = 1 <<  1;
 constexpr int MWF_FLAG_PATTERN      = 1 <<  2;
-constexpr int MWF_FLAG_SA           = 1 <<  3;
-constexpr int MWF_FLAG_TOOBIG_SA    = 1 <<  4;
-constexpr int MWF_FLAG_FORCE_SA     = 1 <<  5;
-constexpr int MWF_FLAG_FORCEBIG_SA  = 1 <<  6;
-constexpr int MWF_FLAG_RANDOM       = 1 <<  7;
-constexpr int MWF_FLAG_CRIT_MINE1   = 1 <<  8;
-constexpr int MWF_FLAG_CRIT_MINE2   = 1 <<  9;
-constexpr int MWF_FLAG_CRIT_MINE3   = 1 << 10;
-constexpr int MWF_FLAG_CRIT_HIS1    = 1 << 11;
-constexpr int MWF_FLAG_CRIT_HIS2    = 1 << 12;
-constexpr int MWF_FLAG_CRIT_HIS3    = 1 << 13;
-constexpr int MWF_FLAG_SAVING_1     = 1 << 14;
-constexpr int MWF_FLAG_SAVING_2     = 1 << 15;
-constexpr int MWF_FLAG_SAVING_3P    = 1 << 16;
-constexpr int MWF_FLAG_CAPTURE_1    = 1 << 17;
-constexpr int MWF_FLAG_CAPTURE_2    = 1 << 18;
-constexpr int MWF_FLAG_CAPTURE_3P   = 1 << 19;
+constexpr int MWF_FLAG_PATTERN_SA   = 1 <<  3;
+constexpr int MWF_FLAG_SA           = 1 <<  4;
+constexpr int MWF_FLAG_TOOBIG_SA    = 1 <<  5;
+constexpr int MWF_FLAG_FORCE_SA     = 1 <<  6;
+constexpr int MWF_FLAG_FORCEBIG_SA  = 1 <<  7;
+constexpr int MWF_FLAG_RANDOM       = 1 <<  8;
+constexpr int MWF_FLAG_CRIT_MINE1   = 1 <<  9;
+constexpr int MWF_FLAG_CRIT_MINE2   = 1 << 10;
+constexpr int MWF_FLAG_CRIT_MINE3   = 1 << 11;
+constexpr int MWF_FLAG_CRIT_HIS1    = 1 << 12;
+constexpr int MWF_FLAG_CRIT_HIS2    = 1 << 13;
+constexpr int MWF_FLAG_CRIT_HIS3    = 1 << 14;
+constexpr int MWF_FLAG_SAVING_SA    = 1 << 15;
+constexpr int MWF_FLAG_SAVING_1     = 1 << 16;
+constexpr int MWF_FLAG_SAVING_2     = 1 << 17;
+constexpr int MWF_FLAG_SAVING_3P    = 1 << 18;
+constexpr int MWF_FLAG_CAPTURE_1    = 1 << 19;
+constexpr int MWF_FLAG_CAPTURE_2    = 1 << 20;
+constexpr int MWF_FLAG_CAPTURE_3P   = 1 << 21;
 // Fake features
 constexpr int MWF_FLAG_SAVING       = 1 << 29;
 constexpr int MWF_FLAG_CAPTURE      = 1 << 30;
