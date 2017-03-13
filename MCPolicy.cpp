@@ -18,8 +18,7 @@
 
 using namespace Utils;
 
-std::unordered_map<int, float> PolicyWeights::pattern_weights;
-std::array<float, NUM_FEATURES> PolicyWeights::feature_weights;
+#include "PolicyWeights.h"
 std::unordered_map<int, float> PolicyWeights::pattern_gradients;
 std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
 
@@ -32,7 +31,7 @@ void MCPolicy::mse_from_file(std::string filename) {
     double sum_sq_nn = 0.0;
     int count = 0;
 
-    PolicyWeights::feature_weights.fill(1.0f);
+    //PolicyWeights::feature_weights.fill(1.0f);
 
     while (1) {
         int pick = Random::get_Rng()->randint32(gametotal);
@@ -56,7 +55,7 @@ void MCPolicy::mse_from_file(std::string filename) {
         }
         bool blackwon = (who_won == FastBoard::BLACK);
 
-        constexpr int iterations = 256;
+        constexpr int iterations = 512;
         PolicyWeights::feature_gradients.fill(0.0f);
         PolicyWeights::pattern_gradients.clear();
         float bwins = 0.0f;
@@ -109,22 +108,23 @@ void MCPolicy::mse_from_file(std::string filename) {
 
         count++;
 
-        if (count % 1000 == 0) {
+        if (count % 10000 == 0) {
             myprintf("n=%d MSE MC=%1.4f MSE NN=%1.4f\n",
                 count,
-                sum_sq_pp/((double)2.0*1000.0),
-                sum_sq_nn/((double)2.0*1000.0));
+                sum_sq_pp/((double)2.0*10000),
+                sum_sq_nn/((double)2.0*10000));
             sum_sq_pp = 0.0;
             sum_sq_nn = 0.0;
         }
-        if (count % 1000 == 0) {
+
+        if (count % 10000 == 0) {
             std::string filename = "rltune_" + std::to_string(count) + ".txt";
             std::ofstream out(filename);
             for (int w = 0; w < NUM_FEATURES; w++) {
                 out << w << " = " << PolicyWeights::feature_weights[w] << std::endl;
             }
             for (auto & pat : PolicyWeights::pattern_weights) {
-                out << "{ " << pat.first << ", " << pat.second << "}, " << std::endl;;
+                out << "{ " << pat.first << ", " << pat.second << "f}," << std::endl;;
             }
             out.close();
         }
@@ -246,7 +246,7 @@ void PolicyTrace::trace_process(int iterations, bool blackwon) {
 }
 
 void MCPolicy::adjust_weights(bool blackwon, float black_winrate) {
-    constexpr float alpha = 10.0f;
+    constexpr float alpha = 1.0f;
     float Vstar = (blackwon ? 1.0f : 0.0f);
     float Vdelta = Vstar - black_winrate;
 

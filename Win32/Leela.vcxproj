@@ -253,6 +253,7 @@
     <ClInclude Include="..\Playout.h" />
     <ClInclude Include="..\PNNode.h" />
     <ClInclude Include="..\PNSearch.h" />
+    <ClInclude Include="..\PolicyWeights.h" />
     <ClInclude Include="..\Random.h" />
     <ClInclude Include="..\SGFParser.h" />
     <ClInclude Include="..\SGFTree.h" />
