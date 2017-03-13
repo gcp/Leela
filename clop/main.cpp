@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
     char readbuff[256];
     int read_cnt;
 
+#if 0
     orig_process.write(qPrintable("boardsize 13\n"));
     tune_process.write(qPrintable("boardsize 13\n"));
     orig_process.waitForBytesWritten(-1);
@@ -105,9 +106,10 @@ int main(int argc, char *argv[])
     read_cnt = tune_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
     cerr << "Started, board successfully set." << endl;
+#endif
 
-    orig_process.write(qPrintable("time_settings 300 0 0\n"));
-    tune_process.write(qPrintable("time_settings 300 0 0\n"));
+    orig_process.write(qPrintable("time_settings 600 0 0\n"));
+    tune_process.write(qPrintable("time_settings 600 0 0\n"));
     orig_process.waitForBytesWritten(-1);
     tune_process.waitForBytesWritten(-1);
     while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
@@ -126,9 +128,6 @@ int main(int argc, char *argv[])
     read_cnt = tune_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
     cerr << "Time successfully set." << endl;
-
-
-
 
     bool stop = false;
     bool orig_to_move = (qrand() % 2 == 0);

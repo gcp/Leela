@@ -142,7 +142,8 @@ int TimeControl::max_time_for_move(int color) {
         */
         if (m_inbyo[color]) {
             if (m_byostones) {
-                timealloc = (m_remaining_time[color] - BUFFER_CENTISECS) / m_byostones;
+                timealloc = (m_remaining_time[color] - BUFFER_CENTISECS)
+                             / std::max<int>(m_stones_left[color], 1);
             } else {
                 assert(m_byoperiods);
                 // Just use the byo yomi period
@@ -157,14 +158,14 @@ int TimeControl::max_time_for_move(int color) {
                 int total_time = m_remaining_time[color] + byo_extra;
                 timealloc = (total_time - BUFFER_CENTISECS) / m_moves_expected;
                 // Add back the guaranteed extra seconds
-                timealloc += byo_extra - BUFFER_CENTISECS;
+                timealloc += std::max<int>(byo_extra - BUFFER_CENTISECS, 0);
             } else {
                 assert(m_byoperiods);
                 int byo_extra = m_byotime * (m_periods_left[color] - 1);
                 int total_time = m_remaining_time[color] + byo_extra;
                 timealloc = (total_time - BUFFER_CENTISECS) / m_moves_expected;
                 // Add back the guaranteed extra seconds
-                timealloc += m_byotime - BUFFER_CENTISECS;
+                timealloc += std::max<int>(m_byotime - BUFFER_CENTISECS, 0);
             }
         }
     }
@@ -175,14 +176,19 @@ int TimeControl::max_time_for_move(int color) {
 
 void TimeControl::adjust_time(int color, int time, int stones) {
     m_remaining_time[color] = time;
+    // stones are only given in byo-yomi
     if (stones) {
         m_inbyo[color] = true;
     }
-    if (m_byostones) {
-        m_stones_left[color] = stones;
-    } else if (m_byoperiods) {
-        // KGS extension
-        m_periods_left[color] = stones;
+    // we must be in byo-yomi before interpreting stones
+    // the previous condition guarantees we do this if != 0
+    if (m_inbyo[color]) {
+        if (m_byostones) {
+            m_stones_left[color] = stones;
+        } else if (m_byoperiods) {
+            // KGS extension
+            m_periods_left[color] = stones;
+        }
     }
 }
 

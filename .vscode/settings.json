@@ -11,5 +11,27 @@
         "**/*.solverstate": true
     },
     "workbench.sideBar.location": "right",
-    "files.associations": {}
+    "files.associations": {
+        "*.ctl": "python",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "cmath": "cpp",
+        "csetjmp": "cpp",
+        "csignal": "cpp",
+        "cstdarg": "cpp",
+        "cstddef": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "cstring": "cpp",
+        "ctime": "cpp",
+        "cwchar": "cpp",
+        "cwctype": "cpp",
+        "cinttypes": "cpp",
+        "cstdint": "cpp",
+        "exception": "cpp",
+        "initializer_list": "cpp",
+        "new": "cpp",
+        "type_traits": "cpp",
+        "typeinfo": "cpp"
+    }
 }

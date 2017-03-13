@@ -309,6 +309,9 @@ bool UCTSearch::allow_easy_move() {
     // We can assume there are at least 2 moves now.
     assert(m_use_nets);
 
+    int color = m_rootstate.board.get_to_move();
+    m_root.sort_root_children(color);
+
     UCTNode * first = m_root.get_first_child();
     float best_probability = first->get_score();
     // Some other move got to first place.

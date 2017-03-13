@@ -266,6 +266,9 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
                 if (board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
                     vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
                 }
+                if (board.minimum_elib_count(!board.get_to_move(), it->second) == 2) {
+                    vtx->set_expand_cnt(expand_threshold / 2, netscore_threshold / 2);
+                }
                 if (board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
                     vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
                 }
@@ -509,7 +512,6 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     int childcount = 0;
     UCTNode * child = m_firstchild;
 
-
     // count parentvisits
     // XXX: wtf do we count this??? don't we know?
     // make sure we are at a valid successor
@@ -554,12 +556,14 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 // "UCT" part
                 float winrate = child->get_mixed_score(color);
                 float psa = child->get_score();
-                float denom = child->get_visits();
+                float denom = 1.0f + child->get_visits();
 
-                float cts = std::sqrt(cfg_puct * (numerator / denom));
                 float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
+                float puct = cfg_puct * psa * (std::sqrt(parentvisits) / denom);
+                // float cts = cfg_puct * std::sqrt(numerator / denom);
+                // Alternate is to remove psa in puct but without log(parentvis)
 
-                 value = winrate + cts - mti;
+                value = winrate - mti + puct;
             } else {
                 float winrate = cfg_fpu;
                 float psa = child->get_score();
@@ -570,7 +574,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                     mti = (cfg_psa / psa);
                 }
 
-                value = winrate - mti;
+                value = winrate - mti + cfg_puct * psa * std::sqrt(parentvisits);
                 assert(value > -1000.0f);
             }
         } else {
