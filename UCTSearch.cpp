@@ -655,10 +655,10 @@ void UCTSearch::dump_analysis(void) {
 
     std::string pvstring = get_pv(tempstate, m_root);
     float winrate = 100.0f * m_root.get_winrate(color);
-    float eval = 100.0f * m_root.get_eval(color);
     float mixrate = 100.0f * m_root.get_mixed_score(color);
 
-    if (m_use_nets) {
+    if (m_use_nets && m_root.get_evalcount()) {
+        float eval = 100.0f * m_root.get_eval(color);
         myprintf("Nodes: %d, Win: %5.2f%% (MC:%5.2f%%/VN:%5.2f%%), PV: %s\n",
                  m_root.get_visits(),
                  mixrate, winrate, eval, pvstring.c_str());
