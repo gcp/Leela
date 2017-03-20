@@ -369,8 +369,8 @@ bool UCTSearch::allow_early_exit() {
     // Variance of Bernoulli distribution is p(1-p) = 0.25
     // Standard error is var/sqrt(n)
     // Thus standard error on MC = sqrt(0.25)/sqrt(n) = sqrt(0.25/n)
-    low  = p1 - 2.5f * std::sqrt(0.25 / n1);
-    high = p2 + 2.5f * std::sqrt(0.25 / n2);
+    low  = p1 - 3.0f * std::sqrt(0.25 / n1);
+    high = p2 + 3.0f * std::sqrt(0.25 / n2);
 
     if (low > high) {
         myprintf("Allowing early exit: low: %f%% > high: %f%%\n", low * 100.0f, high * 100.0f);

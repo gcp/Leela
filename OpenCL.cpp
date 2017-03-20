@@ -513,6 +513,7 @@ void OpenCL::forward_async(std::vector<float>& input,
     if (cb != nullptr) {
         cb(CL_COMPLETE, 0, data);
     } else {
+        assert(data == nullptr);
         thread_data.get()->m_results_outstanding.fetch_sub(1, std::memory_order_release);
         callback_finished();
     }

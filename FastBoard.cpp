@@ -2553,7 +2553,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
             myprintf("Branch, atari at %s\n", move_to_text(libarr[1]).c_str());
             tmp2.display_board(libarr[1]);
 #endif
-            assert(tmp2.get_square(libarr[1]) == EMPTY);
+            assert(tmp2.get_square(libarr[1]) != EMPTY);
             bool ladder2 = tmp2.check_losing_ladder(color, libarr[0], branching + 1);
 
             // if one side of the ataris work, the ladder works
