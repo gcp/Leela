@@ -91,8 +91,8 @@ bool FastState::try_move(int color, int vertex, bool allow_sa) {
 }
 
 int FastState::walk_empty_list(int color, bool allow_sa) {
-    int dir = Random::get_Rng()->randint(2);
-    int vidx = Random::get_Rng()->randint(board.m_empty_cnt);
+    int dir = Random::get_Rng()->randfix<2>();
+    int vidx = Random::get_Rng()->randint16(board.m_empty_cnt);
 
     if (dir == 0) {
         for (int i = vidx; i < board.m_empty_cnt; i++) {

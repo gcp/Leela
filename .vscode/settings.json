@@ -33,6 +33,9 @@
         "new": "cpp",
         "type_traits": "cpp",
         "typeinfo": "cpp",
-        "atomic": "cpp"
+        "atomic": "cpp",
+        "chrono": "cpp",
+        "random": "cpp",
+        "limits": "cpp"
     }
 }

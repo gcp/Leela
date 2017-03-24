@@ -4,18 +4,24 @@
 #include "config.h"
 
 /*
-    Random number generator
+    Random number generator xoroshiro128+
 */
 class Random {
 public:
     Random(int seed = -1);
 
-    uint32 random(void);
+    uint64 random(void);
     void seedrandom(uint32 s);
+
     /*
-        random number from 0 to max
+        random numbers from 0 to max
     */
-    uint32 randint(const uint16 max);
+    template<int MAX>
+    uint32 randfix() {
+        return ((random() >> 48) * MAX) >> 16;
+    }
+
+    uint32 randint16(const uint16 max);
     uint32 randint32(const uint32 max);
 
     /*
@@ -24,14 +30,12 @@ public:
     float randflt(void);
 
     /*
-        return the "global" RNG
+        return the thread local RNG
     */
     static Random* get_Rng(void);
 
 private:
-    uint32 s1, s2, s3;
-
-    static Random* s_rng;
+    uint64 s[2];
 };
 
 #endif

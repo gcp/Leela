@@ -1,71 +1,58 @@
 #include <time.h>
 #include <limits.h>
+#include <thread>
 #include "config.h"
 
 #include "Random.h"
 
-Random* Random::s_rng = 0;
-
 Random* Random::get_Rng(void) {
-    if (s_rng == 0) {
-        s_rng = new Random;
-    }
-
-    return s_rng;
+    static thread_local Random s_rng;
+    return &s_rng;
 }
 
 Random::Random(int seed) {
     if (seed == -1) {
-        seedrandom((uint32)time(0));
+        size_t thread_id =
+            std::hash<std::thread::id>()(std::this_thread::get_id());
+        seedrandom((uint32)time(0) ^ (uint32)thread_id);
     } else {
         seedrandom(seed);
     }
 }
 
-// n must be between 1 .. (1<<16) + 1
-// 0 .. n-1
-uint32 Random::randint(const uint16 max) {
-    return ((random() >> 16) * max) >> 16;
+static inline uint64 rotl(const uint64 x, int k) {
+	return (x << k) | (x >> (64 - k));
+}
+
+uint64 Random::random(void) {
+    const uint64 s0 = s[0];
+    uint64 s1 = s[1];
+    const uint64 result = s0 + s1;
+
+    s1 ^= s0;
+    s[0] = rotl(s0, 55) ^ s1 ^ (s1 << 14);
+    s[1] = rotl(s1, 36);
+
+    return result;
+}
+
+uint32 Random::randint16(const uint16 max) {
+    return ((random() >> 48) * max) >> 16;
 }
 
 uint32 Random::randint32(const uint32 max) {
-    return ((uint64)random() * (uint64)max) >> 32;
+    return ((random() >> 32) * (uint64)max) >> 32;
 }
 
-//----------------------------------------------------------------------------//
-// Maximally equidistributed Tausworthy taus88 generator by Pierre L'Ecuyer.
-// See: Pierre L'Ecuyer, "Maximally Equidistributed Combined Tausworthy
-//      Generators", Mathematics of Computation, 65 (1996), pp. 203-213.
-//----------------------------------------------------------------------------//
-
-uint32 Random::random(void) {
-    const uint32 mask = 0xffffffff;
-    uint32 b;
-    b  = (((s1 << 13) & mask) ^ s1) >> 19;
-    s1 = (((s1 & 0xFFFFFFFEU) << 12) & mask) ^ b;
-    b  = (((s2 << 2) & mask) ^ s2) >> 25;
-    s2 = (((s2 & 0xFFFFFFF8U) <<  4) & mask) ^ b;
-    b  = (((s3 << 3) & mask) ^ s3) >> 11;
-    s3 = (((s3 & 0xFFFFFFF0U) << 17) & mask) ^ b;
-    return (s1 ^ s2 ^ s3);
-}
-
-void Random::seedrandom(uint32 s) {
-    if (s == 0) {
-        s = 1;
-    }
-
-    s1 = (741103597 * s);
-    s2 = (741103597 * s1);
-    s3 = (741103597 * s2);
-
-    s1 |= 2;
-    s2 |= 8;
-    s3 |= 16;
+void Random::seedrandom(uint32 seed) {
+    s[0] = (741103597 * seed);
+    s[1] = (741103597 * s[0]);
 }
 
 float Random::randflt(void) {
-    uint32 rnd = random();
-    static const float umax = 1.0f / (float)UINT_MAX;
+    // We need a 23 bit mantissa + implicit 1 bit = 24 bit number
+    // starting from a 64 bit random.
+    constexpr float umax = 1.0f / (UINT32_C(1) << 24);
+    uint32 rnd = random() >> 40;
     return ((float)rnd) * umax;
 }

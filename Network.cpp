@@ -461,7 +461,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     assert(ensemble == DIRECT || ensemble == RANDOM_ROTATION);
     int rotation;
     if (ensemble == RANDOM_ROTATION) {
-        rotation = Random::get_Rng()->randint(8);
+        rotation = Random::get_Rng()->randfix<8>();
     } else {
         assert(ensemble == DIRECT);
         rotation = 0;
@@ -516,7 +516,7 @@ float Network::get_value(FastState * state, Ensemble ensemble) {
     if (ensemble == DIRECT) {
         result = get_value_internal(state, planes, 0);
     } else if (ensemble == RANDOM_ROTATION) {
-        int rotation = Random::get_Rng()->randint(8);
+        int rotation = Random::get_Rng()->randfix<8>();
         result = get_value_internal(state, planes, rotation);
     } else {
         assert(ensemble == AVERAGE_ALL);
@@ -551,7 +551,7 @@ Network::Netresult Network::get_scored_moves(
     if (ensemble == DIRECT) {
         result = get_scored_moves_internal(state, planes, 0);
     } else if (ensemble == RANDOM_ROTATION) {
-        int rotation = Random::get_Rng()->randint(8);
+        int rotation = Random::get_Rng()->randfix<8>();
         result = get_scored_moves_internal(state, planes, rotation);
     } else {
         assert(ensemble == AVERAGE_ALL);
@@ -978,7 +978,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
             if (treewalk->get_state()->board.get_boardsize() != 19)
                 break;
 
-            int skip = Random::get_Rng()->randint(8);
+            int skip = Random::get_Rng()->randfix<8>();
             if (skip == 0) {
                 KoState * state = treewalk->get_state();
                 int tomove = state->get_to_move();
@@ -1155,7 +1155,7 @@ void Network::train_network(TrainVector& data,
         datum.set_width(19);
         std::string buffer(datum_channels * 19 * 19, '\0');
         // check whether to rotate the position
-        int symmetry = Random::get_Rng()->randint(8);
+        int symmetry = Random::get_Rng()->randfix<8>();
         for (size_t p = 0; p < nnplanes.size(); p++) {
             BoardPlane tmp;
             for (size_t b = 0; b < nnplanes[p].size(); b++) {

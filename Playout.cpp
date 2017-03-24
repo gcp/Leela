@@ -99,7 +99,7 @@ void Playout::run(FastState & state, bool postpassout, bool resigning) {
     // update MCO in one swoop
     bool blackwon;
     if (score == 0.0f) {
-        blackwon = (Random::get_Rng()->randint(2) == 0);
+        blackwon = (Random::get_Rng()->randfix<2>() == 0);
     } else {
         blackwon = (score > 0.0f);
     }
