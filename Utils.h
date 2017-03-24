@@ -7,6 +7,7 @@
 #endif
 
 #include <string>
+#include <atomic>
 
 #ifdef _MSC_VER
 #define ASSUME_ALIGNED(p, n) \
@@ -30,6 +31,12 @@ namespace Utils {
     void log_input(std::string input);
     bool input_pending();
     bool input_causes_stop();
+
+    template<class T>
+    void atomic_add(std::atomic<T> &f, T d) {
+        T old = f.load();
+        while (!f.compare_exchange_weak(old, old + d));
+    }
 
     template<class T>
     bool is_aligned(T* ptr, size_t alignment) {

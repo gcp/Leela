@@ -826,6 +826,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
     for (auto& thread : tg) {
+        assert(thread.joinable());
         if (thread.joinable()) {
             thread.join();
         }

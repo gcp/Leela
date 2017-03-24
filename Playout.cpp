@@ -2,6 +2,8 @@
 #include <array>
 #include <cstdlib>
 #include <cassert>
+#include <thread>
+#include <algorithm>
 #include "config.h"
 
 #include "Timing.h"
@@ -10,6 +12,7 @@
 #include "Utils.h"
 #include "MCOTable.h"
 #include "Random.h"
+#include "GTP.h"
 
 using namespace Utils;
 
@@ -156,25 +159,42 @@ void Playout::do_playout_benchmark(GameState & game) {
 }
 
 float Playout::mc_owner(FastState & state, int iterations, float* points) {
-    float bwins = 0.0f;
-    float board_score = 0.0f;
+    int cpus = cfg_num_threads;
+    int iters_per_thread = (iterations + (cpus - 1)) / cpus;
 
-    for (int i = 0; i < iterations; i++) {
-        FastState tmp = state;
+    std::atomic<float> bwins{0.0f};
+    std::atomic<float> board_score{0.0f};
 
-        Playout p;
+    std::vector<std::thread> tg;
+    for (int i = 0; i < cpus; i++) {
+        tg.push_back(
+            std::thread([iters_per_thread, &state,
+                         &bwins, &board_score]() {
+                for (int i = 0; i < iters_per_thread; i++) {
+                    FastState tmp = state;
 
-        p.run(tmp, true, false);
+                    Playout p;
+                    p.run(tmp, true, false);
 
-        float score = p.get_score();
-        if (score == 0.0f) {
-            bwins += 0.5f;
-        } else if (score > 0.0f) {
-            bwins += 1.0f;
-        }
+                    float score = p.get_score();
+                    if (score == 0.0f) {
+                        atomic_add(bwins, 0.5f);
+                    } else if (score > 0.0f) {
+                        atomic_add(bwins, 1.0f);
+                    }
 
-        board_score += p.get_territory();
+                    float territory_score = p.get_territory();
+                    atomic_add(board_score, territory_score);
+                }
+            }
+        ));
     }
+
+    auto join_thread = [](std::thread &thread) {
+        assert(thread.joinable());
+        thread.join();
+    };
+    std::for_each(tg.begin(), tg.end(), join_thread);
 
     float score = bwins / (float)iterations;
     float territory = board_score / (float)iterations;
