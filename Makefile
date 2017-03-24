@@ -52,6 +52,7 @@ CXXFLAGS += -I$(CAFFE_INC) -I/usr/local/cuda/include
 #CXXFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Headers
 LDFLAGS  += -L$(CAFFE_LIB)
 #LDFLAGS  += -L/opt/intel/mkl/lib/intel64/
+#LDFLAGS  += -L/opt/intel/mkl/lib/ia32/
 
 CXXFLAGS += -I.
 CPPFLAGS += -MD -MP

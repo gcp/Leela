@@ -276,7 +276,7 @@ void Network::initialize(void) {
 
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
-         unsigned long W, unsigned long B>
+         size_t W, size_t B>
 void convolve(std::vector<float>& input,
               std::array<float, W>& weights,
               std::array<float, B>& biases,
@@ -326,7 +326,7 @@ void convolve(std::vector<float>& input,
 
 template<unsigned int inputs,
          unsigned int outputs,
-         unsigned long W, unsigned long B>
+         size_t W, size_t B>
 void innerproduct(std::vector<float>& input,
                   std::array<float, W>& weights,
                   std::array<float, B>& biases,

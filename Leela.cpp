@@ -4,7 +4,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#ifdef USE_OPTIONS
 #include <boost/program_options.hpp>
+#endif
 #include <boost/format.hpp>
 #ifdef USE_CAFFE
 #include <glog/logging.h>
@@ -21,6 +23,7 @@
 
 using namespace Utils;
 
+#ifdef USE_OPTIONS
 void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     namespace po = boost::program_options;
     // Declare the supported options.
@@ -219,6 +222,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
 #endif
 }
+#endif
 
 #ifdef _CONSOLE
 int main (int argc, char *argv[]) {
@@ -230,7 +234,9 @@ int main (int argc, char *argv[]) {
 #endif
     // Set up engine parameters
     GTP::setup_default_parameters();
+#ifdef USE_OPTIONS
     parse_commandline(argc, argv, gtp_mode);
+#endif
 
     // Disable IO buffering as much as possible
     std::cout.setf(std::ios::unitbuf);
