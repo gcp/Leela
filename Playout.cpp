@@ -170,6 +170,8 @@ float Playout::mc_owner(FastState & state, int iterations, float* points) {
         tg.push_back(
             std::thread([iters_per_thread, &state,
                          &bwins, &board_score]() {
+                float thread_bwins = 0.0f;
+                float thread_board_score = 0.0f;
                 for (int i = 0; i < iters_per_thread; i++) {
                     FastState tmp = state;
 
@@ -178,14 +180,14 @@ float Playout::mc_owner(FastState & state, int iterations, float* points) {
 
                     float score = p.get_score();
                     if (score == 0.0f) {
-                        atomic_add(bwins, 0.5f);
+                        thread_bwins += 0.5f;
                     } else if (score > 0.0f) {
-                        atomic_add(bwins, 1.0f);
+                        thread_bwins += 1.0f;
                     }
-
-                    float territory_score = p.get_territory();
-                    atomic_add(board_score, territory_score);
+                    thread_board_score += p.get_territory();
                 }
+                atomic_add(bwins, thread_bwins);
+                atomic_add(board_score, thread_board_score);
             }
         ));
     }
