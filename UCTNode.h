@@ -88,17 +88,17 @@ private:
     // Move
     int m_move;
     // UCT
-    double m_blackwins;
-    int m_visits;
+    std::atomic<double> m_blackwins;
+    std::atomic<int> m_visits;
     // RAVE
-    double m_ravestmwins;
-    int m_ravevisits;
+    std::atomic<double> m_ravestmwins;
+    std::atomic<int> m_ravevisits;
     // move order
     float m_score;
     // board eval
     bool m_eval_propagated;
-    double m_blackevals;
-    int m_evalcount;
+    std::atomic<double> m_blackevals;
+    std::atomic<int> m_evalcount;
     bool m_is_evaluating;    // mutex
     // alive (superko)
     bool m_valid;

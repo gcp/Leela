@@ -348,30 +348,28 @@ void UCTNode::set_expand_cnt(int runs, int netscore_cnt) {
 }
 
 void UCTNode::update(Playout & gameresult, int color, bool update_eval) {
-    SMP::Lock lock(get_mutex());
     m_visits++;
     m_ravevisits++;
 
     // prefer winning with more territory
     float score = gameresult.get_score();
-
-    m_blackwins += 0.05 * score;
-
+    double blackwins_inc = 0.05 * score;
     if (score > 0.0f) {
-        m_blackwins += 1.0;
+        blackwins_inc += 1.0;
     } else if (score == 0.0f) {
-        m_blackwins += 0.5;
+        blackwins_inc += 0.5;
     }
+    atomic_add(m_blackwins, blackwins_inc);
 
     // We're inspected from one level above and scores
     // are side to move, so invert here
     if (color == FastBoard::BLACK) {
         if (score < 0.0f) {
-            m_ravestmwins += 1.0 + 0.05 * -score;
+            atomic_add(m_ravestmwins, 1.0 + 0.05 * -score);
         }
     } else if (color == FastBoard::WHITE) {
         if (score > 0.0f) {
-            m_ravestmwins += 1.0 + 0.05 * score;
+            atomic_add(m_ravestmwins, 1.0 + 0.05 * score);
         }
     }
 
@@ -390,12 +388,10 @@ double UCTNode::get_blackwins() const {
 }
 
 void UCTNode::set_visits(int visits) {
-    SMP::Lock lock(get_mutex());
     m_visits = visits;
 }
 
 void UCTNode::set_blackwins(double wins) {
-    SMP::Lock lock(get_mutex());
     m_blackwins = wins;
 }
 
@@ -411,11 +407,11 @@ float UCTNode::get_winrate(int tomove) const {
     assert(!first_visit());
 
     float rate = get_blackwins() / get_visits();
-    
+
     if (tomove == FastBoard::WHITE) {
         rate = 1.0f - rate;
     }
-    
+
     return rate;
 }
 
@@ -425,14 +421,13 @@ float UCTNode::get_raverate() const {
     return rate;
 }
 
-int UCTNode::get_visits() const {        
+int UCTNode::get_visits() const {
     return m_visits;
 }
 
 int UCTNode::get_ravevisits() const {
     return m_ravevisits;
 }
-
 
 float UCTNode::get_eval(int tomove) const {
     float score = m_blackevals / (double)m_evalcount;
@@ -471,7 +466,7 @@ void UCTNode::set_eval_propagated() {
 }
 
 void UCTNode::accumulate_eval(float eval) {
-    m_blackevals += eval;
+    atomic_add(m_blackevals, (double)eval);
     m_evalcount  += 1;
 }
 
@@ -816,43 +811,41 @@ void UCTNode::delete_child(UCTNode * del_child) {
 }
 
 // update siblings with matching RAVE info
-void UCTNode::updateRAVE(Playout & playout, int color) {      
-    float score = playout.get_score();            
-    
+void UCTNode::updateRAVE(Playout & playout, int color) {
+    float score = playout.get_score();
+
     // siblings
-    UCTNode * child = m_firstchild;    
-    
-    while (child != NULL) {                
-        int move = child->get_move();                
-        
+    UCTNode * child = m_firstchild;
+
+    while (child != NULL) {
+        int move = child->get_move();
+
         if (color == FastBoard::BLACK) {
-            bool bpass = playout.passthrough(FastBoard::BLACK, move);        
-            
-            if (bpass) { 
-                SMP::Lock lock(child->get_mutex());    
+            bool bpass = playout.passthrough(FastBoard::BLACK, move);
+
+            if (bpass) {
                 child->m_ravevisits++;
 
                 if (score > 0.0f) {
-                    child->m_ravestmwins += 1.0f + 0.05f * score;
+                    atomic_add(child->m_ravestmwins, 1.0 + 0.05 * score);
                 } else if (score == 0.0f) {
-                    child->m_ravestmwins += 0.5f;
+                    atomic_add(child->m_ravestmwins, 0.5);
                 }
             }
         } else {
-            bool wpass = playout.passthrough(FastBoard::WHITE, move);        
-            
-            if (wpass) { 
-                SMP::Lock lock(child->get_mutex());    
+            bool wpass = playout.passthrough(FastBoard::WHITE, move);
+
+            if (wpass) {
                 child->m_ravevisits++;
 
                 if (score < 0.0f) {
-                    child->m_ravestmwins += 1.0f + 0.05f * -score;
+                    atomic_add(child->m_ravestmwins, 1.0 + 0.05 * -score);
                 } else if (score == 0.0f) {
-                    child->m_ravestmwins += 0.5f;
+                    atomic_add(child->m_ravestmwins, 0.5);
                 }
             }
         }
-                        
-        child = child->m_nextsibling;       
-    }      
+
+        child = child->m_nextsibling;
+    }
 }
