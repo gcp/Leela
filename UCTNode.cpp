@@ -19,6 +19,7 @@
 #include "Matcher.h"
 #include "Network.h"
 #include "GTP.h"
+#include "Random.h"
 #ifdef USE_OPENCL
 #include "OpenCL.h"
 #endif
@@ -492,6 +493,18 @@ float UCTNode::get_mixed_score(int tomove) {
     return eval * mix_factor + winrate * (1.0f - mix_factor);
 }
 
+float UCTNode::smp_noise(void) {
+    if (cfg_num_threads >= 6) {
+        float winnoise = 0.0025f;
+        if (cfg_num_threads >= 12) {
+            winnoise = 0.04f;
+        }
+        return winnoise * Random::get_Rng()->randflt();
+    } else {
+        return 0.0f;
+    }
+}
+
 UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     UCTNode * best = NULL;
     float best_value = -1000.0f;
@@ -555,6 +568,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             if (!child->first_visit()) {
                 // "UCT" part
                 float winrate = child->get_mixed_score(color);
+                winrate += smp_noise();
                 float psa = child->get_score();
                 float denom = 1.0f + child->get_visits();
 
@@ -566,6 +580,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 value = winrate - mti + puct;
             } else {
                 float winrate = cfg_fpu;
+                winrate += smp_noise();
                 float psa = child->get_score();
                 float mti;
                 if (parentvisits > 1) {
@@ -584,6 +599,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             if (!child->first_visit()) {
                 // "UCT" part
                 float winrate = child->get_mixed_score(color);
+                winrate += smp_noise();
                 uctvalue = winrate + cfg_uct * std::sqrt(numerator / child->get_visits());
                 patternbonus = sqrtf((child->get_score() * cfg_patternbonus) / child->get_visits());
             } else {

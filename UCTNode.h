@@ -81,6 +81,7 @@ private:
     void rescore_nodelist(std::atomic<int> & nodecount,
                          FastBoard & state,
                          Network::Netresult & nodes);
+    float smp_noise();
     // Tree data
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;
