@@ -1,13 +1,13 @@
-# 90065381 training positions.
-# 3752733 testing positions.
-#  351 817 x 256
-#   14 659 x 256
+# 123645638 training positions.
+#   5151909 testing positions.
+#  482 990 x 256
+#   20 125 x 256
 # The train/test net protocol buffer definition
 net: "train-test.prototxt"
 
 # test_iter specifies how many forward passes the test should carry out.
 # 1/10th total test items
-test_iter: 5000
+test_iter: 2000
 
 # Carry out testing every n training iterations.
 # every 1/10th epoch
@@ -27,13 +27,14 @@ average_loss: 10000
 
 # The total number of iterations
 # 100 epoch
-max_iter: 35180400
+max_iter: 48299000
 
 # snapshot intermediate results
 snapshot: 50000
 snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
-type: "Adam"
+type: Nesterov
+#type: "Adam"
 #type: "SGD"
 solver_mode: GPU
