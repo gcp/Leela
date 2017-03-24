@@ -34,6 +34,8 @@ public:
     void set_quiet(bool flag);
     void ponder();
     bool is_running();
+    bool playout_limit_reached();
+    void increment_playouts();
     Playout play_simulation(KoState & currstate, UCTNode * const node);
     float get_score();
 
@@ -54,6 +56,7 @@ private:
     GameState & m_rootstate;
     UCTNode m_root;
     std::atomic<int> m_nodes;
+    std::atomic<int> m_playouts;
     std::atomic<bool> m_run;
     int m_maxplayouts;
     float m_score;
