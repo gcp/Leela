@@ -250,11 +250,8 @@ int main (int argc, char *argv[]) {
 #endif
 
     // Use deterministic random numbers for hashing
-    std::unique_ptr<Random> rng(new Random(5489UL));
+    std::unique_ptr<Random> rng(new Random(5489));
     Zobrist::init_zobrist(*rng);
-
-    // Now seed with something more random
-    rng.reset(new Random());
 
     // Initialize things
     AttribScores::get_attribscores();
