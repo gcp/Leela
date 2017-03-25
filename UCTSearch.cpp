@@ -202,7 +202,7 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
 #endif
 }
 
-void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
+void UCTSearch::dump_stats(KoState & state, UCTNode & parent) {
 #ifdef _CONSOLE
     const int color = state.get_to_move();
 
@@ -247,7 +247,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
                 node->get_score() * 100.0f);
         }
 
-        GameState tmpstate = state;
+        KoState tmpstate = state;
 
         tmpstate.play_move(node->get_move());
         pvstring += " " + get_pv(tmpstate, *node);
@@ -265,7 +265,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
              parent.get_mixed_score(color) * 100.0f,
              tmp.c_str());
 
-    GameState tmpstate = state;
+    KoState tmpstate = state;
     myprintf(get_pv(tmpstate, parent).c_str());
 
     myprintf("\n");
@@ -624,7 +624,7 @@ void UCTSearch::dump_order2(void) {
     myprintf("--------------------\n");        
 }
 
-std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
+std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
     if (!parent.has_children()) {
         return std::string();
     }

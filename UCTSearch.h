@@ -40,9 +40,9 @@ public:
     float get_score();
 
 private:
-    void dump_stats(GameState & state, UCTNode & parent);
+    void dump_stats(KoState & state, UCTNode & parent);
     void dump_GUI_stats(GameState & state, UCTNode & parent);
-    std::string get_pv(GameState & state, UCTNode & parent);
+    std::string get_pv(KoState & state, UCTNode & parent);
     void dump_thinking();
     void dump_analysis();
     void dump_order2(void);
