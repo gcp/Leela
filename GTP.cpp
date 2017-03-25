@@ -58,6 +58,7 @@ int cfg_eval_scale;
 float cfg_beta;
 float cfg_patternbonus;
 int cfg_rave_moves;
+int cfg_extra_symmetry;
 std::string cfg_logfile;
 FILE* cfg_logfile_handle;
 bool cfg_quiet;
@@ -97,6 +98,7 @@ void GTP::setup_default_parameters() {
     cfg_eval_thresh = 5;
     cfg_eval_scale = 2;
     cfg_rave_moves = 13;
+    cfg_extra_symmetry = 200;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }
@@ -107,7 +109,7 @@ bool GTP::perform_self_test(GameState & state) {
     myprintf("OpenCL self-test: ");
     // Perform self-test
     auto vec = Network::get_Network()->get_scored_moves(
-        &state, Network::Ensemble::DIRECT);
+        &state, Network::Ensemble::DIRECT, 0);
     testPassed &= vec[60].first > 0.185 && vec[60].first < 0.186;
     testPassed &= vec[60].second == 88;
     testPassed &= vec[72].first > 0.189 && vec[72].first < 0.190;
