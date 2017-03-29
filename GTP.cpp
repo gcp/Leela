@@ -68,7 +68,7 @@ void GTP::setup_default_parameters() {
     cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
     cfg_enable_nets = true;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 45;
+    cfg_mature_threshold = 50;
     cfg_expand_divider = 2.0f;
 #else
     cfg_mature_threshold = 90;
@@ -89,16 +89,16 @@ void GTP::setup_default_parameters() {
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 1.1f;
-    cfg_puct = 1.069f;
-    cfg_psa = 0.00435f;
-    cfg_softmax_temp = 0.7724f;
+    cfg_puct = 1.071f;
+    cfg_psa = 0.00368f;
+    cfg_softmax_temp = 0.6945f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.45f;
     cfg_eval_thresh = 5;
     cfg_eval_scale = 2;
     cfg_rave_moves = 13;
-    cfg_extra_symmetry = 200;
+    cfg_extra_symmetry = 195;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }
