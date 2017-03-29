@@ -288,7 +288,8 @@ bool GTP::execute(GameState & game, std::string xinput) {
             if (tmp < 2 || tmp > FastBoard::MAXBOARDSIZE) {
                 gtp_fail_printf(id, "unacceptable size");
             } else {
-                game.init_game(tmp);                
+                float old_komi = game.get_komi();
+                game.init_game(tmp, old_komi);
                 gtp_printf(id, "");
             }
         } else {
