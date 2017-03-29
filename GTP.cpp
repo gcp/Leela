@@ -104,6 +104,7 @@ void GTP::setup_default_parameters() {
 bool GTP::perform_self_test(GameState & state) {
     bool testPassed = true;
 #ifdef USE_OPENCL
+#ifndef USE_TUNER
     myprintf("OpenCL self-test: ");
     // Perform self-test
     auto vec = Network::get_Network()->get_scored_moves(
@@ -117,6 +118,7 @@ bool GTP::perform_self_test(GameState & state) {
     } else {
         myprintf("failed. Check your OpenCL drivers.\n");
     }
+#endif
 #endif
     return testPassed;
 }
