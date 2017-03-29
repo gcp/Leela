@@ -19,7 +19,6 @@
 using namespace Utils;
 
 void FastState::init_game(int size, float komi) {
-
     board.reset_board(size);
 
     m_movenum = 0;

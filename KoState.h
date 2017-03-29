@@ -7,14 +7,14 @@
 #include "FullBoard.h"
 
 class KoState : public FastState {
-public:                    
-    void init_game(int size = FastBoard::MAXBOARDSIZE, float komi = 7.5f);
+public:
+    void init_game(int size, float komi);
     bool superko(void);
     bool superko(uint64 newhash);
     void reset_game();
-    
-    bool legal_move(int vertex);      
-        
+
+    bool legal_move(int vertex);
+
     void play_pass(void);
     void play_move(int color, int vertex);
     void play_move(int vertex);               
