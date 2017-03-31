@@ -75,7 +75,7 @@ extern std::array<float, 128> conv13_b;
 extern std::array<float, 3456> conv14_w;
 extern std::array<float, 3> conv14_b;
 
-extern std::array<float, 19200> val_conv1_w;
+extern std::array<float, 25600> val_conv1_w;
 extern std::array<float, 32> val_conv1_b;
 extern std::array<float, 9216> val_conv2_w;
 extern std::array<float, 32> val_conv2_b;
@@ -470,7 +470,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     CallbackData * cb_data = new CallbackData();
 
     NNPlanes planes;
-    gather_features(state, planes);
+    gather_features_policy(state, planes);
 
     constexpr int width = 19;
     constexpr int height = 19;
@@ -485,7 +485,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     //assert(cb_data->m_thread_result_outstanding.load(boost::memory_order_acquire) == 0);
     cb_data->m_rotation = rotation;
 
-    for (int c = 0; c < Network::CHANNELS; ++c) {
+    for (int c = 0; c < Network::POLICY_CHANNELS; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
                 int vtx = rotate_nn_idx(h * 19 + w, rotation);
@@ -510,7 +510,7 @@ float Network::get_value(FastState * state, Ensemble ensemble) {
     }
 
     NNPlanes planes;
-    gather_features(state, planes, nullptr);
+    gather_features_value(state, planes, nullptr);
     float result;
 
     if (ensemble == DIRECT) {
@@ -546,7 +546,7 @@ Network::Netresult Network::get_scored_moves(
 
     NNPlanes planes;
     BoardPlane* ladder;
-    gather_features(state, planes, &ladder);
+    gather_features_policy(state, planes, &ladder);
 
     if (ensemble == DIRECT) {
         result = get_scored_moves_internal(state, planes, 0);
@@ -592,7 +592,7 @@ float Network::get_value_internal(
     assert(rotation >= 0 && rotation <= 7);
     float result;
 
-    constexpr int channels = CHANNELS;
+    constexpr int channels = VALUE_CHANNELS;
     constexpr int width = 19;
     constexpr int height = 19;
     constexpr int max_channels = MAX_VALUE_CHANNELS;
@@ -613,7 +613,7 @@ float Network::get_value_internal(
     }
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
 
-    convolve<5, 24, 32>(input_data, val_conv1_w, val_conv1_b, output_data);
+    convolve<5, 32, 32>(input_data, val_conv1_w, val_conv1_b, output_data);
     std::swap(input_data, output_data);
     convolve<3, 32, 32>(input_data, val_conv2_w, val_conv2_b, output_data);
     std::swap(input_data, output_data);
@@ -660,7 +660,7 @@ Network::Netresult Network::get_scored_moves_internal(
     assert(height == state->board.get_boardsize());
     float* orig_input_data = input_layer->mutable_cpu_data();
 #else
-    constexpr int channels = CHANNELS;
+    constexpr int channels = POLICY_CHANNELS;
     constexpr int width = 19;
     constexpr int height = 19;
     constexpr int max_channels = MAX_CHANNELS;
@@ -789,8 +789,145 @@ void Network::show_heatmap(FastState * state, Netresult& result) {
     }
 }
 
-void Network::gather_features(FastState * state, NNPlanes & planes,
-                              BoardPlane** ladder_out) {
+void Network::gather_features_policy(FastState * state, NNPlanes & planes,
+                                     BoardPlane** ladder_out) {
+    planes.resize(24);
+    BoardPlane& empt_color    = planes[0];
+    BoardPlane& move_color    = planes[1];
+    BoardPlane& othr_color    = planes[2];
+    BoardPlane& libs_1        = planes[3];
+    BoardPlane& libs_2        = planes[4];
+    BoardPlane& libs_3        = planes[5];
+    BoardPlane& libs_4p       = planes[6];
+    BoardPlane& libs_1_e      = planes[7];
+    BoardPlane& libs_2_e      = planes[8];
+    BoardPlane& libs_3_e      = planes[9];
+    BoardPlane& libs_4p_e     = planes[10];
+    BoardPlane& after_1       = planes[11];
+    BoardPlane& after_2       = planes[12];
+    BoardPlane& after_3       = planes[13];
+    BoardPlane& after_4p      = planes[14];
+    BoardPlane& after_1_e     = planes[15];
+    BoardPlane& after_2_e     = planes[16];
+    BoardPlane& after_3_e     = planes[17];
+    BoardPlane& after_4p_e    = planes[18];
+    BoardPlane& ladder        = planes[19];
+    BoardPlane& komove        = planes[20];
+    BoardPlane& movehist1     = planes[21];
+    BoardPlane& movehist2     = planes[22];
+    BoardPlane& has_komi      = planes[23];
+
+    if (ladder_out) {
+        *ladder_out = &ladder;
+    }
+
+    bool white_has_komi = true;
+    if (std::fabs(state->get_komi()) <= 0.75f) {
+        white_has_komi = false;
+    }
+
+    int tomove = state->get_to_move();
+    // collect white, black occupation planes
+    for (int j = 0; j < 19; j++) {
+        for(int i = 0; i < 19; i++) {
+            int vtx = state->board.get_vertex(i, j);
+            FastBoard::square_t color =
+                state->board.get_square(vtx);
+            int idx = j * 19 + i;
+            if (color != FastBoard::EMPTY) {
+                // White gets extra points in scoring
+                if (color == FastBoard::WHITE && white_has_komi) {
+                    has_komi[idx] = true;
+                }
+                if (color == tomove) {
+                    move_color[idx] = true;
+                } else {
+                    othr_color[idx] = true;
+                }
+                int rlibs = state->board.count_rliberties(vtx);
+                if (rlibs == 1) {
+                    if (color == tomove) {
+                        libs_1[idx] = true;
+                    } else {
+                        libs_1_e[idx] = true;
+                    }
+                } else if (rlibs == 2) {
+                    if (color == tomove) {
+                       libs_2[idx] = true;
+                    } else {
+                        libs_2_e[idx] = true;
+                    }
+                } else if (rlibs == 3) {
+                    if (color == tomove) {
+                        libs_3[idx] = true;
+                    } else {
+                        libs_3_e[idx] = true;
+                    }
+                } else if (rlibs >= 4) {
+                    if (color == tomove) {
+                        libs_4p[idx] = true;
+                    } else {
+                        libs_4p_e[idx] = true;
+                    }
+                }
+            } else {
+                empt_color[idx] = true;
+
+                std::pair<int, int> p =
+                    state->board.after_liberties(tomove, vtx);
+                int al = p.first;
+                if (al == 1) {
+                    after_1[idx] = true;
+                } else if (al == 2) {
+                    after_2[idx] = true;
+                } else if (al == 3) {
+                    after_3[idx] = true;
+                } else if (al >= 4) {
+                    after_4p[idx] = true;
+                }
+                int at = p.second;
+                if (at == 1) {
+                    after_1_e[idx] = true;
+                } else if (at == 2) {
+                    after_2_e[idx] = true;
+                } else if (at == 3) {
+                    after_3_e[idx] = true;
+                } else if (at >= 4) {
+                    after_4p_e[idx] = true;
+                }
+
+                int ss = state->board.saving_size(tomove, vtx);
+                int ae = state->board.count_pliberties(vtx);
+                if (ae == 2) {
+                    if (ss > 0) {
+                        bool ll = state->board.check_losing_ladder(tomove, vtx);
+                        ladder[idx] = ll;
+                    }
+                }
+            }
+        }
+    }
+
+    if (state->get_last_move() > 0) {
+        std::pair<int, int> lastmove = state->board.get_xy(state->get_last_move());
+        int idx = lastmove.second * 19 + lastmove.first;
+        movehist1[idx] = true;
+        if (state->get_prevlast_move() > 0) {
+            std::pair<int, int> prevlast = state->board.get_xy(state->get_prevlast_move());
+            int idxp = prevlast.second * 19 + prevlast.first;
+            movehist2[idxp] = true;
+        }
+    }
+
+    if (state->get_komove() > 0) {
+        std::pair<int, int> kosq = state->board.get_xy(state->get_komove());
+        int idx = kosq.second * 19 + kosq.first;
+        komove[idx] = true;
+    }
+}
+
+void Network::gather_features_value(FastState * state, NNPlanes & planes,
+                                    BoardPlane** ladder_out) {
     planes.resize(32);
     BoardPlane& empt_color   = planes[0];
     BoardPlane& move_color   = planes[1];
@@ -1051,7 +1188,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                         + ((1.0f - frac) * 0.5f);
                     position.stm_score_tanh = (frac * position.stm_won_tanh)
                         + ((1.0f - frac) * 0.0f);
-                    gather_features(state, position.planes);
+                    gather_features_policy(state, position.planes);
                     // add next 2 moves to position
                     // we do not check them for legality
                     /*int next_move = tree_moves[counter + 1];

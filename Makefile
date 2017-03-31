@@ -35,13 +35,13 @@ asan:
 		leela
 
 LIBS = -lboost_thread -lboost_system -lboost_program_options
-LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
-#LIBS += -lopenblas
+#LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
+LIBS += -lopenblas
 DYNAMIC_LIBS += -lpthread
 #DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
-LIBS += -lmkl_rt
+#LIBS += -lmkl_rt
 
 CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include
@@ -50,7 +50,7 @@ CXXFLAGS += -I$(CAFFE_INC) -I/usr/local/cuda/include
 #CXXFLAGS += -I/opt/intel/mkl/include
 #CXXFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Headers
 LDFLAGS  += -L$(CAFFE_LIB)
-LDFLAGS  += -L/opt/intel/mkl/lib/intel64/
+#LDFLAGS  += -L/opt/intel/mkl/lib/intel64/
 #LDFLAGS  += -L/opt/intel/mkl/lib/ia32/
 
 CXXFLAGS += -I.

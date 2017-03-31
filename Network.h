@@ -44,7 +44,8 @@ public:
                                Ensemble ensemble);
     float get_value(FastState *state,
                     Ensemble ensemble);
-    static constexpr int CHANNELS = 24;
+    static constexpr int POLICY_CHANNELS = 24;
+    static constexpr int VALUE_CHANNELS = 32;
     static constexpr int MAX_CHANNELS = 128;
     static constexpr int MAX_VALUE_CHANNELS = 32;
 
@@ -74,9 +75,10 @@ private:
       FastState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
-    static void gather_features(FastState * state, NNPlanes & planes,
-                                BoardPlane** ladder = nullptr);
-
+    static void gather_features_policy(FastState * state, NNPlanes & planes,
+                                       BoardPlane** ladder = nullptr);
+    static void gather_features_value(FastState * state, NNPlanes & planes,
+                                      BoardPlane** ladder = nullptr);
     static Network* s_Net;
 };
 
