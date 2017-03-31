@@ -29,6 +29,7 @@ bool cfg_allow_pondering;
 int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
+bool cfg_komi_adjust;
 int cfg_mature_threshold;
 float cfg_expand_divider;
 int cfg_lagbuffer_cs;
@@ -66,6 +67,7 @@ void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
     cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
     cfg_enable_nets = true;
+    cfg_komi_adjust = false;
 #ifdef USE_OPENCL
     cfg_mature_threshold = 30;
     cfg_expand_divider = 2.0f;
@@ -345,29 +347,39 @@ bool GTP::execute(GameState & game, std::string xinput) {
     } else if (command.find("genmove") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp;
-        
+
         cmdstream >> tmp;  // eat genmove
         cmdstream >> tmp;
-        
+
         if (!cmdstream.fail()) {
             int who;
             if (tmp == "w" || tmp == "white") {
-                who = FastBoard::WHITE;            
+                who = FastBoard::WHITE;
             } else if (tmp == "b" || tmp == "black") {
-                who = FastBoard::BLACK;         
+                who = FastBoard::BLACK;
             } else {
                 gtp_fail_printf(id, "syntax error");
                 return 1;
-            }   
-            
+            }
+            float old_komi = game.get_komi();
+            float new_komi = old_komi;
+            if (cfg_komi_adjust) {
+                if (who == FastBoard::BLACK) {
+                    new_komi = old_komi + 1.0f;
+                } else {
+                    new_komi = old_komi - 1.0f;
+                }
+            }
+            game.set_komi(new_komi);
+
             // start thinking
             {
                 std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
                 int move = search->think(who);
-                game.play_move(who, move);                    
+                game.play_move(who, move);
 
-                std::string vertex = game.move_to_text(move);            
+                std::string vertex = game.move_to_text(move);
                 gtp_printf(id, "%s", vertex.c_str());
             }
             if (cfg_allow_pondering) {
@@ -377,35 +389,46 @@ bool GTP::execute(GameState & game, std::string xinput) {
                     search->ponder();
                 }
             }
+            game.set_komi(old_komi);
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
-                
+
         return true;
     } else if (command.find("kgs-genmove_cleanup") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp;
-        
+
         cmdstream >> tmp;  // eat kgs-genmove
         cmdstream >> tmp;
-        
+
         if (!cmdstream.fail()) {
             int who;
             if (tmp == "w" || tmp == "white") {
-                who = FastBoard::WHITE;            
+                who = FastBoard::WHITE;
             } else if (tmp == "b" || tmp == "black") {
-                who = FastBoard::BLACK;         
+                who = FastBoard::BLACK;
             } else {
                 gtp_fail_printf(id, "syntax error");
                 return 1;
-            } 
-            
+            }
+            float old_komi = game.get_komi();
+            float new_komi = old_komi;
+            if (cfg_komi_adjust) {
+                if (who == FastBoard::BLACK) {
+                    new_komi = old_komi + 1.0f;
+                } else {
+                    new_komi = old_komi - 1.0f;
+                }
+            }
+            game.set_komi(new_komi);
             game.set_passes(0);
 
             std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
             int move = search->think(who, UCTSearch::NOPASS);
-            game.play_move(who, move);                    
+            game.play_move(who, move);
+            game.set_komi(old_komi);
 
             std::string vertex = game.move_to_text(move);             
             gtp_printf(id, "%s", vertex.c_str());
@@ -501,8 +524,21 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 // KGS sends this after our move
                 // now start pondering
                 if (game.get_last_move() != FastBoard::RESIGN) {
+                    float old_komi = game.get_komi();
+                    float new_komi = old_komi;
+                    if (cfg_komi_adjust) {
+                        // We are the the color not to move
+                        int who = !game.get_to_move();
+                        if (who == FastBoard::BLACK) {
+                            new_komi = old_komi + 1.0f;
+                        } else {
+                            new_komi = old_komi - 1.0f;
+                        }
+                    }
+                    game.set_komi(new_komi);
                     std::unique_ptr<UCTSearch> search(new UCTSearch(game));
                     search->ponder();
+                    game.set_komi(old_komi);
                 }
             }
         } else {

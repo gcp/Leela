@@ -8,6 +8,7 @@ extern bool cfg_allow_pondering;
 extern int cfg_num_threads;
 extern int cfg_max_playouts;
 extern bool cfg_enable_nets;
+extern bool cfg_komi_adjust;
 extern int cfg_mature_threshold;
 extern float cfg_expand_divider;
 extern int cfg_lagbuffer_cs;
