@@ -176,8 +176,15 @@ int TimeControl::max_time_for_move(int color) {
 
 void TimeControl::adjust_time(int color, int time, int stones) {
     m_remaining_time[color] = time;
-    // stones are only given in byo-yomi
+    // From pachi: some GTP things send 0 0 at the end of main time
+    if (!time && !stones) {
+        m_inbyo[color] = true;
+        m_remaining_time[color] = m_byotime;
+        m_stones_left[color] = m_byostones;
+        m_periods_left[color] = m_byoperiods;
+    }
     if (stones) {
+        // stones are only given in byo-yomi
         m_inbyo[color] = true;
     }
     // we must be in byo-yomi before interpreting stones
