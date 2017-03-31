@@ -13,11 +13,10 @@
 #include "Random.h"
 #include "Utils.h"
 
-void GameState::init_game(int size, float komi) {        
-
+void GameState::init_game(int size, float komi) {
     KoState::init_game(size, komi);
 
-    game_history.clear();        
+    game_history.clear();
     game_history.push_back(*this);
 
     m_timecontrol.set_boardsize(board.get_boardsize());

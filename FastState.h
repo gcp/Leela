@@ -6,16 +6,16 @@
 #include "FullBoard.h"
 
 class FastState {
-public:        
-    void init_game(int size = FastBoard::MAXBOARDSIZE, float komi = 7.5f);
+public:
+    void init_game(int size, float komi);
     void reset_game();
-    void reset_board();  
-            
+    void reset_board();
+
     int play_random_move();
-    int play_random_move(int color);    
+    int play_random_move(int color);
     int play_move_fast(int vertex);
     float score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex);
-    
+
     void play_pass(void);
     void play_move(int vertex);
 

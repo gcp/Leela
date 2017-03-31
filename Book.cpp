@@ -41,7 +41,7 @@ void Book::bookgen_from_file(std::string filename) {
         SGFTree * treewalk = &(*sgftree);
         int counter = 0;
 
-        while (counter < movecount) {
+        while (counter < movecount && counter < 30) {
             assert(treewalk != NULL);
             assert(treewalk->get_state() != NULL);
             if (treewalk->get_state()->board.get_boardsize() != 19)

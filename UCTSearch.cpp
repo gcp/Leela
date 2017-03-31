@@ -32,6 +32,7 @@ UCTSearch::UCTSearch(GameState & g)
     : m_rootstate(g),
       m_root(FastBoard::PASS, 0.0f, 1, 1),
       m_nodes(0),
+      m_playouts(0),
       m_score(0.0f),
       m_hasrunflag(false),
       m_runflag(NULL),
@@ -201,7 +202,7 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
 #endif
 }
 
-void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
+void UCTSearch::dump_stats(KoState & state, UCTNode & parent) {
 #ifdef _CONSOLE
     const int color = state.get_to_move();
 
@@ -246,7 +247,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
                 node->get_score() * 100.0f);
         }
 
-        GameState tmpstate = state;
+        KoState tmpstate = state;
 
         tmpstate.play_move(node->get_move());
         pvstring += " " + get_pv(tmpstate, *node);
@@ -264,7 +265,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
              parent.get_mixed_score(color) * 100.0f,
              tmp.c_str());
 
-    GameState tmpstate = state;
+    KoState tmpstate = state;
     myprintf(get_pv(tmpstate, parent).c_str());
 
     myprintf("\n");
@@ -623,7 +624,7 @@ void UCTSearch::dump_order2(void) {
     myprintf("--------------------\n");        
 }
 
-std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
+std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
     if (!parent.has_children()) {
         return std::string();
     }
@@ -679,6 +680,10 @@ bool UCTSearch::is_running() {
     return m_run;
 }
 
+bool UCTSearch::playout_limit_reached() {
+    return m_playouts >= m_maxplayouts;
+}
+
 void UCTWorker::operator()() {
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->thread_init();
@@ -686,7 +691,8 @@ void UCTWorker::operator()() {
     do {
         KoState currstate = m_rootstate;
         m_search->play_simulation(currstate, m_root);
-    } while(m_search->is_running());
+        m_search->increment_playouts();
+    } while(m_search->is_running() && !m_search->playout_limit_reached());
 #ifdef USE_OPENCL
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
@@ -697,6 +703,10 @@ void UCTWorker::operator()() {
 
 float UCTSearch::get_score() {
     return m_score;
+}
+
+void UCTSearch::increment_playouts() {
+    m_playouts++;
 }
 
 int UCTSearch::think(int color, passflag_t passflag) {
@@ -765,6 +775,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_root.kill_superkos(m_rootstate);
 
     m_run = true;
+    m_playouts = 0;
 
     int cpus = cfg_num_threads;
     std::vector<std::thread> tg;
@@ -776,12 +787,12 @@ int UCTSearch::think(int color, passflag_t passflag) {
     // checked (and failed).
     bool easy_move_tested = !easy_move_precondition();
     bool keeprunning = true;
-    int iterations = 0;
     int last_update = 0;
     do {
         KoState currstate = m_rootstate;
 
         play_simulation(currstate, &m_root);
+        increment_playouts();
 
         Time elapsed;
         int centiseconds_elapsed = Time::timediff(start, elapsed);
@@ -796,10 +807,10 @@ int UCTSearch::think(int color, passflag_t passflag) {
             }
             keeprunning = (centiseconds_elapsed < time_for_move
                            && (!m_hasrunflag || (*m_runflag)));
-            keeprunning &= (iterations++ < m_maxplayouts);
+            keeprunning &= !playout_limit_reached();
 
             // check for early exit
-            if (keeprunning && ((iterations & 127) == 0)) {
+            if (keeprunning && ((m_playouts & 127) == 0)) {
                 if (centiseconds_elapsed > time_for_move/5) {
                     if (!easy_move_tested) {
                         keeprunning &= !allow_easy_move();
@@ -826,6 +837,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     OpenCL::get_OpenCL()->join_outstanding_cb();
 #endif
     for (auto& thread : tg) {
+        assert(thread.joinable());
         if (thread.joinable()) {
             thread.join();
         }
@@ -882,14 +894,16 @@ int UCTSearch::think(int color, passflag_t passflag) {
     Time elapsed;
     int centiseconds_elapsed = Time::timediff(start, elapsed);
     if (centiseconds_elapsed > 0) {
-        myprintf("\n%d visits, %d nodes, %d vps\n\n",
+        myprintf("\n%d visits, %d nodes, %d playouts, %d p/s\n\n",
                  m_root.get_visits(),
                  (int)m_nodes,
-                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));
-        GUIprintf("%d visits, %d nodes, %d vps",
+                 (int)m_playouts,
+                 (m_playouts * 100) / (centiseconds_elapsed+1));
+        GUIprintf("%d visits, %d nodes, %d playouts, %d p/s",
                  m_root.get_visits(),
                   (int)m_nodes,
-                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));
+                  (int)m_playouts,
+                 (m_playouts * 100) / (centiseconds_elapsed+1));
     }
     int bestmove = get_best_move(passflag);
 #else
@@ -907,6 +921,7 @@ void UCTSearch::ponder() {
 
 #ifdef USE_SEARCH
     m_run = true;
+    m_playouts = 0;
     int cpus = cfg_num_threads;
     std::vector<std::thread> tg;
     for (int i = 1; i < cpus; i++) {
@@ -915,6 +930,7 @@ void UCTSearch::ponder() {
     do {
         KoState currstate = m_rootstate;
         play_simulation(currstate, &m_root);
+        increment_playouts();
     } while(!Utils::input_pending() && (!m_hasrunflag || (*m_runflag)));
 
     // stop the search

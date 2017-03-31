@@ -15,10 +15,10 @@
 using namespace Utils;
 
 SGFTree::SGFTree(void) {
-    // initialize root state with defaults
-    // the SGF might be missing boardsize or komi
-    // which means we'll never initialize
-    m_state.init_game();
+    // Initialize root state with defaults.
+    // The SGF might be missing boardsize or komi
+    // which means we'll never initialize properly.
+    m_state.init_game(19, 7.5f);
 }
 
 KoState * SGFTree::get_state(void) {
@@ -139,7 +139,8 @@ void SGFTree::populate_states(void) {
         int bsize;
         strm >> bsize;
         if (bsize <= FastBoard::MAXBOARDSIZE) {
-            m_state.init_game(bsize);
+            // Assume 7.5 komi if not specified
+            m_state.init_game(bsize, 7.5f);
             valid_size = true;
         } else {
             throw std::runtime_error("Board size not supported.");

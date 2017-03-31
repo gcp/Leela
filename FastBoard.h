@@ -106,9 +106,9 @@ public:
     int get_pattern4(const int sq, bool invert);
     uint64 get_pattern5(const int sq, bool invert, bool extend);
 
-    int estimate_mc_score(float komi = 7.5f);
-    float final_mc_score(float komi = 7.5f);
-    float area_score(float komi = 7.5f);
+    int estimate_mc_score(float komi);
+    float final_mc_score(float komi);
+    float area_score(float komi);
     std::vector<bool> calc_reach_color(int col);
     std::vector<int> influence(void);
     std::vector<int> moyo(void);
