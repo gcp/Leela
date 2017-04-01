@@ -39,6 +39,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
                         "Safety margin for time usage in centiseconds.")
         ("logfile,l", po::value<std::string>(), "File to log input/output to.")
         ("quiet,q", "Disable all diagnostic output.")
+        ("komiadjust", "Adjust komi one point in my disadvantage (territory scoring).")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
 #ifdef USE_OPENCL
@@ -204,6 +205,11 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
 
     if (vm.count("nonets")) {
         cfg_enable_nets = false;
+    }
+
+    if (vm.count("komiadjust")) {
+        myprintf("Adjusting komi for territory scoring rules.\n");
+        cfg_komi_adjust = true;
     }
 
     if (vm.count("lagbuffer")) {
