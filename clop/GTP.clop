@@ -14,8 +14,8 @@ Script ./clopgtp
 GammaParameter         softmax_temp       0.10      10.0
 GammaParameter         puct               0.05      20.0
 GammaParameter         psa                0.00001    2.0
-IntegerGammaParameter  extra_symmetry     1         5000
 IntegerGammaParameter  mature_threshold   1         5000
+IntegerGammaParameter  extra_symmetry     1         5000
 
 Processor cpu1
 Processor cpu2
@@ -23,8 +23,8 @@ Processor cpu3
 Processor cpu4
 Processor cpu5
 Processor cpu6
-Processor cpu7
-Processor cpu8
+#Processor cpu7
+#Processor cpu8
 
 Replications 1
 DrawElo 0
