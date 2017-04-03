@@ -1245,9 +1245,15 @@ void Network::autotune_from_file(std::string filename) {
         std::unique_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
         std::string dbTrainName("leela_train");
         train_db->Open(dbTrainName.c_str(), caffe::db::NEW);
+        std::unique_ptr<caffe::db::DB> train_label_db(caffe::db::GetDB("leveldb"));
+        std::string dbTrainLabelName("leela_train_label");
+        train_db->Open(dbTrainLabelName.c_str(), caffe::db::NEW);
         std::unique_ptr<caffe::db::DB> test_db(caffe::db::GetDB("leveldb"));
         std::string dbTestName("leela_test");
         test_db->Open(dbTestName.c_str(), caffe::db::NEW);
+        std::unique_ptr<caffe::db::DB> test_label_db(caffe::db::GetDB("leveldb"));
+        std::string dbTestLabelName("leela_test_label");
+        test_db->Open(dbTestLabelName.c_str(), caffe::db::NEW);
     }
 #endif
     TrainVector data;
