@@ -36,13 +36,13 @@ asan:
 
 LIBS = -lboost_thread -lboost_system -lboost_program_options
 
-#LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
+LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
 LIBS += -lopenblas
 DYNAMIC_LIBS += -lpthread
 #DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
-#LIBS += -lmkl_rt
+#DYNAMIC_LIBS += -lmkl_rt
 
 CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include
@@ -73,8 +73,8 @@ deps = $(sources:%.cpp=%.d)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 leela: $(objects)
-	$(CXX) $(LDFLAGS) -o $@ $^ -static-libgcc -static-libstdc++ -Wl,-Bstatic $(LIBS) -Wl,-Bdynamic $(DYNAMIC_LIBS)
-#	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS) $(DYNAMIC_LIBS)
+#	$(CXX) $(LDFLAGS) -o $@ $^ -static-libgcc -static-libstdc++ -Wl,-Bstatic $(LIBS) -Wl,-Bdynamic $(DYNAMIC_LIBS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS) $(DYNAMIC_LIBS)
 
 clean:
 	-$(RM) leela $(objects) $(deps)

@@ -2370,11 +2370,11 @@ int FastBoard::count_rliberties(int vertex) {
 
 
 int FastBoard::after_liberties_color(const int color, const int vtx) {
-    FastBoard tmp = *this;
     int libs = 0;
     bool dummy;
 
     if (!is_suicide(vtx, color)) {
+        FastBoard tmp = *this;
         tmp.update_board_fast(color, vtx, dummy);
         libs = tmp.count_rliberties(vtx);
     }
