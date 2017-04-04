@@ -23,7 +23,7 @@ Processor cpu3
 Processor cpu4
 Processor cpu5
 Processor cpu6
-#Processor cpu7
+Processor cpu7
 #Processor cpu8
 
 Replications 1
