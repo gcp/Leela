@@ -81,7 +81,7 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     }
 #ifdef USE_OPENCL
     // Previous kernel is still running, skip this expansion for now
-    if (!OpenCL::get_OpenCL()->thread_can_issue()) {
+    if (!opencl.thread_can_issue()) {
         // We don't abort them when the search ends
         // assert(!at_root);
         return;

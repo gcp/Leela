@@ -686,7 +686,7 @@ bool UCTSearch::playout_limit_reached() {
 
 void UCTWorker::operator()() {
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->thread_init();
+    opencl.thread_init();
 #endif
     do {
         KoState currstate = m_rootstate;
@@ -694,7 +694,7 @@ void UCTWorker::operator()() {
         m_search->increment_playouts();
     } while(m_search->is_running() && !m_search->playout_limit_reached());
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->join_outstanding_cb();
+    opencl.join_outstanding_cb();
 #endif
 #ifdef _WIN32
     boost::on_thread_exit();
@@ -714,7 +714,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_rootstate.start_clock(color);
 
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->thread_init();
+    opencl.thread_init();
 #endif
     // set side to move
     m_rootstate.board.set_to_move(color);
@@ -834,7 +834,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     // stop the search
     m_run = false;
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->join_outstanding_cb();
+    opencl.join_outstanding_cb();
 #endif
     for (auto& thread : tg) {
         assert(thread.joinable());
@@ -936,7 +936,7 @@ void UCTSearch::ponder() {
     // stop the search
     m_run = false;
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->join_outstanding_cb();
+    opencl.join_outstanding_cb();
 #endif
     for (auto& thread : tg) {
         if (thread.joinable()) {

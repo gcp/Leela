@@ -114,7 +114,7 @@ Network * Network::get_Network(void) {
 
 void Network::benchmark(FastState * state) {
     constexpr int POL_BENCH_AMOUNT = 1000;
-    constexpr int VAL_BENCH_AMOUNT = 1000;
+    constexpr int VAL_BENCH_AMOUNT = 2000;
     {
         Time start;
 
@@ -148,22 +148,37 @@ void Network::benchmark(FastState * state) {
 void Network::initialize(void) {
 #ifdef USE_OPENCL
     myprintf("Initializing OpenCL\n");
-    OpenCL * cl = OpenCL::get_OpenCL();
+    opencl.initialize();
     myprintf("Transferring weights to GPU...");
-    cl->push_convolve(5, conv1_w, conv1_b);
-    cl->push_convolve(3, conv2_w, conv2_b);
-    cl->push_convolve(3, conv3_w, conv3_b);
-    cl->push_convolve(3, conv4_w, conv4_b);
-    cl->push_convolve(3, conv5_w, conv5_b);
-    cl->push_convolve(3, conv6_w, conv6_b);
-    cl->push_convolve(3, conv7_w, conv7_b);
-    cl->push_convolve(3, conv8_w, conv8_b);
-    cl->push_convolve(3, conv9_w, conv9_b);
-    cl->push_convolve(3, conv10_w, conv10_b);
-    cl->push_convolve(3, conv11_w, conv11_b);
-    cl->push_convolve(3, conv12_w, conv12_b);
-    cl->push_convolve(3, conv13_w, conv13_b);
-    cl->push_convolve(3, conv14_w, conv14_b);
+    opencl_policy_net.push_convolve(5, conv1_w, conv1_b);
+    opencl_policy_net.push_convolve(3, conv2_w, conv2_b);
+    opencl_policy_net.push_convolve(3, conv3_w, conv3_b);
+    opencl_policy_net.push_convolve(3, conv4_w, conv4_b);
+    opencl_policy_net.push_convolve(3, conv5_w, conv5_b);
+    opencl_policy_net.push_convolve(3, conv6_w, conv6_b);
+    opencl_policy_net.push_convolve(3, conv7_w, conv7_b);
+    opencl_policy_net.push_convolve(3, conv8_w, conv8_b);
+    opencl_policy_net.push_convolve(3, conv9_w, conv9_b);
+    opencl_policy_net.push_convolve(3, conv10_w, conv10_b);
+    opencl_policy_net.push_convolve(3, conv11_w, conv11_b);
+    opencl_policy_net.push_convolve(3, conv12_w, conv12_b);
+    opencl_policy_net.push_convolve(3, conv13_w, conv13_b);
+    opencl_policy_net.push_convolve(3, conv14_w, conv14_b);
+
+    opencl_value_net.push_convolve(5, val_conv1_w, val_conv1_b);
+    opencl_value_net.push_convolve(3, val_conv2_w, val_conv2_b);
+    opencl_value_net.push_convolve(3, val_conv3_w, val_conv3_b);
+    opencl_value_net.push_convolve(3, val_conv4_w, val_conv4_b);
+    opencl_value_net.push_convolve(3, val_conv5_w, val_conv5_b);
+    opencl_value_net.push_convolve(3, val_conv6_w, val_conv6_b);
+    opencl_value_net.push_convolve(3, val_conv7_w, val_conv7_b);
+    opencl_value_net.push_convolve(3, val_conv8_w, val_conv8_b);
+    opencl_value_net.push_convolve(3, val_conv9_w, val_conv9_b);
+    opencl_value_net.push_convolve(3, val_conv10_w, val_conv10_b);
+    opencl_value_net.push_convolve(3, val_conv11_w, val_conv11_b);
+    //opencl_value_net.push_convolve(3, val_conv12_w, val_conv12_b);
+    //opencl_value_net.push_innerproduct(val_ip13_w, val_ip13_b);
+    //opencl_value_net.push_innerproduct(val_ip14_w, val_ip14_b);
     myprintf("done\n");
 #endif
 #ifdef USE_BLAS
@@ -447,7 +462,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     // Reduce the count of things having pointers to UCTNodes
     // or UCTSearch. We cannot destroy the search till these
     // have finished.
-    OpenCL::get_OpenCL()->callback_finished();
+    opencl.callback_finished();
 }
 
 void Network::async_scored_moves(std::atomic<int> * nodecount,
@@ -480,8 +495,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     cb_data->m_node = node;
     cb_data->m_input_data.resize(Network::MAX_CHANNELS * 19 * 19);
     cb_data->m_output_data.resize(Network::MAX_CHANNELS * 19 * 19);
-    cb_data->m_thread_results_outstanding =
-        OpenCL::get_OpenCL()->get_thread_results_outstanding();
+    cb_data->m_thread_results_outstanding = opencl.get_thread_results_outstanding();
     //assert(cb_data->m_thread_result_outstanding.load(boost::memory_order_acquire) == 0);
     cb_data->m_rotation = rotation;
 
@@ -497,9 +511,9 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
 
     void * data = static_cast<void*>(cb_data);
 
-    OpenCL::get_OpenCL()->forward_async(cb_data->m_input_data,
-                                        cb_data->m_output_data,
-                                        forward_cb, data);
+    opencl_policy_net.forward(cb_data->m_input_data,
+                                    cb_data->m_output_data,
+                                    forward_cb, data);
 }
 #endif
 
@@ -611,6 +625,19 @@ float Network::get_value_internal(
             }
         }
     }
+#ifdef USE_OPENCL
+    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
+    opencl.thread_init();
+    opencl_value_net.forward(input_data, output_data, nullptr, nullptr);
+    std::swap(input_data, output_data);
+    convolve<1, 32,  1>(input_data, val_conv12_w, val_conv12_b, output_data);
+    // Now get the score
+    innerproduct<361, 256>(output_data, val_ip13_w, val_ip13_b, winrate_data);
+    innerproduct<256, 1>(winrate_data, val_ip14_w, val_ip14_b, winrate_out);
+    // Sigmoid
+    float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
+    result = winrate_sig;
+#elif defined(USE_BLAS)
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
 
     convolve<5, 24, 32>(input_data, val_conv1_w, val_conv1_b, output_data);
@@ -642,7 +669,7 @@ float Network::get_value_internal(
     // Sigmoid
     float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
     result = winrate_sig;
-
+ #endif
     return result;
 }
 
@@ -680,9 +707,8 @@ Network::Netresult Network::get_scored_moves_internal(
     }
 #ifdef USE_OPENCL
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
-    OpenCL::get_OpenCL()->thread_init();
-    OpenCL::get_OpenCL()->forward_async(input_data, output_data,
-                                        nullptr, nullptr);
+    opencl.thread_init();
+    opencl_policy_net.forward(input_data, output_data, nullptr, nullptr);
     softmax(output_data, softmax_data, cfg_softmax_temp);
     std::vector<float>& outputs = softmax_data;
 #elif defined(USE_BLAS)
@@ -1262,7 +1288,7 @@ void Network::autotune_from_file(std::string filename) {
 
 std::string Network::get_opencl_backend() {
 #if defined(USE_OPENCL)
-    return OpenCL::get_OpenCL()->get_device_name();
+    return opencl.get_device_name();
 #elif defined(USE_CAFFE)
     return std::string("Caffe");
 #else
