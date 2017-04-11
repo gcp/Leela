@@ -1400,6 +1400,7 @@ void Network::train_network(TrainVector& data,
 
 void Network::autotune_from_file(std::string filename) {
 #ifdef USE_CAFFE
+#if 0
     {
         std::unique_ptr<caffe::db::DB> train_db(caffe::db::GetDB("leveldb"));
         std::string dbTrainName("leela_train");
@@ -1414,6 +1415,7 @@ void Network::autotune_from_file(std::string filename) {
         std::string dbTestLabelName("leela_test_label");
         test_db->Open(dbTestLabelName.c_str(), caffe::db::NEW);
     }
+#endif
 #endif
     TrainVector data;
     gather_traindata(filename, data);
