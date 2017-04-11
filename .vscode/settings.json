@@ -36,6 +36,8 @@
         "atomic": "cpp",
         "chrono": "cpp",
         "random": "cpp",
-        "limits": "cpp"
+        "limits": "cpp",
+        "*.ipp": "cpp",
+        "functional": "cpp"
     }
 }

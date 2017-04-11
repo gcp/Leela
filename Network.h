@@ -78,8 +78,7 @@ private:
     void train_network(TrainVector& tv, size_t&, size_t&);
     static void gather_features_policy(FastState * state, NNPlanes & planes,
                                        BoardPlane** ladder = nullptr);
-    static void gather_features_value(FastState * state, NNPlanes & planes,
-                                      BoardPlane** ladder = nullptr);
+    static void gather_features_value(FastState * state, NNPlanes & planes);
     static Network* s_Net;
 };
 
