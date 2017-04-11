@@ -22,7 +22,89 @@
 
 using namespace Utils;
 
-static std::string sourceCode = R"(
+static std::string sourceCode_convolve15 = R"(
+    __kernel
+    __attribute__((work_group_size_hint(8, 32, 1)))
+    void convolve1(
+                   __global const float * in,
+                   __global float * merge,
+                   __global const float * weights,
+                   __local float * channel_buff,
+                   __local float * row_buff) {
+
+        // cl::NDRange global(channels, outputs, row);
+        const int c   = get_global_id(0);  // channel
+        const int o   = get_global_id(1);  // output
+        const int row = get_global_id(2);  // row
+
+        const int channels = get_global_size(0);
+        const int outputs  = get_global_size(1);
+
+        // cl::NDRange local(2, (1->32), 1);
+        const int lx = get_local_id(0);
+        const int ly = get_local_id(1);
+
+        const int chan_buff_size = 8;
+        const int out_buff_size  = get_local_size(1);
+        const int row_buff_size  = 7;
+        const int chan_shift     = 3;
+
+        // input = channels * height * width
+        // output = outputs * height * width
+        // weights = output * channels * filter
+        // merge = channels * outputs * height * width
+
+        const int width = 19;
+        const int height = 19;
+        const int strip_size = width;
+
+        // Copy the input channels (strips) locally
+        if (out_buff_size < 19 && ly == 0) {
+            // strip-row
+            for (int w = 0; w < width; w++) {
+                channel_buff[lx * width + w] =
+                    in[(c * height + row) * width + w];
+            }
+        } else if (out_buff_size >= 19 && ly < 19) {
+            // Every thread copies a column
+            channel_buff[lx * width + ly] = in[(c * height + row) * width + ly];
+        }
+
+        // Copy the filter we are applying locally
+        __private float filter_buff = weights[(o * channels + c)];
+
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        int out_lane = 0;
+        int out_cw   = 0;
+        #pragma unroll
+        for (int cw = 0; cw < width; cw++) {
+            int fid = lx * strip_size;
+            float out  = channel_buff[fid + cw] * filter_buff;
+            row_buff[(ly * chan_buff_size + lx) * row_buff_size + out_lane] = out;
+            out_lane++;
+
+            // Row buffer full or last lane?
+            if (out_lane == row_buff_size || (cw == width - 1)) {
+                barrier(CLK_LOCAL_MEM_FENCE);
+                if (lx < out_lane) {
+                    float val;
+                    val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
+                    merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
+                }
+                out_cw  += row_buff_size;
+                out_lane = 0;
+            }
+        }
+    }
+
     __kernel
     __attribute__((reqd_work_group_size(8, 32, 1)))
     void convolve5(
@@ -181,7 +263,9 @@ static std::string sourceCode = R"(
             }
         }
     }
+)";
 
+static std::string sourceCode_convolve3 = R"(
     __kernel
     __attribute__((work_group_size_hint(8, 32, 1)))
     void convolve3(
@@ -341,7 +425,9 @@ static std::string sourceCode = R"(
             }
         }
     }
+)";
 
+static std::string sourceCode_utility = R"(
     __kernel void merge(
                         __global const float * in,
                         __global float * out,
@@ -399,23 +485,47 @@ static std::string sourceCode = R"(
         out[o * channel_size + b] = scale_stddiv
                                     * (in[o * channel_size + b] - mean);
     }
+
+    __kernel void innerproduct(
+                               __private const int inputs,
+                               __global const float * in,
+                               __global float * out,
+                               __global const float * weights,
+                               __constant const float * biases) {
+        const int gx = get_global_id(0);
+        const int output = gx;
+
+        const int outputs = get_global_size(0);
+
+        const unsigned int o = output;
+        unsigned int i;
+
+        float16 val16 = (float16)(0.0f);
+        for (i = 0; i + 16 < inputs; i += 16) {
+            val16 += vload16(0, &in[i]) * vload16(0, &weights[o * inputs + i]);
+        }
+        float val = val16.s0 + val16.s1 + val16.s2 + val16.s3
+                  + val16.s4 + val16.s5 + val16.s6 + val16.s7
+                  + val16.s8 + val16.s9 + val16.sa + val16.sb
+                  + val16.sc + val16.sd + val16.se + val16.sf;
+
+        for (; i < inputs; i++) {
+            val += in[i] * weights[o * inputs + i];
+        }
+        val += biases[o];
+        if (outputs > 1) {
+            val = val > 0 ? val : 1.0f * (half_exp(val) - 1.0f);
+        }
+        out[o] = val;
+    }
 )";
 
-OpenCL* OpenCL::s_OpenCL = nullptr;
-
-OpenCL * OpenCL::get_OpenCL(void) {
-    if (!s_OpenCL) {
-        s_OpenCL = new OpenCL();
-        s_OpenCL->initialize();
-    }
-    return s_OpenCL;
-}
-
-OpenCL::OpenCL(void) {
-}
+OpenCL opencl;
+OpenCL_Network opencl_policy_net;
+OpenCL_Network opencl_value_net;
 
 bool OpenCL::thread_can_issue() {
-    static int max_queue_size = 0;
+    static std::atomic<int> max_queue_size{0};
     int current_queue = thread_data.get()->m_results_outstanding;
     if (current_queue > max_queue_size) {
         max_queue_size = current_queue;
@@ -433,10 +543,12 @@ void OpenCL::thread_init() {
         auto data = new ThreadData();
 
         // Make kernels
+        data->m_convolve1_kernel = cl::Kernel(m_program, "convolve1");
         data->m_convolve3_kernel = cl::Kernel(m_program, "convolve3");
         data->m_convolve5_kernel = cl::Kernel(m_program, "convolve5");
         data->m_merge_kernel = cl::Kernel(m_program, "merge");
         data->m_batchnorm_kernel = cl::Kernel(m_program, "batchnorm");
+        data->m_innerproduct_kernel = cl::Kernel(m_program, "innerproduct");
 
         data->m_commandqueue = cl::CommandQueue(cl::Context::getDefault(),
             cl::Device::getDefault());
@@ -445,9 +557,9 @@ void OpenCL::thread_init() {
     }
 }
 
-void OpenCL::add_weights(size_t layer,
-                         size_t size,
-                         float * weights) {
+void OpenCL_Network::add_weights(size_t layer,
+                                 size_t size,
+                                 float * weights) {
     if (layer >= m_layers.size()) {
         m_layers.push_back(Layer());
     }
@@ -460,62 +572,83 @@ void OpenCL::add_weights(size_t layer,
     m_layers.back().weights.push_back(bufferWeights);
 }
 
-void OpenCL::forward_async(std::vector<float>& input,
-                           std::vector<float>& output,
-                           event_callback cb, void * data) {
+void OpenCL_Network::forward(std::vector<float>& input,
+                             std::vector<float>& output,
+                             event_callback cb, void * data) {
     constexpr int width = 19;
     constexpr int height = 19;
     constexpr size_t one_plane = width * height * sizeof(float);
 
-    thread_data.get()->m_results_outstanding.fetch_add(1, std::memory_order_release);
+    opencl.thread_data.get()->m_results_outstanding.fetch_add(1, std::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
-    size_t mergeSize = one_plane *
-        Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 8);
 
-    if (!thread_data.get()->m_buffers_allocated) {
-        thread_data.get()->m_inBuffer = cl::Buffer(
-            CL_MEM_READ_WRITE, inSize);
-        thread_data.get()->m_tmpBuffer = cl::Buffer(
-            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, outSize);
-        thread_data.get()->m_mergeBuffer = cl::Buffer(
-            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, mergeSize);
-        thread_data.get()->m_outBuffer = cl::Buffer(CL_MEM_WRITE_ONLY, finalSize);
-        thread_data.get()->m_buffers_allocated = true;
+    if (!opencl.thread_data.get()->m_buffers_allocated) {
+        size_t alloc_inSize = one_plane * Network::MAX_CHANNELS;
+        size_t alloc_outSize = one_plane * Network::MAX_CHANNELS;
+        size_t alloc_finalSize = one_plane * Network::MAX_CHANNELS;
+        size_t alloc_mergeSize = one_plane *
+            Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 8);
+
+        opencl.thread_data.get()->m_inBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE, alloc_inSize);
+        opencl.thread_data.get()->m_tmpBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE, alloc_outSize);
+        opencl.thread_data.get()->m_mergeBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, alloc_mergeSize);
+        opencl.thread_data.get()->m_outBuffer = cl::Buffer(
+            CL_MEM_WRITE_ONLY, alloc_finalSize);
+        opencl.thread_data.get()->m_buffers_allocated = true;
     }
 
-    cl::Buffer & inBuffer = thread_data.get()->m_inBuffer;
-    cl::Buffer & outBuffer = thread_data.get()->m_outBuffer;
-    cl::Buffer & tmpBuffer = thread_data.get()->m_tmpBuffer;
-    cl::Buffer & mergeBuffer = thread_data.get()->m_mergeBuffer;
-    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
+    cl::Buffer & inBuffer = opencl.thread_data.get()->m_inBuffer;
+    cl::Buffer & outBuffer = opencl.thread_data.get()->m_outBuffer;
+    cl::Buffer & tmpBuffer = opencl.thread_data.get()->m_tmpBuffer;
+    cl::Buffer & mergeBuffer = opencl.thread_data.get()->m_mergeBuffer;
+    cl::CommandQueue & queue = opencl.thread_data.get()->m_commandqueue;
 
     queue.enqueueWriteBuffer(inBuffer, CL_FALSE, 0, inSize, input.data());
 
     for (auto & layer : m_layers) {
-        // convolution
-        convolve(layer.filter_size,
-            layer.channels,
-            layer.outputs,
-            inBuffer,
-            tmpBuffer,
-            mergeBuffer,
-            layer.weights);
-        std::swap(inBuffer, tmpBuffer);
+        if (layer.is_batchnorm) {
+            batchnorm(layer.outputs,
+                      layer.filter_size,
+                      inBuffer,
+                      tmpBuffer,
+                      layer.weights);
+            std::swap(inBuffer, tmpBuffer);
+        } else if (layer.is_innerproduct) {
+            innerproduct(layer.channels,
+                         layer.outputs,
+                         inBuffer,
+                         tmpBuffer,
+                         layer.weights);
+            std::swap(inBuffer, tmpBuffer);
+        } else {
+            // convolution
+            convolve(layer.filter_size,
+                     layer.channels,
+                     layer.outputs,
+                     inBuffer,
+                     tmpBuffer,
+                     mergeBuffer,
+                     layer.weights);
+            std::swap(inBuffer, tmpBuffer);
+        }
     }
 
     queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
 
-    m_cb_outstanding.fetch_add(1, std::memory_order_release);
+    opencl.m_cb_outstanding.fetch_add(1, std::memory_order_release);
     queue.finish();
     if (cb != nullptr) {
         cb(CL_COMPLETE, 0, data);
     } else {
         assert(data == nullptr);
-        thread_data.get()->m_results_outstanding.fetch_sub(1, std::memory_order_release);
-        callback_finished();
+        opencl.thread_data.get()->m_results_outstanding.fetch_sub(1, std::memory_order_release);
+        opencl.callback_finished();
     }
 }
 
@@ -527,15 +660,11 @@ void OpenCL::join_outstanding_cb() {
     while (m_cb_outstanding.load(std::memory_order_acquire) > 0);
 }
 
-static int rounddown_pow2(int val) {
-    return (int)std::floor(std::log2(val));
-}
-
-void OpenCL::convolve(int filter_size, int channels, int outputs,
-                      cl::Buffer& bufferInput,
-                      cl::Buffer& bufferOutput,
-                      cl::Buffer& bufferMerge,
-                      std::vector<cl::Buffer>& weights) {
+void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
+                              cl::Buffer& bufferInput,
+                              cl::Buffer& bufferOutput,
+                              cl::Buffer& bufferMerge,
+                              std::vector<cl::Buffer>& weights) {
     // fixed for 19x19
     constexpr int width = 19;
     constexpr int height = 19;
@@ -551,16 +680,20 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     cl::Kernel m_convolve_kernel;
     if (filter_size == 3) {
-        m_convolve_kernel = thread_data.get()->m_convolve3_kernel;
+        m_convolve_kernel = opencl.thread_data.get()->m_convolve3_kernel;
+    } else if (filter_size == 5) {
+        m_convolve_kernel = opencl.thread_data.get()->m_convolve5_kernel;
     } else {
-        m_convolve_kernel = thread_data.get()->m_convolve5_kernel;
+        assert(filter_size == 1);
+        m_convolve_kernel = opencl.thread_data.get()->m_convolve1_kernel;
     }
 
     constexpr int channelGroup = 8;
     constexpr int channelShift = 3;
     constexpr int rowGroup = 1;
     // Workgroup things
-    if (m_max_workgroup_size < 512 || m_max_workgroup_dims[1] < 64) {
+    if (opencl.m_max_workgroup_size < 512
+        || opencl.m_max_workgroup_dims[1] < 64) {
         outputGroup = std::min(outputs, 32);
     } else {
         // Can optionally be 64
@@ -584,8 +717,13 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         stripSize = filter_size * (width + (filter_size - 1)) * sizeof(float);
         rowTiles    =  cfg_rowtiles;
         rowTileSize =  (19 + rowTiles - 1) / rowTiles;
-    } else {
+    } else if (filter_size == 5) {
         stripSize = filter_size * width * sizeof(float);
+        rowTiles    = 19;
+        rowTileSize =  1;
+    } else {
+        assert(filter_size == 1);
+        stripSize = width * sizeof(float);
         rowTiles    = 19;
         rowTileSize =  1;
     }
@@ -596,7 +734,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
 
     assert(mergeSize <= bufferMerge.getInfo<CL_MEM_SIZE>());
 
-    cl::CommandQueue & queue = thread_data.get()->m_commandqueue;
+    cl::CommandQueue & queue = opencl.thread_data.get()->m_commandqueue;
 
     try {
         m_convolve_kernel.setArg(0, bufferInput);
@@ -616,7 +754,7 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
         return;
     }
 
-    cl::Kernel & merge_kernel = thread_data.get()->m_merge_kernel;
+    cl::Kernel & merge_kernel = opencl.thread_data.get()->m_merge_kernel;
 
     try {
         merge_kernel.setArg(0, bufferMerge);
@@ -633,14 +771,14 @@ void OpenCL::convolve(int filter_size, int channels, int outputs,
     }
 }
 
-void OpenCL::batchnorm(int outputs,
-                       int channel_size,
-                       cl::Buffer & bufferInput,
-                       cl::Buffer & bufferOutput,
-                       std::vector<cl::Buffer>& weights) {
-    cl::CommandQueue queue = thread_data.get()->m_commandqueue;
+void OpenCL_Network::batchnorm(int outputs,
+                               int channel_size,
+                               cl::Buffer & bufferInput,
+                               cl::Buffer & bufferOutput,
+                               std::vector<cl::Buffer>& weights) {
+    cl::CommandQueue queue = opencl.thread_data.get()->m_commandqueue;
 
-    cl::Kernel batchnorm_kernel = thread_data.get()->m_batchnorm_kernel;
+    cl::Kernel batchnorm_kernel = opencl.thread_data.get()->m_batchnorm_kernel;
 
     size_t channelGroup = 1;
     if (channel_size == 361) {
@@ -659,6 +797,32 @@ void OpenCL::batchnorm(int outputs,
                                    cl::NDRange(std::min(8, outputs), channelGroup));
     } catch (cl::Error &e) {
         std::cerr << "Error in batchnorm: " << e.what() << ": "
+            << e.err() << std::endl;
+        return;
+    }
+}
+
+void OpenCL_Network::innerproduct(int inputs,
+                                  int outputs,
+                                  cl::Buffer & bufferInput,
+                                  cl::Buffer & bufferOutput,
+                                  std::vector<cl::Buffer>& weights) {
+    cl::CommandQueue queue = opencl.thread_data.get()->m_commandqueue;
+
+    cl::Kernel innerproduct_kernel = opencl.thread_data.get()->m_innerproduct_kernel;
+
+    try {
+        innerproduct_kernel.setArg(0, inputs);
+        innerproduct_kernel.setArg(1, bufferInput);
+        innerproduct_kernel.setArg(2, bufferOutput);
+        innerproduct_kernel.setArg(3, weights[0]);
+        innerproduct_kernel.setArg(4, weights[1]);
+
+        queue.enqueueNDRangeKernel(innerproduct_kernel, cl::NullRange,
+                                   cl::NDRange(outputs),
+                                   cl::NDRange(std::min(16, outputs)));
+    } catch (cl::Error &e) {
+        std::cerr << "Error in innerproduct: " << e.what() << ": "
             << e.err() << std::endl;
         return;
     }
@@ -775,7 +939,9 @@ void OpenCL::initialize(void) {
 
     // Make program of the source code in the context
     try {
-        m_program = cl::Program(sourceCode);
+        m_program = cl::Program(sourceCode_convolve15
+                                + sourceCode_convolve3
+                                + sourceCode_utility);
     } catch (cl::Error &e) {
         myprintf("Error getting kernels: %s: %d", e.what(), e.err());
         return;
