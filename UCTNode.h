@@ -107,7 +107,8 @@ private:
     bool m_is_expanding;
     // dcnn node
     bool m_has_netscore;
-    int m_netscore_cnt;
+    int m_netscore_thresh;
+    int m_symmetries_done;
     bool m_is_netscoring;
     SMP::Mutex m_nodemutex;
 };
