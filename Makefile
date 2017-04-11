@@ -42,7 +42,7 @@ DYNAMIC_LIBS += -lpthread
 #DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
-#LIBS += -lmkl_rt
+#DYNAMIC_LIBS += -lmkl_rt
 
 CAFFE_BASE = /usr/local
 CAFFE_INC = $(CAFFE_BASE)/include

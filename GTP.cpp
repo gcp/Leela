@@ -59,6 +59,7 @@ int cfg_eval_scale;
 float cfg_beta;
 float cfg_patternbonus;
 int cfg_rave_moves;
+int cfg_extra_symmetry;
 std::string cfg_logfile;
 FILE* cfg_logfile_handle;
 bool cfg_quiet;
@@ -69,11 +70,13 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 30;
+    cfg_mature_threshold = 35;
     cfg_expand_divider = 2.0f;
+    cfg_extra_symmetry =  450;
 #else
-    cfg_mature_threshold = 90;
+    cfg_mature_threshold = 80;
     cfg_expand_divider = 2.0f;
+    cfg_extra_symmetry = 3000;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -90,9 +93,9 @@ void GTP::setup_default_parameters() {
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 1.1f;
-    cfg_puct = 1.2f;
-    cfg_psa = 0.002f;
-    cfg_softmax_temp = 0.48f;
+    cfg_puct = 1.15f;
+    cfg_psa = 0.0015f;
+    cfg_softmax_temp = 0.725f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.45f;
@@ -110,7 +113,7 @@ bool GTP::perform_self_test(GameState & state) {
     myprintf("OpenCL self-test: ");
     // Perform self-test
     auto vec = Network::get_Network()->get_scored_moves(
-        &state, Network::Ensemble::DIRECT);
+        &state, Network::Ensemble::DIRECT, 0);
     testPassed &= vec[60].first > 0.185 && vec[60].first < 0.186;
     testPassed &= vec[60].second == 88;
     testPassed &= vec[72].first > 0.189 && vec[72].first < 0.190;
