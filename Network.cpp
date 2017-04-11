@@ -47,8 +47,8 @@ using namespace Utils;
 Network* Network::s_Net = nullptr;
 
 extern std::array<float, 76800> conv1_w;
-extern std::array<float, 128> conv1_b;
-extern std::array<float, 147456> conv2_w;
+extern std::array<float, 96> conv1_b;
+extern std::array<float, 110592> conv2_w;
 extern std::array<float, 128> conv2_b;
 extern std::array<float, 147456> conv3_w;
 extern std::array<float, 128> conv3_b;
@@ -70,10 +70,8 @@ extern std::array<float, 147456> conv11_w;
 extern std::array<float, 128> conv11_b;
 extern std::array<float, 147456> conv12_w;
 extern std::array<float, 128> conv12_b;
-extern std::array<float, 147456> conv13_w;
-extern std::array<float, 128> conv13_b;
-extern std::array<float, 3456> conv14_w;
-extern std::array<float, 3> conv14_b;
+extern std::array<float, 1152> conv13_w;
+extern std::array<float, 1> conv13_b;
 
 extern std::array<float, 19200> val_conv1_w;
 extern std::array<float, 32> val_conv1_b;
@@ -163,7 +161,6 @@ void Network::initialize(void) {
     cl->push_convolve(3, conv11_w, conv11_b);
     cl->push_convolve(3, conv12_w, conv12_b);
     cl->push_convolve(3, conv13_w, conv13_b);
-    cl->push_convolve(3, conv14_w, conv14_b);
     myprintf("done\n");
 #endif
 #ifdef USE_BLAS
@@ -185,8 +182,8 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::GPU);
 
-    net.reset(new Net<float>("model_value.txt", TEST));
-    net->CopyTrainedLayersFrom("model_value.caffemodel");
+    net.reset(new Net<float>("model_5399.txt", TEST));
+    net->CopyTrainedLayersFrom("model_5399.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         net->num_inputs(), net->num_outputs());
@@ -691,9 +688,9 @@ Network::Netresult Network::get_scored_moves_internal(
     // XXX really only need the first 24
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
 
-    convolve<5,  24, 128>(input_data, conv1_w, conv1_b, output_data);
+    convolve<5,  32,  96>(input_data, conv1_w, conv1_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv2_w, conv2_b, output_data);
+    convolve<3,  96, 128>(input_data, conv2_w, conv2_b, output_data);
     std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv3_w, conv3_b, output_data);
     std::swap(input_data, output_data);
@@ -715,9 +712,7 @@ Network::Netresult Network::get_scored_moves_internal(
     std::swap(input_data, output_data);
     convolve<3, 128, 128>(input_data, conv12_w, conv12_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv13_w, conv13_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128,   1>(input_data, conv14_w, conv14_b, output_data);
+    convolve<3, 128,   1>(input_data, conv13_w, conv13_b, output_data);
     softmax(output_data, softmax_data, cfg_softmax_temp);
 
     // Move scores

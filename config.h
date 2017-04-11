@@ -19,13 +19,13 @@
 /* Features */
 //#define KGS
 #define USE_OPTIONS
-//#define USE_BLAS
-//#define USE_OPENBLAS
+#define USE_BLAS
+#define USE_OPENBLAS
 //#define USE_MKL
-#define USE_CAFFE
+//#define USE_CAFFE
 //#define USE_OPENCL
-//#define USE_TUNER
-//#define USE_SEARCH
+#define USE_TUNER
+#define USE_SEARCH
 
 #define PROGRAM_NAME "Leela"
 #ifdef KGS
