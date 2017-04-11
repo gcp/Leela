@@ -176,9 +176,9 @@ void Network::initialize(void) {
     opencl_value_net.push_convolve(3, val_conv9_w, val_conv9_b);
     opencl_value_net.push_convolve(3, val_conv10_w, val_conv10_b);
     opencl_value_net.push_convolve(3, val_conv11_w, val_conv11_b);
-    //opencl_value_net.push_convolve(3, val_conv12_w, val_conv12_b);
-    //opencl_value_net.push_innerproduct(val_ip13_w, val_ip13_b);
-    //opencl_value_net.push_innerproduct(val_ip14_w, val_ip14_b);
+    opencl_value_net.push_convolve(1, val_conv12_w, val_conv12_b);
+    opencl_value_net.push_innerproduct(val_ip13_w, val_ip13_b);
+    opencl_value_net.push_innerproduct(val_ip14_w, val_ip14_b);
     myprintf("done\n");
 #endif
 #ifdef USE_BLAS
@@ -289,6 +289,7 @@ void Network::initialize(void) {
 #endif
 }
 
+#ifdef USE_BLAS
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          size_t W, size_t B>
@@ -392,6 +393,7 @@ void batchnorm(std::vector<float>& input,
         }
     }
 }
+#endif
 
 void softmax(std::vector<float>& input,
              std::vector<float>& output,
@@ -629,13 +631,8 @@ float Network::get_value_internal(
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
     opencl.thread_init();
     opencl_value_net.forward(input_data, output_data, nullptr, nullptr);
-    std::swap(input_data, output_data);
-    convolve<1, 32,  1>(input_data, val_conv12_w, val_conv12_b, output_data);
-    // Now get the score
-    innerproduct<361, 256>(output_data, val_ip13_w, val_ip13_b, winrate_data);
-    innerproduct<256, 1>(winrate_data, val_ip14_w, val_ip14_b, winrate_out);
     // Sigmoid
-    float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
+    float winrate_sig = (1.0f + std::tanh(output_data[0])) / 2.0f;
     result = winrate_sig;
 #elif defined(USE_BLAS)
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());

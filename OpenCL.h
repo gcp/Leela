@@ -31,6 +31,7 @@ class ThreadData {
     friend class OpenCL_Network;
 private:
     cl::CommandQueue m_commandqueue;
+    cl::Kernel m_convolve1_kernel;
     cl::Kernel m_convolve3_kernel;
     cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;

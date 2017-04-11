@@ -146,6 +146,7 @@ const std::string GTP::s_commands[] = {
     "time_left",
     "influence",
     "mc_score",
+    "vn_score",
     "kgs-genmove_cleanup",
     "fixed_handicap",
     "place_free_handicap",
@@ -449,15 +450,20 @@ bool GTP::execute(GameState & game, std::string xinput) {
         game.display_state();
         return true;
     } else if (command.find("mc_score") == 0) {
-        float ftmp = game.board.final_mc_score(game.get_komi());   
-        /* white wins */        
+        float ftmp = game.board.final_mc_score(game.get_komi());
+        /* white wins */
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
         } else if (ftmp > 0.1) {
             gtp_printf(id, "B+%3.1f", ftmp);
         } else {
             gtp_printf(id, "0");
-        }                
+        }
+        return true;
+    }  else if (command.find("vn_score") == 0) {
+        float net_score = Network::get_Network()->get_value(&game,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        gtp_printf(id, "%f", net_score);
         return true;
     } else if (command.find("final_score") == 0) {
         float ftmp = game.final_score();   
