@@ -453,18 +453,18 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
 void Network::async_scored_moves(std::atomic<int> * nodecount,
                                  FastState * state,
                                  UCTNode * node,
-                                 Ensemble ensemble) {
+                                 Ensemble ensemble,
+                                 int rotation) {
     if (state->board.get_boardsize() != 19) {
         return;
     }
 
     assert(ensemble == DIRECT || ensemble == RANDOM_ROTATION);
-    int rotation;
     if (ensemble == RANDOM_ROTATION) {
+        assert(rotation == -1);
         rotation = Random::get_Rng()->randfix<8>();
     } else {
         assert(ensemble == DIRECT);
-        rotation = 0;
     }
 
     CallbackData * cb_data = new CallbackData();
@@ -538,7 +538,7 @@ float Network::get_value(FastState * state, Ensemble ensemble) {
 }
 
 Network::Netresult Network::get_scored_moves(
-    FastState * state, Ensemble ensemble) {
+    FastState * state, Ensemble ensemble, int rotation) {
     Netresult result;
     if (state->board.get_boardsize() != 19) {
         return result;
@@ -549,10 +549,12 @@ Network::Netresult Network::get_scored_moves(
     gather_features_policy(state, planes, &ladder);
 
     if (ensemble == DIRECT) {
-        result = get_scored_moves_internal(state, planes, 0);
-    } else if (ensemble == RANDOM_ROTATION) {
-        int rotation = Random::get_Rng()->randfix<8>();
+        assert(rotation >= 0 && rotation <= 7);
         result = get_scored_moves_internal(state, planes, rotation);
+    } else if (ensemble == RANDOM_ROTATION) {
+        assert(rotation == -1);
+        int rand_rot = Random::get_Rng()->randfix<8>();
+        result = get_scored_moves_internal(state, planes, rand_rot);
     } else {
         assert(ensemble == AVERAGE_ALL);
         result = get_scored_moves_internal(state, planes, 0);

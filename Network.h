@@ -41,7 +41,8 @@ public:
     using Netresult = std::vector<scored_node>;
 
     Netresult get_scored_moves(FastState * state,
-                               Ensemble ensemble);
+                               Ensemble ensemble,
+                               int rotation = -1);
     float get_value(FastState *state,
                     Ensemble ensemble);
     static constexpr int POLICY_CHANNELS = 24;
@@ -52,7 +53,7 @@ public:
 #ifdef USE_OPENCL
     void async_scored_moves(std::atomic<int> * nodecount,
                             FastState * state, UCTNode * node,
-                            Ensemble ensemble);
+                            Ensemble ensemble, int rotation = -1);
 #endif
     void initialize();
     void benchmark(FastState * state);

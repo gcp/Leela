@@ -38,6 +38,7 @@ extern float cfg_mix;
 extern int cfg_eval_thresh;
 extern int cfg_eval_scale;
 extern int cfg_rave_moves;
+extern int cfg_extra_symmetry;
 extern std::string cfg_logfile;
 extern FILE* cfg_logfile_handle;
 extern bool cfg_quiet;

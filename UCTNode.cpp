@@ -33,8 +33,8 @@ UCTNode::UCTNode(int vertex, float score, int expand_threshold,
       m_eval_propagated(false), m_blackevals(0.0f),
       m_evalcount(0), m_is_evaluating(false),
       m_valid(true), m_expand_cnt(expand_threshold), m_is_expanding(false),
-      m_has_netscore(false), m_netscore_cnt(netscore_threshold),
-      m_is_netscoring(false) {
+      m_has_netscore(false), m_netscore_thresh(netscore_threshold),
+      m_symmetries_done(0), m_is_netscoring(false) {
     m_ravevisits = 20;
     m_ravestmwins = 10.0;
 }
@@ -59,7 +59,7 @@ bool UCTNode::should_expand() const {
 }
 
 bool UCTNode::should_netscore() const {
-    return m_visits > m_netscore_cnt;
+    return m_visits > m_netscore_thresh;
 }
 
 void UCTNode::link_child(UCTNode * newchild) {
@@ -76,7 +76,13 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     // acquire the lock
     SMP::Lock lock(get_mutex());
     // check whether somebody beat us to it
-    if (m_has_netscore) {
+    if (at_root && m_has_netscore) {
+        return;
+    }
+    if (!at_root && m_symmetries_done >= 8) {
+        return;
+    }
+    if (m_visits < m_symmetries_done * cfg_extra_symmetry) {
         return;
     }
 #ifdef USE_OPENCL
@@ -103,12 +109,12 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
         scoring_cb(&nodecount, state, raw_netlist);
     } else {
         Network::get_Network()->async_scored_moves(
-            &nodecount, &state, this, Network::Ensemble::RANDOM_ROTATION);
+            &nodecount, &state, this, Network::Ensemble::DIRECT, m_symmetries_done);
     }
 #else
     auto raw_netlist = Network::get_Network()->get_scored_moves(
         &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
-                           Network::Ensemble::RANDOM_ROTATION));
+                           Network::Ensemble::DIRECT), m_symmetries_done);
     scoring_cb(&nodecount, state, raw_netlist);
 #endif
 }
@@ -224,14 +230,25 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
                 childrenadded++;
             }
         } else {
-            // Found, overwrite score with netscore
-            child->set_score(it->first);
+            // Found
+            // First net run, overwrite MC score with netscore
+            if (m_symmetries_done == 0) {
+                child->set_score(it->first);
+            } else {
+                assert(m_symmetries_done > 0 && m_symmetries_done < 8);
+                float oldscore = child->get_score();
+                float factor = 1.0f / ((float)m_symmetries_done + 1.0f);
+                child->set_score(it->first * factor
+                                 + oldscore * (1.0f - factor));
+            }
         }
     }
 
     nodecount += childrenadded;
     sort_children();
     m_has_netscore = true;
+    m_is_netscoring = false;
+    m_symmetries_done++;
 }
 
 void UCTNode::link_nodelist(std::atomic<int> & nodecount,
@@ -344,7 +361,7 @@ void UCTNode::set_move(int move) {
 
 void UCTNode::set_expand_cnt(int runs, int netscore_cnt) {
     m_expand_cnt = runs;
-    m_netscore_cnt = netscore_cnt;
+    m_netscore_thresh = netscore_cnt;
 }
 
 void UCTNode::update(Playout & gameresult, int color, bool update_eval) {
