@@ -182,8 +182,8 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::GPU);
 
-    net.reset(new Net<float>("model_5399.txt", TEST));
-    net->CopyTrainedLayersFrom("model_5399.caffemodel");
+    net.reset(new Net<float>("model_5413.txt", TEST));
+    net->CopyTrainedLayersFrom("model_5413.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         net->num_inputs(), net->num_outputs());
