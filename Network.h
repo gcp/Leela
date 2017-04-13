@@ -48,7 +48,7 @@ public:
     static constexpr int POLICY_CHANNELS = 24;
     static constexpr int VALUE_CHANNELS = 32;
     static constexpr int MAX_CHANNELS = 128;
-    static constexpr int MAX_VALUE_CHANNELS = 32;
+    static constexpr int MAX_VALUE_CHANNELS = 48;
 
 #ifdef USE_OPENCL
     void async_scored_moves(std::atomic<int> * nodecount,
