@@ -74,7 +74,7 @@ void GTP::setup_default_parameters() {
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry =  450;
 #else
-    cfg_mature_threshold = 80;
+    cfg_mature_threshold = 95;
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry = 3000;
 #endif
@@ -93,9 +93,9 @@ void GTP::setup_default_parameters() {
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 1.1f;
-    cfg_puct = 1.15f;
-    cfg_psa = 0.0015f;
-    cfg_softmax_temp = 0.725f;
+    cfg_puct = 1.0f;
+    cfg_psa = 0.002f;
+    cfg_softmax_temp = 0.6f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.45f;
