@@ -161,7 +161,6 @@ void Network::initialize(void) {
     opencl_policy_net.push_convolve(3, conv11_w, conv11_b);
     opencl_policy_net.push_convolve(3, conv12_w, conv12_b);
     opencl_policy_net.push_convolve(3, conv13_w, conv13_b);
-    opencl_policy_net.push_convolve(3, conv14_w, conv14_b);
 
     opencl_value_net.push_convolve(5, val_conv1_w, val_conv1_b);
     opencl_value_net.push_convolve(3, val_conv2_w, val_conv2_b);
@@ -485,7 +484,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     CallbackData * cb_data = new CallbackData();
 
     NNPlanes planes;
-    gather_features(state, planes);
+    gather_features_policy(state, planes);
 
     constexpr int width = 19;
     constexpr int height = 19;
@@ -499,7 +498,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     //assert(cb_data->m_thread_result_outstanding.load(boost::memory_order_acquire) == 0);
     cb_data->m_rotation = rotation;
 
-    for (int c = 0; c < Network::CHANNELS; ++c) {
+    for (int c = 0; c < Network::CHANNELS_POLICY; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
                 int vtx = rotate_nn_idx(h * 19 + w, rotation);
