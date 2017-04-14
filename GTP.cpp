@@ -98,9 +98,9 @@ void GTP::setup_default_parameters() {
     cfg_softmax_temp = 0.62f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix = 0.45f;
-    cfg_eval_thresh = 5;
-    cfg_eval_scale = 2;
+    cfg_mix = 0.47f;
+    cfg_eval_thresh = 3;
+    cfg_eval_scale = 3;
     cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
