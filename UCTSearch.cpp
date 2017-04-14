@@ -728,21 +728,20 @@ int UCTSearch::think(int color, passflag_t passflag) {
         time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);
 
         GUIprintf("Thinking at most %.1f seconds...", time_for_move/100.0f);
-
-#ifdef USE_SEARCH
-        if (m_rootstate.get_movenum() < 30) {
-            int bookmove = Book::get_book_move(m_rootstate);
-            if (bookmove != FastBoard::PASS) {
-                return bookmove;
-            }
-        }
-#endif
 #ifdef KGS
         if (m_rootstate.get_handicap() > 3
             || m_rootstate.get_komi() < 0.0f
             || m_rootstate.get_komi() > 8.0f) {
             myprintf("Bullshit game parameters, resigning...\n");
             return FastBoard::RESIGN;
+        }
+#endif
+#ifdef USE_SEARCH
+        if (m_rootstate.get_movenum() < 30) {
+            int bookmove = Book::get_book_move(m_rootstate);
+            if (bookmove != FastBoard::PASS) {
+                return bookmove;
+            }
         }
 #endif
     } else {
