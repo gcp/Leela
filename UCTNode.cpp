@@ -106,6 +106,8 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     if (at_root) {
         auto raw_netlist = Network::get_Network()->get_scored_moves(
             &state, Network::Ensemble::AVERAGE_ALL);
+        // Special marking value
+        m_symmetries_done = 8;
         scoring_cb(&nodecount, state, raw_netlist);
     } else {
         Network::get_Network()->async_scored_moves(
@@ -231,8 +233,9 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
             }
         } else {
             // Found
-            // First net run, overwrite MC score with netscore
-            if (m_symmetries_done == 0) {
+            // First net run, or averge_all run at the root
+            // Overwrite MC score with netscore
+            if (m_symmetries_done == 0 || m_symmetries_done == 8) {
                 child->set_score(it->first);
             } else {
                 assert(m_symmetries_done > 0 && m_symmetries_done < 8);
@@ -248,7 +251,9 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
     sort_children();
     m_has_netscore = true;
     m_is_netscoring = false;
-    m_symmetries_done++;
+    if (m_symmetries_done < 8) {
+        m_symmetries_done++;
+    }
 }
 
 void UCTNode::link_nodelist(std::atomic<int> & nodecount,

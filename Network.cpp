@@ -409,6 +409,7 @@ public:
     std::atomic<int> * m_thread_results_outstanding;
     std::vector<float> m_output_data;
     std::vector<float> m_input_data;
+    Network::BoardPlane m_ladder;
 };
 
 extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
@@ -434,6 +435,19 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
         int vtx = cb_data->m_state.board.get_vertex(x, y);
         if (cb_data->m_state.board.get_square(vtx) == FastBoard::EMPTY) {
             result.push_back(std::make_pair(val, vtx));
+        }
+    }
+
+    /* prune losing ladders completely */
+    for (auto & sm : result) {
+        std::pair<int, int> xy = cb_data->m_state.board.get_xy(sm.second);
+        int bitmappos = (xy.second * 19) + xy.first;
+        if (cb_data->m_ladder[bitmappos]) {
+            //myprintf("Ladder at %s (%d) score %f\n",
+            //         state->board.move_to_text(sm.second).c_str(),
+            //         sm.second,
+            //         sm.first);
+            sm.first = 0.0f;
         }
     }
 
@@ -470,7 +484,8 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     CallbackData * cb_data = new CallbackData();
 
     NNPlanes planes;
-    gather_features(state, planes);
+    BoardPlane *ladder;
+    gather_features(state, planes, &ladder);
 
     constexpr int width = 19;
     constexpr int height = 19;
@@ -484,6 +499,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
         OpenCL::get_OpenCL()->get_thread_results_outstanding();
     //assert(cb_data->m_thread_result_outstanding.load(boost::memory_order_acquire) == 0);
     cb_data->m_rotation = rotation;
+    cb_data->m_ladder = *ladder;
 
     for (int c = 0; c < Network::CHANNELS; ++c) {
         for (int h = 0; h < height; ++h) {
