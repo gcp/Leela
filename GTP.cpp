@@ -70,9 +70,9 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 35;
+    cfg_mature_threshold = 30;
     cfg_expand_divider = 2.0f;
-    cfg_extra_symmetry =  450;
+    cfg_extra_symmetry =  350;
 #else
     cfg_mature_threshold = 100;
     cfg_expand_divider = 2.0f;
@@ -98,8 +98,8 @@ void GTP::setup_default_parameters() {
     cfg_softmax_temp = 0.62f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix = 0.45f;
-    cfg_eval_thresh = 5;
+    cfg_mix = 0.52f;
+    cfg_eval_thresh = 2;
     cfg_eval_scale = 2;
     cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
