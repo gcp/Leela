@@ -197,8 +197,8 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::GPU);
 
-    net.reset(new Net<float>("model_5413.txt", TEST));
-    net->CopyTrainedLayersFrom("model_5413.caffemodel");
+    net.reset(new Net<float>("model_value.txt", TEST));
+    net->CopyTrainedLayersFrom("model_value.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         net->num_inputs(), net->num_outputs());
@@ -595,9 +595,9 @@ Network::Netresult Network::get_scored_moves(
         }
     }
 
-    if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-        show_heatmap(state, result);
-    }
+    // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
+    //    show_heatmap(state, result);
+    // }
 
     return result;
 }
@@ -1154,7 +1154,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
 
         size_t movecount = sgftree->count_mainline_moves();
         std::vector<int> tree_moves = sgftree->get_mainline();
-        //int who_won = sgftree->get_winner();
+        int who_won = sgftree->get_winner();
         int handicap = sgftree->get_state()->get_handicap();
         //float komi = sgftree->get_state()->get_komi();
         if (handicap) {
@@ -1164,9 +1164,9 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
         //if (std::abs(komi) > 0.75f && (std::abs(komi) < 5.25f || std::abs(komi) > 7.75f)) {
         //    goto skipnext;
         //}
-        //if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE) {
-        //    goto skipnext;
-        //}
+        if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE) {
+            goto skipnext;
+        }
 
         while (counter < movecount) {
             assert(treewalk != NULL);
@@ -1175,7 +1175,6 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 break;
 
             //int skip = Random::get_Rng()->randfix<4>();
-            if (1/*skip == 0*/) {
             KoState * state = treewalk->get_state();
             int tomove = state->get_to_move();
             int move;
@@ -1190,7 +1189,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
             }
 
             assert(move == tree_moves[counter]);
-                int this_move = -1;
+            int this_move = -1;
 
             std::vector<int> moves = state->generate_moves(tomove);
             bool moveseen = false;
@@ -1199,7 +1198,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                     if (move != FastBoard::PASS) {
                         // get x y coords for actual move
                         std::pair<int, int> xy = state->board.get_xy(move);
-                            this_move = (xy.second * 19) + xy.first;
+                        this_move = (xy.second * 19) + xy.first;
                         if (counter < 32) {
                             if ((xy.first == 0 && xy.second == 0)
                              || (xy.first == 18 && xy.second == 0)
@@ -1214,21 +1213,22 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                 }
             }
 
-                bool has_next_moves = counter + 2 < tree_moves.size();
-                if (!has_next_moves) {
-                    goto skipnext;
-                }
+            //bool has_next_moves = counter + 2 < tree_moves.size();
+            //if (!has_next_moves) {
+                //goto skipnext;
+            //}
 
-                has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
-                has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
+            //has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
+            //has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
 
-                if (!has_next_moves) {
-                    goto skipnext;
-                }
+            //if (!has_next_moves) {
+            //    goto skipnext;
+            //}
 
             int skip = Random::get_Rng()->randfix<16>();
             if (skip == 0) {
                 if (moveseen && move != FastBoard::PASS /*&& has_next_moves*/) {
+                    TrainPosition position;
                     position.stm_won = (tomove == who_won ? 1.0f : 0.0f);
                     position.stm_won_tanh = (tomove == who_won ? 1.0f : -1.0f);
                     float frac = (float)counter / (float)movecount;
@@ -1237,15 +1237,15 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                     position.stm_score_tanh = (frac * position.stm_won_tanh)
                         + ((1.0f - frac) * 0.0f);
                     gather_features_value(state, position.planes);
-                    position.moves[0] = this_move;
+                    // position.moves[0] = this_move;
                     // add next 2 moves to position
                     // we do not check them for legality
-                    int next_move = tree_moves[counter + 1];
+                    /*int next_move = tree_moves[counter + 1];
                     int next_next_move = tree_moves[counter + 2];
                     std::pair<int, int> xy = state->board.get_xy(next_move);
                     position.moves[1] = (xy.second * 19) + xy.first;
                     xy = state->board.get_xy(next_next_move);
-                    position.moves[2] = (xy.second * 19) + xy.first;
+                    position.moves[2] = (xy.second * 19) + xy.first;*/
                     data.push_back(position);
                 } else if (move != FastBoard::PASS) {
                     myprintf("Mainline move not found: %d\n", move);
@@ -1385,21 +1385,21 @@ void Network::train_network(TrainVector& data,
 
         // labels
         caffe::Datum datum_label;
-        datum_label.set_channels(3);
+        datum_label.set_channels(4);
         datum_label.set_height(1);
         datum_label.set_width(1);
 
-        int this_move = rotate_nn_idx(position.moves[0], symmetry);
-        int next_move = rotate_nn_idx(position.moves[1], symmetry);
-        int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
+        //int this_move = rotate_nn_idx(position.moves[0], symmetry);
+        //int next_move = rotate_nn_idx(position.moves[1], symmetry);
+        //int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
 
-        datum_label.add_float_data(this_move);
-        datum_label.add_float_data(next_move);
-        datum_label.add_float_data(next_next_move);
-        //datum_label.add_float_data((float)position.stm_score);
-        //datum_label.add_float_data((float)position.stm_won);
-        //datum_label.add_float_data((float)position.stm_score_tanh);
-        //datum_label.add_float_data((float)position.stm_won_tanh);
+        //datum_label.add_float_data(this_move);
+        //datum_label.add_float_data(next_move);
+        //datum_label.add_float_data(next_next_move);
+        datum_label.add_float_data((float)position.stm_score);
+        datum_label.add_float_data((float)position.stm_won);
+        datum_label.add_float_data((float)position.stm_score_tanh);
+        datum_label.add_float_data((float)position.stm_won_tanh);
         std::string label_out;
         datum_label.SerializeToString(&label_out);
 
@@ -1463,7 +1463,6 @@ void Network::autotune_from_file(std::string filename) {
         std::string dbTestLabelName("leela_test_label");
         test_label_db->Open(dbTestLabelName.c_str(), caffe::db::NEW);
     }
-#endif
 #endif
 #endif
     TrainVector data;
