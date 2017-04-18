@@ -79,7 +79,8 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     if (at_root && m_has_netscore) {
         return;
     }
-    if (!at_root && m_symmetries_done >= 8) {
+    if (m_symmetries_done >= 8) {
+        assert(!at_root);
         return;
     }
     if (m_visits < m_symmetries_done * cfg_extra_symmetry) {
@@ -106,7 +107,7 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     if (at_root) {
         auto raw_netlist = Network::get_Network()->get_scored_moves(
             &state, Network::Ensemble::AVERAGE_ALL);
-        scoring_cb(&nodecount, state, raw_netlist);
+        scoring_cb(&nodecount, state, raw_netlist, at_root);
     } else {
         Network::get_Network()->async_scored_moves(
             &nodecount, &state, this, Network::Ensemble::DIRECT, m_symmetries_done);
@@ -115,7 +116,7 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     auto raw_netlist = Network::get_Network()->get_scored_moves(
         &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
                            Network::Ensemble::DIRECT), m_symmetries_done);
-    scoring_cb(&nodecount, state, raw_netlist);
+    scoring_cb(&nodecount, state, raw_netlist, at_root);
 #endif
 }
 
@@ -168,7 +169,8 @@ void UCTNode::create_children(std::atomic<int> & nodecount,
 
 void UCTNode::scoring_cb(std::atomic<int> * nodecount,
                          FastState & state,
-                         Network::Netresult & raw_netlist) {
+                         Network::Netresult & raw_netlist,
+                         bool all_symmetries) {
     FastBoard & board = state.board;
     std::vector<Network::scored_node> nodelist;
 
@@ -181,12 +183,13 @@ void UCTNode::scoring_cb(std::atomic<int> * nodecount,
         }
     }
     nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
-    rescore_nodelist(*nodecount, board, nodelist);
+    rescore_nodelist(*nodecount, board, nodelist, all_symmetries);
 }
 
 void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
                                FastBoard & board,
-                               Network::Netresult & nodelist) {
+                               Network::Netresult & nodelist,
+                               bool all_symmetries) {
 
     // sort (this will reverse scores, but linking is backwards too)
     std::sort(nodelist.begin(), nodelist.end());
@@ -231,8 +234,9 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
             }
         } else {
             // Found
-            // First net run, overwrite MC score with netscore
-            if (m_symmetries_done == 0) {
+            // First net run, or average_all run at the root
+            // Overwrite MC score with netscore
+            if (m_symmetries_done == 0 || all_symmetries) {
                 child->set_score(it->first);
             } else {
                 assert(m_symmetries_done > 0 && m_symmetries_done < 8);
@@ -248,7 +252,11 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
     sort_children();
     m_has_netscore = true;
     m_is_netscoring = false;
-    m_symmetries_done++;
+    if (all_symmetries) {
+        m_symmetries_done = 8;
+    } else {
+        m_symmetries_done++;
+    }
 }
 
 void UCTNode::link_nodelist(std::atomic<int> & nodecount,
