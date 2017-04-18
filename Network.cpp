@@ -454,7 +454,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     // Network::show_heatmap(&cb_data->m_state, result);
 
     cb_data->m_node->scoring_cb(cb_data->m_nodecount, cb_data->m_state,
-                                result);
+                                result, false);
 
     delete cb_data;
 
