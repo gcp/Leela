@@ -29,7 +29,8 @@ public:
                            FastState & state, bool at_root);
     void scoring_cb(std::atomic<int> * nodecount,
                     FastState & state,
-                    Network::Netresult & raw_netlist);
+                    Network::Netresult & raw_netlist,
+                    bool all_symmetries);
     void run_value_net(FastState & state);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
@@ -80,7 +81,8 @@ private:
                        bool use_nets);
     void rescore_nodelist(std::atomic<int> & nodecount,
                          FastBoard & state,
-                         Network::Netresult & nodes);
+                         Network::Netresult & nodes,
+                         bool all_symmetries);
     float smp_noise();
     // Tree data
     UCTNode* m_firstchild;

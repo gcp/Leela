@@ -70,13 +70,17 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 35;
+    cfg_mature_threshold = 30;
     cfg_expand_divider = 2.0f;
-    cfg_extra_symmetry =  450;
+    cfg_extra_symmetry =  350;
+    cfg_eval_thresh = 2;
+    cfg_eval_scale = 2;
 #else
     cfg_mature_threshold = 100;
-    cfg_expand_divider = 2.0f;
-    cfg_extra_symmetry = 3000;
+    cfg_expand_divider =  2.0f;
+    cfg_extra_symmetry =  3000;
+    cfg_eval_thresh = 5;
+    cfg_eval_scale = 2;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;

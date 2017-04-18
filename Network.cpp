@@ -423,6 +423,7 @@ public:
     std::atomic<int> * m_thread_results_outstanding;
     std::vector<float> m_output_data;
     std::vector<float> m_input_data;
+    Network::BoardPlane m_ladder;
 };
 
 extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
@@ -451,10 +452,23 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
         }
     }
 
+    /* prune losing ladders completely */
+    for (auto & sm : result) {
+        std::pair<int, int> xy = cb_data->m_state.board.get_xy(sm.second);
+        int bitmappos = (xy.second * 19) + xy.first;
+        if (cb_data->m_ladder[bitmappos]) {
+            //myprintf("Ladder at %s (%d) score %f\n",
+            //         state->board.move_to_text(sm.second).c_str(),
+            //         sm.second,
+            //         sm.first);
+            sm.first = 0.0f;
+        }
+    }
+
     // Network::show_heatmap(&cb_data->m_state, result);
 
     cb_data->m_node->scoring_cb(cb_data->m_nodecount, cb_data->m_state,
-                                result);
+                                result, false);
 
     delete cb_data;
 
@@ -484,7 +498,8 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     CallbackData * cb_data = new CallbackData();
 
     NNPlanes planes;
-    gather_features_policy(state, planes);
+    BoardPlane *ladder;
+    gather_features_policy(state, planes, &ladder);
 
     constexpr int width = 19;
     constexpr int height = 19;
@@ -497,8 +512,9 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     cb_data->m_thread_results_outstanding = opencl.get_thread_results_outstanding();
     //assert(cb_data->m_thread_result_outstanding.load(boost::memory_order_acquire) == 0);
     cb_data->m_rotation = rotation;
+    cb_data->m_ladder = *ladder;
 
-    for (int c = 0; c < Network::POLICY_CHANNELS; ++c) {
+    for (int c = 0; c < Network::CHANNELS_POLICY; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
                 int vtx = rotate_nn_idx(h * 19 + w, rotation);
