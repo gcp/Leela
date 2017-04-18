@@ -514,7 +514,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     cb_data->m_rotation = rotation;
     cb_data->m_ladder = *ladder;
 
-    for (int c = 0; c < Network::CHANNELS_POLICY; ++c) {
+    for (int c = 0; c < Network::POLICY_CHANNELS; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
                 int vtx = rotate_nn_idx(h * 19 + w, rotation);
