@@ -74,7 +74,7 @@ void GTP::setup_default_parameters() {
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry =  450;
 #else
-    cfg_mature_threshold = 80;
+    cfg_mature_threshold = 100;
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry = 3000;
 #endif
@@ -93,14 +93,14 @@ void GTP::setup_default_parameters() {
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 1.1f;
-    cfg_puct = 1.15f;
-    cfg_psa = 0.0015f;
-    cfg_softmax_temp = 0.725f;
+    cfg_puct = 1.1f;
+    cfg_psa = 0.0025f;
+    cfg_softmax_temp = 0.62f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix = 0.45f;
-    cfg_eval_thresh = 5;
-    cfg_eval_scale = 2;
+    cfg_mix = 0.47f;
+    cfg_eval_thresh = 3;
+    cfg_eval_scale = 3;
     cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
@@ -149,6 +149,7 @@ const std::string GTP::s_commands[] = {
     "time_left",
     "influence",
     "mc_score",
+    "vn_score",
     "kgs-genmove_cleanup",
     "fixed_handicap",
     "place_free_handicap",
@@ -452,15 +453,20 @@ bool GTP::execute(GameState & game, std::string xinput) {
         game.display_state();
         return true;
     } else if (command.find("mc_score") == 0) {
-        float ftmp = game.board.final_mc_score(game.get_komi());   
-        /* white wins */        
+        float ftmp = game.board.final_mc_score(game.get_komi());
+        /* white wins */
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
         } else if (ftmp > 0.1) {
             gtp_printf(id, "B+%3.1f", ftmp);
         } else {
             gtp_printf(id, "0");
-        }                
+        }
+        return true;
+    }  else if (command.find("vn_score") == 0) {
+        float net_score = Network::get_Network()->get_value(&game,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        gtp_printf(id, "%f", net_score);
         return true;
     } else if (command.find("final_score") == 0) {
         float ftmp = game.final_score();   

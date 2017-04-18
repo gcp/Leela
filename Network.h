@@ -30,11 +30,11 @@ public:
     using PredMoves = std::array<int, 3>;
     struct TrainPosition {
         NNPlanes planes;
-        // PredMoves moves;
-        float stm_score;
-        float stm_won;
-        float stm_score_tanh;
-        float stm_won_tanh;
+        PredMoves moves;
+        //float stm_score;
+        //float stm_won;
+        //float stm_score_tanh;
+        //float stm_won_tanh;
     };
     using TrainVector = std::vector<TrainPosition>;
     using scored_node = std::pair<float, int>;
@@ -45,10 +45,10 @@ public:
                                int rotation = -1);
     float get_value(FastState *state,
                     Ensemble ensemble);
-    static constexpr int POLICY_CHANNELS = 24;
+    static constexpr int POLICY_CHANNELS = 32;
     static constexpr int VALUE_CHANNELS = 32;
     static constexpr int MAX_CHANNELS = 128;
-    static constexpr int MAX_VALUE_CHANNELS = 32;
+    static constexpr int MAX_VALUE_CHANNELS = 48;
 
 #ifdef USE_OPENCL
     void async_scored_moves(std::atomic<int> * nodecount,

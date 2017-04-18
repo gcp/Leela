@@ -37,7 +37,11 @@
         "chrono": "cpp",
         "random": "cpp",
         "limits": "cpp",
-        "*.ipp": "cpp",
-        "functional": "cpp"
+        "array": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "slist": "cpp"
     }
 }
