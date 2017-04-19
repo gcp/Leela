@@ -40,11 +40,11 @@ public:
     using scored_node = std::pair<float, int>;
     using Netresult = std::vector<scored_node>;
 
-    Netresult get_scored_moves(FastState * state,
-                               Ensemble ensemble,
-                               int rotation = -1);
-    float get_value(FastState *state,
-                    Ensemble ensemble);
+    static Netresult get_scored_moves(FastState * state,
+                                      Ensemble ensemble,
+                                      int rotation = -1);
+    static float get_value(FastState *state,
+                           Ensemble ensemble);
     static constexpr int CHANNELS_POLICY = 32;
     static constexpr int CHANNELS_VALUE = 24;
     static constexpr int MAX_CHANNELS = 128;
@@ -70,9 +70,9 @@ private:
     std::unique_ptr<caffe::Net<float>> net;
 #endif
 
-    Netresult get_scored_moves_internal(
+    static Netresult get_scored_moves_internal(
       FastState * state, NNPlanes & planes, int rotation);
-    float get_value_internal(
+    static float get_value_internal(
       FastState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
