@@ -103,8 +103,6 @@ void GTP::setup_default_parameters() {
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix = 0.47f;
-    cfg_eval_thresh = 3;
-    cfg_eval_scale = 3;
     cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
@@ -151,9 +149,6 @@ const std::string GTP::s_commands[] = {
     "final_status_list",
     "time_settings",
     "time_left",
-    "influence",
-    "mc_score",
-    "vn_score",
     "kgs-genmove_cleanup",
     "fixed_handicap",
     "place_free_handicap",
@@ -161,6 +156,11 @@ const std::string GTP::s_commands[] = {
     "loadsgf",
     "kgs-time_settings",
     "printsgf",
+    "influence",
+    "heatmap",
+    "mc_score",
+    "mc_winrate",
+    "vn_winrate",
     ""
 };
 
@@ -467,21 +467,25 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_printf(id, "0");
         }
         return true;
-    }  else if (command.find("vn_score") == 0) {
-        float net_score = Network::get_Network()->get_value(&game,
-                                                            Network::Ensemble::AVERAGE_ALL);
-        gtp_printf(id, "%f", net_score);
-        return true;
     } else if (command.find("final_score") == 0) {
-        float ftmp = game.final_score();   
-        /* white wins */        
+        float ftmp = game.final_score();
+        /* white wins */
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
         } else if (ftmp > 0.1) {
             gtp_printf(id, "B+%3.1f", ftmp);
         } else {
             gtp_printf(id, "0");
-        }                
+        }
+        return true;
+    } else if (command.find("vn_winrate") == 0) {
+        float net_score = Network::get_Network()->get_value(&game,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        gtp_printf(id, "%f", net_score);
+        return true;
+    }  else if (command.find("mc_winrate") == 0) {
+        float mc_winrate = Playout::mc_owner(game, 512);
+        gtp_printf(id, "%f", mc_winrate);
         return true;
     } else if (command.find("final_status_list") == 0) {
         if (command.find("alive") != std::string::npos) {
@@ -494,7 +498,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_printf(id, "");
         }
         return true;
-    } else if (command.find("time_settings") == 0) {        
+    } else if (command.find("time_settings") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp;
         int maintime, byotime, byostones;
@@ -584,7 +588,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (command.find("influence") == 0) {
         gtp_printf(id, "");
-        game.board.display_map(game.board.influence());        
+        game.board.display_map(game.board.influence());
+        return true;
+    } else if (command.find("heatmap") == 0) {
+        gtp_printf(id, "");
+        auto vec = Network::get_Network()->get_scored_moves(
+            &game, Network::Ensemble::AVERAGE_ALL);
+        Network::show_heatmap(&game, vec, false);
         return true;
     } else if (command.find("fixed_handicap") == 0) {
         std::istringstream cmdstream(command);
@@ -764,11 +774,6 @@ bool GTP::execute(GameState & game, std::string xinput) {
         gtp_printf(id, "");
         return true;
 
-    } else if (command.find("predict") == 0) {
-        auto vec = Network::get_Network()->get_scored_moves(
-            &game, Network::Ensemble::DIRECT);
-        gtp_printf(id, "");
-        return true;
     } else if (command.find("bookgen") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp, filename;

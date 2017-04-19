@@ -8,11 +8,11 @@
 #include "FastState.h"
 
 class Playout {
-public:       
+public:
     typedef std::bitset<FastBoard::MAXSQ> bitboard_t;
     typedef std::array<bitboard_t, 2> color_bitboard_t;
-    
-    static const int AUTOGAMES = 100000;    
+
+    static const int AUTOGAMES = 200000;
     static void do_playout_benchmark(GameState & game);
     static float mc_owner(FastState & state,
                           int iterations = 64,

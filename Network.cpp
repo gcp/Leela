@@ -8,6 +8,7 @@
 #include <memory>
 #include <cmath>
 #include <array>
+#include <thread>
 #include <boost/utility.hpp>
 #include <boost/format.hpp>
 
@@ -111,35 +112,68 @@ Network * Network::get_Network(void) {
 }
 
 void Network::benchmark(FastState * state) {
-    constexpr int POL_BENCH_AMOUNT = 1000;
-    constexpr int VAL_BENCH_AMOUNT = 2000;
     {
-        Time start;
+        // Policy
+        int BENCH_AMOUNT = 2000;
+        int cpus = cfg_num_threads;
+        int iters_per_thread = (BENCH_AMOUNT + (cpus - 1)) / cpus;
 
-        for (int loop = 0; loop < POL_BENCH_AMOUNT; loop++) {
-            auto vec = get_scored_moves(state, Ensemble::RANDOM_ROTATION);
+        Time start;
+        std::vector<std::thread> tg;
+        for (int i = 0; i < cpus; i++) {
+            tg.push_back(
+                std::thread([iters_per_thread, state]() {
+                    FastState mystate = *state;
+                    for (int loop = 0; loop < iters_per_thread; loop++) {
+                        auto vec = get_scored_moves(&mystate, Ensemble::RANDOM_ROTATION);
         }
+                })
+            );
+        };
+
+        auto join_thread = [](std::thread &thread) {
+            assert(thread.joinable());
+            thread.join();
+        };
+        std::for_each(tg.begin(), tg.end(), join_thread);
 
         Time end;
 
-        myprintf("%d predictions in %5.2f seconds -> %d p/s\n",
-                 POL_BENCH_AMOUNT,
+        myprintf("%5d predictions in %5.2f seconds -> %d p/s\n",
+                 BENCH_AMOUNT,
                  (float)Time::timediff(start,end)/100.0,
-                 (int)((float)POL_BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
+                 (int)((float)BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
     }
     {
-        Time start;
+        // Value
+        int BENCH_AMOUNT = 10000;
+        int cpus = cfg_num_threads;
+        int iters_per_thread = (BENCH_AMOUNT + (cpus - 1)) / cpus;
 
-        for (int loop = 0; loop < VAL_BENCH_AMOUNT; loop++) {
-            auto vec = get_value(state, Ensemble::RANDOM_ROTATION);
+        Time start;
+        std::vector<std::thread> tg;
+        for (int i = 0; i < cpus; i++) {
+            tg.push_back(
+                std::thread([iters_per_thread, state]() {
+                    FastState mystate = *state;
+                    for (int loop = 0; loop < iters_per_thread; loop++) {
+                        auto vec = get_value(&mystate, Ensemble::RANDOM_ROTATION);
         }
+                })
+            );
+        };
+        auto join_thread = [](std::thread &thread) {
+            assert(thread.joinable());
+            thread.join();
+        };
+        std::for_each(tg.begin(), tg.end(), join_thread);
 
         Time end;
 
-        myprintf("%d evaluations in %5.2f seconds -> %d p/s\n",
-                 VAL_BENCH_AMOUNT,
+        myprintf("%5d evaluations in %5.2f seconds -> %d p/s\n",
+                 BENCH_AMOUNT,
                  (float)Time::timediff(start,end)/100.0,
-                 (int)((float)VAL_BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
+                 (int)((float)BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
     }
 }
 
@@ -465,7 +499,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
         }
     }
 
-    // Network::show_heatmap(&cb_data->m_state, result);
+    // Network::show_heatmap(&cb_data->m_state, result, false);
 
     cb_data->m_node->scoring_cb(cb_data->m_nodecount, cb_data->m_state,
                                 result, false);
@@ -612,7 +646,7 @@ Network::Netresult Network::get_scored_moves(
     }
 
     // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-    //    show_heatmap(state, result);
+    //     show_heatmap(state, result, true);
     // }
 
     return result;
@@ -778,7 +812,7 @@ Network::Netresult Network::get_scored_moves_internal(
     return result;
 }
 
-void Network::show_heatmap(FastState * state, Netresult& result) {
+void Network::show_heatmap(FastState * state, Netresult& result, bool topmoves) {
     auto moves = result;
     std::vector<std::string> display_map;
     std::string line;
@@ -811,6 +845,7 @@ void Network::show_heatmap(FastState * state, Netresult& result) {
         myprintf("%s\n", display_map[i].c_str());
     }
 
+    if (topmoves) {
     std::stable_sort(moves.rbegin(), moves.rend());
 
     float cum = 0.0f;
@@ -822,6 +857,7 @@ void Network::show_heatmap(FastState * state, Netresult& result) {
                  state->board.move_to_text(moves[tried].second).c_str());
         cum += moves[tried].first;
         tried++;
+    }
     }
 }
 

@@ -42,6 +42,8 @@
         "hash_set": "cpp",
         "string": "cpp",
         "unordered_map": "cpp",
-        "slist": "cpp"
+        "slist": "cpp",
+        "deque": "cpp",
+        "vector": "cpp"
     }
 }
