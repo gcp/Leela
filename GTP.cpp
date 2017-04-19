@@ -151,7 +151,8 @@ const std::string GTP::s_commands[] = {
     "time_left",
     "influence",
     "mc_score",
-    "vn_score",
+    "mc_winrate",
+    "vn_winrate",
     "kgs-genmove_cleanup",
     "fixed_handicap",
     "place_free_handicap",
@@ -465,21 +466,25 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_printf(id, "0");
         }
         return true;
-    }  else if (command.find("vn_score") == 0) {
-        float net_score = Network::get_Network()->get_value(&game,
-                                                            Network::Ensemble::AVERAGE_ALL);
-        gtp_printf(id, "%f", net_score);
-        return true;
     } else if (command.find("final_score") == 0) {
-        float ftmp = game.final_score();   
-        /* white wins */        
+        float ftmp = game.final_score();
+        /* white wins */
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
         } else if (ftmp > 0.1) {
             gtp_printf(id, "B+%3.1f", ftmp);
         } else {
             gtp_printf(id, "0");
-        }                
+        }
+        return true;
+    } else if (command.find("vn_winrate") == 0) {
+        float net_score = Network::get_Network()->get_value(&game,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        gtp_printf(id, "%f", net_score);
+        return true;
+    }  else if (command.find("mc_winrate") == 0) {
+        float mc_winrate = Playout::mc_owner(game, 512);
+        gtp_printf(id, "%f", mc_winrate);
         return true;
     } else if (command.find("final_status_list") == 0) {
         if (command.find("alive") != std::string::npos) {
@@ -492,7 +497,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_printf(id, "");
         }
         return true;
-    } else if (command.find("time_settings") == 0) {        
+    } else if (command.find("time_settings") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp;
         int maintime, byotime, byostones;
