@@ -16,7 +16,8 @@ public:
     typedef std::tuple<float, int, UCTNode*> sortnode_t;
 
     UCTNode(int vertex, float score,
-            int expand_threshold, int netscore_threshold);
+            int expand_threshold, int netscore_threshold,
+            int movenum);
     ~UCTNode();
     bool first_visit() const;
     bool has_children() const;
@@ -74,6 +75,7 @@ public:
     SMP::Mutex & get_mutex();
 
 private:
+    UCTNode();
     void link_child(UCTNode * newchild);
     void link_nodelist(std::atomic<int> & nodecount,
                        FastBoard & state,
@@ -101,6 +103,7 @@ private:
     bool m_eval_propagated;
     std::atomic<double> m_blackevals;
     std::atomic<int> m_evalcount;
+    int m_movenum;
     bool m_is_evaluating;    // mutex
     // alive (superko)
     bool m_valid;

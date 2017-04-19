@@ -53,9 +53,9 @@ float cfg_puct;
 float cfg_uct;
 float cfg_psa;
 float cfg_softmax_temp;
-float cfg_mix;
+float cfg_mix_opening;
+float cfg_mix_ending;
 int cfg_eval_thresh;
-int cfg_eval_scale;
 float cfg_beta;
 float cfg_patternbonus;
 int cfg_rave_moves;
@@ -73,14 +73,12 @@ void GTP::setup_default_parameters() {
     cfg_mature_threshold = 30;
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry =  350;
-    cfg_eval_thresh = 2;
-    cfg_eval_scale = 2;
+    cfg_eval_thresh = 3;
 #else
     cfg_mature_threshold = 100;
     cfg_expand_divider =  2.0f;
     cfg_extra_symmetry =  3000;
-    cfg_eval_thresh = 5;
-    cfg_eval_scale = 2;
+    cfg_eval_thresh = 6;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -102,7 +100,8 @@ void GTP::setup_default_parameters() {
     cfg_softmax_temp = 0.62f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix = 0.52f;
+    cfg_mix_opening = 0.52f;
+    cfg_mix_ending = 0.52f;
     cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
