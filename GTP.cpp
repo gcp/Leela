@@ -149,10 +149,6 @@ const std::string GTP::s_commands[] = {
     "final_status_list",
     "time_settings",
     "time_left",
-    "influence",
-    "mc_score",
-    "mc_winrate",
-    "vn_winrate",
     "kgs-genmove_cleanup",
     "fixed_handicap",
     "place_free_handicap",
@@ -160,6 +156,11 @@ const std::string GTP::s_commands[] = {
     "loadsgf",
     "kgs-time_settings",
     "printsgf",
+    "influence",
+    "heatmap",
+    "mc_score",
+    "mc_winrate",
+    "vn_winrate",
     ""
 };
 
@@ -587,7 +588,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (command.find("influence") == 0) {
         gtp_printf(id, "");
-        game.board.display_map(game.board.influence());        
+        game.board.display_map(game.board.influence());
+        return true;
+    } else if (command.find("heatmap") == 0) {
+        gtp_printf(id, "");
+        auto vec = Network::get_Network()->get_scored_moves(
+            &game, Network::Ensemble::AVERAGE_ALL);
+        Network::show_heatmap(&game, vec, false);
         return true;
     } else if (command.find("fixed_handicap") == 0) {
         std::istringstream cmdstream(command);
@@ -767,11 +774,6 @@ bool GTP::execute(GameState & game, std::string xinput) {
         gtp_printf(id, "");
         return true;
 
-    } else if (command.find("predict") == 0) {
-        auto vec = Network::get_Network()->get_scored_moves(
-            &game, Network::Ensemble::DIRECT);
-        gtp_printf(id, "");
-        return true;
     } else if (command.find("bookgen") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp, filename;

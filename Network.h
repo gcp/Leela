@@ -57,7 +57,7 @@ public:
 #endif
     void initialize();
     void benchmark(FastState * state);
-    static void show_heatmap(FastState * state, Netresult & netres);
+    static void show_heatmap(FastState * state, Netresult & netres, bool topmoves);
     void autotune_from_file(std::string filename);
     static Network* get_Network(void);
     std::string get_blas_backend();

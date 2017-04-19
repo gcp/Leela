@@ -465,7 +465,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
         }
     }
 
-    // Network::show_heatmap(&cb_data->m_state, result);
+    // Network::show_heatmap(&cb_data->m_state, result, false);
 
     cb_data->m_node->scoring_cb(cb_data->m_nodecount, cb_data->m_state,
                                 result, false);
@@ -612,7 +612,7 @@ Network::Netresult Network::get_scored_moves(
     }
 
     // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-    //     show_heatmap(state, result);
+    //     show_heatmap(state, result, true);
     // }
 
     return result;
@@ -778,7 +778,7 @@ Network::Netresult Network::get_scored_moves_internal(
     return result;
 }
 
-void Network::show_heatmap(FastState * state, Netresult& result) {
+void Network::show_heatmap(FastState * state, Netresult& result, bool topmoves) {
     auto moves = result;
     std::vector<std::string> display_map;
     std::string line;
@@ -811,17 +811,19 @@ void Network::show_heatmap(FastState * state, Netresult& result) {
         myprintf("%s\n", display_map[i].c_str());
     }
 
-    std::stable_sort(moves.rbegin(), moves.rend());
+    if (topmoves) {
+        std::stable_sort(moves.rbegin(), moves.rend());
 
-    float cum = 0.0f;
-    size_t tried = 0;
-    while (cum < 0.85f && tried < moves.size()) {
-        if (moves[tried].first < 0.01f) break;
-        myprintf("%1.3f (%s)\n",
-                 moves[tried].first,
-                 state->board.move_to_text(moves[tried].second).c_str());
-        cum += moves[tried].first;
-        tried++;
+        float cum = 0.0f;
+        size_t tried = 0;
+        while (cum < 0.85f && tried < moves.size()) {
+            if (moves[tried].first < 0.01f) break;
+            myprintf("%1.3f (%s)\n",
+                    moves[tried].first,
+                    state->board.move_to_text(moves[tried].second).c_str());
+            cum += moves[tried].first;
+            tried++;
+        }
     }
 }
 
