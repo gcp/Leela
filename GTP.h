@@ -2,6 +2,7 @@
 #define GTP_H_INCLUDED
 
 #include <string>
+#include <vector>
 #include "GameState.h"
 
 extern bool cfg_allow_pondering;
@@ -13,6 +14,7 @@ extern int cfg_mature_threshold;
 extern float cfg_expand_divider;
 extern int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
+extern std::vector<int> cfg_gpus;
 extern int cfg_rowtiles;
 #endif
 extern float cfg_crit_mine_1;
