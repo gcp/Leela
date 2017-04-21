@@ -46,6 +46,9 @@ using namespace caffe;
 using namespace Utils;
 
 Network* Network::s_Net = nullptr;
+#ifdef USE_CAFFE
+std::unique_ptr<caffe::Net<float>> Network::s_net;
+#endif
 
 extern std::array<float, 76800> conv1_w;
 extern std::array<float, 96> conv1_b;
@@ -231,20 +234,20 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::GPU);
 
-    net.reset(new Net<float>("model_5413.txt", TEST));
-    net->CopyTrainedLayersFrom("model_5413.caffemodel");
+    s_net.reset(new Net<float>("model_value.txt", TEST));
+    s_net->CopyTrainedLayersFrom("model_value.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
-        net->num_inputs(), net->num_outputs());
+        s_net->num_inputs(), s_net->num_outputs());
 
-    Blob<float>* input_layer = net->input_blobs()[0];
+    Blob<float>* input_layer = s_net->input_blobs()[0];
     int num_channels = input_layer->channels();
     int width = input_layer->width();
     int height = input_layer->height();
     myprintf("Input: channels=%d, width=%d, height=%d\n", num_channels, width, height);
 
-    for (int i = 0; i < net->num_outputs(); i++) {
-        Blob<float>* output_layer = net->output_blobs()[i];
+    for (int i = 0; i < s_net->num_outputs(); i++) {
+        Blob<float>* output_layer = s_net->output_blobs()[i];
         int num_out_channels = output_layer->channels();
         width = output_layer->width();
         height = output_layer->height();
@@ -258,7 +261,7 @@ void Network::initialize(void) {
 #endif
 
     int total_weights = 0;
-    auto & layers = net->layers();
+    auto & layers = s_net->layers();
     myprintf("%d layers:\n", layers.size());
     int layer_num = 1;
 #ifdef WRITE_WEIGHTS
@@ -724,7 +727,7 @@ Network::Netresult Network::get_scored_moves_internal(
     Netresult result;
     assert(rotation >= 0 && rotation <= 7);
 #ifdef USE_CAFFE
-    Blob<float>* input_layer = net->input_blobs()[0];
+    Blob<float>* input_layer = s_net->input_blobs()[0];
     int channels = input_layer->channels();
     int width = input_layer->width();
     int height = input_layer->height();
@@ -792,8 +795,8 @@ Network::Netresult Network::get_scored_moves_internal(
     std::vector<float>& outputs = softmax_data;
 #endif
 #ifdef USE_CAFFE
-    net->Forward();
-    Blob<float>* output_layer = net->output_blobs()[0];
+    s_net->Forward();
+    Blob<float>* output_layer = s_net->output_blobs()[0];
     const float* begin = output_layer->cpu_data();
     const float* end = begin + output_layer->channels();
     auto outputs = std::vector<float>(begin, end);
