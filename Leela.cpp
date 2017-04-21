@@ -39,10 +39,12 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
                         "Safety margin for time usage in centiseconds.")
         ("logfile,l", po::value<std::string>(), "File to log input/output to.")
         ("quiet,q", "Disable all diagnostic output.")
-        ("komiadjust", "Adjust komi one point in my disadvantage (territory scoring).")
+        ("komiadjust,k", "Adjust komi one point in my disadvantage (territory scoring).")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
 #ifdef USE_OPENCL
+        ("gpu",  po::value<std::vector<int> >(),
+                "ID of the OpenCL device(s) to use (disables autodetection).")
         ("rowtiles", po::value<int>()->default_value(cfg_rowtiles),
                      "Split up the board in # tiles.")
 #endif
@@ -221,6 +223,10 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
 
 #ifdef USE_OPENCL
+    if (vm.count("gpu")) {
+        cfg_gpus = vm["gpu"].as<std::vector<int> >();
+    }
+
     if (vm.count("rowtiles")) {
         int rowtiles = vm["rowtiles"].as<int>();
         rowtiles = std::min(19, rowtiles);

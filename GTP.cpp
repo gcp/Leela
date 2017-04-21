@@ -34,6 +34,7 @@ int cfg_mature_threshold;
 float cfg_expand_divider;
 int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
+std::vector<int> cfg_gpus;
 int cfg_rowtiles;
 #endif
 float cfg_crit_mine_1;
@@ -83,6 +84,7 @@ void GTP::setup_default_parameters() {
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
 #ifdef USE_OPENCL
+    cfg_gpus = { 0 };
     cfg_rowtiles = 5;
 #endif
     cfg_crit_mine_1 = 4.16f;

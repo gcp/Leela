@@ -863,6 +863,7 @@ void OpenCL::initialize(void) {
     std::string best_vendor;
     int best_score = 0;
     bool found_device = false;
+    int id = 0;
 
     myprintf("Detected %d OpenCL platforms\n", platforms.size());
 
@@ -885,10 +886,11 @@ void OpenCL::initialize(void) {
         try {
             p.getDevices(CL_DEVICE_TYPE_ALL, &devices);
         } catch (cl::Error &e) {
-            myprintf("Error getting device: %s: %d\n", e.what(), e.err());
+            myprintf("Error getting device(s): %s: %d\n", e.what(), e.err());
             devices.clear();
         }
         for (auto &d : devices) {
+            myprintf("Device ID:     %d\n", id);
             myprintf("Device name:   %s\n",
                      trim(d.getInfo<CL_DEVICE_NAME>()).c_str());
             myprintf("Device type:   %s\n",
@@ -913,13 +915,20 @@ void OpenCL::initialize(void) {
             this_score +=  opencl_version * 10;
             myprintf("Device score:  %d\n", this_score);
 
-            if (this_score > best_score) {
+            bool preferred = std::find(cfg_gpus.cbegin(), cfg_gpus.cend(), id) != cfg_gpus.cend();
+
+            if ((this_score > best_score) || preferred) {
                 best_version = opencl_version;
                 best_platform = p;
                 best_device = d;
-                best_score = this_score;
+                if (preferred) {
+                    best_score = std::numeric_limits<decltype(best_score)>::max();
+                } else {
+                    best_score = this_score;
+                }
                 found_device = true;
             }
+            id++;
         }
     }
 
