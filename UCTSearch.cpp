@@ -30,7 +30,7 @@ using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
     : m_rootstate(g),
-      m_root(FastBoard::PASS, 0.0f, 1, 1),
+      m_root(FastBoard::PASS, 0.0f, 1, 1, g.board.get_stone_count()),
       m_nodes(0),
       m_playouts(0),
       m_score(0.0f),
