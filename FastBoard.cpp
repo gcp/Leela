@@ -403,6 +403,10 @@ float FastBoard::area_score(float komi) {
     return score;
 }   
 
+int FastBoard::get_stone_count() {
+    return m_totalstones[BLACK] + m_totalstones[WHITE];
+}
+
 int FastBoard::estimate_mc_score(float komi) {    
     int wsc, bsc;        
 

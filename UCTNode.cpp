@@ -27,11 +27,11 @@
 using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score, int expand_threshold,
-                 int netscore_threshold)
+                 int netscore_threshold, int movenum)
     : m_firstchild(nullptr), m_nextsibling(nullptr),
       m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
       m_eval_propagated(false), m_blackevals(0.0f),
-      m_evalcount(0), m_is_evaluating(false),
+      m_evalcount(0), m_movenum(movenum), m_is_evaluating(false),
       m_valid(true), m_expand_cnt(expand_threshold), m_is_expanding(false),
       m_has_netscore(false), m_netscore_thresh(netscore_threshold),
       m_symmetries_done(0), m_is_netscoring(false) {
@@ -200,6 +200,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
     const int max_net_childs = 35;
     int netscore_threshold = cfg_mature_threshold;
     int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
+    int movenum = board.get_stone_count();
 
     SMP::Lock lock(get_mutex());
 
@@ -218,7 +219,8 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
             // Not added yet, is it highly scored?
             if (std::distance(it, nodelist.cend()) <= max_net_childs) {
                 UCTNode * vtx = new UCTNode(it->second, it->first,
-                                            expand_threshold, netscore_threshold);
+                                            expand_threshold, netscore_threshold,
+                                            movenum);
                 if (it->second != FastBoard::PASS) {
                     // atari giving
                     // was == 2, == 1
@@ -279,13 +281,15 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
 
     int netscore_threshold = cfg_mature_threshold;
     int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
+    int movenum = board.get_stone_count();
 
     SMP::Lock lock(get_mutex());
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         if (totalchildren - childrenseen <= maxchilds) {
             UCTNode * vtx = new UCTNode(it->second, it->first,
-                                        expand_threshold, netscore_threshold);
+                                        expand_threshold, netscore_threshold,
+                                        movenum);
             if (it->second != FastBoard::PASS) {
                 // atari giving
                 // was == 2, == 1
@@ -505,12 +509,13 @@ float UCTNode::get_mixed_score(int tomove) {
         return winrate;
     }
     float eval = get_eval(tomove);
-    if (evalcount >= cfg_eval_scale) {
-        return eval * cfg_mix + winrate * (1.0f - cfg_mix);
+    float opening_mix = eval * cfg_mix_opening + winrate * (1.0f - cfg_mix_opening);
+    float ending_mix = eval * cfg_mix_ending + winrate * (1.0f - cfg_mix_ending);
+    if (m_movenum > 200) {
+        return ending_mix;
     }
-    float scaling = (float)evalcount/(float)cfg_eval_scale;
-    float mix_factor = scaling * cfg_mix;
-    return eval * mix_factor + winrate * (1.0f - mix_factor);
+    float ratio = m_movenum / 200.0;
+    return opening_mix * (1.0f - ratio) + ending_mix * ratio;
 }
 
 float UCTNode::smp_noise(void) {

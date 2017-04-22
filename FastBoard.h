@@ -108,6 +108,7 @@ public:
 
     int estimate_mc_score(float komi);
     float final_mc_score(float komi);
+    int get_stone_count();
     float area_score(float komi);
     std::vector<bool> calc_reach_color(int col);
     std::vector<int> influence(void);
