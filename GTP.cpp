@@ -84,7 +84,7 @@ void GTP::setup_default_parameters() {
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
 #ifdef USE_OPENCL
-    cfg_gpus = { 0 };
+    cfg_gpus = { };
     cfg_rowtiles = 5;
 #endif
     cfg_crit_mine_1 = 4.16f;
