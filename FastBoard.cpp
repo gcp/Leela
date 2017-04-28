@@ -2428,6 +2428,53 @@ bool FastBoard::check_winning_ladder(const int color, const int vtx) {
     return false;
 }
 
+std::vector<int> FastBoard::critical_neighbours(const int color, const int vertex) {
+    std::vector<int> res;
+
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+
+        if (m_square[ai] == color) {
+            int par = m_parent[ai];
+            int lib = m_libs[par];
+
+            if (lib <= 1) {
+                res.push_back(par);
+            }
+        }
+    }
+
+    return res;
+}
+
+bool FastBoard::can_kill_neighbours(const int vertex) {
+    int scolor = m_square[vertex];
+    int kcolor = !scolor;
+
+    int pos = vertex;
+
+    do {
+        assert(m_square[pos] == scolor);
+
+        for (int k = 0; k < 4; k++) {
+            int ai = pos + m_dirs[k];
+
+            if (m_square[ai] == kcolor) {
+                int par = m_parent[ai];
+                int lib = m_libs[par];
+
+                if (lib <= 1) {
+                    return true;
+                }
+            }
+        }
+
+        pos = m_next[pos];
+    } while (pos != vertex);
+
+    return false;
+}
+
 #undef LADDER_DEBUG
 
 bool FastBoard::check_losing_ladder(const int color, const int vtx, int branching) {
@@ -2449,6 +2496,30 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
     if (elib == 0 || elib == 1) {
 #ifdef LADDER_DEBUG
         myprintf("Enemy dies, exiting\n");
+#endif
+        return false;
+    }
+
+    // killing opponents - one of the atari giving
+    // stones can be captured?
+    // find the string in atari we're trying to save
+    // finding multiple means we're connecting so not a ladder
+    auto crit_nbr = critical_neighbours(color, vtx);
+    std::sort(crit_nbr.begin(), crit_nbr.end());
+    crit_nbr.erase(std::unique(crit_nbr.begin(), crit_nbr.end()),
+                   crit_nbr.end());
+    assert(crit_nbr.size() > 0);
+    if (crit_nbr.size() > 1) {
+#ifdef LADDER_DEBUG
+        myprintf("Connecting 2 weak groups, exiting\n");
+#endif
+        return false;
+    }
+    // Now there's just a single group in atari
+    bool kill = can_kill_neighbours(crit_nbr[0]);
+    if (kill) {
+#ifdef LADDER_DEBUG
+        myprintf("Capturing an atari giver, exiting\n");
 #endif
         return false;
     }
