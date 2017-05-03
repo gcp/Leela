@@ -195,6 +195,23 @@ void SGFTree::populate_states(void) {
         m_winner = FastBoard::EMPTY;
     }
 
+    // Verify Aya results consistency
+    it = m_properties.find("GN");
+    if (it != m_properties.end()) {
+        std::string result = it->second;
+        if (boost::algorithm::starts_with(result, "W+R")) {
+            if (m_winner == FastBoard::BLACK) {
+                m_winner = FastBoard::INVAL;
+                std::cerr << "s";
+            }
+        } else if (boost::algorithm::starts_with(result, "B+R")) {
+            if (m_winner == FastBoard::WHITE) {
+                m_winner = FastBoard::INVAL;
+                std::cerr << "s";
+            }
+        }
+    }
+
     // handicap stone
     std::pair<PropertyMap::iterator, 
               PropertyMap::iterator> abrange = m_properties.equal_range("AB");

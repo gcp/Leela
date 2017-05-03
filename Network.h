@@ -30,11 +30,11 @@ public:
     using PredMoves = std::array<int, 3>;
     struct TrainPosition {
         NNPlanes planes;
-        PredMoves moves;
-        //float stm_score;
-        //float stm_won;
-        //float stm_score_tanh;
-        //float stm_won_tanh;
+        //PredMoves moves;
+        float stm_score;
+        float stm_won;
+        float stm_score_tanh;
+        float stm_won_tanh;
     };
     using TrainVector = std::vector<TrainPosition>;
     using scored_node = std::pair<float, int>;
@@ -45,8 +45,8 @@ public:
                                       int rotation = -1);
     static float get_value(FastState *state,
                            Ensemble ensemble);
-    static constexpr int CHANNELS_POLICY = 32;
-    static constexpr int CHANNELS_VALUE = 24;
+    static constexpr int POLICY_CHANNELS = 32;
+    static constexpr int VALUE_CHANNELS = 32;
     static constexpr int MAX_CHANNELS = 128;
     static constexpr int MAX_VALUE_CHANNELS = 32;
 
@@ -78,8 +78,7 @@ private:
     void train_network(TrainVector& tv, size_t&, size_t&);
     static void gather_features_policy(FastState * state, NNPlanes & planes,
                                        BoardPlane** ladder = nullptr);
-    static void gather_features_value(FastState * state, NNPlanes & planes,
-                                      BoardPlane** ladder = nullptr);
+    static void gather_features_value(FastState * state, NNPlanes & planes);
 
     static Network* s_Net;
 };
