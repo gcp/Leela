@@ -156,6 +156,7 @@ const std::string GTP::s_commands[] = {
     "set_free_handicap",
     "loadsgf",
     "kgs-time_settings",
+    "kgs-game_over",
     "printsgf",
     "influence",
     "heatmap",
@@ -684,6 +685,10 @@ bool GTP::execute(GameState & game, std::string xinput) {
         } while (!cmdstream.fail());
 
         gtp_fail_printf(id, "I'm a go bot, not a chat bot.");
+        return true;
+    } else if (command.find("kgs-game_over") == 0) {
+        // Do nothing. Particularly, don't ponder.
+        gtp_printf(id, "");
         return true;
     } else if (command.find("kgs-time_settings") == 0) {
         // none, absolute, byoyomi, or canadian
