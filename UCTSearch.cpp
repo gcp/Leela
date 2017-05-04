@@ -146,23 +146,23 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
     m_root.sort_root_children(color);
 
     UCTNode * bestnode = parent.get_first_child();
-
     if (bestnode->first_visit()) {
         return;
     }
 
+    int total_visits = m_root.get_visits();
+
     using TRowVector = std::vector<std::pair<std::string, std::string>>;
     using TDataVector = std::vector<TRowVector>;
 
-    TDataVector* GUIdata = new TDataVector();
-
-    int movecount = 0;
+    auto analysis_data = new TDataVector();
+    auto move_data = new std::vector<std::pair<std::string, float>>();
     UCTNode * node = bestnode;
-
+    int movecount = 0;
     while (node != NULL) {
         if (node->get_score() > 0.005f || node->get_visits() > 0) {
-            std::string tmp = state.move_to_text(node->get_move());
-            std::string pvstring(tmp);
+            std::string movestr = state.move_to_text(node->get_move());
+            std::string pvstring(movestr);
 
             GameState tmpstate = state;
 
@@ -170,7 +170,9 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
             pvstring += " " + get_pv(tmpstate, *node);
 
             std::vector<std::pair<std::string, std::string>> row;
-            row.push_back(std::make_pair(std::string("Move"), tmp));
+            row.push_back(std::make_pair(std::string("Move"), movestr));
+            row.push_back(std::make_pair(std::string("Effort%"),
+                std::to_string(100.0 * node->get_visits() / (double)total_visits)));
             row.push_back(std::make_pair(std::string("Simulations"),
                 std::to_string(node->get_visits())));
             row.push_back(std::make_pair(std::string("Win%"),
@@ -192,13 +194,18 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
                 std::to_string(node->get_score() * 100.0f)));
             row.push_back(std::make_pair(std::string("PV"), pvstring));
 
-            GUIdata->push_back(row);
+            analysis_data->push_back(row);
+
+            move_data->push_back(
+                std::make_pair(movestr,
+                               node->get_visits() / (double)total_visits));
         }
 
         node = node->get_sibling();
     }
 
-    AnalyzeGUI((void*)GUIdata);
+    GUIAnalysis((void*)analysis_data);
+    GUIBestMoves((void*)move_data);
 #endif
 }
 

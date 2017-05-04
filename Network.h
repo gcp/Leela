@@ -60,8 +60,7 @@ public:
     static void show_heatmap(FastState * state, Netresult & netres, bool topmoves);
     void autotune_from_file(std::string filename);
     static Network* get_Network(void);
-    std::string get_blas_backend();
-    std::string get_opencl_backend();
+    std::string get_backend();
     static int rotate_nn_idx(const int vertex, int symmetry);
     static int rev_rotate_nn_idx(const int vertex, int symmetry);
 
