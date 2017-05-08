@@ -712,13 +712,9 @@ std::tuple<float, float, float> UCTSearch::get_scores() {
     // make sure best is first
     m_root.sort_root_children(color);
 
-    int bestmove = m_root.get_first_child()->get_move();
-
     // do we have statistics on the moves?
-    if (m_root.get_first_child() != NULL) {
-        if (m_root.get_first_child()->first_visit()) {
-            return std::make_tuple(-1.0f, -1.0f, -1.0f);
-        }
+    if (m_root.get_first_child() == nullptr) {
+        return std::make_tuple(-1.0f, -1.0f, -1.0f);
     }
 
     UCTNode* bestnode = m_root.get_first_child();
