@@ -64,8 +64,9 @@ bool GameState::undo_move(void) {
 }
 
 void GameState::rewind(void) {
-    KoState & f = *this; 
+    KoState & f = *this;
     f = game_history[0];
+    m_movenum = 0;
 }
 
 void GameState::play_move(int vertex) {

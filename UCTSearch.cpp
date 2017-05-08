@@ -33,7 +33,6 @@ UCTSearch::UCTSearch(GameState & g)
       m_root(FastBoard::PASS, 0.0f, 1, 1, g.board.get_stone_count()),
       m_nodes(0),
       m_playouts(0),
-      m_score(0.0f),
       m_hasrunflag(false),
       m_runflag(NULL),
       m_analyzing(false),
@@ -198,7 +197,7 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
 
             move_data->push_back(
                 std::make_pair(movestr,
-                               node->get_visits() / (double)total_visits));
+                               (float)(node->get_visits() / (double)total_visits)));
         }
 
         node = node->get_sibling();
@@ -517,7 +516,6 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     }
 
     float bestscore = m_root.get_first_child()->get_winrate(color);
-    m_score = bestscore;
 
     // do we want to fiddle with the best move because of the rule set?
      if (passflag & UCTSearch::NOPASS) {
@@ -708,8 +706,32 @@ void UCTWorker::operator()() {
 #endif
 }
 
-float UCTSearch::get_score() {
-    return m_score;
+std::tuple<float, float, float> UCTSearch::get_scores() {
+    int color = m_rootstate.board.get_to_move();
+
+    // make sure best is first
+    m_root.sort_root_children(color);
+
+    int bestmove = m_root.get_first_child()->get_move();
+
+    // do we have statistics on the moves?
+    if (m_root.get_first_child() != NULL) {
+        if (m_root.get_first_child()->first_visit()) {
+            return std::make_tuple(-1.0f, -1.0f, -1.0f);
+        }
+    }
+
+    UCTNode* bestnode = m_root.get_first_child();
+
+    float bestmc =
+       (bestnode->first_visit() ? -1.0f : bestnode->get_winrate(FastBoard::BLACK));
+    float bestvn =
+       (bestnode->get_evalcount() == 0 ? -1.0f : bestnode->get_eval(FastBoard::BLACK));
+    float bestscore =
+        ((bestnode->first_visit() || (bestnode->get_evalcount() == 0))
+         ? -1.0f : bestnode->get_mixed_score(FastBoard::BLACK));
+
+    return std::make_tuple(bestscore, bestmc, bestvn);
 }
 
 void UCTSearch::increment_playouts() {
