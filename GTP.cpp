@@ -71,7 +71,7 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 30;
+    cfg_mature_threshold = 25;
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
@@ -79,7 +79,7 @@ void GTP::setup_default_parameters() {
     cfg_mature_threshold = 100;
     cfg_expand_divider =  2.0f;
     cfg_extra_symmetry =  3000;
-    cfg_eval_thresh = 5;
+    cfg_eval_thresh = 8;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -102,8 +102,8 @@ void GTP::setup_default_parameters() {
     cfg_softmax_temp = 0.62f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix_opening = 0.736f;
-    cfg_mix_ending = 0.396f;
+    cfg_mix_opening = 0.735f;
+    cfg_mix_ending = 0.415f;
     cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
@@ -117,9 +117,9 @@ bool GTP::perform_self_test(GameState & state) {
     // Perform self-test
     auto vec = Network::get_Network()->get_scored_moves(
         &state, Network::Ensemble::DIRECT, 0);
-    testPassed &= vec[60].first > 0.185 && vec[60].first < 0.186;
+    testPassed &= vec[60].first > 0.225 && vec[60].first < 0.226;
     testPassed &= vec[60].second == 88;
-    testPassed &= vec[72].first > 0.189 && vec[72].first < 0.190;
+    testPassed &= vec[72].first > 0.211 && vec[72].first < 0.212;
     testPassed &= vec[72].second == 100;
     if (testPassed) {
         myprintf("passed.\n");
