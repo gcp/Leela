@@ -24,7 +24,7 @@ using namespace Utils;
 
 static std::string sourceCode_convolve15 = R"(
     __kernel
-    __attribute__((work_group_size_hint(8, 32, 1)))
+    __attribute__((work_group_size_hint(8, 16, 1)))
     void convolve1(
                    __global const float * in,
                    __global float * merge,
@@ -106,7 +106,7 @@ static std::string sourceCode_convolve15 = R"(
     }
 
     __kernel
-    __attribute__((reqd_work_group_size(8, 32, 1)))
+    __attribute__((work_group_size_hint(8, 32, 1)))
     void convolve5(
                    __global const float * in,
                    __global float * merge,
@@ -698,6 +698,10 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
     } else {
         // Can optionally be 64
         outputGroup = std::min(outputs, 32);
+    }
+
+    if (outputs == 48) {
+        outputGroup = 16;
     }
 
     // Total output size after reducing
