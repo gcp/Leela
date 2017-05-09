@@ -149,16 +149,21 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
         return;
     }
 
-    int total_visits = m_root.get_visits();
+    int total_visits = 0;
+    UCTNode * node = bestnode;
+    while (node != nullptr) {
+        total_visits += node->get_visits();
+        node = node->get_sibling();
+    }
 
     using TRowVector = std::vector<std::pair<std::string, std::string>>;
     using TDataVector = std::vector<TRowVector>;
 
     auto analysis_data = new TDataVector();
     auto move_data = new std::vector<std::pair<std::string, float>>();
-    UCTNode * node = bestnode;
+    node = bestnode;
     int movecount = 0;
-    while (node != NULL) {
+    while (node != nullptr) {
         if (node->get_score() > 0.005f || node->get_visits() > 0) {
             std::string movestr = state.move_to_text(node->get_move());
             std::string pvstring(movestr);
