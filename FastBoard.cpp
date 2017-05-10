@@ -2532,18 +2532,27 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 
     tmp.update_board_fast(tmp.m_tomove, vtx, dummy);
 
-    // suicided
-    if (tmp.get_square(atari) == EMPTY) {
-        return true;
-    }
 
     // This loop does not swap the side to move, defender
     // and attacker are always the same.
     while (1) {
+        // suicided
+        if (tmp.get_square(atari) == EMPTY) {
+#ifdef LADDER_DEBUG
+            myprintf("suicided, exiting\n");
+            tmp.display_board(atari);
+#endif
+            return true;
+        }
+
         int newlibs = tmp.count_rliberties(atari);
 
         // self-atari
         if (newlibs == 1) {
+#ifdef LADDER_DEBUG
+            myprintf("self-atari, exiting\n");
+            tmp.display_board(atari);
+#endif
             return true;
         }
 
@@ -2582,8 +2591,8 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
         // Find where to atari next
         int liberties_arr0 = tmp.after_liberties_color(tmp.get_to_move(), libarr[0]);
         int liberties_arr1 = tmp.after_liberties_color(tmp.get_to_move(), libarr[1]);
-        bool suicide_arr0 = tmp.is_suicide(libarr[0], !tmp.get_to_move());
-        bool suicide_arr1 = tmp.is_suicide(libarr[1], !tmp.get_to_move());
+        bool suicide_arr0 = tmp.is_suicide(libarr[0], !tmp.get_to_move()) || tmp.self_atari(!tmp.get_to_move(), libarr[0]);
+        bool suicide_arr1 = tmp.is_suicide(libarr[1], !tmp.get_to_move()) || tmp.self_atari(!tmp.get_to_move(), libarr[1]);
 
         if (suicide_arr0 && suicide_arr1) {
 #ifdef LADDER_DEBUG
@@ -2655,7 +2664,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 #ifdef LADDER_DEBUG
         myprintf("Saving through %s\n", move_to_text(atari).c_str());
 #endif
-    };
+    }
 
     return false;
 }

@@ -79,7 +79,7 @@ void GTP::setup_default_parameters() {
     cfg_mature_threshold = 100;
     cfg_expand_divider =  2.0f;
     cfg_extra_symmetry =  3000;
-    cfg_eval_thresh = 8;
+    cfg_eval_thresh = 10;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -102,8 +102,8 @@ void GTP::setup_default_parameters() {
     cfg_softmax_temp = 0.62f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix_opening = 0.735f;
-    cfg_mix_ending = 0.415f;
+    cfg_mix_opening = 0.72f;
+    cfg_mix_ending = 0.42f;
     cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
