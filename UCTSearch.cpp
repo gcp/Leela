@@ -545,22 +545,28 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         if (m_rootstate.get_last_move() == FastBoard::PASS) {
             // We didn't consider passing. Should we have and
             // end the game immediately?
-            float score = m_rootstate.final_score();
+            float winrate;
+            float score = m_rootstate.final_score(&winrate);
             // do we lose by passing?
             if ((score > 0.0f && color == FastBoard::WHITE)
                 ||
                 (score < 0.0f && color == FastBoard::BLACK)) {
-                myprintf("Passing loses, I'll play on\n");
+                myprintf("Passing loses, I'll play on.\n");
             } else {
-                myprintf("Passing wins, I'll pass out\n");
-                bestmove = FastBoard::PASS;
+                // Is it clear enough we won? Don't want to
+                // be on the edge of a life & death call.
+                if (color == FastBoard::WHITE) winrate = 1.0f - winrate;
+                if (winrate > 0.66f) {
+                    myprintf("Passing wins (%2.0f%%), I'll pass out.\n", winrate);
+                    bestmove = FastBoard::PASS;
+                }
             }
-        }
-        // either by forcing or coincidence passing is
-        // on top...check whether passing loses instantly
-        if (bestmove == FastBoard::PASS) {
+        } else if (bestmove == FastBoard::PASS) {
+            // either by forcing or coincidence passing is
+            // on top...check whether passing loses instantly
             // do full count including dead stones
-            float score = m_rootstate.final_score();
+            float winrate;
+            float score = m_rootstate.final_score(&winrate);
             // do we lose by passing?
             if ((score > 0.0f && color == FastBoard::WHITE)
                 ||
@@ -568,7 +574,6 @@ int UCTSearch::get_best_move(passflag_t passflag) {
                 myprintf("Passing loses :-(\n");
                 // find a valid non-pass move
                 UCTNode * nopass = m_root.get_nopass_child();
-
                 if (nopass != NULL) {
                     myprintf("Avoiding pass because it loses.\n");
                     bestmove = nopass->get_move();
