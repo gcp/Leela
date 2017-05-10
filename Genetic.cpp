@@ -287,9 +287,9 @@ void Genetic::genetic_split(std::string filename) {
             
             std::unique_ptr<UCTSearch> search(new UCTSearch(game));
             search->think(tomove, UCTSearch::NOPASS);
-            
-            float score = search->get_score();    
-            
+
+            float score = std::get<0>(search->get_scores());
+
             myprintf("Score: %f\n", score);                           
             
             if (score > 0.66f && score < 0.90f) {            

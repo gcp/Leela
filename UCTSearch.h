@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <atomic>
+#include <tuple>
 
 #include "GameState.h"
 #include "UCTNode.h"
@@ -37,7 +38,7 @@ public:
     bool playout_limit_reached();
     void increment_playouts();
     Playout play_simulation(KoState & currstate, UCTNode * const node);
-    float get_score();
+    std::tuple<float, float, float> get_scores();
 
 private:
     void dump_stats(KoState & state, UCTNode & parent);
@@ -59,7 +60,6 @@ private:
     std::atomic<int> m_playouts;
     std::atomic<bool> m_run;
     int m_maxplayouts;
-    float m_score;
 
     // For external control
     bool m_hasrunflag;

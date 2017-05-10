@@ -33,7 +33,6 @@ UCTSearch::UCTSearch(GameState & g)
       m_root(FastBoard::PASS, 0.0f, 1, 1, g.board.get_stone_count()),
       m_nodes(0),
       m_playouts(0),
-      m_score(0.0f),
       m_hasrunflag(false),
       m_runflag(NULL),
       m_analyzing(false),
@@ -146,23 +145,28 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
     m_root.sort_root_children(color);
 
     UCTNode * bestnode = parent.get_first_child();
-
     if (bestnode->first_visit()) {
         return;
+    }
+
+    int total_visits = 0;
+    UCTNode * node = bestnode;
+    while (node != nullptr) {
+        total_visits += node->get_visits();
+        node = node->get_sibling();
     }
 
     using TRowVector = std::vector<std::pair<std::string, std::string>>;
     using TDataVector = std::vector<TRowVector>;
 
-    TDataVector* GUIdata = new TDataVector();
-
+    auto analysis_data = new TDataVector();
+    auto move_data = new std::vector<std::pair<std::string, float>>();
+    node = bestnode;
     int movecount = 0;
-    UCTNode * node = bestnode;
-
-    while (node != NULL) {
+    while (node != nullptr) {
         if (node->get_score() > 0.005f || node->get_visits() > 0) {
-            std::string tmp = state.move_to_text(node->get_move());
-            std::string pvstring(tmp);
+            std::string movestr = state.move_to_text(node->get_move());
+            std::string pvstring(movestr);
 
             GameState tmpstate = state;
 
@@ -170,7 +174,9 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
             pvstring += " " + get_pv(tmpstate, *node);
 
             std::vector<std::pair<std::string, std::string>> row;
-            row.push_back(std::make_pair(std::string("Move"), tmp));
+            row.push_back(std::make_pair(std::string("Move"), movestr));
+            row.push_back(std::make_pair(std::string("Effort%"),
+                std::to_string(100.0 * node->get_visits() / (double)total_visits)));
             row.push_back(std::make_pair(std::string("Simulations"),
                 std::to_string(node->get_visits())));
             row.push_back(std::make_pair(std::string("Win%"),
@@ -192,13 +198,18 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
                 std::to_string(node->get_score() * 100.0f)));
             row.push_back(std::make_pair(std::string("PV"), pvstring));
 
-            GUIdata->push_back(row);
+            analysis_data->push_back(row);
+
+            move_data->push_back(
+                std::make_pair(movestr,
+                               (float)(node->get_visits() / (double)total_visits)));
         }
 
         node = node->get_sibling();
     }
 
-    AnalyzeGUI((void*)GUIdata);
+    GUIAnalysis((void*)analysis_data);
+    GUIBestMoves((void*)move_data);
 #endif
 }
 
@@ -510,7 +521,6 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     }
 
     float bestscore = m_root.get_first_child()->get_winrate(color);
-    m_score = bestscore;
 
     // do we want to fiddle with the best move because of the rule set?
      if (passflag & UCTSearch::NOPASS) {
@@ -701,8 +711,28 @@ void UCTWorker::operator()() {
 #endif
 }
 
-float UCTSearch::get_score() {
-    return m_score;
+std::tuple<float, float, float> UCTSearch::get_scores() {
+    int color = m_rootstate.board.get_to_move();
+
+    // make sure best is first
+    m_root.sort_root_children(color);
+
+    // do we have statistics on the moves?
+    if (m_root.get_first_child() == nullptr) {
+        return std::make_tuple(-1.0f, -1.0f, -1.0f);
+    }
+
+    UCTNode* bestnode = m_root.get_first_child();
+
+    float bestmc =
+       (bestnode->first_visit() ? -1.0f : bestnode->get_winrate(FastBoard::BLACK));
+    float bestvn =
+       (bestnode->get_evalcount() == 0 ? -1.0f : bestnode->get_eval(FastBoard::BLACK));
+    float bestscore =
+        ((bestnode->first_visit() || (bestnode->get_evalcount() == 0))
+         ? -1.0f : bestnode->get_mixed_score(FastBoard::BLACK));
+
+    return std::make_tuple(bestscore, bestmc, bestvn);
 }
 
 void UCTSearch::increment_playouts() {

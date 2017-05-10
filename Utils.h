@@ -20,10 +20,11 @@ __assume((reinterpret_cast<std::size_t>(p) & ((n) - 1)) == 0)
 namespace Utils {
 #ifndef _CONSOLE
     void setGUIQueue(wxEvtHandler * evt, int evt_type);
-    void setAnalysisQueue(wxEvtHandler * evt, int evt_type);
+    void setAnalysisQueue(wxEvtHandler * evt, int a_evt_type, int m_evt_type);
 #endif
     void GUIprintf(const char *fmt, ...);
-    void AnalyzeGUI(void* data);
+    void GUIAnalysis(void* data);
+    void GUIBestMoves(void* data);
 
     void myprintf(const char *fmt, ...);
     void gtp_printf(int id, const char *fmt, ...);

@@ -711,7 +711,7 @@ float Network::get_value_internal(
     std::swap(input_data, output_data);
     convolve<3, 48, 48>(input_data, val_conv11_w, val_conv11_b, output_data);
     std::swap(input_data, output_data);
-    convolve<1, 48,  1>(input_data, val_conv12_w, val_conv12_b, output_data);
+    convolve<3, 48,  1>(input_data, val_conv12_w, val_conv12_b, output_data);
     // Now get the score
     innerproduct<361, 256>(output_data, val_ip13_w, val_ip13_b, winrate_data);
     innerproduct<256, 1>(winrate_data, val_ip14_w, val_ip14_b, winrate_out);
@@ -1280,7 +1280,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
             //    goto skipnext;
             //}
 
-            int skip = Random::get_Rng()->randfix<16>();
+            int skip = Random::get_Rng()->randfix<8>();
             if (skip == 0) {
                 if (moveseen && move != FastBoard::PASS /*&& has_next_moves*/) {
                     TrainPosition position;
@@ -1318,7 +1318,7 @@ skipnext:
             myprintf("Game %d, %d new positions, %d total\n",
                      gamecount, data.size(), train_pos + data.size());
         }
-        if (gamecount % (16*50000) == 0) {
+        if (gamecount % (8*50000) == 0) {
             train_network(data, train_pos, test_pos);
         }
     }
@@ -1524,17 +1524,12 @@ void Network::autotune_from_file(std::string filename) {
     gather_traindata(filename, data);
 }
 
-std::string Network::get_opencl_backend() {
+std::string Network::get_backend() {
 #if defined(USE_OPENCL)
     return opencl.get_device_name();
 #elif defined(USE_CAFFE)
     return std::string("Caffe");
 #else
-    return std::string("No GPU acceleration");
-#endif
-}
-
-std::string Network::get_blas_backend() {
 #ifdef USE_BLAS
 #ifndef __APPLE__
 #ifdef USE_OPENBLAS
@@ -1547,6 +1542,7 @@ std::string Network::get_blas_backend() {
 #endif
 #else
     return std::string("BLAS core: Apple Accelerate");
+#endif
 #endif
 #endif
     return std::string("No BLAS backend active");

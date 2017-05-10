@@ -71,7 +71,7 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 30;
+    cfg_mature_threshold = 25;
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 3;
@@ -79,7 +79,7 @@ void GTP::setup_default_parameters() {
     cfg_mature_threshold = 100;
     cfg_expand_divider =  2.0f;
     cfg_extra_symmetry =  3000;
-    cfg_eval_thresh = 5;
+    cfg_eval_thresh = 10;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -117,9 +117,9 @@ bool GTP::perform_self_test(GameState & state) {
     // Perform self-test
     auto vec = Network::get_Network()->get_scored_moves(
         &state, Network::Ensemble::DIRECT, 0);
-    testPassed &= vec[60].first > 0.185 && vec[60].first < 0.186;
+    testPassed &= vec[60].first > 0.225 && vec[60].first < 0.226;
     testPassed &= vec[60].second == 88;
-    testPassed &= vec[72].first > 0.189 && vec[72].first < 0.190;
+    testPassed &= vec[72].first > 0.211 && vec[72].first < 0.212;
     testPassed &= vec[72].second == 100;
     if (testPassed) {
         myprintf("passed.\n");
@@ -156,6 +156,7 @@ const std::string GTP::s_commands[] = {
     "set_free_handicap",
     "loadsgf",
     "kgs-time_settings",
+    "kgs-game_over",
     "printsgf",
     "influence",
     "heatmap",
@@ -684,6 +685,10 @@ bool GTP::execute(GameState & game, std::string xinput) {
         } while (!cmdstream.fail());
 
         gtp_fail_printf(id, "I'm a go bot, not a chat bot.");
+        return true;
+    } else if (command.find("kgs-game_over") == 0) {
+        // Do nothing. Particularly, don't ponder.
+        gtp_printf(id, "");
         return true;
     } else if (command.find("kgs-time_settings") == 0) {
         // none, absolute, byoyomi, or canadian
