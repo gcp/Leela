@@ -47,6 +47,7 @@ public:
     void set_score(float score);
     float get_eval(int tomove) const;
     float get_mixed_score(int tomove);
+    static float score_mix_function(int movenum, float eval, float winrate);
     double get_blackevals() const;
     int get_evalcount() const;
     bool has_eval_propagated() const;

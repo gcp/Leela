@@ -15,6 +15,7 @@
 #include "GTP.h"
 #include "Playout.h"
 #include "UCTSearch.h"
+#include "UCTNode.h"
 #include "SGFTree.h"
 #include "AttribScores.h"
 #include "Genetic.h"
@@ -485,9 +486,17 @@ bool GTP::execute(GameState & game, std::string xinput) {
                                                             Network::Ensemble::AVERAGE_ALL);
         gtp_printf(id, "%f", net_score);
         return true;
-    }  else if (command.find("mc_winrate") == 0) {
+    } else if (command.find("mc_winrate") == 0) {
         float mc_winrate = Playout::mc_owner(game, 512);
         gtp_printf(id, "%f", mc_winrate);
+        return true;
+    } else if (command.find("winrate") == 0) {
+        float mc_winrate = Playout::mc_owner(game, 512);
+        float net_score = Network::get_Network()->get_value(&game,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        float comb_winrate = UCTNode::score_mix_function(game.get_movenum(),
+                                                         net_score, mc_winrate);
+        gtp_printf(id, "%f", comb_winrate);
         return true;
     } else if (command.find("final_status_list") == 0) {
         if (command.find("alive") != std::string::npos) {
