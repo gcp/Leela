@@ -151,19 +151,20 @@ const std::string GTP::s_commands[] = {
     "final_status_list",
     "time_settings",
     "time_left",
-    "kgs-genmove_cleanup",
     "fixed_handicap",
     "place_free_handicap",
     "set_free_handicap",
     "loadsgf",
+    "printsgf",
+    "kgs-genmove_cleanup",
     "kgs-time_settings",
     "kgs-game_over",
-    "printsgf",
     "influence",
-    "heatmap",
     "mc_score",
     "mc_winrate",
     "vn_winrate",
+    "winrate",
+    "heatmap",
     ""
 };
 
