@@ -7,10 +7,6 @@
 #include <utility>
 #include <thread>
 #include <algorithm>
-#ifdef _WIN32
-#include <boost/thread.hpp>
-#include <boost/thread/detail/tss_hooks.hpp>
-#endif
 
 #include "FastBoard.h"
 #include "UCTSearch.h"
@@ -710,9 +706,6 @@ void UCTWorker::operator()() {
     } while(m_search->is_running() && !m_search->playout_limit_reached());
 #ifdef USE_OPENCL
     opencl.join_outstanding_cb();
-#endif
-#ifdef _WIN32
-    boost::on_thread_exit();
 #endif
 }
 
