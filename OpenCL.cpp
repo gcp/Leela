@@ -678,14 +678,14 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
 
     size_t outputGroup;
 
-    cl::Kernel m_convolve_kernel;
+    cl::Kernel * m_convolve_kernel = nullptr;
     if (filter_size == 3) {
-        m_convolve_kernel = opencl.thread_data.get()->m_convolve3_kernel;
+        m_convolve_kernel = &opencl.thread_data.get()->m_convolve3_kernel;
     } else if (filter_size == 5) {
-        m_convolve_kernel = opencl.thread_data.get()->m_convolve5_kernel;
+        m_convolve_kernel = &opencl.thread_data.get()->m_convolve5_kernel;
     } else {
         assert(filter_size == 1);
-        m_convolve_kernel = opencl.thread_data.get()->m_convolve1_kernel;
+        m_convolve_kernel = &opencl.thread_data.get()->m_convolve1_kernel;
     }
 
     constexpr int channelGroup = 8;
@@ -741,16 +741,16 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
     cl::CommandQueue & queue = opencl.thread_data.get()->m_commandqueue;
 
     try {
-        m_convolve_kernel.setArg(0, bufferInput);
-        m_convolve_kernel.setArg(1, bufferMerge);
-        m_convolve_kernel.setArg(2, weights[0]);
-        m_convolve_kernel.setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
-        m_convolve_kernel.setArg(4, cl::Local(rowSize));
+        m_convolve_kernel->setArg(0, bufferInput);
+        m_convolve_kernel->setArg(1, bufferMerge);
+        m_convolve_kernel->setArg(2, weights[0]);
+        m_convolve_kernel->setArg(3, cl::Local(stripSize * channelGroup * rowGroup));
+        m_convolve_kernel->setArg(4, cl::Local(rowSize));
         if (filter_size == 3) {
-            m_convolve_kernel.setArg(5, rowTileSize);
+            m_convolve_kernel->setArg(5, rowTileSize);
         }
 
-        queue.enqueueNDRangeKernel(m_convolve_kernel, cl::NullRange,
+        queue.enqueueNDRangeKernel(*m_convolve_kernel, cl::NullRange,
                                    cl::NDRange(channels, outputs, rowTiles),
                                    cl::NDRange(channelGroup, outputGroup, rowGroup));
     } catch (cl::Error &e) {
@@ -780,9 +780,9 @@ void OpenCL_Network::batchnorm(int outputs,
                                cl::Buffer & bufferInput,
                                cl::Buffer & bufferOutput,
                                std::vector<cl::Buffer>& weights) {
-    cl::CommandQueue queue = opencl.thread_data.get()->m_commandqueue;
+    cl::CommandQueue & queue = opencl.thread_data.get()->m_commandqueue;
 
-    cl::Kernel batchnorm_kernel = opencl.thread_data.get()->m_batchnorm_kernel;
+    cl::Kernel & batchnorm_kernel = opencl.thread_data.get()->m_batchnorm_kernel;
 
     size_t channelGroup = 1;
     if (channel_size == 361) {
@@ -811,9 +811,9 @@ void OpenCL_Network::innerproduct(int inputs,
                                   cl::Buffer & bufferInput,
                                   cl::Buffer & bufferOutput,
                                   std::vector<cl::Buffer>& weights) {
-    cl::CommandQueue queue = opencl.thread_data.get()->m_commandqueue;
+    cl::CommandQueue & queue = opencl.thread_data.get()->m_commandqueue;
 
-    cl::Kernel innerproduct_kernel = opencl.thread_data.get()->m_innerproduct_kernel;
+    cl::Kernel & innerproduct_kernel = opencl.thread_data.get()->m_innerproduct_kernel;
 
     try {
         innerproduct_kernel.setArg(0, inputs);
