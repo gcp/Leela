@@ -68,7 +68,7 @@ bool cfg_quiet;
 
 void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
-    cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
+    cfg_num_threads = std::max(1, std::min(SMP::get_num_cpus(), MAX_CPUS));
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
