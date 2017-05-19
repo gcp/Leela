@@ -46,8 +46,6 @@ private:
     std::atomic<int> m_results_outstanding{0};
 };
 
-extern thread_local ThreadData opencl_thread_data;
-
 class OpenCL_Network {
 public:
     using event_callback =  void (CL_CALLBACK *) (cl_event, cl_int, void *);
@@ -140,5 +138,6 @@ private:
 extern OpenCL opencl;
 extern OpenCL_Network opencl_policy_net;
 extern OpenCL_Network opencl_value_net;
+extern thread_local ThreadData opencl_thread_data;
 
 #endif

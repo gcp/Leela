@@ -22,19 +22,13 @@ clang:
 		LDFLAGS='$(LDFLAGS)' \
 		leela
 
-llvm:
-	$(MAKE) CC=~/svn/llvm/build/bin/clang CXX=~/svn/llvm/build/bin/clang++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -g -march=native -flto -std=c++11 -D_CONSOLE -DNDEBUG' \
-		LDFLAGS='$(LDFLAGS) -flto' \
-		leela
-
 asan:
-	$(MAKE) CC=~/svn/llvm/build/bin/clang CXX=~/svn/llvm/build/bin/clang++ \
+	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
 		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=address -fno-omit-frame-pointer -O1 -g -std=c++11 -D_CONSOLE' \
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
 		leela
 
-LIBS = -lboost_thread -lboost_system -lboost_program_options
+LIBS = -lboost_program_options
 
 #DYNAMIC_LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
 #LIBS += -lopenblas
@@ -52,7 +46,6 @@ CXXFLAGS += -I/opt/intel/mkl/include
 #CXXFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Headers
 LDFLAGS  += -L$(CAFFE_LIB)
 LDFLAGS  += -L/opt/intel/mkl/lib/intel64/
-#LDFLAGS  += -L/opt/intel/mkl/lib/ia32/
 
 CXXFLAGS += -I.
 CPPFLAGS += -MD -MP
