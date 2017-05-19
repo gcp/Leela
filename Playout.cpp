@@ -134,37 +134,30 @@ void Playout::do_playout_benchmark(GameState & game) {
 
     Time start;
 
-    std::vector<std::thread> tg;
+    ThreadGroup tg(thread_pool);
     for (int i = 0; i < cpus; i++) {
-        tg.push_back(
-            std::thread([iters_per_thread, &game, &len, &board_score,
-                         playoutlen, resign, boardsize]() {
-                GameState mygame = game;
-                float thread_len = 0.0f;
-                float thread_board_score = 0.0f;
-                for (int i = 0; i < iters_per_thread; i++) {
-                    do {
-                        mygame.play_random_move();
-                    } while (mygame.get_passes() < 2
-                            && mygame.get_movenum() < playoutlen
-                            && abs(mygame.estimate_mc_score()) < resign);
+        tg.add_task([iters_per_thread, &game, &len, &board_score,
+                              playoutlen, resign, boardsize]() {
+            GameState mygame = game;
+            float thread_len = 0.0f;
+            float thread_board_score = 0.0f;
+            for (int i = 0; i < iters_per_thread; i++) {
+                do {
+                    mygame.play_random_move();
+                } while (mygame.get_passes() < 2
+                        && mygame.get_movenum() < playoutlen
+                        && abs(mygame.estimate_mc_score()) < resign);
 
-                    thread_len += mygame.get_movenum();
-                    thread_board_score += mygame.calculate_mc_score();
+                thread_len += mygame.get_movenum();
+                thread_board_score += mygame.calculate_mc_score();
 
-                    mygame.reset_game();
-                }
-                atomic_add(board_score, thread_board_score);
-                atomic_add(len, thread_len);
-            })
-        );
+                mygame.reset_game();
+            }
+            atomic_add(board_score, thread_board_score);
+            atomic_add(len, thread_len);
+        });
     };
-
-    auto join_thread = [](std::thread &thread) {
-        assert(thread.joinable());
-        thread.join();
-    };
-    std::for_each(tg.begin(), tg.end(), join_thread);
+    tg.wait_all();
 
     Time end;
 
@@ -184,38 +177,31 @@ float Playout::mc_owner(FastState & state, int iterations, float* points) {
     std::atomic<float> bwins{0.0f};
     std::atomic<float> board_score{0.0f};
 
-    std::vector<std::thread> tg;
+    ThreadGroup tg(thread_pool);
     for (int i = 0; i < cpus; i++) {
-        tg.push_back(
-            std::thread([iters_per_thread, &state,
-                         &bwins, &board_score]() {
-                float thread_bwins = 0.0f;
-                float thread_board_score = 0.0f;
-                for (int i = 0; i < iters_per_thread; i++) {
-                    FastState tmp = state;
+        tg.add_task([iters_per_thread, &state,
+                     &bwins, &board_score]() {
+            float thread_bwins = 0.0f;
+            float thread_board_score = 0.0f;
+            for (int i = 0; i < iters_per_thread; i++) {
+                FastState tmp = state;
 
-                    Playout p;
-                    p.run(tmp, true, false);
+                Playout p;
+                p.run(tmp, true, false);
 
-                    float score = p.get_score();
-                    if (score == 0.0f) {
-                        thread_bwins += 0.5f;
-                    } else if (score > 0.0f) {
-                        thread_bwins += 1.0f;
-                    }
-                    thread_board_score += p.get_territory();
+                float score = p.get_score();
+                if (score == 0.0f) {
+                    thread_bwins += 0.5f;
+                } else if (score > 0.0f) {
+                    thread_bwins += 1.0f;
                 }
-                atomic_add(bwins, thread_bwins);
-                atomic_add(board_score, thread_board_score);
-            })
-        );
+                thread_board_score += p.get_territory();
+            }
+            atomic_add(bwins, thread_bwins);
+            atomic_add(board_score, thread_board_score);
+        });
     }
-
-    auto join_thread = [](std::thread &thread) {
-        assert(thread.joinable());
-        thread.join();
-    };
-    std::for_each(tg.begin(), tg.end(), join_thread);
+    tg.wait_all();
 
     float score = bwins / (float)iterations;
     float territory = board_score / (float)iterations;

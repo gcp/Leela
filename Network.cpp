@@ -122,23 +122,17 @@ void Network::benchmark(FastState * state) {
         int iters_per_thread = (BENCH_AMOUNT + (cpus - 1)) / cpus;
 
         Time start;
-        std::vector<std::thread> tg;
-        for (int i = 0; i < cpus; i++) {
-            tg.push_back(
-                std::thread([iters_per_thread, state]() {
-                    FastState mystate = *state;
-                    for (int loop = 0; loop < iters_per_thread; loop++) {
-                        auto vec = get_scored_moves(&mystate, Ensemble::RANDOM_ROTATION);
-                    }
-                })
-            );
-        };
 
-        auto join_thread = [](std::thread &thread) {
-            assert(thread.joinable());
-            thread.join();
+        ThreadGroup tg(thread_pool);
+        for (int i = 0; i < cpus; i++) {
+            tg.add_task([iters_per_thread, state]() {
+                FastState mystate = *state;
+                for (int loop = 0; loop < iters_per_thread; loop++) {
+                    auto vec = get_scored_moves(&mystate, Ensemble::RANDOM_ROTATION);
+                }
+            });
         };
-        std::for_each(tg.begin(), tg.end(), join_thread);
+        tg.wait_all();
 
         Time end;
 
@@ -154,22 +148,16 @@ void Network::benchmark(FastState * state) {
         int iters_per_thread = (BENCH_AMOUNT + (cpus - 1)) / cpus;
 
         Time start;
-        std::vector<std::thread> tg;
+        ThreadGroup tg(thread_pool);
         for (int i = 0; i < cpus; i++) {
-            tg.push_back(
-                std::thread([iters_per_thread, state]() {
-                    FastState mystate = *state;
-                    for (int loop = 0; loop < iters_per_thread; loop++) {
-                        auto vec = get_value(&mystate, Ensemble::RANDOM_ROTATION);
-                    }
-                })
-            );
+            tg.add_task([iters_per_thread, state]() {
+                FastState mystate = *state;
+                for (int loop = 0; loop < iters_per_thread; loop++) {
+                    auto vec = get_value(&mystate, Ensemble::RANDOM_ROTATION);
+                }
+            });
         };
-        auto join_thread = [](std::thread &thread) {
-            assert(thread.joinable());
-            thread.join();
-        };
-        std::for_each(tg.begin(), tg.end(), join_thread);
+        tg.wait_all();
 
         Time end;
 

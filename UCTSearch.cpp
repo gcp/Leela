@@ -805,9 +805,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_playouts = 0;
 
     int cpus = cfg_num_threads;
-    std::vector<std::thread> tg;
+    ThreadGroup tg(thread_pool);
     for (int i = 1; i < cpus; i++) {
-        tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
+        tg.add_task(UCTWorker(m_rootstate, this, &m_root));
     }
 
     // If easy move precondition doesn't hold, pretend we
@@ -863,12 +863,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 #ifdef USE_OPENCL
     opencl.join_outstanding_cb();
 #endif
-    for (auto& thread : tg) {
-        assert(thread.joinable());
-        if (thread.joinable()) {
-            thread.join();
-        }
-    }
+    tg.wait_all();
     if (!m_root.has_children()) {
         return FastBoard::PASS;
     }
@@ -950,9 +945,9 @@ void UCTSearch::ponder() {
     m_run = true;
     m_playouts = 0;
     int cpus = cfg_num_threads;
-    std::vector<std::thread> tg;
+    ThreadGroup tg(thread_pool);
     for (int i = 1; i < cpus; i++) {
-        tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
+        tg.add_task(UCTWorker(m_rootstate, this, &m_root));
     }
     do {
         KoState currstate = m_rootstate;
@@ -965,11 +960,7 @@ void UCTSearch::ponder() {
 #ifdef USE_OPENCL
     opencl.join_outstanding_cb();
 #endif
-    for (auto& thread : tg) {
-        if (thread.joinable()) {
-            thread.join();
-        }
-    }
+    tg.wait_all();
     // display search info
     myprintf("\n");
     dump_stats(m_rootstate, m_root);
