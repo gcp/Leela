@@ -19,6 +19,10 @@ TTable::TTable(int size) {
     m_buckets.resize(size);
 }
 
+void TTable::clear(void) {
+    std::fill(m_buckets.begin(), m_buckets.end(), TTEntry());
+}
+
 void TTable::update(uint64 hash, const UCTNode * node) {        
     unsigned int index = (unsigned int)hash;
     

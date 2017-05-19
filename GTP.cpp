@@ -22,6 +22,7 @@
 #include "PNSearch.h"
 #include "Network.h"
 #include "Book.h"
+#include "TTable.h"
 
 using namespace Utils;
 
@@ -319,17 +320,21 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::istringstream cmdstream(command);
         std::string tmp;
         float komi = 7.5f;
-        
+        float old_komi = game.get_komi();
+
         cmdstream >> tmp;  // eat komi
-        cmdstream >> komi;            
-        
+        cmdstream >> komi;
+
         if (!cmdstream.fail()) {
-            game.set_komi(komi);
+            if (komi != old_komi) {
+                game.set_komi(komi);
+                TTable::get_TT()->clear();
+            }
             gtp_printf(id, "");
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
-        
+
         return true;
     } else if (command.find("play") == 0) {
         if (command.find("pass") != std::string::npos
