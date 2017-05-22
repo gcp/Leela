@@ -30,11 +30,11 @@ public:
     using PredMoves = std::array<int, 3>;
     struct TrainPosition {
         NNPlanes planes;
-        //PredMoves moves;
-        float stm_score;
-        float stm_won;
-        float stm_score_tanh;
-        float stm_won_tanh;
+        PredMoves moves;
+        //float stm_score;
+        //float stm_won;
+        //float stm_score_tanh;
+        //float stm_won_tanh;
     };
     using TrainVector = std::vector<TrainPosition>;
     using scored_node = std::pair<float, int>;

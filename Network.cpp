@@ -42,6 +42,7 @@ using namespace caffe;
 #include "Random.h"
 #include "Network.h"
 #include "GTP.h"
+#include "Utils.h"
 
 using namespace Utils;
 
@@ -1217,7 +1218,6 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
             if (treewalk->get_state()->board.get_boardsize() != 19)
                 break;
 
-            //int skip = Random::get_Rng()->randfix<4>();
             KoState * state = treewalk->get_state();
             int tomove = state->get_to_move();
             int move;
@@ -1242,53 +1242,45 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                         // get x y coords for actual move
                         std::pair<int, int> xy = state->board.get_xy(move);
                         this_move = (xy.second * 19) + xy.first;
-                        if (counter < 32) {
-                            if ((xy.first == 0 && xy.second == 0)
-                             || (xy.first == 18 && xy.second == 0)
-                             || (xy.first == 0 && xy.second == 18)
-                             || (xy.first == 18 && xy.second == 18)) {
-                                 std::cerr << "m";
-                                 goto skipnext;
-                             }
-                        }
                     }
                     moveseen = true;
                 }
             }
 
-            //bool has_next_moves = counter + 2 < tree_moves.size();
-            //if (!has_next_moves) {
-                //goto skipnext;
-            //}
+            bool has_next_moves = counter + 2 < tree_moves.size();
+            if (!has_next_moves) {
+                goto skipnext;
+            }
 
-            //has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
-            //has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
+            has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
+            has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
 
-            //if (!has_next_moves) {
-            //    goto skipnext;
-            //}
+            if (!has_next_moves) {
+                goto skipnext;
+            }
 
-            int skip = Random::get_Rng()->randfix<8>();
-            if (skip == 0) {
-                if (moveseen && move != FastBoard::PASS /*&& has_next_moves*/) {
+            //int skip = Random::get_Rng()->randfix<8>();
+            if (/*skip == 0*/ 1) {
+                if (moveseen && move != FastBoard::PASS && has_next_moves) {
                     TrainPosition position;
-                    position.stm_won = (tomove == who_won ? 1.0f : 0.0f);
-                    position.stm_won_tanh = (tomove == who_won ? 1.0f : -1.0f);
-                    float frac = (float)counter / (float)movecount;
-                    position.stm_score = (frac * position.stm_won)
-                        + ((1.0f - frac) * 0.5f);
-                    position.stm_score_tanh = (frac * position.stm_won_tanh)
-                        + ((1.0f - frac) * 0.0f);
-                    gather_features_value(state, position.planes);
-                    // position.moves[0] = this_move;
+                    //position.stm_won = (tomove == who_won ? 1.0f : 0.0f);
+                    //position.stm_won_tanh = (tomove == who_won ? 1.0f : -1.0f);
+                    //float frac = (float)counter / (float)movecount;
+                    //position.stm_score = (frac * position.stm_won)
+                        //+ ((1.0f - frac) * 0.5f);
+                    //position.stm_score_tanh = (frac * position.stm_won_tanh)
+                        //+ ((1.0f - frac) * 0.0f);
+                    //gather_features_value(state, position.planes);
+                    position.moves[0] = this_move;
                     // add next 2 moves to position
                     // we do not check them for legality
-                    /*int next_move = tree_moves[counter + 1];
+                    int next_move = tree_moves[counter + 1];
                     int next_next_move = tree_moves[counter + 2];
                     std::pair<int, int> xy = state->board.get_xy(next_move);
                     position.moves[1] = (xy.second * 19) + xy.first;
                     xy = state->board.get_xy(next_next_move);
-                    position.moves[2] = (xy.second * 19) + xy.first;*/
+                    position.moves[2] = (xy.second * 19) + xy.first;
+                    gather_features_policy(state, position.planes);
                     data.push_back(position);
                 } else if (move != FastBoard::PASS) {
                     myprintf("Mainline move not found: %d\n", move);
@@ -1306,7 +1298,7 @@ skipnext:
             myprintf("Game %d, %d new positions, %d total\n",
                      gamecount, data.size(), train_pos + data.size());
         }
-        if (gamecount % (8*50000) == 0) {
+        if (gamecount % (50000) == 0) {
             train_network(data, train_pos, test_pos);
         }
     }
@@ -1428,21 +1420,21 @@ void Network::train_network(TrainVector& data,
 
         // labels
         caffe::Datum datum_label;
-        datum_label.set_channels(4);
+        datum_label.set_channels(3);
         datum_label.set_height(1);
         datum_label.set_width(1);
 
-        //int this_move = rotate_nn_idx(position.moves[0], symmetry);
-        //int next_move = rotate_nn_idx(position.moves[1], symmetry);
-        //int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
+        int this_move = rotate_nn_idx(position.moves[0], symmetry);
+        int next_move = rotate_nn_idx(position.moves[1], symmetry);
+        int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
 
-        //datum_label.add_float_data(this_move);
-        //datum_label.add_float_data(next_move);
-        //datum_label.add_float_data(next_next_move);
-        datum_label.add_float_data((float)position.stm_score);
-        datum_label.add_float_data((float)position.stm_won);
-        datum_label.add_float_data((float)position.stm_score_tanh);
-        datum_label.add_float_data((float)position.stm_won_tanh);
+        datum_label.add_float_data(this_move);
+        datum_label.add_float_data(next_move);
+        datum_label.add_float_data(next_next_move);
+        //datum_label.add_float_data((float)position.stm_score);
+        //datum_label.add_float_data((float)position.stm_won);
+        //datum_label.add_float_data((float)position.stm_score_tanh);
+        //datum_label.add_float_data((float)position.stm_won_tanh);
         std::string label_out;
         datum_label.SerializeToString(&label_out);
 
