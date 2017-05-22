@@ -8,7 +8,6 @@
 #define CL_HPP_ENABLE_EXCEPTIONS
 #include <CL/cl2.hpp>
 
-#include <boost/thread/tss.hpp>
 #include <atomic>
 #include <string>
 #include <vector>
@@ -30,6 +29,7 @@ class ThreadData {
     friend class OpenCL;
     friend class OpenCL_Network;
 private:
+    bool m_is_initialized{false};
     cl::CommandQueue m_commandqueue;
     cl::Kernel m_convolve3_kernel;
     cl::Kernel m_convolve5_kernel;
@@ -124,7 +124,6 @@ public:
     std::atomic<int> * get_thread_results_outstanding();
 
 private:
-    boost::thread_specific_ptr<ThreadData> thread_data;
     cl::Program m_program;
 
     size_t m_wavefront_size{0};
@@ -138,5 +137,6 @@ private:
 extern OpenCL opencl;
 extern OpenCL_Network opencl_policy_net;
 extern OpenCL_Network opencl_value_net;
+extern thread_local ThreadData opencl_thread_data;
 
 #endif

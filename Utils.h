@@ -8,6 +8,7 @@
 
 #include <string>
 #include <atomic>
+#include "ThreadPool.h"
 
 #ifdef _MSC_VER
 #define ASSUME_ALIGNED(p, n) \
@@ -16,6 +17,8 @@ __assume((reinterpret_cast<std::size_t>(p) & ((n) - 1)) == 0)
 #define ASSUME_ALIGNED(p, n) \
 (p) = static_cast<__typeof__(p)>(__builtin_assume_aligned((p), (n)))
 #endif
+
+extern ThreadPool thread_pool;
 
 namespace Utils {
 #ifndef _CONSOLE

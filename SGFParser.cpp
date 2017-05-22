@@ -10,15 +10,10 @@
 #include "Utils.h"
 #include "SGFParser.h"
 
-std::vector<std::string> SGFParser::chop_all(std::string filename,
-                                             size_t stopat) {
-    std::ifstream ins(filename.c_str(), std::ifstream::binary | std::ifstream::in);
-    std::string gamebuff;
+std::vector<std::string> SGFParser::chop_stream(std::istream& ins,
+                                                size_t stopat) {
     std::vector<std::string> result;
-
-    if (ins.fail()) {
-        throw new std::runtime_error("Error opening file");
-    }
+    std::string gamebuff;
 
     ins >> std::noskipws;
 
@@ -65,12 +60,24 @@ std::vector<std::string> SGFParser::chop_all(std::string filename,
         }
     }
 
-    ins.close();
-
     // No game found? Assume closing tag was missing (OGS)
     if (result.size() == 0) {
         result.push_back(gamebuff);
     }
+
+    return result;
+}
+
+std::vector<std::string> SGFParser::chop_all(std::string filename,
+                                             size_t stopat) {
+    std::ifstream ins(filename.c_str(), std::ifstream::binary | std::ifstream::in);
+
+    if (ins.fail()) {
+        throw new std::runtime_error("Error opening file");
+    }
+
+    auto result = chop_stream(ins, stopat);
+    ins.close();
 
     return result;
 }

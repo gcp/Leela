@@ -22,14 +22,8 @@ clang:
 		LDFLAGS='$(LDFLAGS)' \
 		leela
 
-llvm:
-	$(MAKE) CC=~/svn/llvm/build/bin/clang CXX=~/svn/llvm/build/bin/clang++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -g -march=native -flto -std=c++11 -D_CONSOLE -DNDEBUG' \
-		LDFLAGS='$(LDFLAGS) -flto' \
-		leela
-
 asan:
-	$(MAKE) CC=~/svn/llvm/build/bin/clang CXX=~/svn/llvm/build/bin/clang++ \
+	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
 		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=address -fno-omit-frame-pointer -O1 -g -std=c++11 -D_CONSOLE' \
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
 		leela

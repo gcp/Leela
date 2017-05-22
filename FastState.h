@@ -30,14 +30,14 @@ public:
     int get_to_move();
     void set_to_move(int tomove);
     void set_passes(int val);
-    void increment_passes();            
-    
+    void increment_passes();
+
     float calculate_mc_score();
     int estimate_mc_score();
-    float final_score();
+    float final_score(float *winrate = nullptr);
     std::vector<int> final_score_map();
-    std::vector<bool> mark_dead();
-    
+    std::vector<bool> mark_dead(float *winrate = nullptr);
+
     int get_movenum();
     int get_last_move();  
     int get_prevlast_move();      

@@ -7,10 +7,6 @@
 #include <utility>
 #include <thread>
 #include <algorithm>
-#ifdef _WIN32
-#include <boost/thread.hpp>
-#include <boost/thread/detail/tss_hooks.hpp>
-#endif
 
 #include "FastBoard.h"
 #include "UCTSearch.h"
@@ -545,22 +541,28 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         if (m_rootstate.get_last_move() == FastBoard::PASS) {
             // We didn't consider passing. Should we have and
             // end the game immediately?
-            float score = m_rootstate.final_score();
+            float winrate;
+            float score = m_rootstate.final_score(&winrate);
             // do we lose by passing?
             if ((score > 0.0f && color == FastBoard::WHITE)
                 ||
                 (score < 0.0f && color == FastBoard::BLACK)) {
-                myprintf("Passing loses, I'll play on\n");
+                myprintf("Passing loses, I'll play on.\n");
             } else {
-                myprintf("Passing wins, I'll pass out\n");
-                bestmove = FastBoard::PASS;
+                // Is it clear enough we won? Don't want to
+                // be on the edge of a life & death call.
+                if (color == FastBoard::WHITE) winrate = 1.0f - winrate;
+                if (winrate > 0.66f) {
+                    myprintf("Passing wins (%2.0f%%), I'll pass out.\n", winrate);
+                    bestmove = FastBoard::PASS;
+                }
             }
-        }
-        // either by forcing or coincidence passing is
-        // on top...check whether passing loses instantly
-        if (bestmove == FastBoard::PASS) {
+        } else if (bestmove == FastBoard::PASS) {
+            // either by forcing or coincidence passing is
+            // on top...check whether passing loses instantly
             // do full count including dead stones
-            float score = m_rootstate.final_score();
+            float winrate;
+            float score = m_rootstate.final_score(&winrate);
             // do we lose by passing?
             if ((score > 0.0f && color == FastBoard::WHITE)
                 ||
@@ -568,7 +570,6 @@ int UCTSearch::get_best_move(passflag_t passflag) {
                 myprintf("Passing loses :-(\n");
                 // find a valid non-pass move
                 UCTNode * nopass = m_root.get_nopass_child();
-
                 if (nopass != NULL) {
                     myprintf("Avoiding pass because it loses.\n");
                     bestmove = nopass->get_move();
@@ -706,9 +707,6 @@ void UCTWorker::operator()() {
 #ifdef USE_OPENCL
     opencl.join_outstanding_cb();
 #endif
-#ifdef _WIN32
-    boost::on_thread_exit();
-#endif
 }
 
 std::tuple<float, float, float> UCTSearch::get_scores() {
@@ -754,8 +752,8 @@ int UCTSearch::think(int color, passflag_t passflag) {
     int time_for_move;
 
     if (!m_analyzing) {
-        m_rootstate.get_timecontrol()->set_boardsize(m_rootstate.board.get_boardsize());
-        time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);
+        m_rootstate.get_timecontrol().set_boardsize(m_rootstate.board.get_boardsize());
+        time_for_move = m_rootstate.get_timecontrol().max_time_for_move(color);
 
         GUIprintf("Thinking at most %.1f seconds...", time_for_move/100.0f);
 #ifdef KGS
@@ -807,9 +805,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_playouts = 0;
 
     int cpus = cfg_num_threads;
-    std::vector<std::thread> tg;
+    ThreadGroup tg(thread_pool);
     for (int i = 1; i < cpus; i++) {
-        tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
+        tg.add_task(UCTWorker(m_rootstate, this, &m_root));
     }
 
     // If easy move precondition doesn't hold, pretend we
@@ -865,12 +863,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 #ifdef USE_OPENCL
     opencl.join_outstanding_cb();
 #endif
-    for (auto& thread : tg) {
-        assert(thread.joinable());
-        if (thread.joinable()) {
-            thread.join();
-        }
-    }
+    tg.wait_all();
     if (!m_root.has_children()) {
         return FastBoard::PASS;
     }
@@ -952,9 +945,9 @@ void UCTSearch::ponder() {
     m_run = true;
     m_playouts = 0;
     int cpus = cfg_num_threads;
-    std::vector<std::thread> tg;
+    ThreadGroup tg(thread_pool);
     for (int i = 1; i < cpus; i++) {
-        tg.emplace_back(UCTWorker(m_rootstate, this, &m_root));
+        tg.add_task(UCTWorker(m_rootstate, this, &m_root));
     }
     do {
         KoState currstate = m_rootstate;
@@ -967,11 +960,7 @@ void UCTSearch::ponder() {
 #ifdef USE_OPENCL
     opencl.join_outstanding_cb();
 #endif
-    for (auto& thread : tg) {
-        if (thread.joinable()) {
-            thread.join();
-        }
-    }
+    tg.wait_all();
     // display search info
     myprintf("\n");
     dump_stats(m_rootstate, m_root);

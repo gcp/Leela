@@ -30,7 +30,7 @@ public:
     
     void start_clock(int color);
     void stop_clock(int color);
-    TimeControl * get_timecontrol();
+    TimeControl& get_timecontrol();
     void set_timecontrol(int maintime, int byotime, int byostones,
                          int byoperiods);
     void set_timecontrol(TimeControl tmc);

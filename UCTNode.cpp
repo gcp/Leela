@@ -499,6 +499,16 @@ void UCTNode::accumulate_eval(float eval) {
     m_evalcount  += 1;
 }
 
+float UCTNode::score_mix_function(int movenum, float eval, float winrate) {
+    float opening_mix = eval * cfg_mix_opening + winrate * (1.0f - cfg_mix_opening);
+    float ending_mix = eval * cfg_mix_ending + winrate * (1.0f - cfg_mix_ending);
+    if (movenum > 200) {
+        return ending_mix;
+    }
+    float ratio = movenum / 200.0f;
+    return opening_mix * (1.0f - ratio) + ending_mix * ratio;
+}
+
 float UCTNode::get_mixed_score(int tomove) {
     if (first_visit()) {
         return 0.0f;
@@ -509,13 +519,7 @@ float UCTNode::get_mixed_score(int tomove) {
         return winrate;
     }
     float eval = get_eval(tomove);
-    float opening_mix = eval * cfg_mix_opening + winrate * (1.0f - cfg_mix_opening);
-    float ending_mix = eval * cfg_mix_ending + winrate * (1.0f - cfg_mix_ending);
-    if (m_movenum > 200) {
-        return ending_mix;
-    }
-    float ratio = m_movenum / 200.0;
-    return opening_mix * (1.0f - ratio) + ending_mix * ratio;
+    return UCTNode::score_mix_function(m_movenum, eval, winrate);
 }
 
 float UCTNode::smp_noise(void) {

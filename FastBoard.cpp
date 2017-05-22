@@ -464,121 +464,117 @@ std::vector<int> FastBoard::influence(void) {
     return remove_dead().run_bouzy(5, 21);
 }
 
-std::vector<int> FastBoard::moyo(void) {        
+std::vector<int> FastBoard::moyo(void) {
     return remove_dead().run_bouzy(5, 10);
 }
 
-std::vector<int> FastBoard::area(void) {    
+std::vector<int> FastBoard::area(void) {
     return remove_dead().run_bouzy(4, 0);
 }
 
 std::vector<int> FastBoard::run_bouzy(int dilat, int eros) {
-    int i;
-    int d, e;
-    int goodsec, badsec;
-    std::vector<int> tmp(m_maxsq);
     std::vector<int> influence(m_maxsq);
-    
+
     /* init stones */
-    for (i = 0; i < m_maxsq; i++) {
+    for (int i = 0; i < m_maxsq; i++) {
         if (m_square[i] == BLACK) {
             influence[i] = 128;
         } else if (m_square[i] == WHITE) {
             influence[i] = -128;
-        } else {
-            influence[i] = 0;
         }
     }
-    
-    tmp = influence;
-        
-    for (d = 0; d < dilat; d++) {    
-        for (i = 0; i < m_maxsq; i++) {
+
+    for (int d = 0; d < dilat; d++) {
+        auto tmp = influence;
+        for (int i = 0; i < m_maxsq; i++) {
             if (get_square(i) == INVAL) continue;
             if (influence[i] >= 0) {
-                goodsec = badsec = 0;
+                int goodsec = 0;
+                bool badsec = false;
                 for (int k = 0; k < 4; k++) {
                     int sq = i + m_dirs[k];
                     if (get_square(sq) != INVAL && !badsec) {
                         if      (influence[sq] > 0) goodsec++;
-                        else if (influence[sq] < 0) badsec++;
+                        else if (influence[sq] < 0) badsec = true;
                     }
                 }
-                if (!badsec) 
+                if (!badsec)
                     tmp[i] += goodsec;
              }
              if (influence[i] <= 0) {
-                goodsec = badsec = 0;
+                int goodsec = 0;
+                bool badsec = false;
                 for (int k = 0; k < 4; k++) {
                     int sq = i + m_dirs[k];
                     if (get_square(sq) != INVAL && !badsec) {
                         if      (influence[sq] < 0) goodsec++;
-                        else if (influence[sq] > 0) badsec++;
+                        else if (influence[sq] > 0) badsec = true;
                     }
                 }
-                if (!badsec) 
+                if (!badsec)
                     tmp[i] -= goodsec;
             }
         }
-        influence = tmp;
+        std::swap(influence, tmp);
     }
-    
-    for (e = 0; e < eros; e++) {        
-        for (i = 0; i < m_maxsq; i++) {
+
+    for (int e = 0; e < eros; e++) {
+        auto tmp = influence;
+        for (int i = 0; i < m_maxsq; i++) {
             if (get_square(i) == INVAL) continue;
             if (influence[i] > 0) {
-                badsec = 0;
+                int badsec = 0;
                 for (int k = 0; k < 4; k++) {
                     int sq = i + m_dirs[k];
-                    if (get_square(sq) != INVAL && !badsec) {
+                    if (get_square(sq) != INVAL) {
                         if (influence[sq] <= 0) badsec++;
                     }
-                }                                                            
+                }
                 tmp[i] -= badsec;
                 if (tmp[i] < 0) tmp[i] = 0;
             } else if (influence[i] < 0) {
-                badsec = 0;
+                int badsec = 0;
                 for (int k = 0; k < 4; k++) {
                     int sq = i + m_dirs[k];
-                    if (get_square(sq) != INVAL && !badsec) {
+                    if (get_square(sq) != INVAL) {
                         if (influence[sq] >= 0) badsec++;
                     }
-                }       
+                }
                 tmp[i] += badsec;
-                if (tmp[i] > 0) tmp[i] = 0;                    
+                if (tmp[i] > 0) tmp[i] = 0;
             }
-        }        
-        influence = tmp;
+        }
+        std::swap(influence, tmp);
     }
-    
-    return influence;        
+
+    return influence;
 }
 
 void FastBoard::display_map(std::vector<int> influence) {
-    int i, j;            
-    
+    int i, j;
+
     for (j = m_boardsize-1; j >= 0; j--) {
         for (i = 0; i < m_boardsize; i++) {
-            int infl = influence[get_vertex(i,j)];
+            int infl = influence[get_vertex(i, j)];
             if (infl > 0) {
-                if (get_square(i, j) ==  BLACK) {
+                if (get_square(i, j) == BLACK) {
                     myprintf("X ");
                 } else if (get_square(i, j) == WHITE) {
                     myprintf("w ");
                 } else {
                     myprintf("x ");
-                }                               
+                }
             } else if (infl < 0) {
-                if (get_square(i, j) ==  BLACK) {
+                if (get_square(i, j) == BLACK) {
                     myprintf("b ");
                 } else if (get_square(i, j) == WHITE) {
                     myprintf("O ");
                 } else {
                     myprintf("o ");
-                }   
+                }
             } else {
                 myprintf(". ");
-            }            
+            }
         }
         myprintf("\n");
     }

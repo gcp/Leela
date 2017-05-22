@@ -122,23 +122,17 @@ void Network::benchmark(FastState * state) {
         int iters_per_thread = (BENCH_AMOUNT + (cpus - 1)) / cpus;
 
         Time start;
-        std::vector<std::thread> tg;
-        for (int i = 0; i < cpus; i++) {
-            tg.push_back(
-                std::thread([iters_per_thread, state]() {
-                    FastState mystate = *state;
-                    for (int loop = 0; loop < iters_per_thread; loop++) {
-                        auto vec = get_scored_moves(&mystate, Ensemble::RANDOM_ROTATION);
-        }
-                })
-            );
-        };
 
-        auto join_thread = [](std::thread &thread) {
-            assert(thread.joinable());
-            thread.join();
+        ThreadGroup tg(thread_pool);
+        for (int i = 0; i < cpus; i++) {
+            tg.add_task([iters_per_thread, state]() {
+                FastState mystate = *state;
+                for (int loop = 0; loop < iters_per_thread; loop++) {
+                    auto vec = get_scored_moves(&mystate, Ensemble::RANDOM_ROTATION);
+                }
+            });
         };
-        std::for_each(tg.begin(), tg.end(), join_thread);
+        tg.wait_all();
 
         Time end;
 
@@ -154,22 +148,16 @@ void Network::benchmark(FastState * state) {
         int iters_per_thread = (BENCH_AMOUNT + (cpus - 1)) / cpus;
 
         Time start;
-        std::vector<std::thread> tg;
+        ThreadGroup tg(thread_pool);
         for (int i = 0; i < cpus; i++) {
-            tg.push_back(
-                std::thread([iters_per_thread, state]() {
-                    FastState mystate = *state;
-                    for (int loop = 0; loop < iters_per_thread; loop++) {
-                        auto vec = get_value(&mystate, Ensemble::RANDOM_ROTATION);
-        }
-                })
-            );
+            tg.add_task([iters_per_thread, state]() {
+                FastState mystate = *state;
+                for (int loop = 0; loop < iters_per_thread; loop++) {
+                    auto vec = get_value(&mystate, Ensemble::RANDOM_ROTATION);
+                }
+            });
         };
-        auto join_thread = [](std::thread &thread) {
-            assert(thread.joinable());
-            thread.join();
-        };
-        std::for_each(tg.begin(), tg.end(), join_thread);
+        tg.wait_all();
 
         Time end;
 
@@ -689,29 +677,29 @@ float Network::get_value_internal(
 #elif defined(USE_BLAS)
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
 
-    convolve<5, 32, 48>(input_data, val_conv1_w, val_conv1_b, output_data);
+    convolve<5, 32, 64>(input_data, val_conv1_w, val_conv1_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv2_w, val_conv2_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv2_w, val_conv2_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv3_w, val_conv3_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv3_w, val_conv3_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv4_w, val_conv4_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv4_w, val_conv4_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv5_w, val_conv5_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv5_w, val_conv5_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv6_w, val_conv6_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv6_w, val_conv6_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv7_w, val_conv7_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv7_w, val_conv7_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv8_w, val_conv8_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv8_w, val_conv8_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv9_w, val_conv9_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv9_w, val_conv9_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv10_w, val_conv10_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv10_w, val_conv10_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48, 48>(input_data, val_conv11_w, val_conv11_b, output_data);
+    convolve<3, 64, 64>(input_data, val_conv11_w, val_conv11_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 48,  1>(input_data, val_conv12_w, val_conv12_b, output_data);
+    convolve<3, 64,  1>(input_data, val_conv12_w, val_conv12_b, output_data);
     // Now get the score
     innerproduct<361, 256>(output_data, val_ip13_w, val_ip13_b, winrate_data);
     innerproduct<256, 1>(winrate_data, val_ip14_w, val_ip14_b, winrate_out);
