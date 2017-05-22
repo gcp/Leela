@@ -38,6 +38,11 @@ public:
     */
     void sync(uint64 hash, UCTNode * node);
 
+    /*
+        wipe TT on rule/komi changes
+    */
+    void clear();
+
 private:
     TTable(int size = 500000);
 

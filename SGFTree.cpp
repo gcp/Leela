@@ -150,8 +150,8 @@ void SGFTree::populate_states(void) {
     // komi
     it = m_properties.find("KM");
     if (it != m_properties.end()) {
-        std::string size = it->second;
-        std::istringstream strm(size);
+        std::string foo = it->second;
+        std::istringstream strm(foo);
         float komi;
         strm >> komi;
         int handicap = m_state.get_handicap();

@@ -154,8 +154,8 @@ void GameState::display_state() {
     m_timecontrol.display_times();        
 }
 
-TimeControl * GameState::get_timecontrol() {
-    return &m_timecontrol;
+TimeControl& GameState::get_timecontrol() {
+    return m_timecontrol;
 }
 
 void GameState::set_timecontrol(int maintime, int byotime,

@@ -15,12 +15,14 @@
 #include "GTP.h"
 #include "Playout.h"
 #include "UCTSearch.h"
+#include "UCTNode.h"
 #include "SGFTree.h"
 #include "AttribScores.h"
 #include "Genetic.h"
 #include "PNSearch.h"
 #include "Network.h"
 #include "Book.h"
+#include "TTable.h"
 
 using namespace Utils;
 
@@ -67,7 +69,7 @@ bool cfg_quiet;
 
 void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
-    cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
+    cfg_num_threads = std::max(1, std::min(SMP::get_num_cpus(), MAX_CPUS));
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
@@ -150,19 +152,20 @@ const std::string GTP::s_commands[] = {
     "final_status_list",
     "time_settings",
     "time_left",
-    "kgs-genmove_cleanup",
     "fixed_handicap",
     "place_free_handicap",
     "set_free_handicap",
     "loadsgf",
+    "printsgf",
+    "kgs-genmove_cleanup",
     "kgs-time_settings",
     "kgs-game_over",
-    "printsgf",
     "influence",
-    "heatmap",
     "mc_score",
     "mc_winrate",
     "vn_winrate",
+    "winrate",
+    "heatmap",
     ""
 };
 
@@ -317,17 +320,21 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::istringstream cmdstream(command);
         std::string tmp;
         float komi = 7.5f;
-        
+        float old_komi = game.get_komi();
+
         cmdstream >> tmp;  // eat komi
-        cmdstream >> komi;            
-        
+        cmdstream >> komi;
+
         if (!cmdstream.fail()) {
-            game.set_komi(komi);
+            if (komi != old_komi) {
+                game.set_komi(komi);
+                TTable::get_TT()->clear();
+            }
             gtp_printf(id, "");
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
-        
+
         return true;
     } else if (command.find("play") == 0) {
         if (command.find("pass") != std::string::npos
@@ -485,9 +492,17 @@ bool GTP::execute(GameState & game, std::string xinput) {
                                                             Network::Ensemble::AVERAGE_ALL);
         gtp_printf(id, "%f", net_score);
         return true;
-    }  else if (command.find("mc_winrate") == 0) {
+    } else if (command.find("mc_winrate") == 0) {
         float mc_winrate = Playout::mc_owner(game, 512);
         gtp_printf(id, "%f", mc_winrate);
+        return true;
+    } else if (command.find("winrate") == 0) {
+        float mc_winrate = Playout::mc_owner(game, 512);
+        float net_score = Network::get_Network()->get_value(&game,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        float comb_winrate = UCTNode::score_mix_function(game.get_movenum(),
+                                                         net_score, mc_winrate);
+        gtp_printf(id, "%f", comb_winrate);
         return true;
     } else if (command.find("final_status_list") == 0) {
         if (command.find("alive") != std::string::npos) {

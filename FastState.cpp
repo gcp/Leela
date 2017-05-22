@@ -413,35 +413,46 @@ std::string FastState::move_to_text(int move) {
     return board.move_to_text(move);
 }
 
-std::vector<bool> FastState::mark_dead() {
+std::vector<bool> FastState::mark_dead(float *winrate) {
     static const int MARKING_RUNS = 256;
     
     std::vector<int> survive_count(FastBoard::MAXSQ);    
     std::vector<bool> dead_group(FastBoard::MAXSQ);    
     
     fill(survive_count.begin(), survive_count.end(), 0);    
-    fill(dead_group.begin(), dead_group.end(), false);        
-    
+    fill(dead_group.begin(), dead_group.end(), false);
+
+    float wins = 0.0;
     for (int i = 0; i < MARKING_RUNS; i++) {
         FastState workstate(*this);
         Playout p;
-        
+
         p.run(workstate, true, false);
-        
+
+        float score = p.get_score();
+        if (score > 0.0f) {
+            wins += 1.0f;
+        } else if (score == 0.0f) {
+            wins += 0.5f;
+        }
+
         for (int i = 0; i < board.get_boardsize(); i++) {
             for (int j = 0; j < board.get_boardsize(); j++) {
-                int vertex = board.get_vertex(i, j);           
-                int sq    =           board.get_square(vertex);       
+                int vertex = board.get_vertex(i, j);
+                int sq    =           board.get_square(vertex);
                 int mc_sq = workstate.board.get_square(vertex);
-                
+
                 if (sq == mc_sq) {
-                    survive_count[vertex]++; 
-                } 
+                    survive_count[vertex]++;
+                }
             }
-        }        
+        }
     }
 
     const int LIVE_TRESHOLD = MARKING_RUNS / 2;
+    if (winrate) {
+        *winrate = wins / (float)MARKING_RUNS;
+    }
 
     for (int i = 0; i < board.get_boardsize(); i++) {
         for (int j = 0; j < board.get_boardsize(); j++) {
@@ -460,7 +471,7 @@ std::vector<int> FastState::final_score_map() {
     FastState workstate(*this);    
                  
     std::vector<bool> dead_group = workstate.mark_dead();
-    
+
      for (int i = 0; i < workstate.board.get_boardsize(); i++) {
         for (int j = 0; j < workstate.board.get_boardsize(); j++) {
             int vertex = workstate.board.get_vertex(i, j);
@@ -470,7 +481,7 @@ std::vector<int> FastState::final_score_map() {
             }
         }
     }
-    
+
     std::vector<bool> white = workstate.board.calc_reach_color(FastBoard::WHITE);
     std::vector<bool> black = workstate.board.calc_reach_color(FastBoard::BLACK);
     
@@ -493,21 +504,21 @@ std::vector<int> FastState::final_score_map() {
     return res;
 }
 
-float FastState::final_score() {       
+float FastState::final_score(float *winrate) {
     FastState workstate(*this);
-                 
-    std::vector<bool> dead_group = workstate.mark_dead();
-    
+
+    std::vector<bool> dead_group = workstate.mark_dead(winrate);
+
      for (int i = 0; i < workstate.board.get_boardsize(); i++) {
         for (int j = 0; j < workstate.board.get_boardsize(); j++) {
             int vertex = workstate.board.get_vertex(i, j);
-            
+
             if (dead_group[vertex]) {
                 workstate.board.set_square(vertex, FastBoard::EMPTY);
             }
         }
-    }        
-    
+    }
+
     return workstate.board.area_score(get_komi() + get_handicap());
 }
 
