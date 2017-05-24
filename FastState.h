@@ -34,8 +34,8 @@ public:
 
     float calculate_mc_score();
     int estimate_mc_score();
-    float final_score(float *winrate = nullptr);
-    std::vector<int> final_score_map();
+    float final_score(float *winrate = nullptr, bool mark_dead = true);
+    std::vector<int> final_score_map(bool mark_dead = true);
     std::vector<bool> mark_dead(float *winrate = nullptr);
 
     int get_movenum();
