@@ -280,7 +280,14 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     if (!totalchildren) return;
 
     int netscore_threshold = cfg_mature_threshold;
-    int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
+    if (!use_nets) {
+        if (board.get_boardsize() <= 9) {
+            netscore_threshold = 30;
+        } else {
+            netscore_threshold = 50;
+        }
+    }
+    int expand_threshold = ((float)netscore_threshold)/cfg_expand_divider;
     int movenum = board.get_stone_count();
 
     SMP::Lock lock(get_mutex());
