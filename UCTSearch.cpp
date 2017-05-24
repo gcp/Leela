@@ -39,10 +39,19 @@ UCTSearch::UCTSearch(GameState & g)
         cfg_beta = 9.5f;
         cfg_patternbonus = 0.00075f;
     } else {
-        cfg_uct = 0.00025f;
-        cfg_mcts_fpu = 1.3f;
-        cfg_beta = 32.0f;
-        cfg_patternbonus = 0.0035f;
+        if (g.board.get_boardsize() <= 9) {
+            cfg_mature_threshold = 30;
+            cfg_uct = 0.0015f;
+            cfg_mcts_fpu = 1.25f;
+            cfg_beta = 22.0f;
+            cfg_patternbonus = 0.0035f;
+        } else {
+            cfg_mature_threshold = 50;
+            cfg_uct = 0.001f;
+            cfg_mcts_fpu = 0.58f;
+            cfg_beta = 35.0f;
+            cfg_patternbonus = 0.0075f;
+        }
     }
 }
 
@@ -798,7 +807,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)
     m_root.create_children(m_nodes, m_rootstate, true, m_use_nets);
-    m_root.netscore_children(m_nodes, m_rootstate, true);
+    if (m_use_nets) {
+        m_root.netscore_children(m_nodes, m_rootstate, true);
+    }
     m_root.kill_superkos(m_rootstate);
 
     m_run = true;
