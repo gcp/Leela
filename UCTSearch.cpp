@@ -36,8 +36,10 @@ UCTSearch::UCTSearch(GameState & g)
     set_use_nets(cfg_enable_nets);
     set_playout_limit(cfg_max_playouts);
     if (m_use_nets) {
-        cfg_beta = 9.5f;
-        cfg_patternbonus = 0.00075f;
+        cfg_uct = 0.1713f;
+        cfg_mcts_fpu = 0.3625f;
+        cfg_beta = 48.75f;
+        cfg_patternbonus = 0.02f;
     } else {
         if (g.board.get_boardsize() <= 9) {
             cfg_uct = 0.0015f;
