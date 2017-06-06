@@ -665,6 +665,7 @@ std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
     res.append(next);
 
     // Resort according to move probability
+    SMP::Lock lock(parent.get_mutex());
     parent.sort_children();
 
     return res;
