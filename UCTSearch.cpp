@@ -36,13 +36,22 @@ UCTSearch::UCTSearch(GameState & g)
     set_use_nets(cfg_enable_nets);
     set_playout_limit(cfg_max_playouts);
     if (m_use_nets) {
-        cfg_beta = 9.5f;
-        cfg_patternbonus = 0.00075f;
+        cfg_uct = 0.1713f;
+        cfg_mcts_fpu = 0.3625f;
+        cfg_beta = 48.75f;
+        cfg_patternbonus = 0.02f;
     } else {
-        cfg_uct = 0.00025f;
-        cfg_mcts_fpu = 1.3f;
-        cfg_beta = 32.0f;
-        cfg_patternbonus = 0.0035f;
+        if (g.board.get_boardsize() <= 9) {
+            cfg_uct = 0.0015f;
+            cfg_mcts_fpu = 1.25f;
+            cfg_beta = 22.0f;
+            cfg_patternbonus = 0.0035f;
+        } else {
+            cfg_uct = 0.001f;
+            cfg_mcts_fpu = 0.58f;
+            cfg_beta = 35.0f;
+            cfg_patternbonus = 0.0075f;
+        }
     }
 }
 
@@ -656,6 +665,7 @@ std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
     res.append(next);
 
     // Resort according to move probability
+    SMP::Lock lock(parent.get_mutex());
     parent.sort_children();
 
     return res;
@@ -798,7 +808,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     // create a sorted list off legal moves (make sure we
     // play something legal and decent even in time trouble)
     m_root.create_children(m_nodes, m_rootstate, true, m_use_nets);
-    m_root.netscore_children(m_nodes, m_rootstate, true);
+    if (m_use_nets) {
+        m_root.netscore_children(m_nodes, m_rootstate, true);
+    }
     m_root.kill_superkos(m_rootstate);
 
     m_run = true;
