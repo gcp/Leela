@@ -66,7 +66,7 @@ public:
 
 private:
 #ifdef USE_CAFFE
-    static std::unique_ptr<caffe::Net<float>> s_net;
+    static std::unique_ptr<caffe::Net> s_net;
 #endif
 
     static Netresult get_scored_moves_internal(
