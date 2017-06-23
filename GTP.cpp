@@ -100,8 +100,8 @@ void GTP::setup_default_parameters() {
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 1.1f;
     cfg_puct = 1.1f;
-    cfg_psa = 0.0025f;
-    cfg_softmax_temp = 0.62f;
+    cfg_psa = 0.0018f;
+    cfg_softmax_temp = 0.70f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix_opening = 0.78f;
