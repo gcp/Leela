@@ -15,7 +15,7 @@ public:
     static const int AUTOGAMES = 200000;
     static void do_playout_benchmark(GameState & game);
     static float mc_owner(FastState & state,
-                          int iterations = 64,
+                          const int iterations = 64,
                           float* points = nullptr);
 
     Playout();

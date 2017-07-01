@@ -170,7 +170,7 @@ void Playout::do_playout_benchmark(GameState & game) {
     myprintf("Avg Len: %5.2f Score: %f\n", len/(float)AUTOGAMES, board_score/AUTOGAMES);
 }
 
-float Playout::mc_owner(FastState & state, int iterations, float* points) {
+float Playout::mc_owner(FastState & state, const int iterations, float* points) {
     int cpus = cfg_num_threads;
     int iters_per_thread = (iterations + (cpus - 1)) / cpus;
 
@@ -204,14 +204,12 @@ float Playout::mc_owner(FastState & state, int iterations, float* points) {
     tg.wait_all();
 
     float score = bwins / (float)iterations;
-    float territory = board_score / (float)iterations;
-
     if (state.get_to_move() != FastBoard::BLACK) {
         score = 1.0f - score;
     }
 
     if (points != nullptr) {
-        *points = territory;
+        *points = board_score / (float)iterations;;
     }
 
     return score;

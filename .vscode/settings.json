@@ -44,6 +44,7 @@
         "unordered_map": "cpp",
         "slist": "cpp",
         "deque": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "locale": "cpp"
     }
 }
