@@ -30,7 +30,7 @@ public:
     using PredMoves = std::array<int, 3>;
     struct TrainPosition {
         NNPlanes planes;
-        // PredMoves moves;
+        //PredMoves moves;
         float stm_score;
         float stm_won;
         float stm_score_tanh;
@@ -40,43 +40,44 @@ public:
     using scored_node = std::pair<float, int>;
     using Netresult = std::vector<scored_node>;
 
-    Netresult get_scored_moves(FastState * state,
-                               Ensemble ensemble);
-    float get_value(FastState *state,
+    static Netresult get_scored_moves(FastState * state,
+                               Ensemble ensemble,
+                               int rotation = -1);
+    static float get_value(FastState *state,
                     Ensemble ensemble);
-    static constexpr int CHANNELS = 24;
+    static constexpr int POLICY_CHANNELS = 32;
+    static constexpr int VALUE_CHANNELS = 32;
     static constexpr int MAX_CHANNELS = 128;
-    static constexpr int MAX_VALUE_CHANNELS = 32;
+    static constexpr int MAX_VALUE_CHANNELS = 48;
 
 #ifdef USE_OPENCL
     void async_scored_moves(std::atomic<int> * nodecount,
                             FastState * state, UCTNode * node,
-                            Ensemble ensemble);
+                            Ensemble ensemble, int rotation = -1);
 #endif
     void initialize();
     void benchmark(FastState * state);
-    static void show_heatmap(FastState * state, Netresult & netres);
+    static void show_heatmap(FastState * state, Netresult & netres, bool topmoves);
     void autotune_from_file(std::string filename);
     static Network* get_Network(void);
-    std::string get_blas_backend();
-    std::string get_opencl_backend();
+    std::string get_backend();
     static int rotate_nn_idx(const int vertex, int symmetry);
     static int rev_rotate_nn_idx(const int vertex, int symmetry);
 
 private:
 #ifdef USE_CAFFE
-    std::unique_ptr<caffe::Net<float>> net;
+    static std::unique_ptr<caffe::Net<float>> s_net;
 #endif
 
-    Netresult get_scored_moves_internal(
+    static Netresult get_scored_moves_internal(
       FastState * state, NNPlanes & planes, int rotation);
-    float get_value_internal(
+    static float get_value_internal(
       FastState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
-    static void gather_features(FastState * state, NNPlanes & planes,
-                                BoardPlane** ladder = nullptr);
-
+    static void gather_features_policy(FastState * state, NNPlanes & planes,
+                                       BoardPlane** ladder = nullptr);
+    static void gather_features_value(FastState * state, NNPlanes & planes);
     static Network* s_Net;
 };
 

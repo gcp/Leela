@@ -65,9 +65,13 @@ layer {
   bottom: "label_unsliced"
   top: "wonpc"
   top: "won"
+  top: "wonpctanh"
+  top: "wontanh"
   slice_param {
     axis: 1
     slice_point: 1
+    slice_point: 2
+    slice_point: 3
   }
 }
 
@@ -75,6 +79,8 @@ layer {
   name: "silence"
   type: "Silence"
   bottom: "wonpc"
+  bottom: "wonpctanh"
+  bottom: "wontanh"
 }
 
 layer {
@@ -97,17 +103,9 @@ layer {
 }
 
 layer {
-  name: "relu1"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
+  name: "elu1"
+  type: "ELU"
   # in-place
-  bottom: "conv1"
-  top: "conv1"
-}
-
-layer {
-  name: "bn1"
-  type: "BatchNorm"
   bottom: "conv1"
   top: "conv1"
 }
@@ -132,17 +130,9 @@ layer {
 }
 
 layer {
-  name: "relu2"
-  type:  "ReLU"
-  relu_param { negative_slope: 0.1 }
+  name: "elu2"
+  type:  "ELU"
   # in-place
-  bottom: "conv2"
-  top: "conv2"
-}
-
-layer {
-  name: "bn2"
-  type: "BatchNorm"
   bottom: "conv2"
   top: "conv2"
 }
@@ -167,16 +157,8 @@ layer {
 }
 
 layer {
-  name: "relu3"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
-  bottom: "conv3"
-  top: "conv3"
-}
-
-layer {
-  name: "bn3"
-  type: "BatchNorm"
+  name: "elu3"
+  type: "ELU"
   bottom: "conv3"
   top: "conv3"
 }
@@ -201,17 +183,9 @@ layer {
 }
 
 layer {
-  name: "relu4"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
+  name: "elu4"
+  type: "ELU"
   # in-place
-  bottom: "conv4"
-  top: "conv4"
-}
-
-layer {
-  name: "bn4"
-  type: "BatchNorm"
   bottom: "conv4"
   top: "conv4"
 }
@@ -236,16 +210,8 @@ layer {
 }
 
 layer {
-  name: "relu5"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
-  bottom: "conv5"
-  top: "conv5"
-}
-
-layer {
-  name: "bn5"
-  type: "BatchNorm"
+  name: "elu5"
+  type: "ELU"
   bottom: "conv5"
   top: "conv5"
 }
@@ -270,17 +236,9 @@ layer {
 }
 
 layer {
-  name: "relu6"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
+  name: "elu6"
+  type: "ELU"
   # in-place
-  bottom: "conv6"
-  top: "conv6"
-}
-
-layer {
-  name: "bn6"
-  type: "BatchNorm"
   bottom: "conv6"
   top: "conv6"
 }
@@ -305,16 +263,8 @@ layer {
 }
 
 layer {
-  name: "relu7"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
-  bottom: "conv7"
-  top: "conv7"
-}
-
-layer {
-  name: "bn7"
-  type: "BatchNorm"
+  name: "elu7"
+  type: "ELU"
   bottom: "conv7"
   top: "conv7"
 }
@@ -338,16 +288,8 @@ layer {
 }
 
 layer {
-  name: "relu8"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
-  bottom: "conv8"
-  top: "conv8"
-}
-
-layer {
-  name: "bn8"
-  type: "BatchNorm"
+  name: "elu8"
+  type: "ELU"
   bottom: "conv8"
   top: "conv8"
 }
@@ -372,17 +314,9 @@ layer {
 }
 
 layer {
-  name: "relu9"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
+  name: "elu9"
+  type: "ELU"
   # in-place
-  bottom: "conv9"
-  top: "conv9"
-}
-
-layer {
-  name: "bn9"
-  type: "BatchNorm"
   bottom: "conv9"
   top: "conv9"
 }
@@ -407,17 +341,9 @@ layer {
 }
 
 layer {
-  name: "relu10"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
+  name: "elu10"
+  type: "ELU"
   # in-place
-  bottom: "conv10"
-  top: "conv10"
-}
-
-layer {
-  name: "bn10"
-  type: "BatchNorm"
   bottom: "conv10"
   top: "conv10"
 }
@@ -442,17 +368,9 @@ layer {
 }
 
 layer {
-  name: "relu11"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
+  name: "elu11"
+  type: "ELU"
   # in-place
-  bottom: "conv11"
-  top: "conv11"
-}
-
-layer {
-  name: "bn11"
-  type: "BatchNorm"
   bottom: "conv11"
   top: "conv11"
 }
@@ -476,16 +394,8 @@ layer {
 }
 
 layer {
-  name: "relu12"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
-  bottom: "conv12"
-  top: "conv12"
-}
-
-layer {
-  name: "bn12"
-  type: "BatchNorm"
+  name: "elu12"
+  type: "ELU"
   bottom: "conv12"
   top: "conv12"
 }
@@ -507,16 +417,8 @@ layer {
 }
 
 layer {
-  name: "relu13"
-  type: "ReLU"
-  relu_param { negative_slope: 0.1 }
-  bottom: "ip13"
-  top: "ip13"
-}
-
-layer {
-  name: "bn13"
-  type: "BatchNorm"
+  name: "elu13"
+  type: "ELU"
   bottom: "ip13"
   top: "ip13"
 }

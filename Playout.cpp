@@ -2,6 +2,8 @@
 #include <array>
 #include <cstdlib>
 #include <cassert>
+#include <thread>
+#include <algorithm>
 #include "config.h"
 
 #include "Timing.h"
@@ -10,6 +12,7 @@
 #include "Utils.h"
 #include "MCOTable.h"
 #include "Random.h"
+#include "GTP.h"
 
 using namespace Utils;
 
@@ -96,7 +99,7 @@ void Playout::run(FastState & state, bool postpassout, bool resigning) {
     // update MCO in one swoop
     bool blackwon;
     if (score == 0.0f) {
-        blackwon = (Random::get_Rng()->randint(2) == 0);
+        blackwon = (Random::get_Rng()->randfix<2>() == 0);
     } else {
         blackwon = (score > 0.0f);
     }
@@ -118,63 +121,101 @@ bool Playout::passthrough(int color, int vertex) {
     return m_sq[color][vertex];
 }
 
-void Playout::do_playout_benchmark(GameState & game) {   
-    float ftmp;
-    int loop;    
-    float len;
-    float score;
+void Playout::do_playout_benchmark(GameState & game) {
+    int cpus = cfg_num_threads;
+    int iters_per_thread = (AUTOGAMES + (cpus - 1)) / cpus;
+
+    std::atomic<float> len{0.0f};
+    std::atomic<float> board_score{0.0f};
+
     const int boardsize = game.board.get_boardsize();
     const int resign = (boardsize * boardsize) / 3;
-    const int playoutlen = (boardsize * boardsize) * 2;    
-    
-    len = 0.0;
-    score = 0;
+    const int playoutlen = (boardsize * boardsize) * 2;
+
     Time start;
-    
-    for (loop = 0; loop < AUTOGAMES; loop++) {
-        do {                                    
-            game.play_random_move();
-            
-        } while (game.get_passes() < 2 
-                 && game.get_movenum() < playoutlen
-                 && abs(game.estimate_mc_score()) < resign); 
-                
-        len += game.get_movenum();
-        ftmp = game.calculate_mc_score();   
-        score += ftmp;                
-                
-        game.reset_game();
-    }
-    
+
+    std::vector<std::thread> tg;
+    for (int i = 0; i < cpus; i++) {
+        tg.push_back(
+            std::thread([iters_per_thread, &game, &len, &board_score,
+                         playoutlen, resign, boardsize]() {
+                GameState mygame = game;
+                float thread_len = 0.0f;
+                float thread_board_score = 0.0f;
+                for (int i = 0; i < iters_per_thread; i++) {
+                    do {
+                        mygame.play_random_move();
+                    } while (mygame.get_passes() < 2
+                            && mygame.get_movenum() < playoutlen
+                            && abs(mygame.estimate_mc_score()) < resign);
+
+                    thread_len += mygame.get_movenum();
+                    thread_board_score += mygame.calculate_mc_score();
+
+                    mygame.reset_game();
+                }
+                atomic_add(board_score, thread_board_score);
+                atomic_add(len, thread_len);
+            })
+        );
+    };
+
+    auto join_thread = [](std::thread &thread) {
+        assert(thread.joinable());
+        thread.join();
+    };
+    std::for_each(tg.begin(), tg.end(), join_thread);
+
     Time end;
-    
-    myprintf("%d games in %5.2f seconds -> %d g/s\n", 
-            AUTOGAMES, 
-            (float)Time::timediff(start,end)/100.0, 
-            (int)((float)AUTOGAMES/((float)Time::timediff(start,end)/100.0)));
-    myprintf("Avg Len: %5.2f Score: %f\n", len/(float)AUTOGAMES, score/AUTOGAMES);
+
+    float games_per_sec = (float)AUTOGAMES/((float)Time::timediff(start,end)/100.0);
+
+    myprintf("%d games in %5.2f seconds -> %d g/s (%d g/s per thread)\n",
+            AUTOGAMES,
+            (float)Time::timediff(start,end)/100.0,
+            (int)games_per_sec,(int)(games_per_sec/(float)cpus));
+    myprintf("Avg Len: %5.2f Score: %f\n", len/(float)AUTOGAMES, board_score/AUTOGAMES);
 }
 
 float Playout::mc_owner(FastState & state, int iterations, float* points) {
-    float bwins = 0.0f;
-    float board_score = 0.0f;
+    int cpus = cfg_num_threads;
+    int iters_per_thread = (iterations + (cpus - 1)) / cpus;
 
-    for (int i = 0; i < iterations; i++) {
-        FastState tmp = state;
+    std::atomic<float> bwins{0.0f};
+    std::atomic<float> board_score{0.0f};
 
-        Playout p;
+    std::vector<std::thread> tg;
+    for (int i = 0; i < cpus; i++) {
+        tg.push_back(
+            std::thread([iters_per_thread, &state,
+                         &bwins, &board_score]() {
+                float thread_bwins = 0.0f;
+                float thread_board_score = 0.0f;
+                for (int i = 0; i < iters_per_thread; i++) {
+                    FastState tmp = state;
 
-        p.run(tmp, true, false);
+                    Playout p;
+                    p.run(tmp, true, false);
 
-        float score = p.get_score();
-        if (score == 0.0f) {
-            bwins += 0.5f;
-        } else if (score > 0.0f) {
-            bwins += 1.0f;
-        }
-
-        board_score += p.get_territory();
+                    float score = p.get_score();
+                    if (score == 0.0f) {
+                        thread_bwins += 0.5f;
+                    } else if (score > 0.0f) {
+                        thread_bwins += 1.0f;
+                    }
+                    thread_board_score += p.get_territory();
+                }
+                atomic_add(bwins, thread_bwins);
+                atomic_add(board_score, thread_board_score);
+            })
+        );
     }
+
+    auto join_thread = [](std::thread &thread) {
+        assert(thread.joinable());
+        thread.join();
+    };
+    std::for_each(tg.begin(), tg.end(), join_thread);
 
     float score = bwins / (float)iterations;
     float territory = board_score / (float)iterations;

@@ -30,10 +30,12 @@ bool cfg_allow_pondering;
 int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
+bool cfg_komi_adjust;
 int cfg_mature_threshold;
 float cfg_expand_divider;
 int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
+std::vector<int> cfg_gpus;
 int cfg_rowtiles;
 #endif
 float cfg_crit_mine_1;
@@ -53,12 +55,13 @@ float cfg_puct;
 float cfg_uct;
 float cfg_psa;
 float cfg_softmax_temp;
-float cfg_mix;
+float cfg_mix_opening;
+float cfg_mix_ending;
 int cfg_eval_thresh;
-int cfg_eval_scale;
 float cfg_beta;
 float cfg_patternbonus;
 int cfg_rave_moves;
+int cfg_extra_symmetry;
 std::string cfg_logfile;
 FILE* cfg_logfile_handle;
 bool cfg_quiet;
@@ -67,16 +70,22 @@ void GTP::setup_default_parameters() {
     cfg_allow_pondering = true;
     cfg_num_threads = std::min(SMP::get_num_cpus(), MAX_CPUS);
     cfg_enable_nets = true;
+    cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 30;
+    cfg_mature_threshold = 25;
     cfg_expand_divider = 2.0f;
+    cfg_extra_symmetry =  350;
+    cfg_eval_thresh = 3;
 #else
-    cfg_mature_threshold = 90;
-    cfg_expand_divider = 2.0f;
+    cfg_mature_threshold = 100;
+    cfg_expand_divider =  2.0f;
+    cfg_extra_symmetry =  3000;
+    cfg_eval_thresh = 10;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
 #ifdef USE_OPENCL
+    cfg_gpus = { };
     cfg_rowtiles = 5;
 #endif
     cfg_crit_mine_1 = 4.16f;
@@ -88,15 +97,14 @@ void GTP::setup_default_parameters() {
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
-    cfg_fpu = 3.5f;
-    cfg_puct = 0.3f;
-    cfg_psa = 0.1f;
-    cfg_softmax_temp = 0.5f;
+    cfg_fpu = 1.1f;
+    cfg_puct = 1.1f;
+    cfg_psa = 0.0025f;
+    cfg_softmax_temp = 0.62f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix = 0.45f;
-    cfg_eval_thresh = 5;
-    cfg_eval_scale = 2;
+    cfg_mix_opening = 0.78f;
+    cfg_mix_ending = 0.62f;
     cfg_rave_moves = 13;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
@@ -105,19 +113,21 @@ void GTP::setup_default_parameters() {
 bool GTP::perform_self_test(GameState & state) {
     bool testPassed = true;
 #ifdef USE_OPENCL
+#ifndef USE_TUNER
     myprintf("OpenCL self-test: ");
     // Perform self-test
     auto vec = Network::get_Network()->get_scored_moves(
-        &state, Network::Ensemble::DIRECT);
-    testPassed &= vec[60].first > 0.183 && vec[60].first < 0.184;
+        &state, Network::Ensemble::DIRECT, 0);
+    testPassed &= vec[60].first > 0.225 && vec[60].first < 0.226;
     testPassed &= vec[60].second == 88;
-    testPassed &= vec[72].first > 0.186 && vec[72].first < 0.187;
+    testPassed &= vec[72].first > 0.211 && vec[72].first < 0.212;
     testPassed &= vec[72].second == 100;
     if (testPassed) {
         myprintf("passed.\n");
     } else {
         myprintf("failed. Check your OpenCL drivers.\n");
     }
+#endif
 #endif
     return testPassed;
 }
@@ -141,15 +151,19 @@ const std::string GTP::s_commands[] = {
     "final_status_list",
     "time_settings",
     "time_left",
-    "influence",
-    "mc_score",
     "kgs-genmove_cleanup",
     "fixed_handicap",
     "place_free_handicap",
     "set_free_handicap",
     "loadsgf",
     "kgs-time_settings",
+    "kgs-game_over",
     "printsgf",
+    "influence",
+    "heatmap",
+    "mc_score",
+    "mc_winrate",
+    "vn_winrate",
     ""
 };
 
@@ -287,7 +301,8 @@ bool GTP::execute(GameState & game, std::string xinput) {
             if (tmp < 2 || tmp > FastBoard::MAXBOARDSIZE) {
                 gtp_fail_printf(id, "unacceptable size");
             } else {
-                game.init_game(tmp);                
+                float old_komi = game.get_komi();
+                game.init_game(tmp, old_komi);
                 gtp_printf(id, "");
             }
         } else {
@@ -343,29 +358,39 @@ bool GTP::execute(GameState & game, std::string xinput) {
     } else if (command.find("genmove") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp;
-        
+
         cmdstream >> tmp;  // eat genmove
         cmdstream >> tmp;
-        
+
         if (!cmdstream.fail()) {
             int who;
             if (tmp == "w" || tmp == "white") {
-                who = FastBoard::WHITE;            
+                who = FastBoard::WHITE;
             } else if (tmp == "b" || tmp == "black") {
-                who = FastBoard::BLACK;         
+                who = FastBoard::BLACK;
             } else {
                 gtp_fail_printf(id, "syntax error");
                 return 1;
-            }   
-            
+            }
+            float old_komi = game.get_komi();
+            float new_komi = old_komi;
+            if (cfg_komi_adjust) {
+                if (who == FastBoard::BLACK) {
+                    new_komi = old_komi + 1.0f;
+                } else {
+                    new_komi = old_komi - 1.0f;
+                }
+            }
+            game.set_komi(new_komi);
+
             // start thinking
             {
                 std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
                 int move = search->think(who);
-                game.play_move(who, move);                    
+                game.play_move(who, move);
 
-                std::string vertex = game.move_to_text(move);            
+                std::string vertex = game.move_to_text(move);
                 gtp_printf(id, "%s", vertex.c_str());
             }
             if (cfg_allow_pondering) {
@@ -375,35 +400,46 @@ bool GTP::execute(GameState & game, std::string xinput) {
                     search->ponder();
                 }
             }
+            game.set_komi(old_komi);
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
-                
+
         return true;
     } else if (command.find("kgs-genmove_cleanup") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp;
-        
+
         cmdstream >> tmp;  // eat kgs-genmove
         cmdstream >> tmp;
-        
+
         if (!cmdstream.fail()) {
             int who;
             if (tmp == "w" || tmp == "white") {
-                who = FastBoard::WHITE;            
+                who = FastBoard::WHITE;
             } else if (tmp == "b" || tmp == "black") {
-                who = FastBoard::BLACK;         
+                who = FastBoard::BLACK;
             } else {
                 gtp_fail_printf(id, "syntax error");
                 return 1;
-            } 
-            
+            }
+            float old_komi = game.get_komi();
+            float new_komi = old_komi;
+            if (cfg_komi_adjust) {
+                if (who == FastBoard::BLACK) {
+                    new_komi = old_komi + 1.0f;
+                } else {
+                    new_komi = old_komi - 1.0f;
+                }
+            }
+            game.set_komi(new_komi);
             game.set_passes(0);
 
             std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
             int move = search->think(who, UCTSearch::NOPASS);
-            game.play_move(who, move);                    
+            game.play_move(who, move);
+            game.set_komi(old_komi);
 
             std::string vertex = game.move_to_text(move);             
             gtp_printf(id, "%s", vertex.c_str());
@@ -424,26 +460,35 @@ bool GTP::execute(GameState & game, std::string xinput) {
         game.display_state();
         return true;
     } else if (command.find("mc_score") == 0) {
-        float ftmp = game.board.final_mc_score(game.get_komi());   
-        /* white wins */        
+        float ftmp = game.board.final_mc_score(game.get_komi());
+        /* white wins */
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
         } else if (ftmp > 0.1) {
             gtp_printf(id, "B+%3.1f", ftmp);
         } else {
             gtp_printf(id, "0");
-        }                
+        }
         return true;
     } else if (command.find("final_score") == 0) {
-        float ftmp = game.final_score();   
-        /* white wins */        
+        float ftmp = game.final_score();
+        /* white wins */
         if (ftmp < -0.1) {
             gtp_printf(id, "W+%3.1f", (float)fabs(ftmp));
         } else if (ftmp > 0.1) {
             gtp_printf(id, "B+%3.1f", ftmp);
         } else {
             gtp_printf(id, "0");
-        }                
+        }
+        return true;
+    } else if (command.find("vn_winrate") == 0) {
+        float net_score = Network::get_Network()->get_value(&game,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        gtp_printf(id, "%f", net_score);
+        return true;
+    }  else if (command.find("mc_winrate") == 0) {
+        float mc_winrate = Playout::mc_owner(game, 512);
+        gtp_printf(id, "%f", mc_winrate);
         return true;
     } else if (command.find("final_status_list") == 0) {
         if (command.find("alive") != std::string::npos) {
@@ -456,7 +501,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_printf(id, "");
         }
         return true;
-    } else if (command.find("time_settings") == 0) {        
+    } else if (command.find("time_settings") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp;
         int maintime, byotime, byostones;
@@ -499,8 +544,21 @@ bool GTP::execute(GameState & game, std::string xinput) {
                 // KGS sends this after our move
                 // now start pondering
                 if (game.get_last_move() != FastBoard::RESIGN) {
+                    float old_komi = game.get_komi();
+                    float new_komi = old_komi;
+                    if (cfg_komi_adjust) {
+                        // We are the the color not to move
+                        int who = !game.get_to_move();
+                        if (who == FastBoard::BLACK) {
+                            new_komi = old_komi + 1.0f;
+                        } else {
+                            new_komi = old_komi - 1.0f;
+                        }
+                    }
+                    game.set_komi(new_komi);
                     std::unique_ptr<UCTSearch> search(new UCTSearch(game));
                     search->ponder();
+                    game.set_komi(old_komi);
                 }
             }
         } else {
@@ -533,7 +591,13 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (command.find("influence") == 0) {
         gtp_printf(id, "");
-        game.board.display_map(game.board.influence());        
+        game.board.display_map(game.board.influence());
+        return true;
+    } else if (command.find("heatmap") == 0) {
+        gtp_printf(id, "");
+        auto vec = Network::get_Network()->get_scored_moves(
+            &game, Network::Ensemble::AVERAGE_ALL);
+        Network::show_heatmap(&game, vec, false);
         return true;
     } else if (command.find("fixed_handicap") == 0) {
         std::istringstream cmdstream(command);
@@ -622,6 +686,10 @@ bool GTP::execute(GameState & game, std::string xinput) {
         } while (!cmdstream.fail());
 
         gtp_fail_printf(id, "I'm a go bot, not a chat bot.");
+        return true;
+    } else if (command.find("kgs-game_over") == 0) {
+        // Do nothing. Particularly, don't ponder.
+        gtp_printf(id, "");
         return true;
     } else if (command.find("kgs-time_settings") == 0) {
         // none, absolute, byoyomi, or canadian
@@ -713,11 +781,6 @@ bool GTP::execute(GameState & game, std::string xinput) {
         gtp_printf(id, "");
         return true;
 
-    } else if (command.find("predict") == 0) {
-        auto vec = Network::get_Network()->get_scored_moves(
-            &game, Network::Ensemble::DIRECT);
-        gtp_printf(id, "");
-        return true;
     } else if (command.find("bookgen") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp, filename;

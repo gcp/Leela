@@ -149,7 +149,7 @@ void Genetic::genetic_tune() {
     for (size_t i = 0; i < pool.size(); i++) {
         pool[i].resize(60);
         for (size_t j = 0; j < pool[i].size(); j++) {
-            pool[i][j] = std::pow(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
+            pool[i][j] = std::pow(10.0f, (((float)Random::get_Rng()->randfix<20000>()) / 10000.0f) - 1.0f);
         }                
     } 
     
@@ -181,7 +181,7 @@ void Genetic::genetic_tune() {
             int mother;            
             
             for (int i = 0; i < 4; i++) {
-                int select = Random::get_Rng()->randint(pool.size());
+                int select = Random::get_Rng()->randint32(pool.size());
                 if (poolmse[select] < bestfather) {
                     bestfather = poolmse[select];
                     father = select;
@@ -189,7 +189,7 @@ void Genetic::genetic_tune() {
             }
             
             for (int i = 0; i < 4; i++) {
-                int select = Random::get_Rng()->randint(pool.size());
+                int select = Random::get_Rng()->randint32(pool.size());
                 if (poolmse[select] < bestmother) {
                     bestmother = poolmse[select];
                     mother = select;
@@ -201,16 +201,16 @@ void Genetic::genetic_tune() {
             
             // crossover/mutate
             for (size_t i = 0; i < newrank.size(); i++) {
-                int mutate = Random::get_Rng()->randint(20);
+                int mutate = Random::get_Rng()->randfix<20>();
                 if (mutate != 0) {
-                    int cross = Random::get_Rng()->randint(2);
+                    int cross = Random::get_Rng()->randfix<2>();
                     if (cross == 0) {
                         newrank[i] = pool[father][i];                    
                     } else {
                         newrank[i] = pool[mother][i];                    
                     }        
                 } else {                    
-                    newrank[i] = std::pow(10.0f, (((float)Random::get_Rng()->randint(20000)) / 10000.0f) - 1.0f);
+                    newrank[i] = std::pow(10.0f, (((float)Random::get_Rng()->randfix<20000>()) / 10000.0f) - 1.0f);
                 }            
             }       
             
@@ -287,9 +287,9 @@ void Genetic::genetic_split(std::string filename) {
             
             std::unique_ptr<UCTSearch> search(new UCTSearch(game));
             search->think(tomove, UCTSearch::NOPASS);
-            
-            float score = search->get_score();    
-            
+
+            float score = std::get<0>(search->get_scores());
+
             myprintf("Score: %f\n", score);                           
             
             if (score > 0.66f && score < 0.90f) {            

@@ -106,9 +106,10 @@ public:
     int get_pattern4(const int sq, bool invert);
     uint64 get_pattern5(const int sq, bool invert, bool extend);
 
-    int estimate_mc_score(float komi = 7.5f);
-    float final_mc_score(float komi = 7.5f);
-    float area_score(float komi = 7.5f);
+    int estimate_mc_score(float komi);
+    float final_mc_score(float komi);
+    int get_stone_count();
+    float area_score(float komi);
     std::vector<bool> calc_reach_color(int col);
     std::vector<int> influence(void);
     std::vector<int> moyo(void);
@@ -186,6 +187,8 @@ protected:
     bool predict_solid_eye(const int move, const int color, const int vtx);
     void check_nakade(int color, int vertex, movelist_t & moves);
     int after_liberties_color(const int color, const int vertex);
+    bool can_kill_neighbours(const int vertex);
+    std::vector<int> critical_neighbours(const int color, const int vertex);
 };
 
 #endif

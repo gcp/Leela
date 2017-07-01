@@ -2,16 +2,19 @@
 #define GTP_H_INCLUDED
 
 #include <string>
+#include <vector>
 #include "GameState.h"
 
 extern bool cfg_allow_pondering;
 extern int cfg_num_threads;
 extern int cfg_max_playouts;
 extern bool cfg_enable_nets;
+extern bool cfg_komi_adjust;
 extern int cfg_mature_threshold;
 extern float cfg_expand_divider;
 extern int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
+extern std::vector<int> cfg_gpus;
 extern int cfg_rowtiles;
 #endif
 extern float cfg_crit_mine_1;
@@ -33,10 +36,11 @@ extern float cfg_psa;
 extern float cfg_softmax_temp;
 extern float cfg_beta;
 extern float cfg_patternbonus;
-extern float cfg_mix;
+extern float cfg_mix_opening;
+extern float cfg_mix_ending;
 extern int cfg_eval_thresh;
-extern int cfg_eval_scale;
 extern int cfg_rave_moves;
+extern int cfg_extra_symmetry;
 extern std::string cfg_logfile;
 extern FILE* cfg_logfile_handle;
 extern bool cfg_quiet;

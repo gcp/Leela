@@ -1,8 +1,8 @@
 #include "config.h"
 
 #include <assert.h>
-#include <math.h>
 #include <limits.h>
+#include <cmath>
 #include <vector>
 #include <utility>
 #include <thread>
@@ -30,9 +30,9 @@ using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
     : m_rootstate(g),
-      m_root(FastBoard::PASS, 0.0f, 1, 1),
+      m_root(FastBoard::PASS, 0.0f, 1, 1, g.board.get_stone_count()),
       m_nodes(0),
-      m_score(0.0f),
+      m_playouts(0),
       m_hasrunflag(false),
       m_runflag(NULL),
       m_analyzing(false),
@@ -145,23 +145,28 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
     m_root.sort_root_children(color);
 
     UCTNode * bestnode = parent.get_first_child();
-
     if (bestnode->first_visit()) {
         return;
+    }
+
+    int total_visits = 0;
+    UCTNode * node = bestnode;
+    while (node != nullptr) {
+        total_visits += node->get_visits();
+        node = node->get_sibling();
     }
 
     using TRowVector = std::vector<std::pair<std::string, std::string>>;
     using TDataVector = std::vector<TRowVector>;
 
-    TDataVector* GUIdata = new TDataVector();
-
+    auto analysis_data = new TDataVector();
+    auto move_data = new std::vector<std::pair<std::string, float>>();
+    node = bestnode;
     int movecount = 0;
-    UCTNode * node = bestnode;
-
-    while (node != NULL) {
+    while (node != nullptr) {
         if (node->get_score() > 0.005f || node->get_visits() > 0) {
-            std::string tmp = state.move_to_text(node->get_move());
-            std::string pvstring(tmp);
+            std::string movestr = state.move_to_text(node->get_move());
+            std::string pvstring(movestr);
 
             GameState tmpstate = state;
 
@@ -169,7 +174,9 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
             pvstring += " " + get_pv(tmpstate, *node);
 
             std::vector<std::pair<std::string, std::string>> row;
-            row.push_back(std::make_pair(std::string("Move"), tmp));
+            row.push_back(std::make_pair(std::string("Move"), movestr));
+            row.push_back(std::make_pair(std::string("Effort%"),
+                std::to_string(100.0 * node->get_visits() / (double)total_visits)));
             row.push_back(std::make_pair(std::string("Simulations"),
                 std::to_string(node->get_visits())));
             row.push_back(std::make_pair(std::string("Win%"),
@@ -191,17 +198,22 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
                 std::to_string(node->get_score() * 100.0f)));
             row.push_back(std::make_pair(std::string("PV"), pvstring));
 
-            GUIdata->push_back(row);
+            analysis_data->push_back(row);
+
+            move_data->push_back(
+                std::make_pair(movestr,
+                               (float)(node->get_visits() / (double)total_visits)));
         }
 
         node = node->get_sibling();
     }
 
-    AnalyzeGUI((void*)GUIdata);
+    GUIAnalysis((void*)analysis_data);
+    GUIBestMoves((void*)move_data);
 #endif
 }
 
-void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
+void UCTSearch::dump_stats(KoState & state, UCTNode & parent) {
 #ifdef _CONSOLE
     const int color = state.get_to_move();
 
@@ -246,7 +258,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
                 node->get_score() * 100.0f);
         }
 
-        GameState tmpstate = state;
+        KoState tmpstate = state;
 
         tmpstate.play_move(node->get_move());
         pvstring += " " + get_pv(tmpstate, *node);
@@ -264,7 +276,7 @@ void UCTSearch::dump_stats(GameState & state, UCTNode & parent) {
              parent.get_mixed_score(color) * 100.0f,
              tmp.c_str());
 
-    GameState tmpstate = state;
+    KoState tmpstate = state;
     myprintf(get_pv(tmpstate, parent).c_str());
 
     myprintf("\n");
@@ -308,6 +320,9 @@ bool UCTSearch::allow_easy_move() {
     // Precondition failure should mean we don't get here.
     // We can assume there are at least 2 moves now.
     assert(m_use_nets);
+
+    int color = m_rootstate.board.get_to_move();
+    m_root.sort_root_children(color);
 
     UCTNode * first = m_root.get_first_child();
     float best_probability = first->get_score();
@@ -366,8 +381,8 @@ bool UCTSearch::allow_early_exit() {
     // Variance of Bernoulli distribution is p(1-p) = 0.25
     // Standard error is var/sqrt(n)
     // Thus standard error on MC = sqrt(0.25)/sqrt(n) = sqrt(0.25/n)
-    low  = p1 - 2.5f * std::sqrt(0.25 / n1);
-    high = p2 + 2.5f * std::sqrt(0.25 / n2);
+    low  = p1 - 3.0f * std::sqrt(0.25 / n1);
+    high = p2 + 3.0f * std::sqrt(0.25 / n2);
 
     if (low > high) {
         myprintf("Allowing early exit: low: %f%% > high: %f%%\n", low * 100.0f, high * 100.0f);
@@ -506,7 +521,6 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     }
 
     float bestscore = m_root.get_first_child()->get_winrate(color);
-    m_score = bestscore;
 
     // do we want to fiddle with the best move because of the rule set?
      if (passflag & UCTSearch::NOPASS) {
@@ -620,7 +634,7 @@ void UCTSearch::dump_order2(void) {
     myprintf("--------------------\n");        
 }
 
-std::string UCTSearch::get_pv(GameState & state, UCTNode & parent) {
+std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
     if (!parent.has_children()) {
         return std::string();
     }
@@ -652,10 +666,10 @@ void UCTSearch::dump_analysis(void) {
 
     std::string pvstring = get_pv(tempstate, m_root);
     float winrate = 100.0f * m_root.get_winrate(color);
-    float eval = 100.0f * m_root.get_eval(color);
     float mixrate = 100.0f * m_root.get_mixed_score(color);
 
-    if (m_use_nets) {
+    if (m_use_nets && m_root.get_evalcount()) {
+        float eval = 100.0f * m_root.get_eval(color);
         myprintf("Nodes: %d, Win: %5.2f%% (MC:%5.2f%%/VN:%5.2f%%), PV: %s\n",
                  m_root.get_visits(),
                  mixrate, winrate, eval, pvstring.c_str());
@@ -676,24 +690,53 @@ bool UCTSearch::is_running() {
     return m_run;
 }
 
+bool UCTSearch::playout_limit_reached() {
+    return m_playouts >= m_maxplayouts;
+}
+
 void UCTWorker::operator()() {
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->thread_init();
+    opencl.thread_init();
 #endif
     do {
         KoState currstate = m_rootstate;
         m_search->play_simulation(currstate, m_root);
-    } while(m_search->is_running());
+        m_search->increment_playouts();
+    } while(m_search->is_running() && !m_search->playout_limit_reached());
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->join_outstanding_cb();
+    opencl.join_outstanding_cb();
 #endif
 #ifdef _WIN32
     boost::on_thread_exit();
 #endif
 }
 
-float UCTSearch::get_score() {
-    return m_score;
+std::tuple<float, float, float> UCTSearch::get_scores() {
+    int color = m_rootstate.board.get_to_move();
+
+    // make sure best is first
+    m_root.sort_root_children(color);
+
+    // do we have statistics on the moves?
+    if (m_root.get_first_child() == nullptr) {
+        return std::make_tuple(-1.0f, -1.0f, -1.0f);
+    }
+
+    UCTNode* bestnode = m_root.get_first_child();
+
+    float bestmc =
+       (bestnode->first_visit() ? -1.0f : bestnode->get_winrate(FastBoard::BLACK));
+    float bestvn =
+       (bestnode->get_evalcount() == 0 ? -1.0f : bestnode->get_eval(FastBoard::BLACK));
+    float bestscore =
+        ((bestnode->first_visit() || (bestnode->get_evalcount() == 0))
+         ? -1.0f : bestnode->get_mixed_score(FastBoard::BLACK));
+
+    return std::make_tuple(bestscore, bestmc, bestvn);
+}
+
+void UCTSearch::increment_playouts() {
+    m_playouts++;
 }
 
 int UCTSearch::think(int color, passflag_t passflag) {
@@ -701,7 +744,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_rootstate.start_clock(color);
 
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->thread_init();
+    opencl.thread_init();
 #endif
     // set side to move
     m_rootstate.board.set_to_move(color);
@@ -715,21 +758,20 @@ int UCTSearch::think(int color, passflag_t passflag) {
         time_for_move = m_rootstate.get_timecontrol()->max_time_for_move(color);
 
         GUIprintf("Thinking at most %.1f seconds...", time_for_move/100.0f);
-
-#ifdef USE_SEARCH
-        if (m_rootstate.get_movenum() < 30) {
-            int bookmove = Book::get_book_move(m_rootstate);
-            if (bookmove != FastBoard::PASS) {
-                return bookmove;
-            }
-        }
-#endif
 #ifdef KGS
         if (m_rootstate.get_handicap() > 3
             || m_rootstate.get_komi() < 0.0f
             || m_rootstate.get_komi() > 8.0f) {
             myprintf("Bullshit game parameters, resigning...\n");
             return FastBoard::RESIGN;
+        }
+#endif
+#ifdef USE_SEARCH
+        if (m_rootstate.get_movenum() < 30) {
+            int bookmove = Book::get_book_move(m_rootstate);
+            if (bookmove != FastBoard::PASS) {
+                return bookmove;
+            }
         }
 #endif
     } else {
@@ -762,6 +804,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     m_root.kill_superkos(m_rootstate);
 
     m_run = true;
+    m_playouts = 0;
 
     int cpus = cfg_num_threads;
     std::vector<std::thread> tg;
@@ -773,12 +816,12 @@ int UCTSearch::think(int color, passflag_t passflag) {
     // checked (and failed).
     bool easy_move_tested = !easy_move_precondition();
     bool keeprunning = true;
-    int iterations = 0;
     int last_update = 0;
     do {
         KoState currstate = m_rootstate;
 
         play_simulation(currstate, &m_root);
+        increment_playouts();
 
         Time elapsed;
         int centiseconds_elapsed = Time::timediff(start, elapsed);
@@ -793,10 +836,10 @@ int UCTSearch::think(int color, passflag_t passflag) {
             }
             keeprunning = (centiseconds_elapsed < time_for_move
                            && (!m_hasrunflag || (*m_runflag)));
-            keeprunning &= (iterations++ < m_maxplayouts);
+            keeprunning &= !playout_limit_reached();
 
             // check for early exit
-            if (keeprunning && ((iterations & 127) == 0)) {
+            if (keeprunning && ((m_playouts & 127) == 0)) {
                 if (centiseconds_elapsed > time_for_move/5) {
                     if (!easy_move_tested) {
                         keeprunning &= !allow_easy_move();
@@ -820,9 +863,10 @@ int UCTSearch::think(int color, passflag_t passflag) {
     // stop the search
     m_run = false;
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->join_outstanding_cb();
+    opencl.join_outstanding_cb();
 #endif
     for (auto& thread : tg) {
+        assert(thread.joinable());
         if (thread.joinable()) {
             thread.join();
         }
@@ -879,14 +923,16 @@ int UCTSearch::think(int color, passflag_t passflag) {
     Time elapsed;
     int centiseconds_elapsed = Time::timediff(start, elapsed);
     if (centiseconds_elapsed > 0) {
-        myprintf("\n%d visits, %d nodes, %d vps\n\n",
+        myprintf("\n%d visits, %d nodes, %d playouts, %d p/s\n\n",
                  m_root.get_visits(),
                  (int)m_nodes,
-                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));
-        GUIprintf("%d visits, %d nodes, %d vps",
+                 (int)m_playouts,
+                 (m_playouts * 100) / (centiseconds_elapsed+1));
+        GUIprintf("%d visits, %d nodes, %d playouts, %d p/s",
                  m_root.get_visits(),
                   (int)m_nodes,
-                 (m_root.get_visits() * 100) / (centiseconds_elapsed+1));
+                  (int)m_playouts,
+                 (m_playouts * 100) / (centiseconds_elapsed+1));
     }
     int bestmove = get_best_move(passflag);
 #else
@@ -904,6 +950,7 @@ void UCTSearch::ponder() {
 
 #ifdef USE_SEARCH
     m_run = true;
+    m_playouts = 0;
     int cpus = cfg_num_threads;
     std::vector<std::thread> tg;
     for (int i = 1; i < cpus; i++) {
@@ -912,12 +959,13 @@ void UCTSearch::ponder() {
     do {
         KoState currstate = m_rootstate;
         play_simulation(currstate, &m_root);
+        increment_playouts();
     } while(!Utils::input_pending() && (!m_hasrunflag || (*m_runflag)));
 
     // stop the search
     m_run = false;
 #ifdef USE_OPENCL
-    OpenCL::get_OpenCL()->join_outstanding_cb();
+    opencl.join_outstanding_cb();
 #endif
     for (auto& thread : tg) {
         if (thread.joinable()) {

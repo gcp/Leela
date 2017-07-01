@@ -16,7 +16,8 @@ public:
     typedef std::tuple<float, int, UCTNode*> sortnode_t;
 
     UCTNode(int vertex, float score,
-            int expand_threshold, int netscore_threshold);
+            int expand_threshold, int netscore_threshold,
+            int movenum);
     ~UCTNode();
     bool first_visit() const;
     bool has_children() const;
@@ -29,7 +30,8 @@ public:
                            FastState & state, bool at_root);
     void scoring_cb(std::atomic<int> * nodecount,
                     FastState & state,
-                    Network::Netresult & raw_netlist);
+                    Network::Netresult & raw_netlist,
+                    bool all_symmetries);
     void run_value_net(FastState & state);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
@@ -73,6 +75,7 @@ public:
     SMP::Mutex & get_mutex();
 
 private:
+    UCTNode();
     void link_child(UCTNode * newchild);
     void link_nodelist(std::atomic<int> & nodecount,
                        FastBoard & state,
@@ -80,24 +83,27 @@ private:
                        bool use_nets);
     void rescore_nodelist(std::atomic<int> & nodecount,
                          FastBoard & state,
-                         Network::Netresult & nodes);
+                         Network::Netresult & nodes,
+                         bool all_symmetries);
+    float smp_noise();
     // Tree data
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;
     // Move
     int m_move;
     // UCT
-    double m_blackwins;
-    int m_visits;
+    std::atomic<double> m_blackwins;
+    std::atomic<int> m_visits;
     // RAVE
-    double m_ravestmwins;
-    int m_ravevisits;
+    std::atomic<double> m_ravestmwins;
+    std::atomic<int> m_ravevisits;
     // move order
     float m_score;
     // board eval
     bool m_eval_propagated;
-    double m_blackevals;
-    int m_evalcount;
+    std::atomic<double> m_blackevals;
+    std::atomic<int> m_evalcount;
+    int m_movenum;
     bool m_is_evaluating;    // mutex
     // alive (superko)
     bool m_valid;
@@ -106,7 +112,8 @@ private:
     bool m_is_expanding;
     // dcnn node
     bool m_has_netscore;
-    int m_netscore_cnt;
+    int m_netscore_thresh;
+    int m_symmetries_done;
     bool m_is_netscoring;
     SMP::Mutex m_nodemutex;
 };

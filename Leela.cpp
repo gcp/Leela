@@ -4,7 +4,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#ifdef USE_OPTIONS
 #include <boost/program_options.hpp>
+#endif
 #include <boost/format.hpp>
 #ifdef USE_CAFFE
 #include <glog/logging.h>
@@ -21,6 +23,7 @@
 
 using namespace Utils;
 
+#ifdef USE_OPTIONS
 void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     namespace po = boost::program_options;
     // Declare the supported options.
@@ -36,9 +39,12 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
                         "Safety margin for time usage in centiseconds.")
         ("logfile,l", po::value<std::string>(), "File to log input/output to.")
         ("quiet,q", "Disable all diagnostic output.")
+        ("komiadjust,k", "Adjust komi one point in my disadvantage (territory scoring).")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
 #ifdef USE_OPENCL
+        ("gpu",  po::value<std::vector<int> >(),
+                "ID of the OpenCL device(s) to use (disables autodetection).")
         ("rowtiles", po::value<int>()->default_value(cfg_rowtiles),
                      "Split up the board in # tiles.")
 #endif
@@ -63,11 +69,12 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("psa", po::value<float>())
         ("cutoff_offset", po::value<float>())
         ("cutoff_ratio", po::value<float>())
-        ("mix", po::value<float>())
+        ("mix_opening", po::value<float>())
+        ("mix_ending", po::value<float>())
         ("softmax_temp", po::value<float>())
         ("eval_thresh", po::value<int>())
-        ("eval_scale", po::value<int>())
         ("rave_moves", po::value<int>())
+        ("extra_symmetry", po::value<int>())
 #endif
         ;
     po::variables_map vm;
@@ -153,17 +160,20 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("cutoff_ratio")) {
         cfg_cutoff_ratio = vm["cutoff_ratio"].as<float>();
     }
-    if (vm.count("mix")) {
-        cfg_mix = vm["mix"].as<float>();
+    if (vm.count("mix_opening")) {
+        cfg_mix_opening = vm["mix_opening"].as<float>();
+    }
+    if (vm.count("mix_ending")) {
+        cfg_mix_ending = vm["mix_ending"].as<float>();
     }
     if (vm.count("eval_thresh")) {
         cfg_eval_thresh = vm["eval_thresh"].as<int>();
     }
-    if (vm.count("eval_scale")) {
-        cfg_eval_scale = vm["eval_scale"].as<int>();
-    }
     if (vm.count("rave_moves")) {
         cfg_rave_moves = vm["rave_moves"].as<int>();
+    }
+    if (vm.count("extra_symmetry")) {
+        cfg_extra_symmetry = vm["extra_symmetry"].as<int>();
     }
 #endif
 
@@ -199,6 +209,11 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         cfg_enable_nets = false;
     }
 
+    if (vm.count("komiadjust")) {
+        myprintf("Adjusting komi for territory scoring rules.\n");
+        cfg_komi_adjust = true;
+    }
+
     if (vm.count("lagbuffer")) {
         int lagbuffer = vm["lagbuffer"].as<int>();
         if (lagbuffer != cfg_lagbuffer_cs) {
@@ -208,6 +223,10 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
 
 #ifdef USE_OPENCL
+    if (vm.count("gpu")) {
+        cfg_gpus = vm["gpu"].as<std::vector<int> >();
+    }
+
     if (vm.count("rowtiles")) {
         int rowtiles = vm["rowtiles"].as<int>();
         rowtiles = std::min(19, rowtiles);
@@ -219,6 +238,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
 #endif
 }
+#endif
 
 #ifdef _CONSOLE
 int main (int argc, char *argv[]) {
@@ -230,7 +250,9 @@ int main (int argc, char *argv[]) {
 #endif
     // Set up engine parameters
     GTP::setup_default_parameters();
+#ifdef USE_OPTIONS
     parse_commandline(argc, argv, gtp_mode);
+#endif
 
     // Disable IO buffering as much as possible
     std::cout.setf(std::ios::unitbuf);
@@ -244,11 +266,8 @@ int main (int argc, char *argv[]) {
 #endif
 
     // Use deterministic random numbers for hashing
-    std::unique_ptr<Random> rng(new Random(5489UL));
+    std::unique_ptr<Random> rng(new Random(5489));
     Zobrist::init_zobrist(*rng);
-
-    // Now seed with something more random
-    rng.reset(new Random());
 
     // Initialize things
     AttribScores::get_attribscores();

@@ -13,11 +13,10 @@
 #include "Random.h"
 #include "Utils.h"
 
-void GameState::init_game(int size, float komi) {        
-
+void GameState::init_game(int size, float komi) {
     KoState::init_game(size, komi);
 
-    game_history.clear();        
+    game_history.clear();
     game_history.push_back(*this);
 
     m_timecontrol.set_boardsize(board.get_boardsize());
@@ -65,8 +64,9 @@ bool GameState::undo_move(void) {
 }
 
 void GameState::rewind(void) {
-    KoState & f = *this; 
+    KoState & f = *this;
     f = game_history[0];
+    m_movenum = 0;
 }
 
 void GameState::play_move(int vertex) {

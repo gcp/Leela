@@ -19,6 +19,7 @@
 #include "Matcher.h"
 #include "Network.h"
 #include "GTP.h"
+#include "Random.h"
 #ifdef USE_OPENCL
 #include "OpenCL.h"
 #endif
@@ -26,14 +27,14 @@
 using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score, int expand_threshold,
-                 int netscore_threshold)
+                 int netscore_threshold, int movenum)
     : m_firstchild(nullptr), m_nextsibling(nullptr),
       m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
       m_eval_propagated(false), m_blackevals(0.0f),
-      m_evalcount(0), m_is_evaluating(false),
+      m_evalcount(0), m_movenum(movenum), m_is_evaluating(false),
       m_valid(true), m_expand_cnt(expand_threshold), m_is_expanding(false),
-      m_has_netscore(false), m_netscore_cnt(netscore_threshold),
-      m_is_netscoring(false) {
+      m_has_netscore(false), m_netscore_thresh(netscore_threshold),
+      m_symmetries_done(0), m_is_netscoring(false) {
     m_ravevisits = 20;
     m_ravestmwins = 10.0;
 }
@@ -58,7 +59,7 @@ bool UCTNode::should_expand() const {
 }
 
 bool UCTNode::should_netscore() const {
-    return m_visits > m_netscore_cnt;
+    return m_visits > m_netscore_thresh;
 }
 
 void UCTNode::link_child(UCTNode * newchild) {
@@ -75,12 +76,19 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     // acquire the lock
     SMP::Lock lock(get_mutex());
     // check whether somebody beat us to it
-    if (m_has_netscore) {
+    if (at_root && m_has_netscore) {
+        return;
+    }
+    if (m_symmetries_done >= 8) {
+        assert(!at_root);
+        return;
+    }
+    if (m_visits < m_symmetries_done * cfg_extra_symmetry) {
         return;
     }
 #ifdef USE_OPENCL
     // Previous kernel is still running, skip this expansion for now
-    if (!OpenCL::get_OpenCL()->thread_can_issue()) {
+    if (!opencl.thread_can_issue()) {
         // We don't abort them when the search ends
         // assert(!at_root);
         return;
@@ -99,16 +107,16 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     if (at_root) {
         auto raw_netlist = Network::get_Network()->get_scored_moves(
             &state, Network::Ensemble::AVERAGE_ALL);
-        scoring_cb(&nodecount, state, raw_netlist);
+        scoring_cb(&nodecount, state, raw_netlist, at_root);
     } else {
         Network::get_Network()->async_scored_moves(
-            &nodecount, &state, this, Network::Ensemble::RANDOM_ROTATION);
+            &nodecount, &state, this, Network::Ensemble::DIRECT, m_symmetries_done);
     }
 #else
     auto raw_netlist = Network::get_Network()->get_scored_moves(
         &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
-                           Network::Ensemble::RANDOM_ROTATION));
-    scoring_cb(&nodecount, state, raw_netlist);
+                           Network::Ensemble::DIRECT), m_symmetries_done);
+    scoring_cb(&nodecount, state, raw_netlist, at_root);
 #endif
 }
 
@@ -161,7 +169,8 @@ void UCTNode::create_children(std::atomic<int> & nodecount,
 
 void UCTNode::scoring_cb(std::atomic<int> * nodecount,
                          FastState & state,
-                         Network::Netresult & raw_netlist) {
+                         Network::Netresult & raw_netlist,
+                         bool all_symmetries) {
     FastBoard & board = state.board;
     std::vector<Network::scored_node> nodelist;
 
@@ -174,12 +183,13 @@ void UCTNode::scoring_cb(std::atomic<int> * nodecount,
         }
     }
     nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
-    rescore_nodelist(*nodecount, board, nodelist);
+    rescore_nodelist(*nodecount, board, nodelist, all_symmetries);
 }
 
 void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
                                FastBoard & board,
-                               Network::Netresult & nodelist) {
+                               Network::Netresult & nodelist,
+                               bool all_symmetries) {
 
     // sort (this will reverse scores, but linking is backwards too)
     std::sort(nodelist.begin(), nodelist.end());
@@ -190,6 +200,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
     const int max_net_childs = 35;
     int netscore_threshold = cfg_mature_threshold;
     int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
+    int movenum = board.get_stone_count();
 
     SMP::Lock lock(get_mutex());
 
@@ -208,7 +219,8 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
             // Not added yet, is it highly scored?
             if (std::distance(it, nodelist.cend()) <= max_net_childs) {
                 UCTNode * vtx = new UCTNode(it->second, it->first,
-                                            expand_threshold, netscore_threshold);
+                                            expand_threshold, netscore_threshold,
+                                            movenum);
                 if (it->second != FastBoard::PASS) {
                     // atari giving
                     // was == 2, == 1
@@ -223,14 +235,30 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
                 childrenadded++;
             }
         } else {
-            // Found, overwrite score with netscore
-            child->set_score(it->first);
+            // Found
+            // First net run, or average_all run at the root
+            // Overwrite MC score with netscore
+            if (m_symmetries_done == 0 || all_symmetries) {
+                child->set_score(it->first);
+            } else {
+                assert(m_symmetries_done > 0 && m_symmetries_done < 8);
+                float oldscore = child->get_score();
+                float factor = 1.0f / ((float)m_symmetries_done + 1.0f);
+                child->set_score(it->first * factor
+                                 + oldscore * (1.0f - factor));
+            }
         }
     }
 
     nodecount += childrenadded;
     sort_children();
     m_has_netscore = true;
+    m_is_netscoring = false;
+    if (all_symmetries) {
+        m_symmetries_done = 8;
+    } else {
+        m_symmetries_done++;
+    }
 }
 
 void UCTNode::link_nodelist(std::atomic<int> & nodecount,
@@ -253,18 +281,23 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
 
     int netscore_threshold = cfg_mature_threshold;
     int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
+    int movenum = board.get_stone_count();
 
     SMP::Lock lock(get_mutex());
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         if (totalchildren - childrenseen <= maxchilds) {
             UCTNode * vtx = new UCTNode(it->second, it->first,
-                                        expand_threshold, netscore_threshold);
+                                        expand_threshold, netscore_threshold,
+                                        movenum);
             if (it->second != FastBoard::PASS) {
                 // atari giving
                 // was == 2, == 1
                 if (board.minimum_elib_count(board.get_to_move(), it->second) <= 2) {
                     vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
+                }
+                if (board.minimum_elib_count(!board.get_to_move(), it->second) == 2) {
+                    vtx->set_expand_cnt(expand_threshold / 2, netscore_threshold / 2);
                 }
                 if (board.minimum_elib_count(!board.get_to_move(), it->second) == 1) {
                     vtx->set_expand_cnt(expand_threshold / 3, netscore_threshold / 3);
@@ -340,34 +373,32 @@ void UCTNode::set_move(int move) {
 
 void UCTNode::set_expand_cnt(int runs, int netscore_cnt) {
     m_expand_cnt = runs;
-    m_netscore_cnt = netscore_cnt;
+    m_netscore_thresh = netscore_cnt;
 }
 
 void UCTNode::update(Playout & gameresult, int color, bool update_eval) {
-    SMP::Lock lock(get_mutex());
     m_visits++;
     m_ravevisits++;
 
     // prefer winning with more territory
     float score = gameresult.get_score();
-
-    m_blackwins += 0.05 * score;
-
+    double blackwins_inc = 0.05 * score;
     if (score > 0.0f) {
-        m_blackwins += 1.0;
+        blackwins_inc += 1.0;
     } else if (score == 0.0f) {
-        m_blackwins += 0.5;
+        blackwins_inc += 0.5;
     }
+    atomic_add(m_blackwins, blackwins_inc);
 
     // We're inspected from one level above and scores
     // are side to move, so invert here
     if (color == FastBoard::BLACK) {
         if (score < 0.0f) {
-            m_ravestmwins += 1.0 + 0.05 * -score;
+            atomic_add(m_ravestmwins, 1.0 + 0.05 * -score);
         }
     } else if (color == FastBoard::WHITE) {
         if (score > 0.0f) {
-            m_ravestmwins += 1.0 + 0.05 * score;
+            atomic_add(m_ravestmwins, 1.0 + 0.05 * score);
         }
     }
 
@@ -386,12 +417,10 @@ double UCTNode::get_blackwins() const {
 }
 
 void UCTNode::set_visits(int visits) {
-    SMP::Lock lock(get_mutex());
     m_visits = visits;
 }
 
 void UCTNode::set_blackwins(double wins) {
-    SMP::Lock lock(get_mutex());
     m_blackwins = wins;
 }
 
@@ -407,11 +436,11 @@ float UCTNode::get_winrate(int tomove) const {
     assert(!first_visit());
 
     float rate = get_blackwins() / get_visits();
-    
+
     if (tomove == FastBoard::WHITE) {
         rate = 1.0f - rate;
     }
-    
+
     return rate;
 }
 
@@ -421,14 +450,13 @@ float UCTNode::get_raverate() const {
     return rate;
 }
 
-int UCTNode::get_visits() const {        
+int UCTNode::get_visits() const {
     return m_visits;
 }
 
 int UCTNode::get_ravevisits() const {
     return m_ravevisits;
 }
-
 
 float UCTNode::get_eval(int tomove) const {
     float score = m_blackevals / (double)m_evalcount;
@@ -467,7 +495,7 @@ void UCTNode::set_eval_propagated() {
 }
 
 void UCTNode::accumulate_eval(float eval) {
-    m_blackevals += eval;
+    atomic_add(m_blackevals, (double)eval);
     m_evalcount  += 1;
 }
 
@@ -481,12 +509,25 @@ float UCTNode::get_mixed_score(int tomove) {
         return winrate;
     }
     float eval = get_eval(tomove);
-    if (evalcount >= cfg_eval_scale) {
-        return eval * cfg_mix + winrate * (1.0f - cfg_mix);
+    float opening_mix = eval * cfg_mix_opening + winrate * (1.0f - cfg_mix_opening);
+    float ending_mix = eval * cfg_mix_ending + winrate * (1.0f - cfg_mix_ending);
+    if (m_movenum > 200) {
+        return ending_mix;
     }
-    float scaling = (float)evalcount/(float)cfg_eval_scale;
-    float mix_factor = scaling * cfg_mix;
-    return eval * mix_factor + winrate * (1.0f - mix_factor);
+    float ratio = m_movenum / 200.0;
+    return opening_mix * (1.0f - ratio) + ending_mix * ratio;
+}
+
+float UCTNode::smp_noise(void) {
+    if (cfg_num_threads >= 6) {
+        float winnoise = 0.0025f;
+        if (cfg_num_threads >= 12) {
+            winnoise = 0.04f;
+        }
+        return winnoise * Random::get_Rng()->randflt();
+    } else {
+        return 0.0f;
+    }
 }
 
 UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
@@ -508,7 +549,6 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
 
     int childcount = 0;
     UCTNode * child = m_firstchild;
-
 
     // count parentvisits
     // XXX: wtf do we count this??? don't we know?
@@ -553,15 +593,19 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             if (!child->first_visit()) {
                 // "UCT" part
                 float winrate = child->get_mixed_score(color);
+                winrate += smp_noise();
                 float psa = child->get_score();
-                float denom = child->get_visits();
+                float denom = 1.0f + child->get_visits();
 
-                float cts = std::sqrt(cfg_puct * (numerator / denom));
                 float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
+                float puct = cfg_puct * psa * (std::sqrt(parentvisits) / denom);
+                // float cts = cfg_puct * std::sqrt(numerator / denom);
+                // Alternate is to remove psa in puct but without log(parentvis)
 
-                 value = winrate + cts - mti;
+                value = winrate - mti + puct;
             } else {
                 float winrate = cfg_fpu;
+                winrate += smp_noise();
                 float psa = child->get_score();
                 float mti;
                 if (parentvisits > 1) {
@@ -570,7 +614,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                     mti = (cfg_psa / psa);
                 }
 
-                value = winrate - mti;
+                value = winrate - mti + cfg_puct * psa * std::sqrt(parentvisits);
                 assert(value > -1000.0f);
             }
         } else {
@@ -580,6 +624,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             if (!child->first_visit()) {
                 // "UCT" part
                 float winrate = child->get_mixed_score(color);
+                winrate += smp_noise();
                 uctvalue = winrate + cfg_uct * std::sqrt(numerator / child->get_visits());
                 patternbonus = sqrtf((child->get_score() * cfg_patternbonus) / child->get_visits());
             } else {
@@ -796,43 +841,41 @@ void UCTNode::delete_child(UCTNode * del_child) {
 }
 
 // update siblings with matching RAVE info
-void UCTNode::updateRAVE(Playout & playout, int color) {      
-    float score = playout.get_score();            
-    
+void UCTNode::updateRAVE(Playout & playout, int color) {
+    float score = playout.get_score();
+
     // siblings
-    UCTNode * child = m_firstchild;    
-    
-    while (child != NULL) {                
-        int move = child->get_move();                
-        
+    UCTNode * child = m_firstchild;
+
+    while (child != NULL) {
+        int move = child->get_move();
+
         if (color == FastBoard::BLACK) {
-            bool bpass = playout.passthrough(FastBoard::BLACK, move);        
-            
-            if (bpass) { 
-                SMP::Lock lock(child->get_mutex());    
+            bool bpass = playout.passthrough(FastBoard::BLACK, move);
+
+            if (bpass) {
                 child->m_ravevisits++;
 
                 if (score > 0.0f) {
-                    child->m_ravestmwins += 1.0f + 0.05f * score;
+                    atomic_add(child->m_ravestmwins, 1.0 + 0.05 * score);
                 } else if (score == 0.0f) {
-                    child->m_ravestmwins += 0.5f;
+                    atomic_add(child->m_ravestmwins, 0.5);
                 }
             }
         } else {
-            bool wpass = playout.passthrough(FastBoard::WHITE, move);        
-            
-            if (wpass) { 
-                SMP::Lock lock(child->get_mutex());    
+            bool wpass = playout.passthrough(FastBoard::WHITE, move);
+
+            if (wpass) {
                 child->m_ravevisits++;
 
                 if (score < 0.0f) {
-                    child->m_ravestmwins += 1.0f + 0.05f * -score;
+                    atomic_add(child->m_ravestmwins, 1.0 + 0.05 * -score);
                 } else if (score == 0.0f) {
-                    child->m_ravestmwins += 0.5f;
+                    atomic_add(child->m_ravestmwins, 0.5);
                 }
             }
         }
-                        
-        child = child->m_nextsibling;       
-    }      
+
+        child = child->m_nextsibling;
+    }
 }

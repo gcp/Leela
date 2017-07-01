@@ -403,6 +403,10 @@ float FastBoard::area_score(float komi) {
     return score;
 }   
 
+int FastBoard::get_stone_count() {
+    return m_totalstones[BLACK] + m_totalstones[WHITE];
+}
+
 int FastBoard::estimate_mc_score(float komi) {    
     int wsc, bsc;        
 
@@ -2370,11 +2374,11 @@ int FastBoard::count_rliberties(int vertex) {
 
 
 int FastBoard::after_liberties_color(const int color, const int vtx) {
-    FastBoard tmp = *this;
     int libs = 0;
     bool dummy;
 
     if (!is_suicide(vtx, color)) {
+        FastBoard tmp = *this;
         tmp.update_board_fast(color, vtx, dummy);
         libs = tmp.count_rliberties(vtx);
     }
@@ -2424,6 +2428,53 @@ bool FastBoard::check_winning_ladder(const int color, const int vtx) {
     return false;
 }
 
+std::vector<int> FastBoard::critical_neighbours(const int color, const int vertex) {
+    std::vector<int> res;
+
+    for (int k = 0; k < 4; k++) {
+        int ai = vertex + m_dirs[k];
+
+        if (m_square[ai] == color) {
+            int par = m_parent[ai];
+            int lib = m_libs[par];
+
+            if (lib <= 1) {
+                res.push_back(par);
+            }
+        }
+    }
+
+    return res;
+}
+
+bool FastBoard::can_kill_neighbours(const int vertex) {
+    int scolor = m_square[vertex];
+    int kcolor = !scolor;
+
+    int pos = vertex;
+
+    do {
+        assert(m_square[pos] == scolor);
+
+        for (int k = 0; k < 4; k++) {
+            int ai = pos + m_dirs[k];
+
+            if (m_square[ai] == kcolor) {
+                int par = m_parent[ai];
+                int lib = m_libs[par];
+
+                if (lib <= 1) {
+                    return true;
+                }
+            }
+        }
+
+        pos = m_next[pos];
+    } while (pos != vertex);
+
+    return false;
+}
+
 #undef LADDER_DEBUG
 
 bool FastBoard::check_losing_ladder(const int color, const int vtx, int branching) {
@@ -2449,6 +2500,30 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
         return false;
     }
 
+    // killing opponents - one of the atari giving
+    // stones can be captured?
+    // find the string in atari we're trying to save
+    // finding multiple means we're connecting so not a ladder
+    auto crit_nbr = critical_neighbours(color, vtx);
+    std::sort(crit_nbr.begin(), crit_nbr.end());
+    crit_nbr.erase(std::unique(crit_nbr.begin(), crit_nbr.end()),
+                   crit_nbr.end());
+    assert(crit_nbr.size() > 0);
+    if (crit_nbr.size() > 1) {
+#ifdef LADDER_DEBUG
+        myprintf("Connecting 2 weak groups, exiting\n");
+#endif
+        return false;
+    }
+    // Now there's just a single group in atari
+    bool kill = can_kill_neighbours(crit_nbr[0]);
+    if (kill) {
+#ifdef LADDER_DEBUG
+        myprintf("Capturing an atari giver, exiting\n");
+#endif
+        return false;
+    }
+
 #ifdef LADDER_DEBUG
     display_board(vtx);
 #endif
@@ -2457,18 +2532,27 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 
     tmp.update_board_fast(tmp.m_tomove, vtx, dummy);
 
-    // suicided
-    if (tmp.get_square(atari) == EMPTY) {
-        return true;
-    }
 
     // This loop does not swap the side to move, defender
     // and attacker are always the same.
     while (1) {
+        // suicided
+        if (tmp.get_square(atari) == EMPTY) {
+#ifdef LADDER_DEBUG
+            myprintf("suicided, exiting\n");
+            tmp.display_board(atari);
+#endif
+            return true;
+        }
+
         int newlibs = tmp.count_rliberties(atari);
 
         // self-atari
         if (newlibs == 1) {
+#ifdef LADDER_DEBUG
+            myprintf("self-atari, exiting\n");
+            tmp.display_board(atari);
+#endif
             return true;
         }
 
@@ -2507,8 +2591,8 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
         // Find where to atari next
         int liberties_arr0 = tmp.after_liberties_color(tmp.get_to_move(), libarr[0]);
         int liberties_arr1 = tmp.after_liberties_color(tmp.get_to_move(), libarr[1]);
-        bool suicide_arr0 = tmp.is_suicide(libarr[0], !tmp.get_to_move());
-        bool suicide_arr1 = tmp.is_suicide(libarr[1], !tmp.get_to_move());
+        bool suicide_arr0 = tmp.is_suicide(libarr[0], !tmp.get_to_move()) || tmp.self_atari(!tmp.get_to_move(), libarr[0]);
+        bool suicide_arr1 = tmp.is_suicide(libarr[1], !tmp.get_to_move()) || tmp.self_atari(!tmp.get_to_move(), libarr[1]);
 
         if (suicide_arr0 && suicide_arr1) {
 #ifdef LADDER_DEBUG
@@ -2553,7 +2637,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
             myprintf("Branch, atari at %s\n", move_to_text(libarr[1]).c_str());
             tmp2.display_board(libarr[1]);
 #endif
-            assert(tmp2.get_square(libarr[1]) == EMPTY);
+            assert(tmp2.get_square(libarr[1]) != EMPTY);
             bool ladder2 = tmp2.check_losing_ladder(color, libarr[0], branching + 1);
 
             // if one side of the ataris work, the ladder works
@@ -2580,7 +2664,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
 #ifdef LADDER_DEBUG
         myprintf("Saving through %s\n", move_to_text(atari).c_str());
 #endif
-    };
+    }
 
     return false;
 }

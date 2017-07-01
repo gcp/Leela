@@ -79,7 +79,8 @@ bool Utils::input_pending(void) {
 static wxEvtHandler * GUIQ = nullptr;
 static wxEvtHandler * ANALQ = nullptr;
 static int GUIQ_T = 0;
-static int ANALQ_T = 0;
+static int ANALQ_T_ANAL = 0;
+static int ANALQ_T_MOVES = 0;
 std::mutex GUImutex;
 
 void Utils::setGUIQueue(wxEvtHandler * evt, int evt_type) {
@@ -88,20 +89,33 @@ void Utils::setGUIQueue(wxEvtHandler * evt, int evt_type) {
     GUIQ_T = evt_type;
 }
 
-void Utils::setAnalysisQueue(wxEvtHandler * evt, int evt_type) {
+void Utils::setAnalysisQueue(wxEvtHandler * evt, int an_evt_type,
+                                                 int mv_evt_type) {
     std::lock_guard<std::mutex> guard(GUImutex);
     ANALQ = evt;
-    ANALQ_T = evt_type;
+    ANALQ_T_ANAL = an_evt_type;
+    ANALQ_T_MOVES = mv_evt_type;
 }
 #else
 std::mutex IOmutex;
 #endif
 
-void Utils::AnalyzeGUI(void* data) {
+void Utils::GUIAnalysis(void* data) {
 #ifndef _CONSOLE
     std::lock_guard<std::mutex> guard(GUImutex);
     if (ANALQ != NULL) {
-        wxCommandEvent* myevent = new wxCommandEvent(ANALQ_T);
+        wxCommandEvent* myevent = new wxCommandEvent(ANALQ_T_ANAL);
+        myevent->SetClientData(data);
+        ::wxQueueEvent(ANALQ, myevent);
+    }
+#endif
+}
+
+void Utils::GUIBestMoves(void* data) {
+#ifndef _CONSOLE
+    std::lock_guard<std::mutex> guard(GUImutex);
+    if (ANALQ != NULL) {
+        wxCommandEvent* myevent = new wxCommandEvent(ANALQ_T_MOVES);
         myevent->SetClientData(data);
         ::wxQueueEvent(ANALQ, myevent);
     }

@@ -11,7 +11,7 @@
 
 class GameState : public KoState {
 public:
-    void init_game(int size = FastBoard::MAXBOARDSIZE, float komi = 7.5f);
+    void init_game(int size, float komi);
     void reset_game();
     bool set_fixed_handicap(int stones); 
     int set_fixed_handicap_2(int stones); 
