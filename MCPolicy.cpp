@@ -66,7 +66,7 @@ void MCPolicy::mse_from_file(std::string filename) {
         #pragma omp parallel
         {
             // Get EV (V)
-            #pragma omp for reduction (+:bwins)
+            #pragma omp for reduction (+:bwins) nowait
             for (int i = 0; i < iterations; i++) {
                 FastState tmp = *state;
 
@@ -111,16 +111,16 @@ void MCPolicy::mse_from_file(std::string filename) {
 
         count++;
 
-        if (1/*count % 10000 == 0*/) {
+        if (count % 1000 == 0) {
             myprintf("n=%d MSE MC=%1.4f MSE NN=%1.4f\n",
                 count,
-                sum_sq_pp/(double)count,
-                sum_sq_nn/(double)count);
-            //sum_sq_pp = 0.0;
-            //sum_sq_nn = 0.0;
+                sum_sq_pp/1000.0,
+                sum_sq_nn/1000.0);
+            sum_sq_pp = 0.0;
+            sum_sq_nn = 0.0;
         }
 
-        if (count % 10000 == 0) {
+        if (count % 1000 == 0) {
             std::string filename = "rltune_" + std::to_string(count) + ".txt";
             std::ofstream out(filename);
             for (int w = 0; w < NUM_FEATURES; w++) {
@@ -140,8 +140,7 @@ void PolicyTrace::trace_process(int iterations, bool blackwon) {
         sign = -1.0f;
     }
 
-    std::vector<float> policy_feature_gradient;
-    policy_feature_gradient.resize(NUM_FEATURES);
+    std::array<float, NUM_FEATURES> policy_feature_gradient;
     std::unordered_map<int, float> policy_pattern_gradient;
 
     if (trace.empty()) return;
@@ -166,8 +165,7 @@ void PolicyTrace::trace_process(int iterations, bool blackwon) {
         }
 
         // loop over features, get prob of feature
-        std::vector<float> feature_probabilities;
-        feature_probabilities.resize(NUM_FEATURES);
+        std::array<float, NUM_FEATURES> feature_probabilities;
         for (size_t i = 0; i < NUM_FEATURES; i++) {
             float weight_prob = 0.0f;
             for (size_t c = 0; c < candidate_probabilities.size(); c++) {
