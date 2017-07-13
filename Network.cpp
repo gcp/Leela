@@ -417,9 +417,9 @@ void batchnorm(std::vector<float>& input,
 }
 #endif
 
-void softmax(std::vector<float>& input,
-             std::vector<float>& output,
-             float temperature) {
+void Network::softmax(std::vector<float>& input,
+                      std::vector<float>& output,
+                      float temperature) {
     assert(&input != &output);
 
     float alpha = *std::max_element(input.begin(),
@@ -461,7 +461,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
     constexpr int width = 19;
     constexpr int height = 19;
     std::vector<float> softmax_data(width * height);
-    softmax(cb_data->m_output_data, softmax_data, cfg_softmax_temp);
+    Network::softmax(cb_data->m_output_data, softmax_data, cfg_softmax_temp);
     std::vector<float>& outputs = softmax_data;
 
     Network::Netresult result;

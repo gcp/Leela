@@ -48,7 +48,8 @@ bool Playout::has_eval() {
     return m_eval_valid;
 }
 
-void Playout::run(FastState & state, bool postpassout, bool resigning) {
+void Playout::run(FastState & state, bool postpassout, bool resigning,
+                  PolicyTrace * trace) {
     assert(!m_run);
 
     const int boardsize = state.board.get_boardsize();
@@ -65,7 +66,7 @@ void Playout::run(FastState & state, bool postpassout, bool resigning) {
     while (state.get_passes() < maxpasses
         && state.get_movenum() < playoutlen
         && (!resigning || abs(state.estimate_mc_score()) < resign)) {
-        int vtx = state.play_random_move();
+        int vtx = state.play_random_move(state.get_to_move(), trace);
 
         if (counter < 30 && vtx != FastBoard::PASS) {
             int color = !state.get_to_move();
@@ -143,7 +144,7 @@ void Playout::do_playout_benchmark(GameState & game) {
             float thread_board_score = 0.0f;
             for (int i = 0; i < iters_per_thread; i++) {
                 do {
-                    mygame.play_random_move();
+                    game.play_random_move(game.get_to_move());
                 } while (mygame.get_passes() < 2
                         && mygame.get_movenum() < playoutlen
                         && abs(mygame.estimate_mc_score()) < resign);

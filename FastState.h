@@ -11,8 +11,7 @@ public:
     void reset_game();
     void reset_board();
 
-    int play_random_move();
-    int play_random_move(int color);
+    int play_random_move(int color, PolicyTrace * trace = nullptr);
     int play_move_fast(int vertex);
     float score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex);
 
@@ -63,7 +62,6 @@ protected:
     int walk_empty_list(int color, bool allow_sa = false);
     void play_move(int color, int vertex);
     int select_weighted(FastBoard::scoredmoves_t & moves, int cumul);
-    int select_uniform(FastBoard::movelist_t & moves);
 };
 
 #endif

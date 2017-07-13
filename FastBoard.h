@@ -2,6 +2,7 @@
 #define FASTBOARD_H_INCLUDED
 
 #include "config.h"
+#include "MCPolicy.h"
 
 #include <array>
 #include <string>
@@ -52,7 +53,7 @@ public:
         move generation types
     */
     using movescore_t = std::pair<int, float>;
-    using movelist_t = std::vector<int>;
+    using movelist_t = std::vector<MovewFeatures>;
     using scoredmoves_t = std::vector<movescore_t>;
 
     int get_boardsize(void);
@@ -72,7 +73,6 @@ public:
     void add_pattern_moves(int color, int vertex, movelist_t & moves);
     void add_global_captures(int color, movelist_t & moves);
     void add_near_nakade_moves(int color, int vertex, movelist_t & moves);
-    int replace_if_nakade(int color, int vertex);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);

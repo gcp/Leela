@@ -6,6 +6,7 @@
 
 #include "GameState.h"
 #include "FastState.h"
+#include "MCPolicy.h"
 
 class Playout {
 public:
@@ -19,7 +20,8 @@ public:
                           float* points = nullptr);
 
     Playout();
-    void run(FastState & state, bool postpassout, bool resigning);
+    void run(FastState & state, bool postpassout, bool resigning,
+             PolicyTrace * trace = nullptr);
     float get_score();
     float get_territory();
     void set_eval(float eval);

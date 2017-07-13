@@ -1,7 +1,7 @@
 default:
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -ffast-math -march=native -flto -std=c++11 -DNDEBUG -D_CONSOLE'  \
-		LDFLAGS='$(LDFLAGS) -g' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -ffast-math -march=native -flto -fopenmp -std=c++11 -DNDEBUG -D_CONSOLE'  \
+		LDFLAGS='$(LDFLAGS) -fopenmp -g' \
 		leela
 
 gcc32b:
@@ -12,28 +12,28 @@ gcc32b:
 
 debug:
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O0 -g -std=c++11 -D_CONSOLE' \
-		LDFLAGS='$(LDFLAGS) -g' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O0 -g -fopenmp -std=c++11 -D_CONSOLE' \
+		LDFLAGS='$(LDFLAGS) -fopenmp -g' \
 		leela
 
 clang:
-	$(MAKE) CC=clang CXX=clang++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -g -march=native -std=c++11 -D_CONSOLE -DNDEBUG' \
-		LDFLAGS='$(LDFLAGS)' \
+	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -g -march=native -std=c++11 -fopenmp -flto -D_CONSOLE -DNDEBUG' \
+		LDFLAGS='$(LDFLAGS) -fopenmp -flto -fuse-linker-plugin' \
 		leela
 
 asan:
 	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=address -fno-omit-frame-pointer -O1 -g -std=c++11 -D_CONSOLE' \
-		LDFLAGS='$(LDFLAGS) -g -fsanitize=address' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=address -fno-omit-frame-pointer -O1 -g -fopenmp -std=c++11 -D_CONSOLE' \
+		LDFLAGS='$(LDFLAGS) -g -fsanitize=address -fopenmp' \
 		leela
 
 LIBS = -lboost_program_options
 #DYNAMIC_LIBS += -lboost_filesystem -lcaffe -lprotobuf -lglog
 #LIBS += -lopenblas
 DYNAMIC_LIBS += -lpthread
-#DYNAMIC_LIBS += -lOpenCL
-LIBS += -framework Accelerate
+DYNAMIC_LIBS += -lOpenCL
+#LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
 #DYNAMIC_LIBS += -lmkl_rt
 

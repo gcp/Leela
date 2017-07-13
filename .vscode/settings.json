@@ -45,6 +45,7 @@
         "slist": "cpp",
         "deque": "cpp",
         "vector": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "future": "cpp"
     }
 }
