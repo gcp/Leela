@@ -22,6 +22,11 @@ using namespace Utils;
 std::unordered_map<int, float> PolicyWeights::pattern_gradients;
 std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
 
+// Adam
+std::unordered_map<int, std::pair<float, float>> pattern_adam;
+std::array<std::pair<float, float>, NUM_FEATURES> feature_adam;
+int t{0};
+
 void MCPolicy::mse_from_file(std::string filename) {
     std::vector<std::string> games = SGFParser::chop_all(filename);
     size_t gametotal = games.size();
@@ -260,15 +265,29 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
 }
 
 void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
-    constexpr float alpha = 10.0f;
+    constexpr float alpha = 0.01f;
+    constexpr float beta_1 = 0.9f;
+    constexpr float beta_2 = 0.999f;
+    constexpr float delta = 1e-8f;
+
+    // Timestep for Adam (total updates)
+    t++;
+
     float Vdelta = black_eval - black_winrate;
 
     for (int i = 0; i < NUM_FEATURES; i++) {
         float orig_weight = PolicyWeights::feature_weights[i];
         float gradient = PolicyWeights::feature_gradients[i];
+
+        feature_adam[i].first  = beta_1 * feature_adam[i].first  + (1.0f - beta_1) * gradient;
+        feature_adam[i].second = beta_2 * feature_adam[i].second + (1.0f - beta_2) * gradient * gradient;
+        float bc_m1 = feature_adam[i].first  / (1.0f - std::pow(beta_1, (double)t));
+        float bc_m2 = feature_adam[i].second / (1.0f - std::pow(beta_2, (double)t));
+        float adam_grad = alpha * bc_m1 / (std::sqrt(bc_m2) + delta);
+
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += alpha * Vdelta * gradient;
+        theta += adam_grad * Vdelta;
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
         gamma = std::max(gamma, 1e-5f);
@@ -277,15 +296,23 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     }
 
     for (auto & pat : PolicyWeights::pattern_gradients) {
-        float orig_weight = PolicyWeights::get_pattern_weight(pat.first);
+        int pidx       = pat.first;
         float gradient = pat.second;
+        float orig_weight = PolicyWeights::get_pattern_weight(pidx);
+
+        pattern_adam[pidx].first  = beta_1 * pattern_adam[pidx].first  + (1.0f - beta_1) * gradient;
+        pattern_adam[pidx].second = beta_2 * pattern_adam[pidx].second + (1.0f - beta_2) * gradient * gradient;
+        float bc_m1 = pattern_adam[pidx].first  / (1.0f - std::pow(beta_1, (double)t));
+        float bc_m2 = pattern_adam[pidx].second / (1.0f - std::pow(beta_2, (double)t));
+        float adam_grad = alpha * bc_m1 / (std::sqrt(bc_m2) + delta);
+
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += alpha * Vdelta * gradient;
+        theta += adam_grad * Vdelta;
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
         gamma = std::max(gamma, 1e-5f);
         gamma = std::min(gamma, 1e5f);
-        PolicyWeights::set_pattern_weight(pat.first, gamma);
+        PolicyWeights::set_pattern_weight(pidx, gamma);
     }
 }
