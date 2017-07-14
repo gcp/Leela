@@ -159,7 +159,7 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
         }
     }
 
-    int loop_amount = 4;
+    constexpr int loop_amount = 4;
     // Random moves on the board
     for (int loops = 0; loops < loop_amount; loops++) {
         int sq = walk_empty_list(board.m_tomove, true);

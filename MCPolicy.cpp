@@ -36,6 +36,8 @@ void MCPolicy::mse_from_file(std::string filename) {
     PolicyWeights::feature_weights.fill(1.0f);
     PolicyWeights::pattern_weights.clear();
 
+    Time start;
+
     while (1) {
         int pick = Random::get_Rng()->randint32(gametotal);
 
@@ -62,11 +64,21 @@ void MCPolicy::mse_from_file(std::string filename) {
         PolicyWeights::feature_gradients.fill(0.0f);
         PolicyWeights::pattern_gradients.clear();
         float bwins = 0.0f;
+        float nwscore;
 
         #pragma omp parallel
         {
+            #pragma omp single nowait
+            {
+                nwscore = Network::get_Network()->get_value(
+                    state, Network::Ensemble::AVERAGE_ALL);
+                if (state->get_to_move() == FastBoard::WHITE) {
+                    nwscore = 1.0f - nwscore;
+                }
+            }
+
             // Get EV (V)
-            #pragma omp for reduction (+:bwins) nowait
+            #pragma omp for reduction (+:bwins) nowait schedule(dynamic, 8)
             for (int i = 0; i < iterations; i++) {
                 FastState tmp = *state;
 
@@ -80,7 +92,7 @@ void MCPolicy::mse_from_file(std::string filename) {
             }
 
             // Policy Trace per thread
-            #pragma omp for
+            #pragma omp for schedule(dynamic, 4)
             for (int i = 0; i < iterations; i++) {
                 FastState tmp = *state;
 
@@ -94,11 +106,6 @@ void MCPolicy::mse_from_file(std::string filename) {
         }
         bwins /= (float)iterations;
 
-        float nwscore = Network::get_Network()->get_value(
-            state, Network::Ensemble::AVERAGE_ALL);
-        if (state->get_to_move() == FastBoard::WHITE) {
-            nwscore = 1.0f - nwscore;
-        }
         float black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
 
         MCPolicy::adjust_weights(black_score, bwins);
@@ -112,10 +119,15 @@ void MCPolicy::mse_from_file(std::string filename) {
         count++;
 
         if (count % 1000 == 0) {
-            myprintf("n=%d MSE MC=%1.4f MSE NN=%1.4f\n",
+            Time end;
+            float timediff = Time::timediff(start, end) / 100.0f;
+            float ips = 1000.0f / timediff;
+            start = end;
+            myprintf("n=%d MSE MC=%1.4f MSE NN=%1.4f ips=%f\n",
                 count,
                 sum_sq_pp/1000.0,
-                sum_sq_nn/1000.0);
+                sum_sq_nn/1000.0,
+                ips);
             sum_sq_pp = 0.0;
             sum_sq_nn = 0.0;
         }
@@ -134,13 +146,13 @@ void MCPolicy::mse_from_file(std::string filename) {
     }
 }
 
-void PolicyTrace::trace_process(int iterations, bool blackwon) {
+void PolicyTrace::trace_process(const int iterations, const bool blackwon) {
     float sign = 1.0f;
     if (!blackwon) {
         sign = -1.0f;
     }
 
-    std::array<float, NUM_FEATURES> policy_feature_gradient;
+    std::array<float, NUM_FEATURES> policy_feature_gradient{};
     std::unordered_map<int, float> policy_pattern_gradient;
 
     if (trace.empty()) return;

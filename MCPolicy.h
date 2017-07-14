@@ -47,7 +47,7 @@ public:
     /* gradients default to 0.0 so everything just works,
        but weights need a default of 1.0
     */
-    static float get_pattern_weight(int pattern) {
+    static float get_pattern_weight(const int pattern) {
         assert(pattern >= 0);
         auto it = pattern_weights.find(pattern);
 
@@ -58,7 +58,7 @@ public:
         }
     }
 
-    static void set_pattern_weight(int pattern, float val) {
+    static void set_pattern_weight(const int pattern, const float val) {
         assert(pattern >= 0);
         auto it = pattern_weights.find(pattern);
 
