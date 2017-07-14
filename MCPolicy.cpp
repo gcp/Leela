@@ -283,7 +283,8 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         feature_adam[i].second = beta_2 * feature_adam[i].second + (1.0f - beta_2) * gradient * gradient;
         float bc_m1 = feature_adam[i].first  / (1.0f - std::pow(beta_1, (double)t));
         float bc_m2 = feature_adam[i].second / (1.0f - std::pow(beta_2, (double)t));
-        float adam_grad = alpha * bc_m1 / (std::sqrt(bc_m2) + delta);
+        float bc_m1_nag = beta_1 * bc_m1 + gradient * (1.0f - beta_1) / (1.0f - std::pow(beta_1, (double)t));
+        float adam_grad = alpha * bc_m1_nag / (std::sqrt(bc_m2) + delta);
 
         // Convert to theta
         float theta = std::log(orig_weight);
@@ -304,7 +305,8 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         pattern_adam[pidx].second = beta_2 * pattern_adam[pidx].second + (1.0f - beta_2) * gradient * gradient;
         float bc_m1 = pattern_adam[pidx].first  / (1.0f - std::pow(beta_1, (double)t));
         float bc_m2 = pattern_adam[pidx].second / (1.0f - std::pow(beta_2, (double)t));
-        float adam_grad = alpha * bc_m1 / (std::sqrt(bc_m2) + delta);
+        float bc_m1_nag = beta_1 * bc_m1 + gradient * (1.0f - beta_1) / (1.0f - std::pow(beta_1, (double)t));
+        float adam_grad = alpha * bc_m1_nag / (std::sqrt(bc_m2) + delta);
 
         // Convert to theta
         float theta = std::log(orig_weight);

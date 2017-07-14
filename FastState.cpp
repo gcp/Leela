@@ -171,7 +171,9 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
 
     moves.erase(std::remove_if(moves.begin(), moves.end(),
                                [this](MovewFeatures & mwf) {
-                                   return mwf.get_sq() == m_komove;
+                                   int sq = mwf.get_sq();
+                                   assert(sq > 0);
+                                   return sq == m_komove;
                                }),
                 moves.end());
 
@@ -185,6 +187,7 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
         if (sq == FastBoard::PASS) {
             continue;
         }
+        assert(sq > 0);
         //int pattern = board.get_pattern_fast_augment(sq);
         //score = matcher->matches(color, pattern);
         bool invert_board = false;
