@@ -146,7 +146,8 @@ public:
         trace.push_back(MoveDecision(black_to_move, moves, moves[chosen_idx]));
     }
 
-    void trace_process(int iterations, bool blackwin);
+    void trace_process(const int iterations, const float baseline,
+                       const bool blackwin);
 };
 
 class MCPolicy {

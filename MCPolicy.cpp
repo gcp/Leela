@@ -65,6 +65,7 @@ void MCPolicy::mse_from_file(std::string filename) {
         PolicyWeights::pattern_gradients.clear();
         float bwins = 0.0f;
         float nwscore;
+        float black_score;
 
         #pragma omp parallel
         {
@@ -75,10 +76,11 @@ void MCPolicy::mse_from_file(std::string filename) {
                 if (state->get_to_move() == FastBoard::WHITE) {
                     nwscore = 1.0f - nwscore;
                 }
+                black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
             }
 
             // Get EV (V)
-            #pragma omp for reduction (+:bwins) nowait schedule(dynamic, 8)
+            #pragma omp for reduction (+:bwins) schedule(dynamic, 8)
             for (int i = 0; i < iterations; i++) {
                 FastState tmp = *state;
 
@@ -87,7 +89,7 @@ void MCPolicy::mse_from_file(std::string filename) {
 
                 float score = p.get_score();
                 if (score > 0.0f) {
-                    bwins += 1.0f;
+                    bwins += 1.0f / iterations;
                 }
             }
 
@@ -101,12 +103,9 @@ void MCPolicy::mse_from_file(std::string filename) {
                 p.run(tmp, false, true, &policy_trace);
 
                 bool black_won = p.get_score() > 0.0f;
-                policy_trace.trace_process(iterations, black_won);
+                policy_trace.trace_process(iterations, bwins, black_won);
             }
         }
-        bwins /= (float)iterations;
-
-        float black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
 
         MCPolicy::adjust_weights(black_score, bwins);
 
@@ -146,11 +145,13 @@ void MCPolicy::mse_from_file(std::string filename) {
     }
 }
 
-void PolicyTrace::trace_process(const int iterations, const bool blackwon) {
-    float sign = 1.0f;
+void PolicyTrace::trace_process(const int iterations, const float baseline,
+                                const bool blackwon) {
+    float z = 1.0f;
     if (!blackwon) {
-        sign = -1.0f;
+        z = 0.0f;
     }
+    float sign = z - baseline;
 
     std::array<float, NUM_FEATURES> policy_feature_gradient{};
     std::unordered_map<int, float> policy_pattern_gradient;
