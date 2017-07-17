@@ -12,40 +12,40 @@
 class FastBoard {
     friend class FastState;
 public:
-    /* 
-        neighbor counts are up to 4, so 3 bits is ok,
-        but a power of 2 makes things a bit faster 
-    */
-    static const int NBR_SHIFT = 4;   
-        
     /*
-        largest board supported 
+        neighbor counts are up to 4, so 3 bits is ok,
+        but a power of 2 makes things a bit faster
     */
-    static const int MAXBOARDSIZE = 25;
+    static constexpr int NBR_SHIFT = 4;
 
     /*
-        highest existing square        
-    */            
-    static const int MAXSQ = ((MAXBOARDSIZE + 2) * (MAXBOARDSIZE + 2));    
+        largest board supported
+    */
+    static constexpr int MAXBOARDSIZE = 25;
+
+    /*
+        highest existing square
+    */
+    static constexpr int MAXSQ = ((MAXBOARDSIZE + 2) * (MAXBOARDSIZE + 2));
 
     /*
         infinite score
-    */        
-    static const int BIG = 10000000;
+    */
+    static constexpr int BIG = 10000000;
 
     /*
         vertex of a pass
     */
-    static const int PASS   = -1;
+    static constexpr int PASS   = -1;
     /*
         vertex of a "resign move"
-    */        
-    static const int RESIGN = -2;
+    */
+    static constexpr int RESIGN = -2;
 
     /*
         possible contents of a square
-    */        
-    enum square_t : unsigned char { 
+    */
+    enum square_t : unsigned char {
         BLACK = 0, WHITE = 1, EMPTY = 2, INVAL = 3
     };
 

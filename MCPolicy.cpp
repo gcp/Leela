@@ -76,9 +76,10 @@ void MCPolicy::mse_from_file(std::string filename) {
         {
             #pragma omp single nowait
             {
+                FastState workstate = *state;
                 nwscore = Network::get_Network()->get_value(
-                    state, Network::Ensemble::AVERAGE_ALL);
-                if (state->get_to_move() == FastBoard::WHITE) {
+                    &workstate, Network::Ensemble::AVERAGE_ALL);
+                if (workstate.get_to_move() == FastBoard::WHITE) {
                     nwscore = 1.0f - nwscore;
                 }
                 black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
@@ -94,7 +95,7 @@ void MCPolicy::mse_from_file(std::string filename) {
 
                 float score = p.get_score();
                 if (score > 0.0f) {
-                    bwins += 1.0f / iterations;
+                    bwins += 1.0f / (float)iterations;
                 }
             }
 
@@ -291,8 +292,8 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         theta += adam_grad * Vdelta;
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
-        gamma = std::max(gamma, 1e-5f);
-        gamma = std::min(gamma, 1e5f);
+        gamma = std::max(gamma, 1e-6f);
+        gamma = std::min(gamma, 1e6f);
         PolicyWeights::feature_weights[i] = gamma;
     }
 
@@ -302,19 +303,20 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         float orig_weight = PolicyWeights::get_pattern_weight(pidx);
 
         pattern_adam[pidx].first  = beta_1 * pattern_adam[pidx].first  + (1.0f - beta_1) * gradient;
-        pattern_adam[pidx].second = beta_2 * pattern_adam[pidx].second + (1.0f - beta_2) * gradient * gradient;
-        float bc_m1 = pattern_adam[pidx].first  / (1.0f - std::pow(beta_1, (double)t));
-        float bc_m2 = pattern_adam[pidx].second / (1.0f - std::pow(beta_2, (double)t));
-        float bc_m1_nag = beta_1 * bc_m1 + gradient * (1.0f - beta_1) / (1.0f - std::pow(beta_1, (double)t));
-        float adam_grad = alpha * bc_m1_nag / (std::sqrt(bc_m2) + delta);
+        //pattern_adam[pidx].second = beta_2 * pattern_adam[pidx].second + (1.0f - beta_2) * gradient * gradient;
+        //float bc_m1 = pattern_adam[pidx].first  / (1.0f - std::pow(beta_1, (double)t));
+        //float bc_m2 = pattern_adam[pidx].second / (1.0f - std::pow(beta_2, (double)t));
+        //float bc_m1_nag = beta_1 * bc_m1 + gradient * (1.0f - beta_1) / (1.0f - std::pow(beta_1, (double)t));
+        //float adam_grad = alpha * bc_m1_nag / (std::sqrt(bc_m2) + delta);
+        float m = alpha * pattern_adam[pidx].first;
 
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += adam_grad * Vdelta;
+        theta += m * Vdelta;
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
-        gamma = std::max(gamma, 1e-5f);
-        gamma = std::min(gamma, 1e5f);
+        gamma = std::max(gamma, 1e-6f);
+        gamma = std::min(gamma, 1e6f);
         PolicyWeights::set_pattern_weight(pidx, gamma);
     }
 }

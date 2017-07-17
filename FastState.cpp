@@ -125,20 +125,6 @@ int FastState::walk_empty_list(int color, bool allow_sa) {
     return FastBoard::PASS;
 }
 
-int FastState::select_weighted(FastBoard::scoredmoves_t & scoredmoves,
-                               int cumul) {
-    int index = Random::get_Rng()->randint32(cumul);
-
-    for (size_t i = 0; i < scoredmoves.size(); i++) {
-        int point = scoredmoves[i].second;
-        if (index < point) {
-            return play_move_fast(scoredmoves[i].first);
-        }
-    }
-
-    return play_move_fast(FastBoard::PASS);
-}
-
 int FastState::play_random_move(int color, PolicyTrace * trace) {
     board.m_tomove = color;
 
@@ -303,11 +289,11 @@ float FastState::score_move(std::vector<int> & territory, std::vector<int> & moy
 
 int FastState::play_move_fast(int vertex) {
     bool capture = false;
-    if (vertex == FastBoard::PASS) {                       
-        increment_passes();                 
-    } else {                                                      
+    if (vertex == FastBoard::PASS) {
+        increment_passes();
+    } else {
         m_komove = board.update_board_fast(board.m_tomove, vertex, capture);
-        set_passes(0);                                            
+        set_passes(0);
     }
 
     m_onebutlastmove = m_lastmove;
