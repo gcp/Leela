@@ -141,7 +141,9 @@ void MCPolicy::mse_from_file(std::string filename) {
             std::string filename = "rltune_" + std::to_string(count) + ".txt";
             std::ofstream out(filename);
             for (int w = 0; w < NUM_FEATURES; w++) {
-                out << w << " = " << PolicyWeights::feature_weights[w] << std::endl;
+                out << PolicyWeights::feature_weights[w]
+                    << "f, /* = " << w << " */"
+                    << std::endl;
             }
             for (auto & pat : PolicyWeights::pattern_weights) {
                 out << "{ " << pat.first << ", " << pat.second << "f}," << std::endl;;
