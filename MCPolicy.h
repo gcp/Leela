@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 // Scored features
+constexpr int NUM_PATTERNS = 8192;
 constexpr int NUM_FEATURES = 23;
 constexpr int MWF_FLAG_PASS         = 1 <<  0;
 constexpr int MWF_FLAG_NAKADE       = 1 <<  1;
@@ -39,35 +40,10 @@ constexpr int MWF_FLAG_CAPTURE      = 1 << 30;
 
 class PolicyWeights {
 public:
-    static std::unordered_map<int, float> pattern_gradients;
-    static std::unordered_map<int, float> pattern_weights;
+    static std::array<float, NUM_PATTERNS> pattern_gradients;
+    static std::array<float, NUM_PATTERNS> pattern_weights;
     static std::array<float, NUM_FEATURES> feature_weights;
     static std::array<float, NUM_FEATURES> feature_gradients;
-
-    /* gradients default to 0.0 so everything just works,
-       but weights need a default of 1.0
-    */
-    static float get_pattern_weight(const int pattern) {
-        assert(pattern >= 0);
-        auto it = pattern_weights.find(pattern);
-
-        if (it != pattern_weights.end()) {
-            return it->second;
-        } else {
-            return 1.0f;
-        }
-    }
-
-    static void set_pattern_weight(const int pattern, const float val) {
-        assert(pattern >= 0);
-        auto it = pattern_weights.find(pattern);
-
-        if (it != pattern_weights.end()) {
-            it->second = val;
-        } else {
-            pattern_weights.insert(std::make_pair(pattern, val));
-        }
-    }
 };
 
 class MovewFeatures {
@@ -110,7 +86,7 @@ public:
             }
         }
         if (!is_pass()) {
-            result *= PolicyWeights::get_pattern_weight(m_pattern);
+            result *= PolicyWeights::pattern_weights[m_pattern];
         }
         return result;
     }
@@ -152,6 +128,7 @@ public:
 
 class MCPolicy {
 public:
+    static void hash_test(void);
     static void adjust_weights(float black_eval, float black_winrate);
     static void mse_from_file(std::string filename);
 };

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <omp.h>
+#include <string.h>
 #include "GTP.h"
 #include "MCPolicy.h"
 #include "SGFParser.h"
@@ -19,13 +20,60 @@
 using namespace Utils;
 
 #include "PolicyWeights.h"
-std::unordered_map<int, float> PolicyWeights::pattern_gradients;
+std::array<float, NUM_PATTERNS> PolicyWeights::pattern_gradients;
 std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
 
 // Adam
-std::unordered_map<int, std::pair<float, float>> pattern_adam;
+std::array<std::pair<float, float>, NUM_PATTERNS> pattern_adam;
 std::array<std::pair<float, float>, NUM_FEATURES> feature_adam;
 int t{0};
+
+#if 0
+void MCPolicy::hash_test() {
+    std::atomic<int> mincol{4096};
+
+    // 97 collisions 2148 -> 8192
+    uint32 c1 = 0xc54be620;
+    uint32 c2 = 0x7766d421;
+    uint32 s1 = 26;
+    uint32 s2 = 20;
+
+    #pragma omp parallel for
+    for (size_t inf = 0; inf < SIZE_MAX; inf++) {
+
+        c1  = (uint32)Random::get_Rng()->random();
+        c2  = (uint32)Random::get_Rng()->random();
+        s1  = (uint32)Random::get_Rng()->randint16(32);
+        s2  = (uint32)Random::get_Rng()->randint16(32);
+
+        int pat_hash[8192];
+        memset(pat_hash, 0, sizeof(pat_hash));
+        int coll = 0;
+
+        for (auto & patw : PolicyWeights::pattern_weights) {
+            int pat = patw.first;
+            uint32 h = pat;
+
+            h  = Utils::rotl32(h, 11) ^ ((h + c1) >> s1);
+            h *= c2;
+            h ^= h >> s2;
+
+            int hash = h & (8192 - 1);
+            if (pat_hash[hash]) {
+                coll++;
+            }
+            pat_hash[hash]++;
+        }
+
+        if (coll < mincol) {
+            myprintf("c: %x %x s: %d %d, collisions: %d\n", c1, c2, s1, s2, coll);
+            mincol = coll;
+        }
+    }
+
+    exit(EXIT_SUCCESS);
+}
+#endif
 
 void MCPolicy::mse_from_file(std::string filename) {
     std::vector<std::string> games = SGFParser::chop_all(filename);
@@ -39,8 +87,7 @@ void MCPolicy::mse_from_file(std::string filename) {
     int count = 0;
 
     PolicyWeights::feature_weights.fill(1.0f);
-    PolicyWeights::pattern_weights.clear();
-
+    PolicyWeights::pattern_weights.fill(1.0f);
     Time start;
 
     while (1) {
@@ -67,7 +114,7 @@ void MCPolicy::mse_from_file(std::string filename) {
 
         constexpr int iterations = 512;
         PolicyWeights::feature_gradients.fill(0.0f);
-        PolicyWeights::pattern_gradients.clear();
+        PolicyWeights::pattern_gradients.fill(0.0f);
         float bwins = 0.0f;
         float nwscore;
         float black_score;
@@ -145,8 +192,9 @@ void MCPolicy::mse_from_file(std::string filename) {
                     << "f, /* = " << w << " */"
                     << std::endl;
             }
-            for (auto & pat : PolicyWeights::pattern_weights) {
-                out << "{ " << pat.first << ", " << pat.second << "f}," << std::endl;;
+            out << std::endl;
+            for (int w = 0; w < NUM_PATTERNS; w++) {
+                out << PolicyWeights::pattern_weights[w] << "f, " << std::endl;
             }
             out.close();
         }
@@ -162,7 +210,7 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
     float sign = z - baseline;
 
     std::array<float, NUM_FEATURES> policy_feature_gradient{};
-    std::unordered_map<int, float> policy_pattern_gradient;
+    std::array<float, NUM_PATTERNS> policy_pattern_gradient{};
 
     if (trace.empty()) return;
 
@@ -198,32 +246,6 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
             feature_probabilities[i] = weight_prob;
         }
 
-        // now deal with patterns
-        // get all the ones that occur into a simple list
-        std::unordered_set<int> seen_patterns;
-        for (auto & mwf : decision.candidates) {
-            if (!mwf.is_pass()) {
-                seen_patterns.insert(mwf.get_pattern());
-            }
-        }
-        std::vector<int> patterns(seen_patterns.begin(), seen_patterns.end());
-
-        // get pat probabilities
-        std::vector<float> pattern_probabilities;
-        pattern_probabilities.reserve(patterns.size());
-        for (auto & pat : patterns) {
-            float weight_prob = 0.0f;
-            for (size_t c = 0; c < candidate_probabilities.size(); c++) {
-                if (!decision.candidates[c].is_pass()) {
-                    if (decision.candidates[c].get_pattern() == pat) {
-                        weight_prob += candidate_probabilities[c];
-                    }
-                }
-            }
-            assert(weight_prob > 0.0f);
-            pattern_probabilities.push_back(weight_prob);
-        }
-
         // get policy gradient
         for (int i = 0; i < NUM_FEATURES; i++) {
             float observed = 0.0f;
@@ -235,16 +257,21 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
             assert(!std::isnan(policy_feature_gradient[i]));
         }
 
-        for (size_t i = 0; i < patterns.size(); i++) {
-            float observed = 0.0f;
-            if (!decision.pick.is_pass()) {
-                if (decision.pick.get_pattern() == patterns[i]) {
-                    observed = 1.0f;
+        // get pat probabilities
+        // mutually exclusive, so update directly
+        for (size_t c = 0; c < candidate_probabilities.size(); c++) {
+            if (!decision.candidates[c].is_pass()) {
+                int pat = decision.candidates[c].get_pattern();
+                float pat_prob = candidate_probabilities[c];
+                float observed = 0.0f;
+                if (!decision.pick.is_pass()) {
+                    if (decision.pick.get_pattern() == pat) {
+                        observed = 1.0f;
+                    }
                 }
+                policy_pattern_gradient[pat] += sign *
+                    (observed - pat_prob);
             }
-            policy_pattern_gradient[patterns[i]] += sign *
-                (observed - pattern_probabilities[i]);
-            assert(!std::isnan(policy_pattern_gradient[i]));
         }
     }
 
@@ -260,10 +287,10 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
         PolicyWeights::feature_gradients[i] += policy_feature_gradient[i];
     }
 
-    for (auto & pat : policy_pattern_gradient) {
-        pat.second /= positions * iters;
-        #pragma omp critical(pattern_gradients)
-        PolicyWeights::pattern_gradients[pat.first] += pat.second;
+    for (int i = 0; i < NUM_PATTERNS; i++) {
+        policy_pattern_gradient[i] /= positions * iters;
+        #pragma omp atomic
+        PolicyWeights::pattern_gradients[i] += policy_pattern_gradient[i];
     }
 }
 
@@ -299,26 +326,27 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         PolicyWeights::feature_weights[i] = gamma;
     }
 
-    for (auto & pat : PolicyWeights::pattern_gradients) {
-        int pidx       = pat.first;
-        float gradient = pat.second;
-        float orig_weight = PolicyWeights::get_pattern_weight(pidx);
+    // Give the vectorizer a chance
+    float adam_grad[NUM_PATTERNS];
+    for (int i = 0; i < NUM_PATTERNS; i++) {
+        float gradient = PolicyWeights::pattern_gradients[i];
+        pattern_adam[i].first  = beta_1 * pattern_adam[i].first  + (1.0f - beta_1) * gradient;
+        pattern_adam[i].second = beta_2 * pattern_adam[i].second + (1.0f - beta_2) * gradient * gradient;
+        float bc_m1 = pattern_adam[i].first  / (1.0f - std::pow(beta_1, (double)t));
+        float bc_m2 = pattern_adam[i].second / (1.0f - std::pow(beta_2, (double)t));
+        float bc_m1_nag = beta_1 * bc_m1 + gradient * (1.0f - beta_1) / (1.0f - std::pow(beta_1, (double)t));
+        adam_grad[i] = alpha * bc_m1_nag / (std::sqrt(bc_m2) + delta);
+    }
 
-        pattern_adam[pidx].first  = beta_1 * pattern_adam[pidx].first  + (1.0f - beta_1) * gradient;
-        //pattern_adam[pidx].second = beta_2 * pattern_adam[pidx].second + (1.0f - beta_2) * gradient * gradient;
-        //float bc_m1 = pattern_adam[pidx].first  / (1.0f - std::pow(beta_1, (double)t));
-        //float bc_m2 = pattern_adam[pidx].second / (1.0f - std::pow(beta_2, (double)t));
-        //float bc_m1_nag = beta_1 * bc_m1 + gradient * (1.0f - beta_1) / (1.0f - std::pow(beta_1, (double)t));
-        //float adam_grad = alpha * bc_m1_nag / (std::sqrt(bc_m2) + delta);
-        float m = alpha * pattern_adam[pidx].first;
-
+    for (int i = 0; i < NUM_PATTERNS; i++) {
+        float orig_weight = PolicyWeights::pattern_weights[i];
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += m * Vdelta;
+        theta += adam_grad[i] * Vdelta;
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
         gamma = std::max(gamma, 1e-6f);
         gamma = std::min(gamma, 1e6f);
-        PolicyWeights::set_pattern_weight(pidx, gamma);
+        PolicyWeights::pattern_weights[i] = gamma;
     }
 }

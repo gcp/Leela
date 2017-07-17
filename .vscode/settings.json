@@ -46,6 +46,19 @@
         "deque": "cpp",
         "vector": "cpp",
         "locale": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "*.tcc": "cpp",
+        "codecvt": "cpp",
+        "condition_variable": "cpp",
+        "functional": "cpp",
+        "iosfwd": "cpp",
+        "memory": "cpp",
+        "mutex": "cpp",
+        "ratio": "cpp",
+        "stdexcept": "cpp",
+        "system_error": "cpp",
+        "thread": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp"
     }
 }

@@ -180,8 +180,8 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
         if (color == FastBoard::WHITE) {
             invert_board = true;
         }
-        int pattern = board.get_pattern3_augment(sq, invert_board);
-        mwf.set_pattern(pattern);
+        uint32 pattern = board.get_pattern3_augment(sq, invert_board);
+        mwf.set_pattern(Utils::pattern_hash(pattern));
 
         std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
 

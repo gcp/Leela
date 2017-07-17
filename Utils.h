@@ -8,6 +8,7 @@
 
 #include <string>
 #include <atomic>
+#include "config.h"
 #include "ThreadPool.h"
 
 #ifdef _MSC_VER
@@ -45,6 +46,21 @@ namespace Utils {
     template<class T>
     bool is_aligned(T* ptr, size_t alignment) {
         return (uintptr_t(ptr) & (alignment - 1)) == 0;
+    }
+
+    inline uint32 rotl32(const uint32 x, const int k) {
+	    return (x << k) | (x >> (32 - k));
+    }
+
+    inline uint32 pattern_hash(uint32 h) {
+        constexpr uint32 c1 = 0xc54be620;
+        constexpr uint32 c2 = 0x7766d421;
+        constexpr uint32 s1 = 26;
+        constexpr uint32 s2 = 20;
+        h  = Utils::rotl32(h, 11) ^ ((h + c1) >> s1);
+        h *= c2;
+        h ^= h >> s2;
+        return h & 8191;
     }
 }
 
