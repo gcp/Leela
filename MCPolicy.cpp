@@ -20,12 +20,12 @@
 using namespace Utils;
 
 #include "PolicyWeights.h"
-std::array<float, NUM_PATTERNS> PolicyWeights::pattern_gradients;
-std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
+alignas(64) std::array<float, NUM_PATTERNS> PolicyWeights::pattern_gradients;
+alignas(64) std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
 
 // Adam
-std::array<std::pair<float, float>, NUM_PATTERNS> pattern_adam;
-std::array<std::pair<float, float>, NUM_FEATURES> feature_adam;
+alignas(64) std::array<std::pair<float, float>, NUM_PATTERNS> pattern_adam{};
+alignas(64) std::array<std::pair<float, float>, NUM_FEATURES> feature_adam{};
 int t{0};
 
 #if 0
@@ -129,11 +129,14 @@ void MCPolicy::mse_from_file(std::string filename) {
                 if (workstate.get_to_move() == FastBoard::WHITE) {
                     nwscore = 1.0f - nwscore;
                 }
-                black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
+                // black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
+                black_score = 3.0f * nwscore;
+                black_score += (blackwon ? 1.0f : 0.0f);
+                black_score /= 4.0f;
             }
 
             // Get EV (V)
-            #pragma omp for reduction (+:bwins) schedule(dynamic, 8)
+            #pragma omp for reduction(+:bwins) schedule(dynamic, 8)
             for (int i = 0; i < iterations; i++) {
                 FastState tmp = *state;
 
@@ -209,13 +212,14 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
     }
     float sign = z - baseline;
 
-    std::array<float, NUM_FEATURES> policy_feature_gradient{};
-    std::array<float, NUM_PATTERNS> policy_pattern_gradient{};
-
     if (trace.empty()) return;
 
+    alignas(64) std::array<float, NUM_FEATURES> policy_feature_gradient{};
+    alignas(64) std::array<float, NUM_PATTERNS> policy_pattern_gradient{};
+    std::vector<float> candidate_scores;
+
     for (auto & decision : trace) {
-        std::vector<float> candidate_scores;
+        candidate_scores.clear();
         candidate_scores.reserve(decision.candidates.size());
         // get real probabilities
         float sum_scores = 0.0f;
@@ -227,19 +231,18 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
         }
         assert(sum_scores > 0.0f);
         assert(!std::isnan(sum_scores));
-        std::vector<float> candidate_probabilities;
-        candidate_probabilities.resize(candidate_scores.size());
-        for (size_t i = 0; i < candidate_scores.size(); i++) {
-            candidate_probabilities[i] = candidate_scores[i] / sum_scores;
+        // transform to probabilities
+        for (float & score : candidate_scores) {
+            score /= sum_scores;
         }
 
         // loop over features, get prob of feature
         std::array<float, NUM_FEATURES> feature_probabilities;
         for (size_t i = 0; i < NUM_FEATURES; i++) {
             float weight_prob = 0.0f;
-            for (size_t c = 0; c < candidate_probabilities.size(); c++) {
+            for (size_t c = 0; c < candidate_scores.size(); c++) {
                 if (decision.candidates[c].has_bit(i)) {
-                    weight_prob += candidate_probabilities[c];
+                    weight_prob += candidate_scores[c];
                 }
             }
             assert(!std::isnan(weight_prob));
@@ -259,10 +262,10 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
 
         // get pat probabilities
         // mutually exclusive, so update directly
-        for (size_t c = 0; c < candidate_probabilities.size(); c++) {
+        for (size_t c = 0; c < candidate_scores.size(); c++) {
             if (!decision.candidates[c].is_pass()) {
                 int pat = decision.candidates[c].get_pattern();
-                float pat_prob = candidate_probabilities[c];
+                float pat_prob = candidate_scores[c];
                 float observed = 0.0f;
                 if (!decision.pick.is_pass()) {
                     if (decision.pick.get_pattern() == pat) {
@@ -278,24 +281,25 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
     float positions = trace.size();
     float iters = iterations;
     assert(positions > 0.0f && iters > 0.0f);
+    // scale by N*T
+    float factor = 1.0f / (positions * iters);
 
     for (int i = 0; i < NUM_FEATURES; i++) {
-        // scale by N*T
-        policy_feature_gradient[i] /= positions * iters;
+        float grad = policy_feature_gradient[i] * factor;
         // accumulate total
         #pragma omp atomic
-        PolicyWeights::feature_gradients[i] += policy_feature_gradient[i];
+        PolicyWeights::feature_gradients[i] += grad;
     }
 
     for (int i = 0; i < NUM_PATTERNS; i++) {
-        policy_pattern_gradient[i] /= positions * iters;
+        float grad = policy_pattern_gradient[i] * factor;
         #pragma omp atomic
-        PolicyWeights::pattern_gradients[i] += policy_pattern_gradient[i];
+        PolicyWeights::pattern_gradients[i] += grad;
     }
 }
 
 void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
-    constexpr float alpha = 0.01f;
+    constexpr float alpha = 0.002f;
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
@@ -309,11 +313,14 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         float orig_weight = PolicyWeights::feature_weights[i];
         float gradient = PolicyWeights::feature_gradients[i];
 
-        feature_adam[i].first  = beta_1 * feature_adam[i].first  + (1.0f - beta_1) * gradient;
-        feature_adam[i].second = beta_2 * feature_adam[i].second + (1.0f - beta_2) * gradient * gradient;
-        float bc_m1 = feature_adam[i].first  / (1.0f - std::pow(beta_1, (double)t));
-        float bc_m2 = feature_adam[i].second / (1.0f - std::pow(beta_2, (double)t));
-        float bc_m1_nag = beta_1 * bc_m1 + gradient * (1.0f - beta_1) / (1.0f - std::pow(beta_1, (double)t));
+        feature_adam[i].first  = beta_1 * feature_adam[i].first
+                                 + (1.0f - beta_1) * gradient;
+        feature_adam[i].second = beta_2 * feature_adam[i].second
+                                 + (1.0f - beta_2) * gradient * gradient;
+        float bc_m1 = feature_adam[i].first  / (1.0f - (float)std::pow(beta_1, (double)t));
+        float bc_m2 = feature_adam[i].second / (1.0f - (float)std::pow(beta_2, (double)t));
+        float bc_m1_nag = beta_1 * bc_m1
+                          + gradient * (1.0f - beta_1) / (1.0f - (float)std::pow(beta_1, (double)t));
         float adam_grad = alpha * bc_m1_nag / (std::sqrt(bc_m2) + delta);
 
         // Convert to theta
@@ -327,14 +334,17 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     }
 
     // Give the vectorizer a chance
-    float adam_grad[NUM_PATTERNS];
+    alignas(64) std::array<float, NUM_PATTERNS> adam_grad;
     for (int i = 0; i < NUM_PATTERNS; i++) {
         float gradient = PolicyWeights::pattern_gradients[i];
-        pattern_adam[i].first  = beta_1 * pattern_adam[i].first  + (1.0f - beta_1) * gradient;
-        pattern_adam[i].second = beta_2 * pattern_adam[i].second + (1.0f - beta_2) * gradient * gradient;
-        float bc_m1 = pattern_adam[i].first  / (1.0f - std::pow(beta_1, (double)t));
-        float bc_m2 = pattern_adam[i].second / (1.0f - std::pow(beta_2, (double)t));
-        float bc_m1_nag = beta_1 * bc_m1 + gradient * (1.0f - beta_1) / (1.0f - std::pow(beta_1, (double)t));
+        pattern_adam[i].first  = beta_1 * pattern_adam[i].first
+                                 + (1.0f - beta_1) * gradient;
+        pattern_adam[i].second = beta_2 * pattern_adam[i].second
+                                 + (1.0f - beta_2) * gradient * gradient;
+        float bc_m1 = pattern_adam[i].first  / (1.0f - (float)std::pow(beta_1, (double)t));
+        float bc_m2 = pattern_adam[i].second / (1.0f - (float)std::pow(beta_2, (double)t));
+        float bc_m1_nag = beta_1 * bc_m1
+                          + gradient * (1.0f - beta_1) / (1.0f - (float)std::pow(beta_1, (double)t));
         adam_grad[i] = alpha * bc_m1_nag / (std::sqrt(bc_m2) + delta);
     }
 

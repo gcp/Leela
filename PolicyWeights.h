@@ -1,4 +1,4 @@
-std::array<float, NUM_FEATURES> PolicyWeights::feature_weights{
+alignas(64) std::array<float, NUM_FEATURES> PolicyWeights::feature_weights{
     0.00280115f,
     5.14865f,
     9.15945f,
@@ -24,4 +24,4 @@ std::array<float, NUM_FEATURES> PolicyWeights::feature_weights{
     0.335748f
 };
 
-std::array<float, NUM_PATTERNS> PolicyWeights::pattern_weights{};
+alignas(64) std::array<float, NUM_PATTERNS> PolicyWeights::pattern_weights{};

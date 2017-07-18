@@ -40,10 +40,10 @@ constexpr int MWF_FLAG_CAPTURE      = 1 << 30;
 
 class PolicyWeights {
 public:
-    static std::array<float, NUM_PATTERNS> pattern_gradients;
-    static std::array<float, NUM_PATTERNS> pattern_weights;
-    static std::array<float, NUM_FEATURES> feature_weights;
-    static std::array<float, NUM_FEATURES> feature_gradients;
+    alignas(64) static std::array<float, NUM_PATTERNS> pattern_gradients;
+    alignas(64) static std::array<float, NUM_PATTERNS> pattern_weights;
+    alignas(64) static std::array<float, NUM_FEATURES> feature_weights;
+    alignas(64) static std::array<float, NUM_FEATURES> feature_gradients;
 };
 
 class MovewFeatures {
