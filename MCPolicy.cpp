@@ -129,10 +129,7 @@ void MCPolicy::mse_from_file(std::string filename) {
                 if (workstate.get_to_move() == FastBoard::WHITE) {
                     nwscore = 1.0f - nwscore;
                 }
-                // black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
-                black_score = 3.0f * nwscore;
-                black_score += (blackwon ? 1.0f : 0.0f);
-                black_score /= 4.0f;
+                black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
             }
 
             // Get EV (V)
@@ -217,6 +214,7 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
     alignas(64) std::array<float, NUM_FEATURES> policy_feature_gradient{};
     alignas(64) std::array<float, NUM_PATTERNS> policy_pattern_gradient{};
     std::vector<float> candidate_scores;
+    std::unordered_set<int> patterns;
 
     for (auto & decision : trace) {
         candidate_scores.clear();
@@ -260,21 +258,30 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
             assert(!std::isnan(policy_feature_gradient[i]));
         }
 
+        patterns.clear();
         // get pat probabilities
-        // mutually exclusive, so update directly
+        std::array<float, NUM_PATTERNS> pattern_probabilities;
         for (size_t c = 0; c < candidate_scores.size(); c++) {
             if (!decision.candidates[c].is_pass()) {
                 int pat = decision.candidates[c].get_pattern();
-                float pat_prob = candidate_scores[c];
-                float observed = 0.0f;
-                if (!decision.pick.is_pass()) {
-                    if (decision.pick.get_pattern() == pat) {
-                        observed = 1.0f;
-                    }
+                if (patterns.count(pat)) {
+                    pattern_probabilities[pat] += candidate_scores[c];
+                } else {
+                    patterns.insert(pat);
+                    pattern_probabilities[pat]  = candidate_scores[c];
                 }
-                policy_pattern_gradient[pat] += sign *
-                    (observed - pat_prob);
             }
+        }
+
+        for (int pat : patterns) {
+            float observed = 0.0f;
+            if (!decision.pick.is_pass()) {
+                if (decision.pick.get_pattern() == pat) {
+                    observed = 1.0f;
+                }
+            }
+            policy_pattern_gradient[pat] += sign *
+                (observed - pattern_probabilities[pat]);
         }
     }
 
