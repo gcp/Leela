@@ -16,7 +16,7 @@
 #include "Utils.h"
 #include "GTP.h"
 
-ThreadPool thread_pool;
+Utils::ThreadPool thread_pool;
 
 bool Utils::input_causes_stop() {
     return true;

@@ -29,7 +29,7 @@ asan:
 		leela
 
 LIBS = -lboost_program_options
-DYNAMIC_LIBS += -lboost_system -lboost_filesystem -lcaffe -lprotobuf -lglog
+#DYNAMIC_LIBS += -lboost_system -lboost_filesystem -lcaffe-nv -lprotobuf -lglog
 LIBS += -lopenblas
 DYNAMIC_LIBS += -lpthread
 #DYNAMIC_LIBS += -lOpenCL

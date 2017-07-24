@@ -9,9 +9,11 @@
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": "",
                 "path": [
-                    "/usr/include"
+                    "/usr/include",
+                    "${workspaceRoot}"
                 ]
-            }
+            },
+            "intelliSenseMode": "clang-x64"
         },
         {
             "name": "Linux",
@@ -19,7 +21,14 @@
                 "/usr/include",
                 "/usr/local/include",
                 "/usr/local/cuda/include",
-                "/opt/intel/mkl/include"
+                "/opt/intel/mkl/include",
+                "/usr/bin/../lib/gcc/x86_64-linux-gnu/5.4.0/../../../../include/c++/5.4.0",
+                "/usr/bin/../lib/gcc/x86_64-linux-gnu/5.4.0/../../../../include/x86_64-linux-gnu/c++/5.4.0",
+                "/usr/include/x86_64-linux-gnu",
+                "/usr/bin/../lib/gcc/x86_64-linux-gnu/5.4.0/../../../../include/c++/5.4.0/backward",
+                "/usr/include/clang/4.0.1/include",
+                "/usr/include/wx-3.0",
+                "/usr/lib/x86_64-linux-gnu/wx/include/gtk2-unicode-3.0"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
@@ -28,9 +37,11 @@
                     "/usr/include",
                     "/usr/local/include",
                     "/usr/local/cuda/include",
-                    "/opt/intel/mkl/include"
+                    "/opt/intel/mkl/include",
+                    "${workspaceRoot}"
                 ]
-            }
+            },
+            "intelliSenseMode": "clang-x64"
         },
         {
             "name": "Win32",
@@ -41,9 +52,12 @@
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": "",
                 "path": [
-                    "c:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include"
+                    "c:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
+                    "${workspaceRoot}"
                 ]
-            }
+            },
+            "intelliSenseMode": "msvc-x64"
         }
-    ]
+    ],
+    "version": 2
 }

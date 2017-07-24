@@ -79,8 +79,8 @@ void GTP::setup_default_parameters() {
     cfg_eval_thresh = 3;
 #else
     cfg_mature_threshold = 100;
-    cfg_expand_divider =  2.0f;
-    cfg_extra_symmetry =  3000;
+    cfg_expand_divider = 2.0f;
+    cfg_extra_symmetry = 3000;
     cfg_eval_thresh = 10;
 #endif
     cfg_max_playouts = INT_MAX;
