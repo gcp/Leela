@@ -86,8 +86,8 @@ void MCPolicy::mse_from_file(std::string filename) {
     double sum_sq_nn = 0.0;
     int count = 0;
 
-    PolicyWeights::feature_weights.fill(1.0f);
-    PolicyWeights::pattern_weights.fill(1.0f);
+    // PolicyWeights::feature_weights.fill(1.0f);
+    // PolicyWeights::pattern_weights.fill(1.0f);
     Time start;
 
     while (1) {

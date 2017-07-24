@@ -144,7 +144,7 @@ void Playout::do_playout_benchmark(GameState & game) {
             float thread_board_score = 0.0f;
             for (int i = 0; i < iters_per_thread; i++) {
                 do {
-                    game.play_random_move(game.get_to_move());
+                    mygame.play_random_move(mygame.get_to_move());
                 } while (mygame.get_passes() < 2
                         && mygame.get_movenum() < playoutlen
                         && abs(mygame.estimate_mc_score()) < resign);
