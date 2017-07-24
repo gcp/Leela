@@ -45,7 +45,7 @@ public:
     /*
         possible contents of a square
     */
-    enum square_t : unsigned char {
+    enum square_t : char {
         BLACK = 0, WHITE = 1, EMPTY = 2, INVAL = 3
     };
 
@@ -148,19 +148,19 @@ protected:
     static const std::array<int,      2> s_eyemask;
     static const std::array<square_t, 4> s_cinvert; /* color inversion */
 
-    std::array<square_t,  MAXSQ>           m_square;      /* board contents */
+    std::array<square_t, MAXSQ>            m_square;      /* board contents */
     std::array<unsigned short, MAXSQ+1>    m_next;        /* next stone in string */
     std::array<unsigned short, MAXSQ+1>    m_parent;      /* parent node of string */
     std::array<unsigned short, MAXSQ+1>    m_libs;        /* liberties per string parent */
     std::array<unsigned short, MAXSQ+1>    m_stones;      /* stones per string parent */
     std::array<unsigned short, MAXSQ>      m_neighbours;  /* counts of neighboring stones */
-    std::array<int, 4>          m_dirs;        /* movement directions 4 way */
-    std::array<int, 8>          m_extradirs;   /* movement directions 8 way */
-    std::array<int, 2>          m_prisoners;   /* prisoners per color */
-    std::array<int, 2>          m_totalstones; /* stones per color */
-    std::vector<int>                 m_critical;    /* queue of critical points */
-    std::array<unsigned short, MAXSQ> m_empty;       /* empty squares */
-    std::array<unsigned short, MAXSQ> m_empty_idx;   /* indexes of square */
+    std::array<int, 4>                     m_dirs;        /* movement directions 4 way */
+    std::array<int, 8>                     m_extradirs;   /* movement directions 8 way */
+    std::array<int, 2>                     m_prisoners;   /* prisoners per color */
+    std::array<int, 2>                     m_totalstones; /* stones per color */
+    std::vector<int>                       m_critical;    /* queue of critical points */
+    std::array<unsigned short, MAXSQ>      m_empty;       /* empty squares */
+    std::array<unsigned short, MAXSQ>      m_empty_idx;   /* indexes of square */
     int m_empty_cnt;                                      /* count of empties */
 
     int m_tomove;

@@ -221,16 +221,16 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
                         mwf.add_flag(MWF_FLAG_SA);
                     }
                 }
-                if (mwf.get_flags() & MWF_FLAG_PATTERN) {
+                if (mwf.has_flag(MWF_FLAG_PATTERN)) {
                     mwf.add_flag(MWF_FLAG_PATTERN_SA);
                 }
-                if (mwf.get_flags() & MWF_FLAG_SAVING) {
+                if (mwf.has_flag(MWF_FLAG_SAVING)) {
                     mwf.add_flag(MWF_FLAG_SAVING_SA);
                 }
             }
         }
 
-        if (mwf.get_flags() & MWF_FLAG_SAVING) {
+        if (mwf.has_flag(MWF_FLAG_SAVING)) {
             int ssize = mwf.get_target_size();
             if (ssize == 1) {
                 mwf.add_flag(MWF_FLAG_SAVING_1);
@@ -242,7 +242,7 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
             }
         }
 
-        if (mwf.get_flags() & MWF_FLAG_CAPTURE) {
+        if (mwf.has_flag(MWF_FLAG_CAPTURE)) {
             int ssize = mwf.get_target_size();
             if (ssize == 1) {
                 mwf.add_flag(MWF_FLAG_CAPTURE_1);

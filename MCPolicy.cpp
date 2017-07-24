@@ -239,7 +239,7 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
         for (size_t i = 0; i < NUM_FEATURES; i++) {
             float weight_prob = 0.0f;
             for (size_t c = 0; c < candidate_scores.size(); c++) {
-                if (decision.candidates[c].has_bit(i)) {
+                if (decision.candidates[c].has_flag(i)) {
                     weight_prob += candidate_scores[c];
                 }
             }
@@ -250,7 +250,7 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
         // get policy gradient
         for (int i = 0; i < NUM_FEATURES; i++) {
             float observed = 0.0f;
-            if (decision.pick.has_bit(i)) {
+            if (decision.pick.has_flag(i)) {
                 observed = 1.0f;
             }
             policy_feature_gradient[i] += sign *
