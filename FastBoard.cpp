@@ -986,7 +986,7 @@ bool FastBoard::predict_solid_eye(const int move, const int color, const int i) 
     return true;    
 }
 
-bool FastBoard::no_eye_fill(const int i) {             
+bool FastBoard::no_eye_fill(const int i) {
     return !is_eye(m_tomove, i);
 }
 
@@ -1482,8 +1482,8 @@ int FastBoard::get_pattern_fast_augment(const int sq) {
          | (sqs7 <<  0);            
 
     lib0 = fast_in_atari(sq - size - 2);
-    lib1 = fast_in_atari(sq - 1);    
-    lib2 = fast_in_atari(sq + 1);    
+    lib1 = fast_in_atari(sq - 1);
+    lib2 = fast_in_atari(sq + 1);
     lib3 = fast_in_atari(sq + size + 2);
     
     res |= (lib0 << 19 | lib1 << 18 | lib2 << 17 | lib3 << 16);
@@ -1979,7 +1979,7 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
     idx3 = std::min(idx3, idx4);
     idx5 = std::min(idx5, idx6);
     idx7 = std::min(idx7, idx8);
-    
+
     idx1 = std::min(idx1, idx3);
     idx5 = std::min(idx5, idx7);
     
@@ -1994,7 +1994,7 @@ void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves) {
 
         if (m_square[sq] == EMPTY) {
             if (!fast_ss_suicide(color, sq)) {
-                moves.push_back(MovewFeatures(sq, MWF_FLAG_PATTERN));
+                moves.emplace_back(sq, MWF_FLAG_PATTERN);
             }
         }
     }
@@ -2208,7 +2208,7 @@ void FastBoard::try_capture(int color, int vertex, movelist_t & moves) {
                 assert(lib > 0);
 
                 if (lib <= 1) {
-                    moves.push_back(MovewFeatures(vertex, MWF_FLAG_CAPTURE, string_size(par)));
+                    moves.emplace_back(vertex, MWF_FLAG_CAPTURE, string_size(par));
                     return;
                 }
             }

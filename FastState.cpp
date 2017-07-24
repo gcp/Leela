@@ -10,7 +10,6 @@
 #include "Utils.h"
 #include "Playout.h"
 #include "Zobrist.h"
-#include "Matcher.h"
 #include "AttribScores.h"
 #include "MCOTable.h"
 #include "Genetic.h"
@@ -123,6 +122,88 @@ int FastState::walk_empty_list(int color) {
     return FastBoard::PASS;
 }
 
+void FastState::flag_move(MovewFeatures & mwf, int sq, int color,
+                          Matcher * matcher) {
+    assert(sq > 0);
+    int full_pattern = board.get_pattern_fast_augment(sq);
+    int pattern = matcher->matches(color, full_pattern);
+    mwf.set_pattern(pattern);
+    //bool invert_board = false;
+    //if (color == FastBoard::WHITE) {
+    //    invert_board = true;
+    //}
+    //uint32 pattern = board.get_pattern3_augment(sq, invert_board);
+    //mwf.set_pattern(Utils::pattern_hash(pattern));
+
+    std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
+
+    if (nbr_crit.first == 1) {
+        mwf.add_flag(MWF_FLAG_CRIT_MINE1);
+    } else  if (nbr_crit.first == 2) {
+        mwf.add_flag(MWF_FLAG_CRIT_MINE2);
+    }  else  if (nbr_crit.first == 3) {
+        mwf.add_flag(MWF_FLAG_CRIT_MINE3);
+    }
+    if (nbr_crit.second == 1) {
+        mwf.add_flag(MWF_FLAG_CRIT_HIS1);
+    } else if (nbr_crit.second == 2) {
+        mwf.add_flag(MWF_FLAG_CRIT_HIS2);
+    } else if (nbr_crit.second == 3) {
+        mwf.add_flag(MWF_FLAG_CRIT_HIS3);
+    }
+
+    if (board.self_atari(color, sq)) {
+        if (board.is_suicide(sq, color)) {
+            mwf.add_flag(MWF_FLAG_SUICIDE);
+        } else {
+            // Self-atari with a group of 6 stones always leaves behind
+            // a live group due to eyespace of size 7.
+            if (board.enemy_atari_size(!color, sq) >= 6) {
+                mwf.add_flag(MWF_FLAG_TOOBIG_SA);
+            } else {
+                int enemy_dying = board.enemy_atari_size(color, sq);
+                if (enemy_dying >= 5) {
+                    mwf.add_flag(MWF_FLAG_FORCEBIG_SA);
+                } else if (enemy_dying) {
+                    mwf.add_flag(MWF_FLAG_FORCE_SA);
+                } else {
+                    mwf.add_flag(MWF_FLAG_SA);
+                }
+            }
+            if (mwf.has_flag(MWF_FLAG_PATTERN)) {
+                mwf.add_flag(MWF_FLAG_PATTERN_SA);
+            }
+            if (mwf.has_flag(MWF_FLAG_SAVING)) {
+                mwf.add_flag(MWF_FLAG_SAVING_SA);
+            }
+        }
+    }
+
+    if (mwf.has_flag(MWF_FLAG_SAVING)) {
+        int ssize = mwf.get_target_size();
+        if (ssize == 1) {
+            mwf.add_flag(MWF_FLAG_SAVING_1);
+        } else if (ssize == 2) {
+            mwf.add_flag(MWF_FLAG_SAVING_2);
+        } else {
+            assert(ssize >= 3);
+            mwf.add_flag(MWF_FLAG_SAVING_3P);
+        }
+    }
+
+    if (mwf.has_flag(MWF_FLAG_CAPTURE)) {
+        int ssize = mwf.get_target_size();
+        if (ssize == 1) {
+            mwf.add_flag(MWF_FLAG_CAPTURE_1);
+        } else if (ssize == 2) {
+            mwf.add_flag(MWF_FLAG_CAPTURE_2);
+        } else {
+            assert(ssize >= 3);
+            mwf.add_flag(MWF_FLAG_CAPTURE_3P);
+        }
+    }
+}
+
 int FastState::play_random_move(int color, PolicyTrace * trace) {
     board.m_tomove = color;
 
@@ -162,101 +243,18 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
                 moves.end());
 
     // Pass as fallback
-    moves.push_back(MovewFeatures(FastBoard::PASS, MWF_FLAG_PASS));
-
+    moves.emplace_back(FastBoard::PASS, MWF_FLAG_PASS);
     assert(moves.size());
-
-    for (auto & mwf : moves) {
-        int sq = mwf.get_sq();
-        if (sq == FastBoard::PASS) {
-            continue;
-        }
-        assert(sq > 0);
-        int full_pattern = board.get_pattern_fast_augment(sq);
-        int pattern = matcher->matches(color, full_pattern);
-        mwf.set_pattern(pattern);
-        //bool invert_board = false;
-        //if (color == FastBoard::WHITE) {
-        //    invert_board = true;
-        //}
-        //uint32 pattern = board.get_pattern3_augment(sq, invert_board);
-        //mwf.set_pattern(Utils::pattern_hash(pattern));
-
-        std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
-
-        if (nbr_crit.first == 1) {
-            mwf.add_flag(MWF_FLAG_CRIT_MINE1);
-        } else  if (nbr_crit.first == 2) {
-            mwf.add_flag(MWF_FLAG_CRIT_MINE2);
-        }  else  if (nbr_crit.first == 3) {
-            mwf.add_flag(MWF_FLAG_CRIT_MINE3);
-        }
-        if (nbr_crit.second == 1) {
-            mwf.add_flag(MWF_FLAG_CRIT_HIS1);
-        } else if (nbr_crit.second == 2) {
-            mwf.add_flag(MWF_FLAG_CRIT_HIS2);
-        } else if (nbr_crit.second == 3) {
-            mwf.add_flag(MWF_FLAG_CRIT_HIS3);
-        }
-
-        if (board.self_atari(color, sq)) {
-            if (board.is_suicide(sq, color)) {
-                mwf.add_flag(MWF_FLAG_SUICIDE);
-            } else {
-                // Self-atari with a group of 6 stones always leaves behind
-                // a live group due to eyespace of size 7.
-                if (board.enemy_atari_size(!color, sq) >= 6) {
-                    mwf.add_flag(MWF_FLAG_TOOBIG_SA);
-                } else {
-                    int enemy_dying = board.enemy_atari_size(color, sq);
-                    if (enemy_dying >= 5) {
-                        mwf.add_flag(MWF_FLAG_FORCEBIG_SA);
-                    } else if (enemy_dying) {
-                        mwf.add_flag(MWF_FLAG_FORCE_SA);
-                    } else {
-                        mwf.add_flag(MWF_FLAG_SA);
-                    }
-                }
-                if (mwf.has_flag(MWF_FLAG_PATTERN)) {
-                    mwf.add_flag(MWF_FLAG_PATTERN_SA);
-                }
-                if (mwf.has_flag(MWF_FLAG_SAVING)) {
-                    mwf.add_flag(MWF_FLAG_SAVING_SA);
-                }
-            }
-        }
-
-        if (mwf.has_flag(MWF_FLAG_SAVING)) {
-            int ssize = mwf.get_target_size();
-            if (ssize == 1) {
-                mwf.add_flag(MWF_FLAG_SAVING_1);
-            } else if (ssize == 2) {
-                mwf.add_flag(MWF_FLAG_SAVING_2);
-            } else {
-                assert(ssize >= 3);
-                mwf.add_flag(MWF_FLAG_SAVING_3P);
-            }
-        }
-
-        if (mwf.has_flag(MWF_FLAG_CAPTURE)) {
-            int ssize = mwf.get_target_size();
-            if (ssize == 1) {
-                mwf.add_flag(MWF_FLAG_CAPTURE_1);
-            } else if (ssize == 2) {
-                mwf.add_flag(MWF_FLAG_CAPTURE_2);
-            } else {
-                assert(ssize >= 3);
-                mwf.add_flag(MWF_FLAG_CAPTURE_3P);
-            }
-        }
-    }
 
     float cumul = 0.0f;
     scoredmoves.clear();
     for (auto & mwf : moves) {
         int sq = mwf.get_sq();
+        if (sq != FastBoard::PASS) {
+            flag_move(mwf, sq, color, matcher);
+        }
         cumul += mwf.get_score();
-        scoredmoves.push_back(std::make_pair(sq, cumul));
+        scoredmoves.emplace_back(sq, cumul);
     }
 
     float index = rng->randflt() * cumul;
