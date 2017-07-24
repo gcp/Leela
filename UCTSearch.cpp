@@ -409,8 +409,8 @@ int UCTSearch::get_best_move_nosearch(std::vector<std::pair<float, int>> moves,
     std::stable_sort(moves.rbegin(), moves.rend());
     int bestmove = moves[0].second;
 
-    static const size_t min_alternates = 20;
-    static const size_t max_consider = 3;
+    constexpr size_t min_alternates = 25;
+    constexpr size_t max_consider   =  3;
 
     // Pick proportionally from top 3 moves, if close enough and enought left.
     if (moves.size() > min_alternates) {
@@ -883,7 +883,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     // Pure NN player
     // Not all net_moves vertices are legal
     auto net_moves = Network::get_Network()->get_scored_moves(&m_rootstate,
-        Network::AVERAGE_ALL);
+        Network::RANDOM_ROTATION);
     auto gen_moves = m_rootstate.generate_moves(color);
     std::vector<std::pair<float, int>> filter_moves;
 

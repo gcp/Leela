@@ -17,9 +17,9 @@ debug:
 		leela
 
 clang:
-	$(MAKE) CC=clang CXX=clang++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -g -march=native -std=c++11 -D_CONSOLE -DNDEBUG' \
-		LDFLAGS='$(LDFLAGS)' \
+	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -g -march=native -flto -std=c++11 -D_CONSOLE -DNDEBUG' \
+		LDFLAGS='$(LDFLAGS) -flto -fuse-linker-plugin' \
 		leela
 
 asan:

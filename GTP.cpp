@@ -101,7 +101,11 @@ void GTP::setup_default_parameters() {
     cfg_fpu = 1.1f;
     cfg_puct = 1.1f;
     cfg_psa = 0.0018f;
+#ifdef USE_SEARCH
     cfg_softmax_temp = 0.70f;
+#else
+    cfg_softmax_temp = 0.094f;
+#endif
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix_opening = 0.78f;
