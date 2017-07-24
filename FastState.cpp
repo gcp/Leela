@@ -74,19 +74,17 @@ std::vector<int> FastState::generate_moves(int color) {
     return result;
 }
 
-bool FastState::try_move(int color, int vertex, bool allow_sa) {
+bool FastState::try_move(int color, int vertex) {
     if (vertex != m_komove && board.no_eye_fill(vertex)) {
         if (!board.fast_ss_suicide(color, vertex)) {
-            if ((allow_sa) || (!board.self_atari(color, vertex))) {
-                return true;
-            }
+            return true;
         }
     }
 
     return false;
 }
 
-int FastState::walk_empty_list(int color, bool allow_sa) {
+int FastState::walk_empty_list(int color) {
     int dir = Random::get_Rng()->randfix<2>();
     int vidx = Random::get_Rng()->randint16(board.m_empty_cnt);
 
@@ -94,14 +92,14 @@ int FastState::walk_empty_list(int color, bool allow_sa) {
         for (int i = vidx; i < board.m_empty_cnt; i++) {
             int e = board.m_empty[i];
 
-            if (try_move(color, e, allow_sa)) {
+            if (try_move(color, e)) {
                 return e;
             }
         }
         for (int i = 0; i < vidx; i++) {
             int e = board.m_empty[i];
 
-            if (try_move(color, e, allow_sa)) {
+            if (try_move(color, e)) {
                 return e;
             }
         }
@@ -109,14 +107,14 @@ int FastState::walk_empty_list(int color, bool allow_sa) {
         for (int i = vidx; i >= 0; i--) {
             int e = board.m_empty[i];
 
-            if (try_move(color, e, allow_sa)) {
+            if (try_move(color, e)) {
                 return e;
             }
         }
         for (int i = board.m_empty_cnt - 1; i > vidx; i--) {
             int e = board.m_empty[i];
 
-            if (try_move(color, e, allow_sa)) {
+            if (try_move(color, e)) {
                 return e;
             }
         }
@@ -148,11 +146,11 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
     constexpr int loop_amount = 4;
     // Random moves on the board
     for (int loops = 0; loops < loop_amount; loops++) {
-        int sq = walk_empty_list(board.m_tomove, true);
+        int sq = walk_empty_list(board.m_tomove);
         if (sq == FastBoard::PASS) {
             break;
         }
-        moves.push_back(MovewFeatures(sq, MWF_FLAG_RANDOM));
+        moves.emplace_back(sq, MWF_FLAG_RANDOM);
     }
 
     moves.erase(std::remove_if(moves.begin(), moves.end(),
@@ -174,19 +172,17 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
             continue;
         }
         assert(sq > 0);
-        //int pattern = board.get_pattern_fast_augment(sq);
-        //score = matcher->matches(color, pattern);
-        bool invert_board = false;
-        if (color == FastBoard::WHITE) {
-            invert_board = true;
-        }
-        uint32 pattern = board.get_pattern3_augment(sq, invert_board);
-        mwf.set_pattern(Utils::pattern_hash(pattern));
+        int full_pattern = board.get_pattern_fast_augment(sq);
+        int pattern = matcher->matches(color, full_pattern);
+        mwf.set_pattern(pattern);
+        //bool invert_board = false;
+        //if (color == FastBoard::WHITE) {
+        //    invert_board = true;
+        //}
+        //uint32 pattern = board.get_pattern3_augment(sq, invert_board);
+        //mwf.set_pattern(Utils::pattern_hash(pattern));
 
         std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
-
-        assert(nbr_crit.first != 0);
-        assert(nbr_crit.second != 0);
 
         if (nbr_crit.first == 1) {
             mwf.add_flag(MWF_FLAG_CRIT_MINE1);
@@ -412,7 +408,7 @@ std::string FastState::move_to_text(int move) {
 std::vector<bool> FastState::mark_dead(float *winrate) {
     static const int MARKING_RUNS = 256;
     
-    std::vector<int> survive_count(FastBoard::MAXSQ);    
+    std::vector<int> survive_count(FastBoard::MAXSQ);
     std::vector<bool> dead_group(FastBoard::MAXSQ);    
     
     fill(survive_count.begin(), survive_count.end(), 0);    

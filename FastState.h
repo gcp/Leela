@@ -19,7 +19,7 @@ public:
     void play_move(int vertex);
 
     std::vector<int> generate_moves(int color);
-    bool try_move(int color, int vertex, bool allow_sa = false);
+    bool try_move(int color, int vertex);
 
     void set_komi(float komi);        
     float get_komi(); 
@@ -39,7 +39,7 @@ public:
 
     int get_movenum();
     int get_last_move();  
-    int get_prevlast_move();      
+    int get_prevlast_move();
     int get_komove();
     void display_state();    
     std::string move_to_text(int move);
@@ -59,7 +59,7 @@ protected:
     FastBoard::movelist_t moves;
     FastBoard::scoredmoves_t scoredmoves;
 
-    int walk_empty_list(int color, bool allow_sa = false);
+    int walk_empty_list(int color);
     void play_move(int color, int vertex);
 };
 

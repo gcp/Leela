@@ -52,7 +52,7 @@ namespace Utils {
 	    return (x << k) | (x >> (32 - k));
     }
 
-    inline uint32 pattern_hash(uint32 h) {
+    inline uint16 pattern_hash(uint32 h) {
         constexpr uint32 c1 = 0xc54be620;
         constexpr uint32 c2 = 0x7766d421;
         constexpr uint32 s1 = 26;

@@ -5,11 +5,10 @@
 
 #include "Matcher.h"
 #include "FastBoard.h"
-#include "WeightsMatcher.h"
 #include "Utils.h"
-#include "Genetic.h"
+#include "MCPolicy.h"
 
-Matcher* Matcher::s_matcher = 0;
+Matcher* Matcher::s_matcher = nullptr;
 
 Matcher* Matcher::get_Matcher(void) {
     if (s_matcher == 0) {
@@ -41,15 +40,6 @@ Matcher::Matcher() {
     // center square
     int startvtx = board.get_vertex(1, 1);
 
-    typedef std::unordered_map<int, float> patmap;
-    patmap patweights;
-
-    for (size_t i = 0; i < internal_weights_fast.size(); i++) {
-        std::pair<int, float> pr = std::make_pair(internal_patterns_fast[i],
-                                                  internal_weights_fast[i]);
-        patweights.insert(pr);
-    }
-
     for (int i = 0; i < MAX_PAT_IDX; i++) {
         int w = i;
         // fill board
@@ -60,40 +50,15 @@ Matcher::Matcher() {
         }
 
         int reducpat1 = board.get_pattern3_augment_spec(startvtx, w, false);
+        reducpat1 = Utils::pattern_hash(reducpat1);
         int reducpat2 = board.get_pattern3_augment_spec(startvtx, w, true);
+        reducpat2 = Utils::pattern_hash(reducpat2);
 
-        patmap::iterator it = patweights.find(reducpat1);
-
-        if (it != patweights.end()) {
-            float weight = it->second;
-            m_patterns[FastBoard::BLACK][i] = weight;
-        } else {
-            m_patterns[FastBoard::BLACK][i] = 1.0f;
-        }
-
-        it = patweights.find(reducpat2);
-
-        if (it != patweights.end()) {
-            float weight = it->second;
-            m_patterns[FastBoard::WHITE][i] = weight;
-        } else {
-            m_patterns[FastBoard::WHITE][i] = 1.0f;
-        }
+        m_patterns[FastBoard::BLACK][i] = reducpat1;
+        m_patterns[FastBoard::WHITE][i] = reducpat2;
     }
 }
 
-float Matcher::matches(int color, int pattern) {
+int Matcher::matches(int color, int pattern) {
     return m_patterns[color][pattern];
-}
-
-uint16 Matcher::clip(double val) {
-    uint16 result;
-    if (val < 0) {
-        result = 0;
-    } else if (val > 0xFFFF) {
-        result = 0xFFFF;
-    }
-    result = (uint16)val;
-
-    return result;
 }
