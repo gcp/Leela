@@ -170,21 +170,21 @@ void MCPolicy::mse_from_file(std::string filename) {
 
         count++;
 
-        if (count % 1000 == 0) {
+        if (count % 10000 == 0) {
             Time end;
             float timediff = Time::timediff(start, end) / 100.0f;
-            float ips = 1000.0f / timediff;
+            float ips = 10000.0f / timediff;
             start = end;
             myprintf("n=%d MSE MC=%1.4f MSE NN=%1.4f ips=%f\n",
                 count,
-                sum_sq_pp/1000.0,
-                sum_sq_nn/1000.0,
+                sum_sq_pp/10000.0,
+                sum_sq_nn/10000.0,
                 ips);
             sum_sq_pp = 0.0;
             sum_sq_nn = 0.0;
         }
 
-        if (count % 1000 == 0) {
+        if (count % 10000 == 0) {
             std::string filename = "rltune_" + std::to_string(count) + ".txt";
             std::ofstream out(filename);
             for (int w = 0; w < NUM_FEATURES; w++) {
@@ -306,7 +306,7 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
 }
 
 void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
-    constexpr float alpha = 0.002f;
+    constexpr float alpha = 0.01f;
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
