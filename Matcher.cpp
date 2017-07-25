@@ -11,7 +11,7 @@
 Matcher* Matcher::s_matcher = nullptr;
 
 Matcher* Matcher::get_Matcher(void) {
-    if (s_matcher == 0) {
+    if (!s_matcher) {
         s_matcher = new Matcher;
     }
 

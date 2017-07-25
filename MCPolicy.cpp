@@ -2,12 +2,15 @@
 
 #include <memory>
 #include <cmath>
-#include <unordered_set>
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <omp.h>
+#include <iomanip>
+#include <algorithm>
 #include <string.h>
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 #include "GTP.h"
 #include "MCPolicy.h"
 #include "SGFParser.h"
@@ -80,7 +83,9 @@ void MCPolicy::mse_from_file(std::string filename) {
     size_t gametotal = games.size();
     myprintf("Total games in file: %d\n", gametotal);
 
+#if defined(_OPENMP)
     omp_set_num_threads(cfg_num_threads);
+#endif
 
     double sum_sq_pp = 0.0;
     double sum_sq_nn = 0.0;
@@ -187,14 +192,17 @@ void MCPolicy::mse_from_file(std::string filename) {
         if (count % 10000 == 0) {
             std::string filename = "rltune_" + std::to_string(count) + ".txt";
             std::ofstream out(filename);
+            out.precision(std::numeric_limits<float>::max_digits10);
+            out << std::defaultfloat;
             for (int w = 0; w < NUM_FEATURES; w++) {
                 out << PolicyWeights::feature_weights[w]
                     << "f, /* = " << w << " */"
                     << std::endl;
             }
             out << std::endl;
+            out << std::scientific;
             for (int w = 0; w < NUM_PATTERNS; w++) {
-                out << PolicyWeights::pattern_weights[w] << "f, " << std::endl;
+                out << PolicyWeights::pattern_weights[w] << "f," << std::endl;
             }
             out.close();
         }
@@ -211,10 +219,16 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
 
     if (trace.empty()) return;
 
+    float positions = trace.size();
+    float iters = iterations;
+    assert(positions > 0.0f && iters > 0.0f);
+    // scale by N*T
+    float factor = 1.0f / (positions * iters);
+
     alignas(64) std::array<float, NUM_FEATURES> policy_feature_gradient{};
-    alignas(64) std::array<float, NUM_PATTERNS> policy_pattern_gradient{};
+    //alignas(64) std::array<float, NUM_PATTERNS> policy_pattern_gradient{};
     std::vector<float> candidate_scores;
-    std::unordered_set<int> patterns;
+    std::vector<int> patterns;
 
     for (auto & decision : trace) {
         candidate_scores.clear();
@@ -235,16 +249,15 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
         }
 
         // loop over features, get prob of feature
-        std::array<float, NUM_FEATURES> feature_probabilities;
-        for (size_t i = 0; i < NUM_FEATURES; i++) {
-            float weight_prob = 0.0f;
-            for (size_t c = 0; c < candidate_scores.size(); c++) {
-                if (decision.candidates[c].has_flag(i)) {
-                    weight_prob += candidate_scores[c];
+        alignas(64) std::array<float, NUM_FEATURES> feature_probabilities{};
+        for (size_t c = 0; c < candidate_scores.size(); c++) {
+            float candidate_probability = candidate_scores[c];
+            MovewFeatures & mwf = decision.candidates[c];
+            for (int i = 0; i < NUM_FEATURES; i++) {
+                if (mwf.has_flag(i)) {
+                    feature_probabilities[i] += candidate_probability;
                 }
             }
-            assert(!std::isnan(weight_prob));
-            feature_probabilities[i] = weight_prob;
         }
 
         // get policy gradient
@@ -264,10 +277,11 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
         for (size_t c = 0; c < candidate_scores.size(); c++) {
             if (!decision.candidates[c].is_pass()) {
                 int pat = decision.candidates[c].get_pattern();
-                if (patterns.count(pat)) {
+                if (std::find(patterns.cbegin(), patterns.cend(), pat)
+                    != patterns.cend()) {
                     pattern_probabilities[pat] += candidate_scores[c];
                 } else {
-                    patterns.insert(pat);
+                    patterns.push_back(pat);
                     pattern_probabilities[pat]  = candidate_scores[c];
                 }
             }
@@ -280,28 +294,18 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
                     observed = 1.0f;
                 }
             }
-            policy_pattern_gradient[pat] += sign *
+            float grad = factor * sign *
                 (observed - pattern_probabilities[pat]);
+            #pragma omp atomic
+            PolicyWeights::pattern_gradients[pat] += grad;
         }
     }
-
-    float positions = trace.size();
-    float iters = iterations;
-    assert(positions > 0.0f && iters > 0.0f);
-    // scale by N*T
-    float factor = 1.0f / (positions * iters);
 
     for (int i = 0; i < NUM_FEATURES; i++) {
         float grad = policy_feature_gradient[i] * factor;
         // accumulate total
         #pragma omp atomic
         PolicyWeights::feature_gradients[i] += grad;
-    }
-
-    for (int i = 0; i < NUM_PATTERNS; i++) {
-        float grad = policy_pattern_gradient[i] * factor;
-        #pragma omp atomic
-        PolicyWeights::pattern_gradients[i] += grad;
     }
 }
 

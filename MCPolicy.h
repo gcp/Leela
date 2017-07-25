@@ -119,7 +119,7 @@ public:
     void add_to_trace(bool black_to_move,
                       std::vector<MovewFeatures> & moves,
                       int chosen_idx) {
-        trace.push_back(MoveDecision(black_to_move, moves, moves[chosen_idx]));
+        trace.emplace_back(black_to_move, moves, moves[chosen_idx]);
     }
 
     void trace_process(const int iterations, const float baseline,
