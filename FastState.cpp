@@ -58,14 +58,14 @@ void FastState::reset_board(void) {
 std::vector<int> FastState::generate_moves(int color) {
     std::vector<int> result;
 
-    result.reserve(board.m_empty_cnt);        
+    result.reserve(board.m_empty_cnt);
 
     for (int i = 0; i < board.m_empty_cnt; i++) {
         int vertex = board.m_empty[i];
 
         if (vertex != m_komove && !board.is_suicide(vertex, color)) {
             result.push_back(vertex);
-        }                                
+        }
     }
 
     result.push_back(+FastBoard::PASS);
@@ -224,38 +224,71 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
         }
     }
 
-    constexpr int loop_amount = 4;
-    // Random moves on the board
-    for (int loops = 0; loops < loop_amount; loops++) {
-        int sq = walk_empty_list(board.m_tomove);
-        if (sq == FastBoard::PASS) {
-            break;
-        }
-        moves.emplace_back(sq, MWF_FLAG_RANDOM);
-    }
-
+    // XXX: make this unneeded
     moves.erase(std::remove_if(moves.begin(), moves.end(),
-                               [this](MovewFeatures & mwf) {
-                                   int sq = mwf.get_sq();
-                                   assert(sq > 0);
-                                   return sq == m_komove;
-                               }),
+                              [this](MovewFeatures & mwf) {
+                                  int sq = mwf.get_sq();
+                                  assert(sq > 0);
+                                  return sq == m_komove;
+                              }),
                 moves.end());
-
-    // Pass as fallback
-    moves.emplace_back(FastBoard::PASS, MWF_FLAG_PASS);
-    assert(moves.size());
 
     float cumul = 0.0f;
     scoredmoves.clear();
     for (auto & mwf : moves) {
         int sq = mwf.get_sq();
-        if (sq != FastBoard::PASS) {
-            flag_move(mwf, sq, color, matcher);
-        }
+        assert(sq != FastBoard::PASS);
+        flag_move(mwf, sq, color, matcher);
         cumul += mwf.get_score();
         scoredmoves.emplace_back(sq, cumul);
     }
+
+    float best_score;
+    if (!moves.empty()) {
+        best_score =
+            std::max_element(moves.begin(), moves.end(),
+                             [](const MovewFeatures & mwf1,
+                                const MovewFeatures & mwf2) {
+                return mwf1.get_score() < mwf2.get_score();
+            })->get_score();
+    }
+
+    // If there's no good moves yet, try randomly
+    if (moves.empty() || best_score < cfg_bound) {
+        constexpr int loop_amount = 4;
+        // Random moves on the board
+        for (int loops = 0; loops < loop_amount; loops++) {
+            int sq = walk_empty_list(board.m_tomove);
+            if (sq == FastBoard::PASS) {
+                break;
+            }
+            moves.emplace_back(sq, MWF_FLAG_RANDOM);
+        }
+
+        moves.erase(std::remove_if(moves.begin() + scoredmoves.size(), moves.end(),
+                                   [this](MovewFeatures & mwf) {
+                                       int sq = mwf.get_sq();
+                                       assert(sq > 0);
+                                       return sq == m_komove;
+                                   }),
+                    moves.end());
+
+        // Pass as fallback
+        moves.emplace_back(FastBoard::PASS, MWF_FLAG_PASS);
+        assert(moves.size());
+    }
+
+    // Score remainder now
+    for (auto mwf = moves.begin() + scoredmoves.size(); mwf != moves.end(); ++mwf) {
+        int sq = mwf->get_sq();
+        if (sq != FastBoard::PASS) {
+            flag_move(*mwf, sq, color, matcher);
+        }
+        cumul += mwf->get_score();
+        scoredmoves.emplace_back(sq, cumul);
+    }
+
+    assert(moves.size() == scoredmoves.size());
 
     float index = rng->randflt() * cumul;
 
@@ -274,11 +307,11 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
     return play_move_fast(FastBoard::PASS);
 }
 
-float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {       
+float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {
     Attributes att;
     att.get_from_move(this, territory, moyo, vertex);
 
-    return AttribScores::get_attribscores()->team_strength(att);        
+    return AttribScores::get_attribscores()->team_strength(att);
 }
 
 int FastState::play_move_fast(int vertex) {
@@ -365,15 +398,15 @@ int FastState::get_prevlast_move() {
     return m_onebutlastmove;
 }
 
-int FastState::get_passes() {     
-    return m_passes; 
+int FastState::get_passes() {
+    return m_passes;
 }
 
-void FastState::set_passes(int val) { 
-    m_passes = val; 
+void FastState::set_passes(int val) {
+    m_passes = val;
 }
 
-void FastState::increment_passes() { 
+void FastState::increment_passes() {
     m_passes++;
     if (m_passes > 4) m_passes = 4;
 }
@@ -386,15 +419,15 @@ void FastState::set_to_move(int tom) {
     board.m_tomove = tom;
 }
 
-void FastState::display_state() {        
-    myprintf("\nPasses: %d            Black (X) Prisoners: %d\n", 
+void FastState::display_state() {
+    myprintf("\nPasses: %d            Black (X) Prisoners: %d\n",
              m_passes, board.get_prisoners(FastBoard::BLACK));
     if (board.black_to_move()) {
         myprintf("Black (X) to move");
     } else {
         myprintf("White (O) to move");
     }
-    myprintf("    White (O) Prisoners: %d\n", board.get_prisoners(FastBoard::WHITE));              
+    myprintf("    White (O) Prisoners: %d\n", board.get_prisoners(FastBoard::WHITE));
 
     board.display_board(m_lastmove);
 }
@@ -405,11 +438,11 @@ std::string FastState::move_to_text(int move) {
 
 std::vector<bool> FastState::mark_dead(float *winrate) {
     static const int MARKING_RUNS = 256;
-    
+
     std::vector<int> survive_count(FastBoard::MAXSQ);
-    std::vector<bool> dead_group(FastBoard::MAXSQ);    
-    
-    fill(survive_count.begin(), survive_count.end(), 0);    
+    std::vector<bool> dead_group(FastBoard::MAXSQ);
+
+    fill(survive_count.begin(), survive_count.end(), 0);
     fill(dead_group.begin(), dead_group.end(), false);
 
     float wins = 0.0;
@@ -458,14 +491,14 @@ std::vector<bool> FastState::mark_dead(float *winrate) {
 }
 
 std::vector<int> FastState::final_score_map() {
-    FastState workstate(*this);    
-                 
+    FastState workstate(*this);
+
     std::vector<bool> dead_group = workstate.mark_dead();
 
      for (int i = 0; i < workstate.board.get_boardsize(); i++) {
         for (int j = 0; j < workstate.board.get_boardsize(); j++) {
             int vertex = workstate.board.get_vertex(i, j);
-            
+
             if (dead_group[vertex]) {
                 workstate.board.set_square(vertex, FastBoard::EMPTY);
             }
@@ -474,15 +507,15 @@ std::vector<int> FastState::final_score_map() {
 
     std::vector<bool> white = workstate.board.calc_reach_color(FastBoard::WHITE);
     std::vector<bool> black = workstate.board.calc_reach_color(FastBoard::BLACK);
-    
+
     std::vector<int> res;
     res.resize(FastBoard::MAXSQ);
-    std::fill(res.begin(), res.end(), FastBoard::EMPTY);    
-            
+    std::fill(res.begin(), res.end(), FastBoard::EMPTY);
+
     for (int i = 0; i < workstate.board.get_boardsize(); i++) {
         for (int j = 0; j < workstate.board.get_boardsize(); j++) {
             int vertex = workstate.board.get_vertex(i, j);
-            
+
             if (white[vertex] && !black[vertex]) {
                 res[vertex] = FastBoard::WHITE;
             } else if (black[vertex] && !white[vertex]) {
@@ -490,7 +523,7 @@ std::vector<int> FastState::final_score_map() {
             }
         }
     }
-    
+
     return res;
 }
 

@@ -56,10 +56,10 @@ public:
         m_flags = 0;
         add_flag(flag);
     }
-    int get_sq() {
+    int get_sq() const {
         return m_vertex;
     }
-    int get_target_size() {
+    int get_target_size() const {
         return m_target_size;
     }
     void add_flag(int flag) {
@@ -74,18 +74,18 @@ public:
         m_pattern = pattern;
         m_score *= PolicyWeights::pattern_weights[m_pattern];
     }
-    int get_pattern() {
+    int get_pattern() const {
         assert(m_pattern > 0);
         return m_pattern;
     }
-    bool has_flag(int flag) {
+    bool has_flag(int flag) const {
         assert(flag < std::numeric_limits<decltype(flag)>::digits);
         return (m_flags & (1 << flag)) != 0;
     }
-    bool is_pass() {
+    bool is_pass() const {
         return has_flag(MWF_FLAG_PASS);
     }
-    float get_score() {
+    float get_score() const {
         return m_score;
     }
 private:

@@ -38,6 +38,7 @@ extern float cfg_beta;
 extern float cfg_patternbonus;
 extern float cfg_mix_opening;
 extern float cfg_mix_ending;
+extern float cfg_mc_softmax;
 extern int cfg_eval_thresh;
 extern int cfg_rave_moves;
 extern int cfg_extra_symmetry;

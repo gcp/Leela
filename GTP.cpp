@@ -59,6 +59,7 @@ float cfg_psa;
 float cfg_softmax_temp;
 float cfg_mix_opening;
 float cfg_mix_ending;
+float cfg_mc_softmax;
 int cfg_eval_thresh;
 float cfg_beta;
 float cfg_patternbonus;
@@ -95,7 +96,7 @@ void GTP::setup_default_parameters() {
     cfg_crit_his_1 = 9.03f;
     cfg_crit_his_2 = 2.58f;
     cfg_tactical = 10.89f;
-    cfg_bound = 0.168f;
+    cfg_bound = 0.2f;
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
@@ -108,6 +109,7 @@ void GTP::setup_default_parameters() {
     cfg_mix_opening = 0.78f;
     cfg_mix_ending = 0.62f;
     cfg_rave_moves = 13;
+    cfg_mc_softmax = 1.0f;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }
@@ -174,31 +176,31 @@ std::string GTP::get_life_list(GameState & game, bool live) {
     std::vector<std::string> stringlist;
     std::string result;
     FastBoard & board = game.board;
-    
-    std::vector<bool> dead = game.mark_dead();        
-    
+
+    std::vector<bool> dead = game.mark_dead();
+
     for (int i = 0; i < board.get_boardsize(); i++) {
         for (int j = 0; j < board.get_boardsize(); j++) {
-            int vertex = board.get_vertex(i, j);           
-            
-            if (board.get_square(vertex) != FastBoard::EMPTY) {                                
+            int vertex = board.get_vertex(i, j);
+
+            if (board.get_square(vertex) != FastBoard::EMPTY) {
                 if (live ^ dead[vertex]) {
-                    stringlist.push_back(board.get_string(vertex));                    
-                }                
+                    stringlist.push_back(board.get_string(vertex));
+                }
             }
         }
-    }    
-    
+    }
+
     // remove multiple mentions of the same string
     // unique reorders and returns new iterator, erase actually deletes
-    std::sort(stringlist.begin(), stringlist.end());    
+    std::sort(stringlist.begin(), stringlist.end());
     stringlist.erase(std::unique(stringlist.begin(), stringlist.end()), stringlist.end());
-    
+
     for (unsigned int i = 0; i < stringlist.size(); i++) {
         result += (i == 0 ? "" : "\n") + stringlist[i];
     }
-    
-    return result;                    
+
+    return result;
 }
 
 bool GTP::execute(GameState & game, std::string xinput) {
@@ -262,45 +264,45 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (command == "name") {
         gtp_printf(id, PROGRAM_NAME);
-        return true;  
+        return true;
     } else if (command == "version") {
         gtp_printf(id, PROGRAM_VERSION);
         return true;
     } else if (command == "quit") {
         gtp_printf(id, "");
-        exit(EXIT_SUCCESS);        
-    } else if (command.find("known_command") == 0) {        
+        exit(EXIT_SUCCESS);
+    } else if (command.find("known_command") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp;
-        
+
         cmdstream >> tmp;     /* remove known_command */
         cmdstream >> tmp;
-        
+
         for (int i = 0; s_commands[i].size() > 0; i++) {
             if (tmp == s_commands[i]) {
                 gtp_printf(id, "true");
                 return 1;
             }
         }
-        
-        gtp_printf(id, "false");        
+
+        gtp_printf(id, "false");
         return true;
     } else if (command.find("list_commands") == 0) {
         std::string outtmp(s_commands[0]);
-        for (int i = 1; s_commands[i].size() > 0; i++) {            
-            outtmp = outtmp + "\n" + s_commands[i];            
+        for (int i = 1; s_commands[i].size() > 0; i++) {
+            outtmp = outtmp + "\n" + s_commands[i];
         }
-        gtp_printf(id, outtmp.c_str());    
+        gtp_printf(id, outtmp.c_str());
         return true;
     } else if (command.find("boardsize") == 0) {
         std::istringstream cmdstream(command);
         std::string stmp;
         int tmp;
-        
+
         cmdstream >> stmp;  // eat boardsize
-        cmdstream >> tmp;                
-        
-        if (!cmdstream.fail()) {        
+        cmdstream >> tmp;
+
+        if (!cmdstream.fail()) {
             if (tmp < 2 || tmp > FastBoard::MAXBOARDSIZE) {
                 gtp_fail_printf(id, "unacceptable size");
             } else {
@@ -311,7 +313,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
-        
+
         return true;
     } else if (command.find("clear_board") == 0) {
         game.reset_game();
@@ -339,7 +341,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
         return true;
     } else if (command.find("play") == 0) {
         if (command.find("pass") != std::string::npos
-            || command.find("resign") != std::string::npos) { 
+            || command.find("resign") != std::string::npos) {
             game.play_pass();
             gtp_printf(id, "");
         } else {
@@ -351,7 +353,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             cmdstream >> color;
             cmdstream >> vertex;
 
-            if (!cmdstream.fail()) {    
+            if (!cmdstream.fail()) {
                 if (!game.play_textmove(color, vertex)) {
                     gtp_fail_printf(id, "illegal move");
                 } else {
@@ -448,19 +450,19 @@ bool GTP::execute(GameState & game, std::string xinput) {
             game.play_move(who, move);
             game.set_komi(old_komi);
 
-            std::string vertex = game.move_to_text(move);             
+            std::string vertex = game.move_to_text(move);
             gtp_printf(id, "%s", vertex.c_str());
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
-                
+
         return true;
     } else if (command.find("undo") == 0) {
         if (game.undo_move()) {
             gtp_printf(id, "");
         } else {
             gtp_fail_printf(id, "cannot undo");
-        }            
+        }
         return true;
     } else if (command.find("showboard") == 0) {
         gtp_printf(id, "");
@@ -508,10 +510,10 @@ bool GTP::execute(GameState & game, std::string xinput) {
     } else if (command.find("final_status_list") == 0) {
         if (command.find("alive") != std::string::npos) {
             std::string livelist = get_life_list(game, true);
-            gtp_printf(id, livelist.c_str());                        
-        } else if (command.find("dead") != std::string::npos) {            
+            gtp_printf(id, livelist.c_str());
+        } else if (command.find("dead") != std::string::npos) {
             std::string deadlist = get_life_list(game, false);
-            gtp_printf(id, deadlist.c_str());                        
+            gtp_printf(id, deadlist.c_str());
         } else {
             gtp_printf(id, "");
         }
@@ -532,20 +534,20 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_fail_printf(id, "syntax not understood");
         }
         return true;
-    } else if (command.find("time_left") == 0) {        
+    } else if (command.find("time_left") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp, color;
         int time, stones;
-        
+
         cmdstream >> tmp >> color >> time >> stones;
-        
+
         if (!cmdstream.fail()) {
             int icolor;
-            
+
             if (color == "w" || color == "white") {
                 icolor = FastBoard::WHITE;
             } else if (color == "b" || color == "black") {
-                icolor = FastBoard::BLACK;        
+                icolor = FastBoard::BLACK;
             } else {
                 gtp_fail_printf(id, "Color in time adjust not understood.\n");
                 return 1;
@@ -578,9 +580,9 @@ bool GTP::execute(GameState & game, std::string xinput) {
             }
         } else {
             gtp_fail_printf(id, "syntax not understood");
-        }    
+        }
         return true;
-    } else if (command.find("auto") == 0) {    
+    } else if (command.find("auto") == 0) {
         do {
             std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
@@ -599,9 +601,9 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
         int move = search->think(game.get_to_move());
-        game.play_move(move);                    
+        game.play_move(move);
 
-        std::string vertex = game.move_to_text(move);        
+        std::string vertex = game.move_to_text(move);
         myprintf("%s\n", vertex.c_str());
         return true;
     } else if (command.find("influence") == 0) {
@@ -618,74 +620,74 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::istringstream cmdstream(command);
         std::string tmp;
         int stones;
-        
+
         cmdstream >> tmp;   // eat fixed_handicap
         cmdstream >> stones;
-        
+
         if (game.set_fixed_handicap(stones)) {
             std::string stonestring = game.board.get_stone_list();
-            gtp_printf(id, "%s", stonestring.c_str());            
+            gtp_printf(id, "%s", stonestring.c_str());
         } else {
-            gtp_fail_printf(id, "Not a valid number of handicap stones");            
-        }   
+            gtp_fail_printf(id, "Not a valid number of handicap stones");
+        }
         return true;
     } else if (command.find("place_free_handicap") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp;
         int stones;
-        
+
         cmdstream >> tmp;   // eat place_free_handicap
         cmdstream >> stones;
-        
+
         game.place_free_handicap(stones);
-        
+
         std::string stonestring = game.board.get_stone_list();
         gtp_printf(id, "%s", stonestring.c_str());
-        
+
         return true;
     } else if (command.find("set_free_handicap") == 0) {
         std::istringstream cmdstream(command);
-        std::string tmp;        
-        
-        cmdstream >> tmp;   // eat set_free_handicap           
-            
-        do {    
+        std::string tmp;
+
+        cmdstream >> tmp;   // eat set_free_handicap
+
+        do {
             std::string vertex;
-            
+
             cmdstream >> vertex;
-            
+
             if (!cmdstream.fail()) {
                 if (!game.play_textmove("black", vertex)) {
                     gtp_fail_printf(id, "illegal move");
                 } else {
                     game.set_handicap(game.get_handicap() + 1);
-                }                
-            } 
-        } while (!cmdstream.fail());                          
-        
+                }
+            }
+        } while (!cmdstream.fail());
+
         std::string stonestring = game.board.get_stone_list();
         gtp_printf(id, "%s", stonestring.c_str());
-        
+
         return true;
     } else if (command.find("loadsgf") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp, filename;
         int movenum;
 
-        cmdstream >> tmp;   // eat loadsgf                
-        
-        cmdstream >> filename;        
+        cmdstream >> tmp;   // eat loadsgf
+
+        cmdstream >> filename;
         cmdstream >> movenum;
-        
+
         if (cmdstream.fail()) {
             movenum = 999;
         }
-        
+
         std::unique_ptr<SGFTree> sgftree(new SGFTree);
-        
-        sgftree->load_from_file(filename);                
+
+        sgftree->load_from_file(filename);
         game = sgftree->follow_mainline_state(movenum);
-        
+
         gtp_printf(id, "");
         return true;
     } else if (command.find("kgs-chat") == 0) {
@@ -744,33 +746,33 @@ bool GTP::execute(GameState & game, std::string xinput) {
         std::istringstream cmdstream(command);
         std::string tmp, filename;
 
-        cmdstream >> tmp;   // eat tune 
+        cmdstream >> tmp;   // eat tune
 
-        cmdstream >> filename;        
-        
+        cmdstream >> filename;
+
         std::unique_ptr<AttribScores> scores(new AttribScores);
-        
+
         scores->autotune_from_file(filename);
-        
+
         gtp_printf(id, "");
         return true;
-    } else if (command.find("genetune") == 0) {        
+    } else if (command.find("genetune") == 0) {
         std::unique_ptr<Genetic> genetic(new Genetic);
-        
+
         genetic->genetic_tune();
-        
+
         gtp_printf(id, "");
         return true;
-    } else if (command.find("genesplit") == 0) {    
+    } else if (command.find("genesplit") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp, filename;
 
-        cmdstream >> tmp;   // eat tune 
-        cmdstream >> filename;          
-        
-        std::unique_ptr<Genetic> genetic(new Genetic);  
+        cmdstream >> tmp;   // eat tune
+        cmdstream >> filename;
+
+        std::unique_ptr<Genetic> genetic(new Genetic);
         genetic->genetic_split(filename);
-        
+
         gtp_printf(id, "");
         return true;
     } else if (command.find("pn") == 0) {

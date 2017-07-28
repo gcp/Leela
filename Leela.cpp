@@ -21,6 +21,7 @@
 #include "Matcher.h"
 #include "AttribScores.h"
 #include "ThreadPool.h"
+#include "MCPolicy.h"
 
 using namespace Utils;
 
@@ -73,6 +74,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("mix_opening", po::value<float>())
         ("mix_ending", po::value<float>())
         ("softmax_temp", po::value<float>())
+        ("mc_softmax", po::value<float>())
         ("eval_thresh", po::value<int>())
         ("rave_moves", po::value<int>())
         ("extra_symmetry", po::value<int>())
@@ -148,6 +150,9 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
     if (vm.count("softmax_temp")) {
         cfg_softmax_temp = vm["softmax_temp"].as<float>();
+    }
+    if (vm.count("mc_softmax")) {
+        cfg_mc_softmax = 1.0f / vm["mc_softmax"].as<float>();
     }
     if (vm.count("beta")) {
         cfg_beta = vm["beta"].as<float>();
@@ -276,6 +281,13 @@ int main (int argc, char *argv[]) {
     AttribScores::get_attribscores();
     Matcher::get_Matcher();
     Network::get_Network();
+    // e^(x/t) = e^x^(1/t)
+    std::for_each(PolicyWeights::pattern_weights.begin(),
+                  PolicyWeights::pattern_weights.end(),
+                  [](float &f) { f = std::pow(f, cfg_mc_softmax); });
+    std::for_each(PolicyWeights::feature_weights.begin(),
+                  PolicyWeights::feature_weights.end(),
+                  [](float &f) { f = std::pow(f, cfg_mc_softmax); });
 
     std::unique_ptr<GameState> maingame(new GameState);
 

@@ -61,14 +61,14 @@ typedef  unsigned long long int uint64;
 #endif
 
 #if (_MSC_VER >= 1400) /* VC8+ Disable all deprecation warnings */
-    #pragma warning(disable : 4996)     
+    #pragma warning(disable : 4996)
 #endif /* VC8+ */
 
 #ifdef GETTICKCOUNT
     typedef int rtime_t;
 #else
     #if defined(GETTIMEOFDAY)
-        #include <sys/time.h>        
+        #include <sys/time.h>
         #include <time.h>
         typedef struct timeval rtime_t;
     #else
