@@ -1,6 +1,5 @@
 #include "config.h"
 
-#include <unordered_map>
 #include <math.h>
 
 #include "Matcher.h"
@@ -54,6 +53,9 @@ Matcher::Matcher() {
         int reducpat2 = board.get_pattern3_augment_spec(startvtx, w, true);
         reducpat2 = Utils::pattern_hash(reducpat2);
 
+        // Most of this array will never be indexed, as most patterns
+        // don't or can't occur in actual games. pattern_hash maps the
+        // 2148 real patterns into 8192 indexes (minus 97 collisions).
         m_patterns[FastBoard::BLACK][i] = reducpat1;
         m_patterns[FastBoard::WHITE][i] = reducpat2;
     }
