@@ -75,10 +75,10 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 25;
+    cfg_mature_threshold = 20;
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry =  350;
-    cfg_eval_thresh = 3;
+    cfg_eval_thresh = 2;
 #else
     cfg_mature_threshold = 100;
     cfg_expand_divider =  2.0f;
@@ -96,7 +96,7 @@ void GTP::setup_default_parameters() {
     cfg_crit_his_1 = 9.03f;
     cfg_crit_his_2 = 2.58f;
     cfg_tactical = 10.89f;
-    cfg_bound = 1e10f;
+    cfg_bound = 0.235f;
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
@@ -106,10 +106,10 @@ void GTP::setup_default_parameters() {
     cfg_softmax_temp = 0.62f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix_opening = 0.78f;
-    cfg_mix_ending = 0.62f;
+    cfg_mix_opening = 0.721f;
+    cfg_mix_ending = 0.691f;
     cfg_rave_moves = 13;
-    cfg_mc_softmax = 1.0f;
+    cfg_mc_softmax = 0.387f;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }
