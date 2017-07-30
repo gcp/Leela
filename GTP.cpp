@@ -96,7 +96,7 @@ void GTP::setup_default_parameters() {
     cfg_crit_his_1 = 9.03f;
     cfg_crit_his_2 = 2.58f;
     cfg_tactical = 10.89f;
-    cfg_bound = 0.2f;
+    cfg_bound = 1e10f;
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;

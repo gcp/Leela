@@ -243,10 +243,10 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
         scoredmoves.emplace_back(sq, cumul);
     }
 
-    float best_score;
+    float best_score = 0.0f;
     if (!moves.empty()) {
         best_score =
-            std::max_element(moves.begin(), moves.end(),
+            std::max_element(moves.cbegin(), moves.cend(),
                              [](const MovewFeatures & mwf1,
                                 const MovewFeatures & mwf2) {
                 return mwf1.get_score() < mwf2.get_score();
@@ -254,7 +254,7 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
     }
 
     // If there's no good moves yet, try randomly
-    if (moves.empty() || best_score < cfg_bound) {
+    if (best_score < cfg_bound) {
         constexpr int loop_amount = 4;
         // Random moves on the board
         for (int loops = 0; loops < loop_amount; loops++) {
@@ -264,14 +264,6 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
             }
             moves.emplace_back(sq, MWF_FLAG_RANDOM);
         }
-
-        moves.erase(std::remove_if(moves.begin() + scoredmoves.size(), moves.end(),
-                                   [this](MovewFeatures & mwf) {
-                                       int sq = mwf.get_sq();
-                                       assert(sq > 0);
-                                       return sq == m_komove;
-                                   }),
-                    moves.end());
 
         // Pass as fallback
         moves.emplace_back(FastBoard::PASS, MWF_FLAG_PASS);

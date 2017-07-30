@@ -152,7 +152,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         cfg_softmax_temp = vm["softmax_temp"].as<float>();
     }
     if (vm.count("mc_softmax")) {
-        cfg_mc_softmax = 1.0f / vm["mc_softmax"].as<float>();
+        cfg_mc_softmax = vm["mc_softmax"].as<float>();
     }
     if (vm.count("beta")) {
         cfg_beta = vm["beta"].as<float>();
@@ -284,10 +284,10 @@ int main (int argc, char *argv[]) {
     // e^(x/t) = e^x^(1/t)
     std::for_each(PolicyWeights::pattern_weights.begin(),
                   PolicyWeights::pattern_weights.end(),
-                  [](float &f) { f = std::pow(f, cfg_mc_softmax); });
+                  [](float &f) { f = std::pow(f, 1.0f / cfg_mc_softmax); });
     std::for_each(PolicyWeights::feature_weights.begin(),
                   PolicyWeights::feature_weights.end(),
-                  [](float &f) { f = std::pow(f, cfg_mc_softmax); });
+                  [](float &f) { f = std::pow(f, 1.0f / cfg_mc_softmax); });
 
     std::unique_ptr<GameState> maingame(new GameState);
 
