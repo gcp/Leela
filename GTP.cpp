@@ -81,8 +81,8 @@ void GTP::setup_default_parameters() {
     cfg_eval_thresh = 2;
 #else
     cfg_mature_threshold = 100;
-    cfg_expand_divider =  2.0f;
-    cfg_extra_symmetry =  3000;
+    cfg_expand_divider = 2.0f;
+    cfg_extra_symmetry = 3000;
     cfg_eval_thresh = 10;
 #endif
     cfg_max_playouts = INT_MAX;
@@ -102,8 +102,12 @@ void GTP::setup_default_parameters() {
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 1.1f;
     cfg_puct = 1.1f;
-    cfg_psa = 0.0025f;
-    cfg_softmax_temp = 0.62f;
+    cfg_psa = 0.0018f;
+#ifdef USE_SEARCH
+    cfg_softmax_temp = 0.70f;
+#else
+    cfg_softmax_temp = 0.094f;
+#endif
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix_opening = 0.721f;
@@ -498,6 +502,14 @@ bool GTP::execute(GameState & game, std::string xinput) {
     } else if (command.find("mc_winrate") == 0) {
         float mc_winrate = Playout::mc_owner(game, 512);
         gtp_printf(id, "%f", mc_winrate);
+        return true;
+    } else if (command.find("winrate") == 0) {
+        float mc_winrate = Playout::mc_owner(game, 512);
+        float net_score = Network::get_Network()->get_value(&game,
+                                                            Network::Ensemble::AVERAGE_ALL);
+        float comb_winrate = UCTNode::score_mix_function(game.get_movenum(),
+                                                         net_score, mc_winrate);
+        gtp_printf(id, "%f", comb_winrate);
         return true;
     } else if (command.find("winrate") == 0) {
         float mc_winrate = Playout::mc_owner(game, 512);

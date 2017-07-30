@@ -30,11 +30,11 @@ public:
     using PredMoves = std::array<int, 3>;
     struct TrainPosition {
         NNPlanes planes;
-        //PredMoves moves;
-        float stm_score;
-        float stm_won;
-        float stm_score_tanh;
-        float stm_won_tanh;
+        PredMoves moves;
+        //float stm_score;
+        //float stm_won;
+        //float stm_score_tanh;
+        //float stm_won_tanh;
     };
     using TrainVector = std::vector<TrainPosition>;
     using scored_node = std::pair<float, int>;
@@ -68,7 +68,7 @@ public:
 
 private:
 #ifdef USE_CAFFE
-    static std::unique_ptr<caffe::Net<float>> s_net;
+    static std::unique_ptr<caffe::Net> s_net;
 #endif
 
     static Netresult get_scored_moves_internal(

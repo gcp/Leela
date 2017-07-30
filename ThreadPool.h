@@ -33,6 +33,8 @@
 #include <future>
 #include <functional>
 
+namespace Utils {
+
 class ThreadPool {
 public:
     ThreadPool() = default;
@@ -121,6 +123,7 @@ inline void ThreadGroup::wait_all() {
     for (auto && result: m_taskresults) {
         result.get();
     }
+}
 }
 
 #endif

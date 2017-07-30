@@ -482,17 +482,19 @@ std::vector<bool> FastState::mark_dead(float *winrate) {
     return dead_group;
 }
 
-std::vector<int> FastState::final_score_map() {
+std::vector<int> FastState::final_score_map(bool mark_dead) {
     FastState workstate(*this);
 
-    std::vector<bool> dead_group = workstate.mark_dead();
+    if (mark_dead) {
+        std::vector<bool> dead_group = workstate.mark_dead();
 
-     for (int i = 0; i < workstate.board.get_boardsize(); i++) {
-        for (int j = 0; j < workstate.board.get_boardsize(); j++) {
-            int vertex = workstate.board.get_vertex(i, j);
+        for (int i = 0; i < workstate.board.get_boardsize(); i++) {
+            for (int j = 0; j < workstate.board.get_boardsize(); j++) {
+                int vertex = workstate.board.get_vertex(i, j);
 
-            if (dead_group[vertex]) {
-                workstate.board.set_square(vertex, FastBoard::EMPTY);
+                if (dead_group[vertex]) {
+                    workstate.board.set_square(vertex, FastBoard::EMPTY);
+                }
             }
         }
     }
@@ -519,17 +521,19 @@ std::vector<int> FastState::final_score_map() {
     return res;
 }
 
-float FastState::final_score(float *winrate) {
+float FastState::final_score(float *winrate, bool mark_dead) {
     FastState workstate(*this);
 
-    std::vector<bool> dead_group = workstate.mark_dead(winrate);
+    if (mark_dead) {
+        std::vector<bool> dead_group = workstate.mark_dead(winrate);
 
-     for (int i = 0; i < workstate.board.get_boardsize(); i++) {
-        for (int j = 0; j < workstate.board.get_boardsize(); j++) {
-            int vertex = workstate.board.get_vertex(i, j);
+        for (int i = 0; i < workstate.board.get_boardsize(); i++) {
+            for (int j = 0; j < workstate.board.get_boardsize(); j++) {
+                int vertex = workstate.board.get_vertex(i, j);
 
-            if (dead_group[vertex]) {
-                workstate.board.set_square(vertex, FastBoard::EMPTY);
+                if (dead_group[vertex]) {
+                    workstate.board.set_square(vertex, FastBoard::EMPTY);
+                }
             }
         }
     }

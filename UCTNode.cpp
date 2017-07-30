@@ -191,12 +191,11 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
                                Network::Netresult & nodelist,
                                bool all_symmetries) {
 
+    assert(!nodelist.empty());
     // sort (this will reverse scores, but linking is backwards too)
     std::sort(nodelist.begin(), nodelist.end());
 
     int childrenadded = 0;
-    if (nodelist.empty()) return;
-
     const int max_net_childs = 35;
     int netscore_threshold = cfg_mature_threshold;
     int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
@@ -265,6 +264,8 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
                             FastBoard & board,
                             Network::Netresult & nodelist,
                             bool use_nets) {
+    int totalchildren = nodelist.size();
+    if (!totalchildren) return;
 
     // sort (this will reverse scores, but linking is backwards too)
     std::sort(nodelist.begin(), nodelist.end());
@@ -276,11 +277,16 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     }
     int childrenadded = 0;
     int childrenseen = 0;
-    int totalchildren = nodelist.size();
-    if (!totalchildren) return;
 
     int netscore_threshold = cfg_mature_threshold;
-    int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
+    if (!use_nets) {
+        if (board.get_boardsize() <= 9) {
+            netscore_threshold = 30;
+        } else {
+            netscore_threshold = 50;
+        }
+    }
+    int expand_threshold = ((float)netscore_threshold)/cfg_expand_divider;
     int movenum = board.get_stone_count();
 
     SMP::Lock lock(get_mutex());
@@ -723,6 +729,7 @@ public:
     Requires node mutex to be held.
 */
 void UCTNode::sort_children() {
+    assert(get_mutex().is_held());
     std::vector<std::tuple<float, UCTNode*>> tmp;
 
     UCTNode * child = m_firstchild;

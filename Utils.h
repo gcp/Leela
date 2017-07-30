@@ -6,9 +6,9 @@
 #include <wx/event.h>
 #endif
 
+#include "config.h"
 #include <string>
 #include <atomic>
-#include "config.h"
 #include "ThreadPool.h"
 
 #ifdef _MSC_VER
@@ -19,7 +19,7 @@ __assume((reinterpret_cast<std::size_t>(p) & ((n) - 1)) == 0)
 (p) = static_cast<__typeof__(p)>(__builtin_assume_aligned((p), (n)))
 #endif
 
-extern ThreadPool thread_pool;
+extern Utils::ThreadPool thread_pool;
 
 namespace Utils {
 #ifndef _CONSOLE

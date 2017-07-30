@@ -13,6 +13,19 @@
 
 typedef QPair<QString, float> parmset;
 
+bool waitForReadyRead(QProcess & process) {
+    while (!process.canReadLine() && process.state() == QProcess::Running) {
+        process.waitForReadyRead(-1);
+    }
+
+    // somebody crashed
+    if (process.state() != QProcess::Running) {
+        return false;
+    }
+
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
@@ -85,24 +98,42 @@ int main(int argc, char *argv[])
     char readbuff[256];
     int read_cnt;
 
+    QString winner;
+    bool stop = false;
+    bool orig_to_move = (qrand() % 2 == 0);
+    bool black_to_move = true;
+    bool black_resigned;
+    bool orig_is_black = orig_to_move;
+    int passes = 0;
+
+    cerr << "Original is black: " << orig_is_black << endl;
+
 #if 0
     orig_process.write(qPrintable("boardsize 13\n"));
     tune_process.write(qPrintable("boardsize 13\n"));
     orig_process.waitForBytesWritten(-1);
     tune_process.waitForBytesWritten(-1);
-    while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+    if (!waitForReadyRead(orig_process)) {
+        goto orig_crash;
+    }
     read_cnt = orig_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
     Q_ASSERT(readbuff[0] == '=');
-    while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+    if (!waitForReadyRead(tune_process)) {
+        goto tune_crash;
+    }
     read_cnt = tune_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
     Q_ASSERT(readbuff[0] == '=');
     // Eat double newline from GTP protocol
-    while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+    if (!waitForReadyRead(orig_process)) {
+        goto orig_crash;
+    }
     read_cnt = orig_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
-    while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+    if (!waitForReadyRead(tune_process)) {
+        goto tune_crash;
+    }
     read_cnt = tune_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
     cerr << "Started, board successfully set." << endl;
@@ -112,31 +143,30 @@ int main(int argc, char *argv[])
     tune_process.write(qPrintable("time_settings 600 0 0\n"));
     orig_process.waitForBytesWritten(-1);
     tune_process.waitForBytesWritten(-1);
-    while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+    if (!waitForReadyRead(orig_process)) {
+        goto orig_crash;
+    }
     read_cnt = orig_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
     Q_ASSERT(readbuff[0] == '=');
-    while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+    if (!waitForReadyRead(tune_process)) {
+        goto tune_crash;
+    }
     read_cnt = tune_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
     Q_ASSERT(readbuff[0] == '=');
     // Eat double newline from GTP protocol
-    while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+    if (!waitForReadyRead(orig_process)) {
+        goto orig_crash;
+    }
     read_cnt = orig_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
-    while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+    if (!waitForReadyRead(tune_process)) {
+        goto tune_crash;
+    }
     read_cnt = tune_process.readLine(readbuff, 256);
     Q_ASSERT(read_cnt > 0);
     cerr << "Time successfully set." << endl;
-
-    bool stop = false;
-    bool orig_to_move = (qrand() % 2 == 0);
-    bool black_to_move = true;
-    bool black_resigned;
-    bool orig_is_black = orig_to_move;
-    int passes = 0;
-
-    cerr << "Original is black: " << orig_is_black << endl;
 
     do {
         QString move_cmd;
@@ -148,12 +178,16 @@ int main(int argc, char *argv[])
         if (orig_to_move) {
             orig_process.write(qPrintable(move_cmd));
             orig_process.waitForBytesWritten(-1);
-            while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+            if (!waitForReadyRead(orig_process)) {
+                goto orig_crash;
+            }
             read_cnt = orig_process.readLine(readbuff, 256);
         } else {
             tune_process.write(qPrintable(move_cmd));
             tune_process.waitForBytesWritten(-1);
-            while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+            if (!waitForReadyRead(tune_process)) {
+                goto tune_crash;
+            }
             read_cnt = tune_process.readLine(readbuff, 256);
         }
         if (read_cnt <= 3 || readbuff[0] != '=') {
@@ -169,11 +203,15 @@ int main(int argc, char *argv[])
 
         // Eat double newline from GTP protocol
         if (orig_to_move) {
-            while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+            if (!waitForReadyRead(orig_process)) {
+                goto orig_crash;
+            }
             read_cnt = orig_process.readLine(readbuff, 256);
             Q_ASSERT(read_cnt > 0);
         } else {
-            while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+            if (!waitForReadyRead(tune_process)) {
+                goto tune_crash;
+            }
             read_cnt = tune_process.readLine(readbuff, 256);
             Q_ASSERT(read_cnt > 0);
         }
@@ -209,28 +247,34 @@ int main(int argc, char *argv[])
             if (orig_to_move) {
                 orig_process.write(qPrintable(move_side));
                 orig_process.waitForBytesWritten(-1);
-                while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+                if (!waitForReadyRead(orig_process)) {
+                    goto orig_crash;
+                }
                 read_cnt = orig_process.readLine(readbuff, 256);
                 Q_ASSERT(read_cnt > 0);
                 Q_ASSERT(readbuff[0] == '=');
-                while (!orig_process.canReadLine()) orig_process.waitForReadyRead(100);
+                if (!waitForReadyRead(orig_process)) {
+                    goto orig_crash;
+                }
                 read_cnt = orig_process.readLine(readbuff, 256);
                 Q_ASSERT(read_cnt > 0);
             } else {
                 tune_process.write(qPrintable(move_side));
                 tune_process.waitForBytesWritten(-1);
-                while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+                if (!waitForReadyRead(tune_process)) {
+                    goto tune_crash;
+                }
                 read_cnt = tune_process.readLine(readbuff, 256);
                 Q_ASSERT(read_cnt > 0);
                 Q_ASSERT(readbuff[0] == '=');
-                while (!tune_process.canReadLine()) tune_process.waitForReadyRead(100);
+                if (!waitForReadyRead(tune_process)) {
+                    goto tune_crash;
+                }
                 read_cnt = tune_process.readLine(readbuff, 256);
                 Q_ASSERT(read_cnt > 0);
             }
         }
     } while (!stop && passes < 2);
-
-    QString winner;
 
     if (!stop) {
         QString sgf_name(QDir::tempPath() + "/");
@@ -314,5 +358,12 @@ int main(int argc, char *argv[])
 
     cout.flush();
 
+    return app.exec();
+
+orig_crash:
+    cout << "W" << endl;
+    return app.exec();
+tune_crash:
+    cout << "L" << endl;
     return app.exec();
 }
