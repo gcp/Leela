@@ -268,16 +268,16 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
         // Pass as fallback
         moves.emplace_back(FastBoard::PASS, MWF_FLAG_PASS);
         assert(moves.size());
-    }
 
-    // Score remainder now
-    for (auto mwf = moves.begin() + scoredmoves.size(); mwf != moves.end(); ++mwf) {
-        int sq = mwf->get_sq();
-        if (sq != FastBoard::PASS) {
-            flag_move(*mwf, sq, color, matcher);
+        // Score remainder now
+        for (auto mwf = moves.begin() + scoredmoves.size(); mwf != moves.end(); ++mwf) {
+            int sq = mwf->get_sq();
+            if (sq != FastBoard::PASS) {
+                flag_move(*mwf, sq, color, matcher);
+            }
+            cumul += mwf->get_score();
+            scoredmoves.emplace_back(sq, cumul);
         }
-        cumul += mwf->get_score();
-        scoredmoves.emplace_back(sq, cumul);
     }
 
     assert(moves.size() == scoredmoves.size());
