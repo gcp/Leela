@@ -273,8 +273,6 @@ int main (int argc, char *argv[]) {
 
     thread_pool.initialize(cfg_num_threads);
 
-    thread_pool.initialize(cfg_num_threads);
-
     // Use deterministic random numbers for hashing
     std::unique_ptr<Random> rng(new Random(5489));
     Zobrist::init_zobrist(*rng);
