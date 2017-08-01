@@ -78,7 +78,7 @@ void MCPolicy::hash_test() {
 }
 #endif
 
-void MCPolicy::mse_from_file2(std::string filename) {
+void MCPolicy::mse_from_file(std::string filename) {
     std::vector<std::string> games = SGFParser::chop_all(filename);
     size_t gametotal = games.size();
     myprintf("Total games in file: %d\n", gametotal);
@@ -209,7 +209,7 @@ void MCPolicy::mse_from_file2(std::string filename) {
     }
 }
 
-void MCPolicy::mse_from_file(std::string filename) {
+void MCPolicy::mse_from_file2(std::string filename) {
     std::vector<std::string> games = SGFParser::chop_all(filename);
     size_t gametotal = games.size();
     myprintf("Total games in file: %d\n", gametotal);
