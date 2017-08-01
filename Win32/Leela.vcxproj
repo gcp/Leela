@@ -264,7 +264,6 @@
     <ClInclude Include="..\UCTSearch.h" />
     <ClInclude Include="..\Utils.h" />
     <ClInclude Include="..\Weights.h" />
-    <ClInclude Include="..\WeightsMatcher.h" />
     <ClInclude Include="..\Zobrist.h" />
   </ItemGroup>
   <ItemGroup>

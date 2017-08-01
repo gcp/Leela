@@ -78,7 +78,7 @@ void MCPolicy::hash_test() {
 }
 #endif
 
-void MCPolicy::mse_from_file(std::string filename) {
+void MCPolicy::mse_from_file2(std::string filename) {
     std::vector<std::string> games = SGFParser::chop_all(filename);
     size_t gametotal = games.size();
     myprintf("Total games in file: %d\n", gametotal);
@@ -188,6 +188,86 @@ void MCPolicy::mse_from_file(std::string filename) {
             sum_sq_pp = 0.0;
             sum_sq_nn = 0.0;
         }
+
+        if (count % 10000 == 0) {
+            std::string filename = "rltune_" + std::to_string(count) + ".txt";
+            std::ofstream out(filename);
+            out.precision(std::numeric_limits<float>::max_digits10);
+            out << std::defaultfloat;
+            for (int w = 0; w < NUM_FEATURES; w++) {
+                out << PolicyWeights::feature_weights[w]
+                    << "f, /* = " << w << " */"
+                    << std::endl;
+            }
+            out << std::endl;
+            out << std::scientific;
+            for (int w = 0; w < NUM_PATTERNS; w++) {
+                out << PolicyWeights::pattern_weights[w] << "f," << std::endl;
+            }
+            out.close();
+        }
+    }
+}
+
+void MCPolicy::mse_from_file(std::string filename) {
+    std::vector<std::string> games = SGFParser::chop_all(filename);
+    size_t gametotal = games.size();
+    myprintf("Total games in file: %d\n", gametotal);
+
+#if defined(_OPENMP)
+    omp_set_num_threads(cfg_num_threads);
+#endif
+
+    std::atomic<int> count = 0;
+
+    PolicyWeights::feature_weights.fill(1.0f);
+    PolicyWeights::pattern_weights.fill(1.0f);
+
+    PolicyWeights::feature_gradients.fill(0.0f);
+    PolicyWeights::pattern_gradients.fill(0.0f);
+
+    Time start;
+
+    for (size_t gameid = 0; gameid < gametotal; gameid++) {
+        std::unique_ptr<SGFTree> sgftree(new SGFTree);
+        try {
+            sgftree->load_from_string(games[gameid]);
+        } catch (...) {
+        };
+
+        SGFTree * treewalk = &(*sgftree);
+        size_t counter = 0;
+        size_t movecount = sgftree->count_mainline_moves();
+        std::vector<int> tree_moves = sgftree->get_mainline();
+
+        while (counter < movecount) {
+            KoState * state = treewalk->get_state();
+            int tomove = state->get_to_move();
+            int move;
+
+            if (treewalk->get_child(0) != NULL) {
+                move = treewalk->get_child(0)->get_move(tomove);
+                if (move == SGFTree::EOT) {
+                    break;
+                }
+            } else {
+                break;
+            }
+
+            assert(move == tree_moves[counter]);
+
+            std::vector<int> moves = state->generate_moves(tomove);
+            auto it = std::find(moves.cbegin(), moves.cend(), move);
+            if (it != moves.cend()) {
+                PolicyTrace policy_trace;
+                state->generate_trace(tomove, policy_trace, move);
+            }
+
+            counter++;
+            treewalk = treewalk->get_child(0);
+        }
+
+        count++;
 
         if (count % 10000 == 0) {
             std::string filename = "rltune_" + std::to_string(count) + ".txt";

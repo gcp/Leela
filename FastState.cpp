@@ -299,6 +299,75 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
     return play_move_fast(FastBoard::PASS);
 }
 
+void FastState::generate_trace(int color, PolicyTrace & trace, int move) {
+    assert(board.m_tomove == color);
+
+    moves.clear();
+
+    Matcher * matcher = Matcher::get_Matcher();
+    Random * rng = Random::get_Rng();
+
+    // Local moves, or tactical ones
+    if (m_lastmove > 0 && m_lastmove < board.m_maxsq) {
+        if (board.get_square(m_lastmove) == !color) {
+            board.add_global_captures(color, moves);
+            board.save_critical_neighbours(color, m_lastmove, moves);
+            if (m_last_was_capture || (0.3f > rng->randflt())) {
+                board.add_near_nakade_moves(color, m_lastmove, moves);
+            }
+            board.add_pattern_moves(color, m_lastmove, moves);
+        }
+    }
+
+    // XXX: make this unneeded
+    moves.erase(std::remove_if(moves.begin(), moves.end(),
+                               [this](MovewFeatures & mwf) {
+                                   int sq = mwf.get_sq();
+                                   assert(sq > 0);
+                                   return sq == m_komove;
+                               }),
+                moves.end());
+
+    constexpr int loop_amount = 4;
+    // Random moves on the board
+    for (int loops = 0; loops < loop_amount; loops++) {
+        int sq = walk_empty_list(board.m_tomove);
+        if (sq == FastBoard::PASS) {
+            break;
+        }
+        moves.emplace_back(sq, MWF_FLAG_RANDOM);
+    }
+
+    // Pass as fallback
+    moves.emplace_back(FastBoard::PASS, MWF_FLAG_PASS);
+
+    size_t move_index;
+
+    auto it = std::find_if(moves.cbegin(), moves.cend(),
+                           [move](const MovewFeatures & mwf) {
+                             return mwf.get_sq() == move;
+                           });
+    if (it == moves.cend()) {
+        // If it's something else it would have been in the list
+        // except maybe a nakade
+        moves.emplace_back(move, MWF_FLAG_RANDOM);
+        move_index = moves.size() - 1;
+    } else {
+        move_index = std::distance(moves.cbegin(), it);
+    }
+
+    assert(moves[move_index].get_sq() == move);
+
+    for (auto & mwf : moves) {
+        int sq = mwf.get_sq();
+        if (sq != FastBoard::PASS) {
+            flag_move(mwf, sq, color, matcher);
+        }
+    }
+
+    trace.add_to_trace(color == FastBoard::BLACK, moves, move_index);
+}
+
 float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {
     Attributes att;
     att.get_from_move(this, territory, moyo, vertex);

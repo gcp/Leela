@@ -21,10 +21,11 @@ public:
 
     std::vector<int> generate_moves(int color);
     bool try_move(int color, int vertex);
+    void generate_trace(int color, PolicyTrace & trace, int move);
 
-    void set_komi(float komi);        
-    float get_komi(); 
-    void set_handicap(int hcap);        
+    void set_komi(float komi);
+    float get_komi();
+    void set_handicap(int hcap);
     int get_handicap();
     int get_passes();
     int get_to_move();
@@ -39,10 +40,10 @@ public:
     std::vector<bool> mark_dead(float *winrate = nullptr);
 
     int get_movenum();
-    int get_last_move();  
+    int get_last_move();
     int get_prevlast_move();
     int get_komove();
-    void display_state();    
+    void display_state();
     std::string move_to_text(int move);
 
     FullBoard board;
