@@ -12,7 +12,8 @@ class SGFTree {
 public:
     static const int EOT = 0;               // End-Of-Tree marker
 
-    SGFTree();
+    SGFTree() = default;
+    void init_state();
 
     KoState * get_state();
     KoState * get_state_from_mainline(unsigned int movenum = 999);
@@ -24,7 +25,7 @@ public:
     int count_mainline_moves(void);
 
     void add_property(std::string property, std::string value);
-    SGFTree * add_child(SGFTree child);
+    SGFTree * add_child();
     SGFTree * get_child(unsigned int count);
     int get_move(int tomove);
     FastBoard::square_t get_winner();
@@ -35,11 +36,12 @@ private:
     void populate_states(void);
     void apply_move(int color, int move);
     void apply_move(int move);
-    void set_state(KoState & state);
+    void copy_state(SGFTree & state);
     int string_to_vertex(std::string move);
 
     typedef std::multimap<std::string, std::string> PropertyMap;
 
+    bool m_initialized{false};
     KoState m_state;
     FastBoard::square_t m_winner{FastBoard::INVAL};
     std::vector<SGFTree> m_children;

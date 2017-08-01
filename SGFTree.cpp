@@ -14,19 +14,22 @@
 
 using namespace Utils;
 
-SGFTree::SGFTree(void) {
-    // Initialize root state with defaults.
+void SGFTree::init_state(void) {
+    m_initialized = true;
+    // Initialize with defaults.
     // The SGF might be missing boardsize or komi
     // which means we'll never initialize properly.
     m_state.init_game(19, 7.5f);
 }
 
 KoState * SGFTree::get_state(void) {
+    assert(m_initialized);
     return &m_state;
 }
 
 SGFTree * SGFTree::get_child(unsigned int count) {
     if (count < m_children.size()) {
+        assert(m_initialized);
         return &(m_children[count]);
     } else {
         return nullptr;
@@ -82,7 +85,7 @@ KoState * SGFTree::get_state_from_mainline(unsigned int movenum) {
 
 // the number of states is one more than the number of moves
 int SGFTree::count_mainline_moves(void) {
-    SGFTree * link = this;             
+    SGFTree * link = this;
     int count = -1;
 
     while (link != NULL) {        
@@ -99,6 +102,8 @@ void SGFTree::load_from_string(std::string gamebuff) {
     // loads properties with moves
     SGFParser::parse(pstream, this);
 
+    // Set up the root state to defaults
+    init_state();
     // populates the states from the moves
     // split this up in root node, achor (handicap), other nodes
     populate_states();
@@ -245,22 +250,23 @@ void SGFTree::populate_states(void) {
     std::vector<SGFTree>::iterator stateit;
     
     for (stateit = m_children.begin(); stateit != m_children.end(); ++stateit) {
-        // propagate state    
-        stateit->set_state(m_state);
-        
+        // propagate state
+        stateit->copy_state(*this);
+
         // XXX: maybe move this to the recursive call
-        // get move for side to move        
-        int move = stateit->get_move(m_state.get_to_move());  
-        
-        if (move != EOT) {            
-            stateit->apply_move(move);                        
-        }                                     
+        // get move for side to move
+        int move = stateit->get_move(m_state.get_to_move());
+
+        if (move != EOT) {
+            stateit->apply_move(move);
+        }
         stateit->populate_states();
-    }        
+    }
 }
 
-void SGFTree::set_state(KoState & state) {
-    m_state = state;
+void SGFTree::copy_state(SGFTree & tree) {
+    m_initialized = tree.m_initialized;
+    m_state = tree.m_state;
 }
 
 void SGFTree::apply_move(int color, int move) {      
@@ -279,19 +285,19 @@ void SGFTree::add_property(std::string property, std::string value) {
     m_properties.insert(std::make_pair(property, value));
 }
 
-SGFTree * SGFTree::add_child(SGFTree child) {
+SGFTree * SGFTree::add_child() {
     // first allocation is better small
     if (m_children.size() == 0) {
         m_children.reserve(1);
-    }    
-    m_children.push_back(child);
+    }
+    m_children.emplace_back();
     return &(m_children.back());
 }
 
 int SGFTree::string_to_vertex(std::string movestring) {
     if (movestring.size() == 0) {
         return FastBoard::PASS;
-    } 
+    }
     
     if (m_state.board.get_boardsize() <= 19) {
         if (movestring == "tt") {

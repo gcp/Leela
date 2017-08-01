@@ -218,7 +218,7 @@ void MCPolicy::mse_from_file(std::string filename) {
     omp_set_num_threads(cfg_num_threads);
 #endif
 
-    std::atomic<int> count = 0;
+    int count = 0;
 
     PolicyWeights::feature_weights.fill(1.0f);
     PolicyWeights::pattern_weights.fill(1.0f);
@@ -228,49 +228,61 @@ void MCPolicy::mse_from_file(std::string filename) {
 
     Time start;
 
-    for (size_t gameid = 0; gameid < gametotal; gameid++) {
-        std::unique_ptr<SGFTree> sgftree(new SGFTree);
-        try {
-            sgftree->load_from_string(games[gameid]);
-        } catch (...) {
-        };
+    for (size_t xgameid = 0; xgameid + 128 < gametotal; xgameid += 128) {
+        #pragma omp parallel for
+        for (size_t gameid = 0; gameid < 128; gameid++) {
+            std::unique_ptr<SGFTree> sgftree(new SGFTree);
+            try {
+                sgftree->load_from_string(games[xgameid + gameid]);
+            } catch (...) {
+                #pragma omp atomic
+                count++;
+                continue;
+            };
 
-        SGFTree * treewalk = &(*sgftree);
-        size_t counter = 0;
-        size_t movecount = sgftree->count_mainline_moves();
-        std::vector<int> tree_moves = sgftree->get_mainline();
+            SGFTree * treewalk = &(*sgftree);
+            size_t counter = 0;
+            size_t movecount = sgftree->count_mainline_moves();
+            std::vector<int> tree_moves = sgftree->get_mainline();
 
-        while (counter < movecount) {
-            KoState * state = treewalk->get_state();
-            int tomove = state->get_to_move();
-            int move;
+            PolicyTrace policy_trace;
 
-            if (treewalk->get_child(0) != NULL) {
-                move = treewalk->get_child(0)->get_move(tomove);
-                if (move == SGFTree::EOT) {
+            while (counter < movecount) {
+                KoState * state = treewalk->get_state();
+                int tomove = state->get_to_move();
+                int move;
+
+                if (treewalk->get_child(0) != NULL) {
+                    move = treewalk->get_child(0)->get_move(tomove);
+                    if (move == SGFTree::EOT) {
+                        break;
+                    }
+                } else {
                     break;
                 }
-            } else {
-                break;
-            }
+                assert(move == tree_moves[counter]);
 
-            assert(move == tree_moves[counter]);
-
-            std::vector<int> moves = state->generate_moves(tomove);
-            auto it = std::find(moves.cbegin(), moves.cend(), move);
-            if (it != moves.cend()) {
-                PolicyTrace policy_trace;
                 state->generate_trace(tomove, policy_trace, move);
+
+                counter++;
+                treewalk = treewalk->get_child(0);
             }
 
-            counter++;
-            treewalk = treewalk->get_child(0);
+            policy_trace.accumulate_sl_gradient();
+
+            #pragma omp atomic
+            count++;
         }
 
-        count++;
+        std::cout << ".";
 
-        if (count % 10000 == 0) {
-            std::string filename = "rltune_" + std::to_string(count) + ".txt";
+        MCPolicy::adjust_weights(1.0f, 0.0f);
+        PolicyWeights::feature_gradients.fill(0.0f);
+        PolicyWeights::pattern_gradients.fill(0.0f);
+
+        if ((count % (128*128)) == 0) {
+            std::cout << "w";
+            std::string filename = "sltune_" + std::to_string(count) + ".txt";
             std::ofstream out(filename);
             out.precision(std::numeric_limits<float>::max_digits10);
             out << std::defaultfloat;
@@ -286,6 +298,94 @@ void MCPolicy::mse_from_file(std::string filename) {
             }
             out.close();
         }
+    }
+}
+
+void PolicyTrace::accumulate_sl_gradient() {
+    if (trace.empty()) return;
+
+    float positions = trace.size();
+    assert(positions > 0.0f);
+    float factor = 1.0f / positions;
+
+    alignas(64) std::array<float, NUM_FEATURES> policy_feature_gradient{};
+    std::vector<float> candidate_scores;
+    std::vector<int> patterns;
+
+    for (auto & decision : trace) {
+        candidate_scores.clear();
+        candidate_scores.reserve(decision.candidates.size());
+        // get real probabilities
+        float sum_scores = 0.0f;
+        for (auto & mwf : decision.candidates) {
+            float score = mwf.get_score();
+            sum_scores += score;
+            assert(!std::isnan(score));
+            candidate_scores.push_back(score);
+        }
+        assert(sum_scores > 0.0f);
+        assert(!std::isnan(sum_scores));
+        // transform to probabilities
+        for (float & score : candidate_scores) {
+            score /= sum_scores;
+        }
+
+        // loop over features, get prob of feature
+        alignas(64) std::array<float, NUM_FEATURES> feature_probabilities{};
+        for (size_t c = 0; c < candidate_scores.size(); c++) {
+            float candidate_probability = candidate_scores[c];
+            MovewFeatures & mwf = decision.candidates[c];
+            for (int i = 0; i < NUM_FEATURES; i++) {
+                if (mwf.has_flag(i)) {
+                    feature_probabilities[i] += candidate_probability;
+                }
+            }
+        }
+
+        // get policy gradient
+        for (int i = 0; i < NUM_FEATURES; i++) {
+            float observed = 0.0f;
+            if (decision.pick.has_flag(i)) {
+                observed = 1.0f;
+            }
+            policy_feature_gradient[i] += (observed - feature_probabilities[i]);
+            assert(!std::isnan(policy_feature_gradient[i]));
+        }
+
+        patterns.clear();
+        // get pat probabilities
+        std::array<float, NUM_PATTERNS> pattern_probabilities;
+        for (size_t c = 0; c < candidate_scores.size(); c++) {
+            if (!decision.candidates[c].is_pass()) {
+                int pat = decision.candidates[c].get_pattern();
+                if (std::find(patterns.cbegin(), patterns.cend(), pat)
+                    != patterns.cend()) {
+                    pattern_probabilities[pat] += candidate_scores[c];
+                } else {
+                    patterns.push_back(pat);
+                    pattern_probabilities[pat]  = candidate_scores[c];
+                }
+            }
+        }
+
+        for (int pat : patterns) {
+            float observed = 0.0f;
+            if (!decision.pick.is_pass()) {
+                if (decision.pick.get_pattern() == pat) {
+                    observed = 1.0f;
+                }
+            }
+            float grad = factor * (observed - pattern_probabilities[pat]);
+            #pragma omp atomic
+            PolicyWeights::pattern_gradients[pat] += grad;
+        }
+    }
+
+    for (int i = 0; i < NUM_FEATURES; i++) {
+        float grad = policy_feature_gradient[i] * factor;
+        // accumulate total
+        #pragma omp atomic
+        PolicyWeights::feature_gradients[i] += grad;
     }
 }
 

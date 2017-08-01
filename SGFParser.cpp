@@ -183,8 +183,7 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
             // start a variation here
             splitpoint = true;
             // new node
-            std::unique_ptr<SGFTree> newnode(new SGFTree);
-            SGFTree * newptr = node->add_child(*newnode);
+            SGFTree * newptr = node->add_child();
             parse(strm, newptr);
         } else if (c == ')') {
             // variation ends, go back
@@ -200,8 +199,7 @@ void SGFParser::parse(std::istringstream & strm, SGFTree * node) {
             }
         } else if (c == ';') {
             // new node
-            std::unique_ptr<SGFTree> newnode(new SGFTree);
-            SGFTree * newptr = node->add_child(*newnode);
+            SGFTree * newptr = node->add_child();
             node = newptr;
             continue;
         }

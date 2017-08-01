@@ -124,6 +124,8 @@ public:
 
     void trace_process(const int iterations, const float baseline,
                        const bool blackwin);
+
+    void accumulate_sl_gradient();
 };
 
 class MCPolicy {
