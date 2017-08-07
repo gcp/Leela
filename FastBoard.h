@@ -69,14 +69,9 @@ public:
     bool is_suicide(int i, int color);
     int fast_ss_suicide(const int color, const int i);
     int update_board_fast(const int color, const int i, bool & capture);
-    void save_critical_neighbours(int color, int vertex, movelist_t & moves);
-    void add_pattern_moves(int color, int vertex, movelist_t & moves);
-    void add_global_captures(int color, movelist_t & moves);
-    void add_near_nakade_moves(int color, int vertex, movelist_t & moves);
     int capture_size(int color, int vertex);
     int saving_size(int color, int vertex);
     int minimum_elib_count(int color, int vertex);
-    int nbr_libs(int color, int vertex, int count, bool plus = false);
     std::pair<int, int> nbr_criticality(int color, int vertex);
     int enemy_atari_size(int color, int vertex);
     int count_pliberties(const int i);
@@ -84,23 +79,21 @@ public:
     bool check_losing_ladder(const int color, const int vtx, int branching = 0);
     bool check_winning_ladder(const int color, const int vtx);
     std::pair<int, int> after_liberties(const int color, const int vertex);
-    int nbr_weight(const int color, const int vertex);
     int merged_string_size(int color, int vertex);
     std::vector<int> get_neighbour_ids(int vertex);
     void augment_chain(std::vector<int> & chains, int vertex);
     std::vector<int> get_augmented_string(int vertex);
     std::vector<int> dilate_liberties(std::vector<int> & vtxlist);
     std::vector<int> get_nearby_enemies(std::vector<int> & vtxlist);
-        
-    bool self_atari(int color, int vertex);    
+    bool is_eye(const int color, const int vtx);
+    bool no_eye_fill(const int i);
+    bool self_atari(int color, int vertex);
     int get_dir(int i);
     int get_extra_dir(int i);
 
-    bool is_eye(const int color, const int vtx);    
-    bool no_eye_fill(const int i);
-    int get_pattern_fast(const int sq);    
+    int get_pattern_fast(const int sq);
     int get_pattern_fast_augment(const int sq); 
-    int get_pattern3(const int sq, bool invert);   
+    int get_pattern3(const int sq, bool invert);
     int get_pattern3_augment(const int sq, bool invert);
     int get_pattern3_augment_spec(const int sq, int libspec, bool invert);
     int get_pattern4(const int sq, bool invert);
@@ -168,14 +161,14 @@ protected:
 
     int m_boardsize;
 
-    int count_neighbours(const int color, const int i);   
-    void merge_strings(const int ip, const int aip);    
-    int remove_string_fast(int i);        
+    int count_neighbours(const int color, const int i);
+    void merge_strings(const int ip, const int aip);
+    int remove_string_fast(int i);
     void add_neighbour(const int i, const int color);
-    void remove_neighbour(const int i, const int color);        
-    int update_board_eye(const int color, const int i);    
-    std::vector<int> run_bouzy(int dilat, int eros);  
-    bool kill_or_connect(int color, int vertex);  
+    void remove_neighbour(const int i, const int color);
+    int update_board_eye(const int color, const int i);
+    std::vector<int> run_bouzy(int dilat, int eros);
+    bool kill_or_connect(int color, int vertex);
     int in_atari(int vertex);
     bool fast_in_atari(int vertex);
     template <int N> void add_string_liberties(int vertex,
@@ -188,7 +181,17 @@ protected:
     void check_nakade(int color, int vertex, movelist_t & moves);
     int after_liberties_color(const int color, const int vertex);
     bool can_kill_neighbours(const int vertex);
-    std::vector<int> critical_neighbours(const int color, const int vertex);
+    std::vector<int> killable_neighbours(const int string_parent, const int N);
+    std::vector<int> critical_neighbours(const int color, const int vertex,
+                                         const int N);
+    template<int N> bool saveable_string(const int string_parent,
+                                         std::array<int, N> & nbr_libs,
+                                         int & nbr_libs_cnt);
+    void save_critical_neighbours(int color, int vertex, movelist_t & moves);
+    void add_pattern_moves(int color, int vertex, movelist_t & moves);
+    void add_global_captures(int color, movelist_t & moves);
+    void add_near_nakade_moves(int color, int vertex, movelist_t & moves);
+    void add_semeai_moves(int color, int vertex, movelist_t & moves);
 };
 
 #endif

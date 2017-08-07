@@ -7,11 +7,10 @@
 #include <array>
 #include <vector>
 #include <limits>
-#include <unordered_map>
 
 // Scored features
 constexpr int NUM_PATTERNS = 8192;
-constexpr int NUM_FEATURES = 23;
+constexpr int NUM_FEATURES = 26;
 constexpr int MWF_FLAG_PASS         =  0;
 constexpr int MWF_FLAG_NAKADE       =  1;
 constexpr int MWF_FLAG_PATTERN      =  2;
@@ -21,12 +20,12 @@ constexpr int MWF_FLAG_TOOBIG_SA    =  5;
 constexpr int MWF_FLAG_FORCE_SA     =  6;
 constexpr int MWF_FLAG_FORCEBIG_SA  =  7;
 constexpr int MWF_FLAG_RANDOM       =  8;
-constexpr int MWF_FLAG_CRIT_MINE1   =  9;
-constexpr int MWF_FLAG_CRIT_MINE2   = 10;
-constexpr int MWF_FLAG_CRIT_MINE3   = 11;
-constexpr int MWF_FLAG_CRIT_HIS1    = 12;
-constexpr int MWF_FLAG_CRIT_HIS2    = 13;
-constexpr int MWF_FLAG_CRIT_HIS3    = 14;
+constexpr int MWF_FLAG_CRIT_MINE_1  =  9;
+constexpr int MWF_FLAG_CRIT_MINE_2  = 10;
+constexpr int MWF_FLAG_CRIT_MINE_3  = 11;
+constexpr int MWF_FLAG_CRIT_HIS_1   = 12;
+constexpr int MWF_FLAG_CRIT_HIS_2   = 13;
+constexpr int MWF_FLAG_CRIT_HIS_3   = 14;
 constexpr int MWF_FLAG_SAVING_SA    = 15;
 constexpr int MWF_FLAG_SAVING_1     = 16;
 constexpr int MWF_FLAG_SAVING_2     = 17;
@@ -35,9 +34,9 @@ constexpr int MWF_FLAG_CAPTURE_1    = 19;
 constexpr int MWF_FLAG_CAPTURE_2    = 20;
 constexpr int MWF_FLAG_CAPTURE_3P   = 21;
 constexpr int MWF_FLAG_SUICIDE      = 22;
-// Fake features
-constexpr int MWF_FLAG_SAVING       = 29;
-constexpr int MWF_FLAG_CAPTURE      = 30;
+constexpr int MWF_FLAG_SEMEAI_2     = 23;
+constexpr int MWF_FLAG_SEMEAI_3     = 24;
+constexpr int MWF_FLAG_SEMEAI_4P    = 25;
 
 class PolicyWeights {
 public:
@@ -51,26 +50,53 @@ public:
 
 class MovewFeatures {
 public:
-    explicit MovewFeatures(int vertex, int flag, int target_size = 0)
-        : m_vertex(vertex),
-          m_target_size(target_size) {
-        m_score = 1.0f;
-        m_flags = 0;
+    struct CaptureTag{};
+    struct SavingTag{};
+    explicit MovewFeatures(int vertex, int flag)
+        : m_vertex(vertex) {
+        add_flag(flag);
+    }
+    explicit MovewFeatures(int vertex, CaptureTag, int size)
+        : m_vertex(vertex) {
+        int flag;
+        switch (size) {
+        case 1:
+            flag = MWF_FLAG_CAPTURE_1;
+            break;
+        case 2:
+            flag = MWF_FLAG_CAPTURE_2;
+            break;
+        default:
+            flag = MWF_FLAG_CAPTURE_3P;
+            break;
+        }
+        add_flag(flag);
+    }
+    explicit MovewFeatures(int vertex, SavingTag, int size)
+        : m_vertex(vertex) {
+        int flag;
+        switch (size) {
+        case 1:
+            flag = MWF_FLAG_SAVING_1;
+            break;
+        case 2:
+            flag = MWF_FLAG_SAVING_2;
+            break;
+        default:
+            flag = MWF_FLAG_SAVING_3P;
+            break;
+        }
         add_flag(flag);
     }
     int get_sq() const {
         return m_vertex;
     }
-    int get_target_size() const {
-        return m_target_size;
-    }
     void add_flag(int flag) {
         assert(flag < std::numeric_limits<decltype(flag)>::digits);
+        assert(flag < NUM_FEATURES);
         m_flags |= 1 << flag;
-        if (flag < NUM_FEATURES) {
-            m_score *= PolicyWeights::feature_weights[flag];
-            m_score *= PolicyWeights::feature_weights_sl[flag];
-        }
+        m_score *= PolicyWeights::feature_weights[flag];
+        m_score *= PolicyWeights::feature_weights_sl[flag];
     }
     void set_pattern(int pattern) {
         assert(pattern > 0);
@@ -96,11 +122,10 @@ private:
     // This is the actual move.
     int m_vertex;
     // Attributes/Features
-    int m_flags;
-    int m_target_size;
+    int m_flags{0};
     int m_pattern;
     // Score so far
-    float m_score;
+    float m_score{1.0f};
 };
 
 class MoveDecision {

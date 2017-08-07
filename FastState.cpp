@@ -138,18 +138,18 @@ void FastState::flag_move(MovewFeatures & mwf, int sq, int color,
     std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
 
     if (nbr_crit.first == 1) {
-        mwf.add_flag(MWF_FLAG_CRIT_MINE1);
+        mwf.add_flag(MWF_FLAG_CRIT_MINE_1);
     } else  if (nbr_crit.first == 2) {
-        mwf.add_flag(MWF_FLAG_CRIT_MINE2);
+        mwf.add_flag(MWF_FLAG_CRIT_MINE_2);
     }  else  if (nbr_crit.first == 3) {
-        mwf.add_flag(MWF_FLAG_CRIT_MINE3);
+        mwf.add_flag(MWF_FLAG_CRIT_MINE_3);
     }
     if (nbr_crit.second == 1) {
-        mwf.add_flag(MWF_FLAG_CRIT_HIS1);
+        mwf.add_flag(MWF_FLAG_CRIT_HIS_1);
     } else if (nbr_crit.second == 2) {
-        mwf.add_flag(MWF_FLAG_CRIT_HIS2);
+        mwf.add_flag(MWF_FLAG_CRIT_HIS_2);
     } else if (nbr_crit.second == 3) {
-        mwf.add_flag(MWF_FLAG_CRIT_HIS3);
+        mwf.add_flag(MWF_FLAG_CRIT_HIS_3);
     }
 
     if (board.self_atari(color, sq)) {
@@ -173,33 +173,11 @@ void FastState::flag_move(MovewFeatures & mwf, int sq, int color,
             if (mwf.has_flag(MWF_FLAG_PATTERN)) {
                 mwf.add_flag(MWF_FLAG_PATTERN_SA);
             }
-            if (mwf.has_flag(MWF_FLAG_SAVING)) {
+            if (mwf.has_flag(MWF_FLAG_SAVING_1)
+                || mwf.has_flag(MWF_FLAG_SAVING_2)
+                || mwf.has_flag(MWF_FLAG_SAVING_3P)) {
                 mwf.add_flag(MWF_FLAG_SAVING_SA);
             }
-        }
-    }
-
-    if (mwf.has_flag(MWF_FLAG_SAVING)) {
-        int ssize = mwf.get_target_size();
-        if (ssize == 1) {
-            mwf.add_flag(MWF_FLAG_SAVING_1);
-        } else if (ssize == 2) {
-            mwf.add_flag(MWF_FLAG_SAVING_2);
-        } else {
-            assert(ssize >= 3);
-            mwf.add_flag(MWF_FLAG_SAVING_3P);
-        }
-    }
-
-    if (mwf.has_flag(MWF_FLAG_CAPTURE)) {
-        int ssize = mwf.get_target_size();
-        if (ssize == 1) {
-            mwf.add_flag(MWF_FLAG_CAPTURE_1);
-        } else if (ssize == 2) {
-            mwf.add_flag(MWF_FLAG_CAPTURE_2);
-        } else {
-            assert(ssize >= 3);
-            mwf.add_flag(MWF_FLAG_CAPTURE_3P);
         }
     }
 }
@@ -221,6 +199,7 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
                 board.add_near_nakade_moves(color, m_lastmove, moves);
             }
             board.add_pattern_moves(color, m_lastmove, moves);
+            board.add_semeai_moves(color, m_lastmove, moves);
         }
     }
 
