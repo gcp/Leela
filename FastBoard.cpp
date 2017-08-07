@@ -1383,7 +1383,7 @@ void FastBoard::add_string_liberties(int vertex,
 }
 
 // check whether this move is a self-atari
-bool FastBoard::self_atari(int color, int vertex) {    
+bool FastBoard::self_atari(int color, int vertex) {
     assert(get_square(vertex) == FastBoard::EMPTY);
 
     // 1) count new liberties, if we add 2 or more we're safe                
@@ -2301,11 +2301,14 @@ bool FastBoard::saveable_string(const int string_parent,
 
 void FastBoard::add_semeai_moves(const int color, const int lastmove,
                                  movelist_t & moves) {
-    constexpr int MAX_LIBERTY_CHECK = 5;
+    constexpr int MAX_LIBERTY_CHECK = 3;
     // Check for own strings that are low on liberties
     std::vector<int> crit_own = critical_neighbours(color, lastmove,
                                                     MAX_LIBERTY_CHECK);
     for (auto & own_group : crit_own) {
+        // Groups in atari have their own handling
+        if (m_libs[own_group] <= 1) continue;
+
         std::array<int, MAX_LIBERTY_CHECK> own_group_liberties;
         size_t own_group_liberty_cnt = 0;
 
@@ -2315,11 +2318,14 @@ void FastBoard::add_semeai_moves(const int color, const int lastmove,
         bool can_save_string = saveable_string<MAX_LIBERTY_CHECK>(
             own_group, own_group_liberties, own_group_liberty_cnt);
         if (!can_save_string) {
-            // See if there's neighbours to kill, has to have <= libs to us
+            // See if there's neighbours to kill, has to have <= libs to us,
             auto surrounding_enemies = killable_neighbours(own_group,
                                                            own_group_liberty_cnt);
 
             for (auto & enemy_group : surrounding_enemies) {
+                // Capturable groups have their own handling
+                if (m_libs[enemy_group] <= 1) continue;
+
                 // Will be at most 5, but really <= own_group_liberty_cnt
                 std::array<int, MAX_LIBERTY_CHECK> enemy_group_liberties;
                 size_t enemy_group_liberty_cnt = 0;
@@ -2329,19 +2335,23 @@ void FastBoard::add_semeai_moves(const int color, const int lastmove,
                 if (can_kill_enemy) {
                     for (size_t i = 0; i < enemy_group_liberty_cnt; i++) {
                         int lib = enemy_group_liberties[i];
-                        if (own_group_liberty_cnt <= 2) {
-                            moves.emplace_back(lib, MWF_FLAG_SEMEAI_2);
-                        } else if (own_group_liberty_cnt == 3) {
-                            moves.emplace_back(lib, MWF_FLAG_SEMEAI_3);
-                        } else {
-                            assert(own_group_liberty_cnt >= 4);
-                            moves.emplace_back(lib, MWF_FLAG_SEMEAI_4P);
+                        auto own_end = own_group_liberties.cbegin()
+                                     + own_group_liberty_cnt;
+                        auto it = std::find(own_group_liberties.cbegin(),
+                                            own_end, lib);
+                        // Playing on our own liberties obviously doesn't help
+                        if (it == own_end && !fast_ss_suicide(color, lib)) {
+                            if (own_group_liberty_cnt <= 2) {
+                                moves.emplace_back(lib, MWF_FLAG_SEMEAI_2);
+                            } else {
+                                assert(own_group_liberty_cnt == 3);
+                                moves.emplace_back(lib, MWF_FLAG_SEMEAI_3);
+                            }
                         }
                     }
                 }
             }
         }
-
     }
 }
 

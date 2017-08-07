@@ -284,13 +284,12 @@ void MCPolicy::mse_from_file2(std::string filename) {
         PolicyWeights::pattern_gradients.fill(0.0f);
 
         std::cout << ".";
-        if ((count % (16*128)) == 0) {
+
+        if ((count % (128*128)) == 0) {
             std::cout << std::endl << "Pred: " << correct*100.0/picks;
             picks = 0;
             correct = 0;
-        }
 
-        if ((count % (128*128)) == 0) {
             std::cout << "w";
             std::string filename = "sltune_" + std::to_string(count) + ".txt";
             std::ofstream out(filename);

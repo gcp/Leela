@@ -10,7 +10,7 @@
 
 // Scored features
 constexpr int NUM_PATTERNS = 8192;
-constexpr int NUM_FEATURES = 26;
+constexpr int NUM_FEATURES = 25;
 constexpr int MWF_FLAG_PASS         =  0;
 constexpr int MWF_FLAG_NAKADE       =  1;
 constexpr int MWF_FLAG_PATTERN      =  2;
@@ -36,7 +36,6 @@ constexpr int MWF_FLAG_CAPTURE_3P   = 21;
 constexpr int MWF_FLAG_SUICIDE      = 22;
 constexpr int MWF_FLAG_SEMEAI_2     = 23;
 constexpr int MWF_FLAG_SEMEAI_3     = 24;
-constexpr int MWF_FLAG_SEMEAI_4P    = 25;
 
 class PolicyWeights {
 public:
@@ -67,6 +66,7 @@ public:
             flag = MWF_FLAG_CAPTURE_2;
             break;
         default:
+            assert(size > 0);
             flag = MWF_FLAG_CAPTURE_3P;
             break;
         }
@@ -83,6 +83,7 @@ public:
             flag = MWF_FLAG_SAVING_2;
             break;
         default:
+            assert(size > 0);
             flag = MWF_FLAG_SAVING_3P;
             break;
         }
