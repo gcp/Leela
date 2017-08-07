@@ -154,7 +154,7 @@ public:
     void trace_process(const int iterations, const float baseline,
                        const bool blackwin);
 
-    void accumulate_sl_gradient();
+    void accumulate_sl_gradient(int & correct, int & picks);
 };
 
 class MCPolicy {

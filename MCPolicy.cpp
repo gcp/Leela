@@ -222,6 +222,8 @@ void MCPolicy::mse_from_file2(std::string filename) {
 #endif
 
     int count = 0;
+    int picks = 0;
+    int correct = 0;
 
     PolicyWeights::feature_weights.fill(1.0f);
     PolicyWeights::pattern_weights.fill(1.0f);
@@ -271,17 +273,22 @@ void MCPolicy::mse_from_file2(std::string filename) {
                 treewalk = treewalk->get_child(0);
             }
 
-            policy_trace.accumulate_sl_gradient();
+            policy_trace.accumulate_sl_gradient(correct, picks);
 
             #pragma omp atomic
             count++;
         }
 
-        std::cout << ".";
-
         MCPolicy::adjust_weights(1.0f, 0.0f);
         PolicyWeights::feature_gradients.fill(0.0f);
         PolicyWeights::pattern_gradients.fill(0.0f);
+
+        std::cout << ".";
+        if ((count % (16*128)) == 0) {
+            std::cout << std::endl << "Pred: " << correct*100.0/picks;
+            picks = 0;
+            correct = 0;
+        }
 
         if ((count % (128*128)) == 0) {
             std::cout << "w";
@@ -304,7 +311,7 @@ void MCPolicy::mse_from_file2(std::string filename) {
     }
 }
 
-void PolicyTrace::accumulate_sl_gradient() {
+void PolicyTrace::accumulate_sl_gradient(int & correct, int & picks) {
     if (trace.empty()) return;
 
     float positions = trace.size();
@@ -320,14 +327,27 @@ void PolicyTrace::accumulate_sl_gradient() {
         candidate_scores.reserve(decision.candidates.size());
         // get real probabilities
         float sum_scores = 0.0f;
+        float max_score = 0.0f;
+        int max_move = -1;
         for (auto & mwf : decision.candidates) {
             float score = mwf.get_score();
             sum_scores += score;
+            if (score > max_score) {
+                max_score = score;
+                max_move = mwf.get_sq();
+            }
             assert(!std::isnan(score));
             candidate_scores.push_back(score);
         }
         assert(sum_scores > 0.0f);
         assert(!std::isnan(sum_scores));
+        if (max_move == decision.pick.get_sq()) {
+            #pragma omp atomic
+            correct++;
+        }
+        #pragma omp atomic
+        picks++;
+
         // transform to probabilities
         for (float & score : candidate_scores) {
             score /= sum_scores;
