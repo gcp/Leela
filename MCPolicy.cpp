@@ -23,6 +23,7 @@
 using namespace Utils;
 
 #include "PolicyWeights.h"
+#include "PolicyWeightsSL.h"
 alignas(64) std::array<float, NUM_PATTERNS> PolicyWeights::pattern_gradients;
 alignas(64) std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
 
@@ -91,8 +92,8 @@ void MCPolicy::mse_from_file(std::string filename) {
     double sum_sq_nn = 0.0;
     int count = 0;
 
-    // PolicyWeights::feature_weights.fill(1.0f);
-    // PolicyWeights::pattern_weights.fill(1.0f);
+    PolicyWeights::feature_weights.fill(1.0f);
+    PolicyWeights::pattern_weights.fill(1.0f);
     Time start;
 
     while (1) {
@@ -151,6 +152,7 @@ void MCPolicy::mse_from_file(std::string filename) {
                 }
             }
 
+#if 1
             // Policy Trace per thread
             #pragma omp for schedule(dynamic, 4)
             for (int i = 0; i < iterations; i++) {
@@ -163,6 +165,7 @@ void MCPolicy::mse_from_file(std::string filename) {
                 bool black_won = p.get_score() > 0.0f;
                 policy_trace.trace_process(iterations, bwins, black_won);
             }
+#endif
         }
 
         MCPolicy::adjust_weights(black_score, bwins);
@@ -228,12 +231,12 @@ void MCPolicy::mse_from_file2(std::string filename) {
 
     Time start;
 
-    for (size_t xgameid = 0; xgameid + 128 < gametotal; xgameid += 128) {
+    for (;;) {
         #pragma omp parallel for
         for (size_t gameid = 0; gameid < 128; gameid++) {
             std::unique_ptr<SGFTree> sgftree(new SGFTree);
             try {
-                sgftree->load_from_string(games[xgameid + gameid]);
+                sgftree->load_from_string(games[Random::get_Rng()->randint32(gametotal)]);
             } catch (...) {
                 #pragma omp atomic
                 count++;
@@ -494,6 +497,7 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
+    constexpr float lambda = 1e-3f;
 
     // Timestep for Adam (total updates)
     t++;
@@ -516,11 +520,9 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
 
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += adam_grad * Vdelta;
+        theta += Vdelta * (adam_grad - lambda * theta);
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
-        gamma = std::max(gamma, 1e-6f);
-        gamma = std::min(gamma, 1e6f);
         PolicyWeights::feature_weights[i] = gamma;
     }
 
@@ -543,11 +545,9 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         float orig_weight = PolicyWeights::pattern_weights[i];
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += adam_grad[i] * Vdelta;
+        theta += Vdelta * (adam_grad[i] - lambda * theta);
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
-        gamma = std::max(gamma, 1e-6f);
-        gamma = std::min(gamma, 1e6f);
         PolicyWeights::pattern_weights[i] = gamma;
     }
 }

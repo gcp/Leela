@@ -42,9 +42,11 @@ constexpr int MWF_FLAG_CAPTURE      = 30;
 class PolicyWeights {
 public:
     alignas(64) static std::array<float, NUM_PATTERNS> pattern_gradients;
+    alignas(64) static std::array<float, NUM_FEATURES> feature_gradients;
     alignas(64) static std::array<float, NUM_PATTERNS> pattern_weights;
     alignas(64) static std::array<float, NUM_FEATURES> feature_weights;
-    alignas(64) static std::array<float, NUM_FEATURES> feature_gradients;
+    alignas(64) static const std::array<float, NUM_FEATURES> feature_weights_sl;
+    alignas(64) static const std::array<float, NUM_PATTERNS> pattern_weights_sl;
 };
 
 class MovewFeatures {
@@ -67,12 +69,14 @@ public:
         m_flags |= 1 << flag;
         if (flag < NUM_FEATURES) {
             m_score *= PolicyWeights::feature_weights[flag];
+            m_score *= PolicyWeights::feature_weights_sl[flag];
         }
     }
     void set_pattern(int pattern) {
         assert(pattern > 0);
         m_pattern = pattern;
         m_score *= PolicyWeights::pattern_weights[m_pattern];
+        m_score *= PolicyWeights::pattern_weights_sl[m_pattern];
     }
     int get_pattern() const {
         assert(m_pattern > 0);
