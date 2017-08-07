@@ -173,7 +173,7 @@ protected:
     bool fast_in_atari(int vertex);
     template <int N> void add_string_liberties(int vertex,
                                                std::array<int, N> & nbr_libs,
-                                               int & nbr_libs_cnt);
+                                               size_t & nbr_libs_cnt);
     void kill_neighbours(int vertex, movelist_t & moves);
     void try_capture(int color, int vertex, movelist_t & moves);
     FastBoard remove_dead();
@@ -186,7 +186,7 @@ protected:
                                          const int N);
     template<int N> bool saveable_string(const int string_parent,
                                          std::array<int, N> & nbr_libs,
-                                         int & nbr_libs_cnt);
+                                         size_t & nbr_libs_cnt);
     void save_critical_neighbours(int color, int vertex, movelist_t & moves);
     void add_pattern_moves(int color, int vertex, movelist_t & moves);
     void add_global_captures(int color, movelist_t & moves);

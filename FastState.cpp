@@ -295,6 +295,7 @@ void FastState::generate_trace(int color, PolicyTrace & trace, int move) {
                 board.add_near_nakade_moves(color, m_lastmove, moves);
             }
             board.add_pattern_moves(color, m_lastmove, moves);
+            board.add_semeai_moves(color, m_lastmove, moves);
         }
     }
 

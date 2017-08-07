@@ -244,6 +244,7 @@ int FastBoard::count_pliberties(const int i) {
 }
 
 // count neighbours of color c at vertex v
+// the border of the board has fake neighours of both colors
 int FastBoard::count_neighbours(const int c, const int v) {
     assert(c == WHITE || c == BLACK || c == EMPTY);
     return (m_neighbours[v] >> (NBR_SHIFT * c)) & 7;
@@ -1340,7 +1341,7 @@ bool FastBoard::kill_or_connect(int color, int vertex) {
 template <int N>
 void FastBoard::add_string_liberties(int vertex,
                                      std::array<int, N> & nbr_libs,
-                                     int & nbr_libs_cnt) {
+                                     size_t & nbr_libs_cnt) {
     int pos = vertex;
 #ifndef NDEBUG
     int color = m_square[pos];
@@ -1357,7 +1358,7 @@ void FastBoard::add_string_liberties(int vertex,
                 if (m_square[ai] == EMPTY) {
                     bool found = false;
 
-                    for (int i = 0; i < nbr_libs_cnt; i++) {
+                    for (size_t i = 0; i < nbr_libs_cnt; i++) {
                         if (nbr_libs[i] == ai) {
                             found = true;
                             break;
@@ -1409,7 +1410,7 @@ bool FastBoard::self_atari(int color, int vertex) {
     
     // list of all liberties, this never gets big             
     std::array<int, 3> nbr_libs;
-    int nbr_libs_cnt = 0;
+    size_t nbr_libs_cnt = 0;
 
     // add the vertex we play in to the liberties list
     nbr_libs[nbr_libs_cnt++] = vertex;           
@@ -1420,7 +1421,7 @@ bool FastBoard::self_atari(int color, int vertex) {
         if (get_square(ai) == FastBoard::EMPTY) {
             bool found = false;
                     
-            for (int i = 0; i < nbr_libs_cnt; i++) {
+            for (size_t i = 0; i < nbr_libs_cnt; i++) {
                 if (nbr_libs[i] == ai) {
                     found = true;
                     break;
@@ -2230,26 +2231,64 @@ void FastBoard::try_capture(int color, int vertex, movelist_t & moves) {
 template<int N>
 bool FastBoard::saveable_string(const int string_parent,
                                 std::array<int, N> & group_liberties,
-                                int & group_liberty_cnt) {
+                                size_t & group_liberty_cnt) {
+    assert(m_parent[string_parent] == string_parent);
     // Walk the string, try to add liberties
     add_string_liberties<N>(string_parent, group_liberties,
                             group_liberty_cnt);
-    // See if playing in the liberty adds any
-    for (int i = 0; i < group_liberty_cnt; i++) {
+    // See if playing in the liberties adds any
+    for (size_t i = 0; i < group_liberty_cnt; i++) {
         int lib = group_liberties[i];
+        // Check squares next to the liberty
         for (int k = 0; k < 4; k++) {
             int ai = lib + m_dirs[k];
+            // Empty, might be a new liberty
             if (m_square[ai] == EMPTY) {
-                // lib is one, and we must increase, so we must add
-                // at least 2
-                if (count_pliberties(ai) >= 3) {
-                    // Check if these aren't existing liberties
-                    auto it = std::find(group_liberties.cbegin(),
-                                        group_liberties.cbegin() + group_liberty_cnt,
-                                        ai);
-                    if (it == group_liberties.cend()) {
-                        // XXX: We could swap the good liberty in first
-                        // position here and use that as a move+property
+                // Check if this is a new liberty
+                auto group_liberties_last = group_liberties.cbegin() +
+                                            group_liberty_cnt;
+                auto it = std::find(group_liberties.cbegin(),
+                                    group_liberties_last, ai);
+                if (it == group_liberties_last) {
+                    // XXX: We could swap the good liberty in first
+                    // position here and use that as a move+property
+                    return true;
+                }
+            } else if (m_square[ai] == m_square[string_parent]) {
+                // color check passed, see if new group
+                int parpar = m_parent[ai];
+                if (parpar == string_parent) {
+                    continue;
+                }
+                if (m_libs[parpar] > group_liberty_cnt) {
+                    // Will increase liberties, even if one
+                    // disappears from the connection
+                    return true;
+                } else if (m_libs[parpar] >= 2) {
+                    // The connection takes away one liberty
+                    // so the connected string must have two (one new).
+                    // Might not add anything if liberties are
+                    // joint. We know they can't be much due
+                    // to above check failing, at best equal
+                    std::array<int, N> new_liberties;
+                    size_t new_cnt = 0;
+                    add_string_liberties<N>(parpar,
+                                            new_liberties,
+                                            new_cnt);
+                    std::vector<int> all_libs;
+                    all_libs.reserve(new_cnt + group_liberty_cnt);
+                    for (size_t j = 0; j < new_cnt; j++) {
+                        all_libs.emplace_back(new_liberties[j]);
+                    }
+                    for (size_t j = 0; j < group_liberty_cnt; j++) {
+                        all_libs.emplace_back(group_liberties[j]);
+                    }
+                    std::sort(all_libs.begin(), all_libs.end());
+                    all_libs.erase(std::unique(all_libs.begin(),
+                                               all_libs.end()),
+                                    all_libs.end());
+                    // Total liberties must increase,
+                    if (all_libs.size() > group_liberty_cnt) {
                         return true;
                     }
                 }
@@ -2268,7 +2307,9 @@ void FastBoard::add_semeai_moves(const int color, const int lastmove,
                                                     MAX_LIBERTY_CHECK);
     for (auto & own_group : crit_own) {
         std::array<int, MAX_LIBERTY_CHECK> own_group_liberties;
-        int own_group_liberty_cnt = 0;
+        size_t own_group_liberty_cnt = 0;
+
+        //if (string_size(own_group) == 1) continue;
 
         // ...and that cannot add liberties
         bool can_save_string = saveable_string<MAX_LIBERTY_CHECK>(
@@ -2281,18 +2322,19 @@ void FastBoard::add_semeai_moves(const int color, const int lastmove,
             for (auto & enemy_group : surrounding_enemies) {
                 // Will be at most 5, but really <= own_group_liberty_cnt
                 std::array<int, MAX_LIBERTY_CHECK> enemy_group_liberties;
-                int enemy_group_liberty_cnt = 0;
+                size_t enemy_group_liberty_cnt = 0;
 
                 bool can_kill_enemy = !saveable_string<MAX_LIBERTY_CHECK>(
                     enemy_group, enemy_group_liberties, enemy_group_liberty_cnt);
                 if (can_kill_enemy) {
-                    for (int i = 0; i < enemy_group_liberty_cnt; i++) {
+                    for (size_t i = 0; i < enemy_group_liberty_cnt; i++) {
                         int lib = enemy_group_liberties[i];
                         if (own_group_liberty_cnt <= 2) {
                             moves.emplace_back(lib, MWF_FLAG_SEMEAI_2);
                         } else if (own_group_liberty_cnt == 3) {
                             moves.emplace_back(lib, MWF_FLAG_SEMEAI_3);
                         } else {
+                            assert(own_group_liberty_cnt >= 4);
                             moves.emplace_back(lib, MWF_FLAG_SEMEAI_4P);
                         }
                     }
@@ -2644,7 +2686,7 @@ bool FastBoard::check_losing_ladder(const int color, const int vtx, int branchin
             return false;
         }
 
-        int lc = 0;
+        size_t lc = 0;
         std::array<int, 2> libarr;
         tmp.add_string_liberties<2>(atari, libarr, lc);
 
