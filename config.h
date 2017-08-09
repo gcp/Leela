@@ -19,11 +19,11 @@
 /* Features */
 //#define KGS
 #define USE_OPTIONS
-//#define USE_BLAS
-//#define USE_OPENBLAS
+#define USE_BLAS
+#define USE_OPENBLAS
 //#define USE_MKL
 //#define USE_CAFFE
-#define USE_OPENCL
+//#define USE_OPENCL
 #define USE_TUNER
 #define USE_SEARCH
 
@@ -31,7 +31,7 @@
 #ifdef KGS
 #define PROGRAM_VERSION "0.10.2. I will resign when I have lost. If you are sure you are winning but I haven't resigned yet, the status of some groups is not yet clear to me. I will pass out the game when I have won. You can download the latest stable version at https://sjeng.org/leela"
 #else
-#define PROGRAM_VERSION "0.10.2 pol1"
+#define PROGRAM_VERSION "0.10.2 1e2"
 #endif
 
 // OpenBLAS limitation
