@@ -516,7 +516,7 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
-    constexpr float lambda = 1e-3f;
+    constexpr float lambda = 1e-4f;
 
     // Timestep for Adam (total updates)
     t++;
@@ -539,7 +539,7 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
 
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta *= (1.0f - lambda);
+        theta -= std::abs(Vdelta) * theta * lambda;
         theta += Vdelta * adam_grad;
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
@@ -565,7 +565,7 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         float orig_weight = PolicyWeights::pattern_weights[i];
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta *= (1.0f - lambda);
+        theta -= std::abs(Vdelta) * theta * lambda;
         theta += Vdelta * adam_grad[i];
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
