@@ -539,7 +539,8 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
 
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += Vdelta * (adam_grad - lambda * theta);
+        theta *= (1.0f - lambda);
+        theta += Vdelta * adam_grad;
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
         PolicyWeights::feature_weights[i] = gamma;
@@ -564,7 +565,8 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         float orig_weight = PolicyWeights::pattern_weights[i];
         // Convert to theta
         float theta = std::log(orig_weight);
-        theta += Vdelta * (adam_grad[i] - lambda * theta);
+        theta *= (1.0f - lambda);
+        theta += Vdelta * adam_grad[i];
         float gamma = std::exp(theta);
         assert(!std::isnan(gamma));
         PolicyWeights::pattern_weights[i] = gamma;
