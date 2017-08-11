@@ -65,6 +65,7 @@ float cfg_beta;
 float cfg_patternbonus;
 int cfg_rave_moves;
 int cfg_extra_symmetry;
+int cfg_random_loops;
 std::string cfg_logfile;
 FILE* cfg_logfile_handle;
 bool cfg_quiet;
@@ -80,10 +81,10 @@ void GTP::setup_default_parameters() {
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
 #else
-    cfg_mature_threshold = 100;
+    cfg_mature_threshold = 85;
     cfg_expand_divider =  2.0f;
-    cfg_extra_symmetry =  3000;
-    cfg_eval_thresh = 10;
+    cfg_extra_symmetry = 3000;
+    cfg_eval_thresh = 9;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -114,6 +115,7 @@ void GTP::setup_default_parameters() {
     cfg_mix_ending = 0.691f;
     cfg_rave_moves = 13;
     cfg_mc_softmax = 1.0f;
+    cfg_random_loops = 4;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }

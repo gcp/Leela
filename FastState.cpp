@@ -255,7 +255,7 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
 
     // If there's no good moves yet, try randomly
     if (best_score < cfg_bound) {
-        constexpr int loop_amount = 4;
+        int loop_amount = cfg_random_loops;
         // Random moves on the board
         for (int loops = 0; loops < loop_amount; loops++) {
             int sq = walk_empty_list(board.m_tomove);

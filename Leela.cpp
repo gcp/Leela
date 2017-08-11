@@ -78,6 +78,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("eval_thresh", po::value<int>())
         ("rave_moves", po::value<int>())
         ("extra_symmetry", po::value<int>())
+        ("random_loops", po::value<int>())
 #endif
         ;
     po::variables_map vm;
@@ -180,6 +181,9 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
     if (vm.count("extra_symmetry")) {
         cfg_extra_symmetry = vm["extra_symmetry"].as<int>();
+    }
+    if (vm.count("random_loops")) {
+        cfg_random_loops = vm["random_loops"].as<int>();
     }
 #endif
 
