@@ -111,11 +111,11 @@ void GTP::setup_default_parameters() {
 #endif
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix_opening = 0.721f;
-    cfg_mix_ending = 0.691f;
+    cfg_mix_opening = 0.72f;
+    cfg_mix_ending = 0.42f;
     cfg_rave_moves = 13;
     cfg_mc_softmax = 1.0f;
-    cfg_random_loops = 4;
+    cfg_random_loops = 3;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }
