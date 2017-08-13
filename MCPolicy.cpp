@@ -89,7 +89,7 @@ void MCPolicy::mse_from_file(std::string filename) {
 #endif
 
     double sum_sq_pp = 0.0;
-    double sum_sq_nn = 0.0;
+    //double sum_sq_nn = 0.0;
     int count = 0;
 
     PolicyWeights::feature_weights.fill(1.0f);
@@ -122,11 +122,12 @@ void MCPolicy::mse_from_file(std::string filename) {
         PolicyWeights::feature_gradients.fill(0.0f);
         PolicyWeights::pattern_gradients.fill(0.0f);
         float bwins = 0.0f;
-        float nwscore;
-        float black_score;
+        //float nwscore;
+        float black_score = blackwon ? 1.0f : 0.0f;
 
         #pragma omp parallel
         {
+#if 0
             #pragma omp single nowait
             {
                 FastState workstate = *state;
@@ -137,6 +138,7 @@ void MCPolicy::mse_from_file(std::string filename) {
                 }
                 black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
             }
+#endif
 
             // Get EV (V)
             #pragma omp for reduction(+:bwins) schedule(dynamic, 8)
@@ -174,7 +176,7 @@ void MCPolicy::mse_from_file(std::string filename) {
        //          count, blackwon, bwins, nwscore);
 
         sum_sq_pp += std::pow((blackwon ? 1.0f : 0.0f) - bwins,   2.0f);
-        sum_sq_nn += std::pow((blackwon ? 1.0f : 0.0f) - nwscore, 2.0f);
+//        sum_sq_nn += std::pow((blackwon ? 1.0f : 0.0f) - nwscore, 2.0f);
 
         count++;
 
@@ -183,13 +185,13 @@ void MCPolicy::mse_from_file(std::string filename) {
             float timediff = Time::timediff(start, end) / 100.0f;
             float ips = 10000.0f / timediff;
             start = end;
-            myprintf("n=%d MSE MC=%1.4f MSE NN=%1.4f ips=%f\n",
+            myprintf("n=%d MSE MC=%1.4f ips=%f\n",
                 count,
                 sum_sq_pp/10000.0,
-                sum_sq_nn/10000.0,
+  //              sum_sq_nn/10000.0,
                 ips);
             sum_sq_pp = 0.0;
-            sum_sq_nn = 0.0;
+//            sum_sq_nn = 0.0;
         }
 
         if (count % 10000 == 0) {
@@ -516,7 +518,7 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
-    constexpr float lambda = 1e-4f;
+    constexpr float lambda = 1e-5f;
 
     // Timestep for Adam (total updates)
     t++;
@@ -542,6 +544,8 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         theta -= std::abs(Vdelta) * theta * lambda;
         theta += Vdelta * adam_grad;
         float gamma = std::exp(theta);
+        gamma = std::max(gamma, 1e-12f);
+        gamma = std::min(gamma, 1e12f);
         assert(!std::isnan(gamma));
         PolicyWeights::feature_weights[i] = gamma;
     }
@@ -568,6 +572,8 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         theta -= std::abs(Vdelta) * theta * lambda;
         theta += Vdelta * adam_grad[i];
         float gamma = std::exp(theta);
+        gamma = std::max(gamma, 1e-12f);
+        gamma = std::min(gamma, 1e12f);
         assert(!std::isnan(gamma));
         PolicyWeights::pattern_weights[i] = gamma;
     }
