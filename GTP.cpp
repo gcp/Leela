@@ -97,7 +97,7 @@ void GTP::setup_default_parameters() {
     cfg_crit_his_1 = 9.03f;
     cfg_crit_his_2 = 2.58f;
     cfg_tactical = 10.89f;
-    cfg_bound = 1e6f;
+    cfg_bound = 10.0f;
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
@@ -111,11 +111,11 @@ void GTP::setup_default_parameters() {
 #endif
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix_opening = 0.72f;
-    cfg_mix_ending = 0.42f;
+    cfg_mix_opening = 0.66f;
+    cfg_mix_ending = 0.49f;
     cfg_rave_moves = 13;
     cfg_mc_softmax = 1.0f;
-    cfg_random_loops = 3;
+    cfg_random_loops = 4;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }
