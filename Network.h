@@ -47,7 +47,7 @@ public:
                     Ensemble ensemble);
     static constexpr int POLICY_CHANNELS = 32;
     static constexpr int VALUE_CHANNELS = 32;
-    static constexpr int MAX_CHANNELS = 128;
+    static constexpr int MAX_CHANNELS = 192;
     static constexpr int MAX_VALUE_CHANNELS = 64;
 
 #ifdef USE_OPENCL

@@ -51,31 +51,31 @@ Network* Network::s_Net = nullptr;
 std::unique_ptr<caffe::Net> Network::s_net;
 #endif
 
-extern std::array<float, 76800> conv1_w;
-extern std::array<float, 96> conv1_b;
-extern std::array<float, 110592> conv2_w;
-extern std::array<float, 128> conv2_b;
-extern std::array<float, 147456> conv3_w;
-extern std::array<float, 128> conv3_b;
-extern std::array<float, 147456> conv4_w;
-extern std::array<float, 128> conv4_b;
-extern std::array<float, 147456> conv5_w;
-extern std::array<float, 128> conv5_b;
-extern std::array<float, 147456> conv6_w;
-extern std::array<float, 128> conv6_b;
-extern std::array<float, 147456> conv7_w;
-extern std::array<float, 128> conv7_b;
-extern std::array<float, 147456> conv8_w;
-extern std::array<float, 128> conv8_b;
-extern std::array<float, 147456> conv9_w;
-extern std::array<float, 128> conv9_b;
-extern std::array<float, 147456> conv10_w;
-extern std::array<float, 128> conv10_b;
-extern std::array<float, 147456> conv11_w;
-extern std::array<float, 128> conv11_b;
-extern std::array<float, 147456> conv12_w;
-extern std::array<float, 128> conv12_b;
-extern std::array<float, 1152> conv13_w;
+extern std::array<float, 102400> conv1_w;
+extern std::array<float, 128> conv1_b;
+extern std::array<float, 221184> conv2_w;
+extern std::array<float, 192> conv2_b;
+extern std::array<float, 331776> conv3_w;
+extern std::array<float, 192> conv3_b;
+extern std::array<float, 331776> conv4_w;
+extern std::array<float, 192> conv4_b;
+extern std::array<float, 331776> conv5_w;
+extern std::array<float, 192> conv5_b;
+extern std::array<float, 331776> conv6_w;
+extern std::array<float, 192> conv6_b;
+extern std::array<float, 331776> conv7_w;
+extern std::array<float, 192> conv7_b;
+extern std::array<float, 331776> conv8_w;
+extern std::array<float, 192> conv8_b;
+extern std::array<float, 331776> conv9_w;
+extern std::array<float, 192> conv9_b;
+extern std::array<float, 331776> conv10_w;
+extern std::array<float, 192> conv10_b;
+extern std::array<float, 331776> conv11_w;
+extern std::array<float, 192> conv11_b;
+extern std::array<float, 331776> conv12_w;
+extern std::array<float, 192> conv12_b;
+extern std::array<float, 1728> conv13_w;
 extern std::array<float, 1> conv13_b;
 
 extern std::array<float, 51200> val_conv1_w;
@@ -223,8 +223,8 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::GPU);
 
-    s_net.reset(new Net("model_5612.txt", TEST));
-    s_net->CopyTrainedLayersFrom("model_5612.caffemodel");
+    s_net.reset(new Net("model_5718.txt", TEST));
+    s_net->CopyTrainedLayersFrom("model_5718.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         s_net->num_inputs(), s_net->num_outputs());
@@ -753,31 +753,31 @@ Network::Netresult Network::get_scored_moves_internal(
     // XXX really only need the first 24
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
 
-    convolve<5,  32,  96>(input_data, conv1_w, conv1_b, output_data);
+    convolve<5,  32, 128>(input_data, conv1_w, conv1_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3,  96, 128>(input_data, conv2_w, conv2_b, output_data);
+    convolve<3, 128, 192>(input_data, conv2_w, conv2_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv3_w, conv3_b, output_data);
+    convolve<3, 192, 192>(input_data, conv3_w, conv3_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv4_w, conv4_b, output_data);
+    convolve<3, 192, 192>(input_data, conv4_w, conv4_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv5_w, conv5_b, output_data);
+    convolve<3, 192, 192>(input_data, conv5_w, conv5_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv6_w, conv6_b, output_data);
+    convolve<3, 192, 192>(input_data, conv6_w, conv6_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv7_w, conv7_b, output_data);
+    convolve<3, 192, 192>(input_data, conv7_w, conv7_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv8_w, conv8_b, output_data);
+    convolve<3, 192, 192>(input_data, conv8_w, conv8_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv9_w, conv9_b, output_data);
+    convolve<3, 192, 192>(input_data, conv9_w, conv9_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv10_w, conv10_b, output_data);
+    convolve<3, 192, 192>(input_data, conv10_w, conv10_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv11_w, conv11_b, output_data);
+    convolve<3, 192, 192>(input_data, conv11_w, conv11_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv12_w, conv12_b, output_data);
+    convolve<3, 192, 192>(input_data, conv12_w, conv12_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3, 128,   1>(input_data, conv13_w, conv13_b, output_data);
+    convolve<3, 192,   1>(input_data, conv13_w, conv13_b, output_data);
     softmax(output_data, softmax_data, cfg_softmax_temp);
 
     // Move scores
