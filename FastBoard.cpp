@@ -1153,7 +1153,7 @@ std::string FastBoard::get_string(int vertex) {
     
     int start = m_parent[vertex];
     int newpos = start;
-    
+
     do {                           
         result += move_to_text(newpos) + " "; 
         newpos = m_next[newpos];
@@ -1478,12 +1478,18 @@ int FastBoard::get_pattern_fast(const int sq) {
          | (m_square[sq + size + 2 + 1] <<  0);
 }
 
-int FastBoard::get_pattern_fast_augment(const int sq) {
+int FastBoard::get_pattern_fast_augment(const int sq,
+                                        const int color,
+                                        std::pair<int, int> & nbr) {
     const int size = m_boardsize;
     int sqs0, sqs1, sqs2, sqs3, sqs4, sqs5, sqs6, sqs7;
     int lib0, lib1, lib2, lib3;
+    int at0, at1, at2, at3;
     int res;
-    
+
+    nbr.first  = 8;
+    nbr.second = 8;
+
     sqs0 = m_square[sq - size - 2 - 1];
     sqs1 = m_square[sq - size - 2];
     sqs2 = m_square[sq - size - 2 + 1];
@@ -1492,7 +1498,7 @@ int FastBoard::get_pattern_fast_augment(const int sq) {
     sqs5 = m_square[sq + size + 2 - 1];
     sqs6 = m_square[sq + size + 2];
     sqs7 = m_square[sq + size + 2 + 1];
-    
+
     res =  (sqs0 << 14)
          | (sqs1 << 12)
          | (sqs2 << 10)
@@ -1500,15 +1506,45 @@ int FastBoard::get_pattern_fast_augment(const int sq) {
          | (sqs4 <<  6)
          | (sqs5 <<  4)
          | (sqs6 <<  2)
-         | (sqs7 <<  0);            
+         | (sqs7 <<  0);
 
-    lib0 = fast_in_atari(sq - size - 2);
-    lib1 = fast_in_atari(sq - 1);
-    lib2 = fast_in_atari(sq + 1);
-    lib3 = fast_in_atari(sq + size + 2);
-    
-    res |= (lib0 << 19 | lib1 << 18 | lib2 << 17 | lib3 << 16);
-    
+    lib0 = m_libs[m_parent[sq - size - 2]];
+    lib1 = m_libs[m_parent[sq - 1]];
+    lib2 = m_libs[m_parent[sq + 1]];
+    lib3 = m_libs[m_parent[sq + size + 2]];
+
+    at0 = lib0 == 1;
+    at1 = lib1 == 1;
+    at2 = lib2 == 1;
+    at3 = lib3 == 1;
+
+    if (sqs1 == color) {
+        nbr.first = std::min(lib0, nbr.first);
+    }
+    if (sqs1 == !color) {
+        nbr.second = std::min(lib0, nbr.second);
+    }
+    if (sqs3 == color) {
+        nbr.first = std::min(lib1, nbr.first);
+    }
+    if (sqs3 == !color) {
+        nbr.second = std::min(lib1, nbr.second);
+    }
+    if (sqs4 == color) {
+        nbr.first = std::min(lib2, nbr.first);
+    }
+    if (sqs4 == !color) {
+        nbr.second = std::min(lib2, nbr.second);
+    }
+    if (sqs6 == color) {
+        nbr.first = std::min(lib3, nbr.first);
+    }
+    if (sqs6 == !color) {
+        nbr.second = std::min(lib3, nbr.second);
+    }
+
+    res |= (at0 << 19 | at1 << 18 | at2 << 17 | at3 << 16);
+
     return res;
 }
 

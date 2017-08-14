@@ -125,7 +125,8 @@ int FastState::walk_empty_list(int color) {
 void FastState::flag_move(MovewFeatures & mwf, int sq, int color,
                           const Matcher * matcher) {
     assert(sq > 0);
-    int full_pattern = board.get_pattern_fast_augment(sq);
+    std::pair<int, int> nbr_crit;
+    int full_pattern = board.get_pattern_fast_augment(sq, color, nbr_crit);
     int pattern = matcher->matches(color, full_pattern);
     mwf.set_pattern(pattern);
     //bool invert_board = false;
@@ -135,7 +136,9 @@ void FastState::flag_move(MovewFeatures & mwf, int sq, int color,
     //uint32 pattern = board.get_pattern3_augment(sq, invert_board);
     //mwf.set_pattern(Utils::pattern_hash(pattern));
 
-    std::pair<int, int> nbr_crit = board.nbr_criticality(color, sq);
+    //std::pair<int, int> nbr_crit_2 = board.nbr_criticality(color, sq);
+    //assert(nbr_crit_2.first == nbr_crit.first);
+    //assert(nbr_crit_2.second == nbr_crit.second);
 
     if (nbr_crit.first == 1) {
         mwf.add_flag(MWF_FLAG_CRIT_MINE_1);
