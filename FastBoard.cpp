@@ -1206,7 +1206,8 @@ int FastBoard::in_atari(int vertex) {
 }
 
 // loop over a string and try to kill neighbors
-void FastBoard::kill_neighbours(int vertex, int komove, movelist_t & moves) {
+bool FastBoard::kill_neighbours(int vertex, int komove, movelist_t & moves) {
+    bool result = false;
     int scolor = m_square[vertex];
     int kcolor = !scolor;
     int pos = vertex;
@@ -1234,6 +1235,10 @@ void FastBoard::kill_neighbours(int vertex, int komove, movelist_t & moves) {
                     }
                     if (!found) {
                         int atari = in_atari(ai);
+                        // We are able to kill the neighbour, though
+                        // not necessarily right now. Making this distinction
+                        // improves empiric results - maybe due to tuning.
+                        result = true;
                         if (atari != komove) {
                             assert(m_square[atari] == EMPTY);
                             moves.emplace_back(atari,
@@ -1257,6 +1262,8 @@ void FastBoard::kill_neighbours(int vertex, int komove, movelist_t & moves) {
 
         pos = m_next[pos];
     } while (pos != vertex);
+
+    return result;
 }
 
 int FastBoard::saving_size(int color, int vertex) {                        
@@ -1307,13 +1314,11 @@ void FastBoard::save_critical_neighbours(int color, int vertex, int komove,
                                        string_size(par));
                 }
                 bool sa = self_atari(color, atari);
-
-                size_t startsize = moves.size();
-                kill_neighbours(ai, komove, moves);
+                bool kill = kill_neighbours(ai, komove, moves);
 
                 // saving moves failed, add this to critical points
                 // to try and capture
-                if (moves.size() == startsize && (sa || (atari == komove))) {
+                if (!kill && (sa || (atari == komove))) {
                     m_critical.push_back(atari);
                 }
             }
@@ -1456,7 +1461,7 @@ bool FastBoard::self_atari(int color, int vertex) {
 
     // if we get here, there are no more than 2 liberties,
     // and we just removed 1 of those (since we added the play square
-    // to the list), so it must be an auto-atari    
+    // to the list), so it must be an auto-atari
     return true;
 }
 
@@ -1624,7 +1629,7 @@ int FastBoard::get_pattern3_augment(const int sq, bool invert) {
     int idx3 = (sqs7 << 14) | (sqs6 << 12) | (sqs5 << 10) | (sqs4 <<  8)
              | (sqs3 <<  6) | (sqs2 <<  4) | (sqs1 <<  2) | (sqs0 <<  0);
     idx3 |= (lib3 << 19 | lib2 << 18 | lib1 << 17 | lib0 << 16);               
-             
+
     int idx4 = (sqs2 << 14) | (sqs4 << 12) | (sqs7 << 10) | (sqs1 <<  8)
              | (sqs6 <<  6) | (sqs0 <<  4) | (sqs3 <<  2) | (sqs5 <<  0);
     idx4 |= (lib2 << 19 | lib0 << 18 | lib3 << 17 | lib1 << 16);               
@@ -1792,7 +1797,7 @@ int FastBoard::get_pattern4(const int sq, bool invert) {
     } else {
         sqs[11] = m_square[sq + 2*(size + 2)];
     } 
-    
+
     /* color symmetry */
     if (invert) {
         for (size_t i = 0; i < sqs.size(); i++) {

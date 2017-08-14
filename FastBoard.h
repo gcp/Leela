@@ -174,7 +174,7 @@ protected:
     template <int N> void add_string_liberties(int vertex,
                                                std::array<int, N> & nbr_libs,
                                                size_t & nbr_libs_cnt);
-    void kill_neighbours(int vertex, int komove, movelist_t & moves);
+    bool kill_neighbours(int vertex, int komove, movelist_t & moves);
     void try_capture(int color, int vertex, movelist_t & moves);
     FastBoard remove_dead();
     bool predict_solid_eye(const int move, const int color, const int vtx);
