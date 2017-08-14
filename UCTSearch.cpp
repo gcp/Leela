@@ -892,7 +892,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         int move = *it;
         if (move != FastBoard::PASS) {
             // self atari, suicide, eyefill
-            if (m_rootstate.try_move(color, move, true)) {
+            if (m_rootstate.try_move(color, move)) {
                 KoState mystate = m_rootstate;
                 mystate.play_move(move);
                 if (!mystate.superko()) {
