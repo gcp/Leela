@@ -123,7 +123,7 @@ int FastState::walk_empty_list(int color) {
 }
 
 void FastState::flag_move(MovewFeatures & mwf, int sq, int color,
-                          Matcher * matcher) {
+                          const Matcher * matcher) {
     assert(sq > 0);
     int full_pattern = board.get_pattern_fast_augment(sq);
     int pattern = matcher->matches(color, full_pattern);
@@ -187,30 +187,23 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
 
     moves.clear();
 
-    Matcher * matcher = Matcher::get_Matcher();
+    const Matcher * matcher = Matcher::get_Matcher();
     Random * rng = Random::get_Rng();
 
     // Local moves, or tactical ones
     if (m_lastmove > 0 && m_lastmove < board.m_maxsq) {
         if (board.get_square(m_lastmove) == !color) {
-            board.add_global_captures(color, moves);
-            board.save_critical_neighbours(color, m_lastmove, moves);
-            if (m_last_was_capture || (0.3f > rng->randflt())) {
-                board.add_near_nakade_moves(color, m_lastmove, moves);
+            board.add_global_captures(color, m_komove, moves);
+            board.save_critical_neighbours(color, m_lastmove, m_komove, moves);
+            if (moves.empty()) {
+                board.add_semeai_moves(color, m_lastmove, m_komove, moves);
             }
-            board.add_pattern_moves(color, m_lastmove, moves);
-            board.add_semeai_moves(color, m_lastmove, moves);
+            if (m_last_was_capture || (0.3f > rng->randflt())) {
+                board.add_near_nakade_moves(color, m_lastmove, m_komove, moves);
+            }
+            board.add_pattern_moves(color, m_lastmove, m_komove, moves);
         }
     }
-
-    // XXX: make this unneeded
-    moves.erase(std::remove_if(moves.begin(), moves.end(),
-                              [this](MovewFeatures & mwf) {
-                                  int sq = mwf.get_sq();
-                                  assert(sq > 0);
-                                  return sq == m_komove;
-                              }),
-                moves.end());
 
     float cumul = 0.0f;
     scoredmoves.clear();
@@ -283,30 +276,23 @@ void FastState::generate_trace(int color, PolicyTrace & trace, int move) {
 
     moves.clear();
 
-    Matcher * matcher = Matcher::get_Matcher();
+    const Matcher * matcher = Matcher::get_Matcher();
     Random * rng = Random::get_Rng();
 
     // Local moves, or tactical ones
     if (m_lastmove > 0 && m_lastmove < board.m_maxsq) {
         if (board.get_square(m_lastmove) == !color) {
-            board.add_global_captures(color, moves);
-            board.save_critical_neighbours(color, m_lastmove, moves);
-            if (m_last_was_capture || (0.3f > rng->randflt())) {
-                board.add_near_nakade_moves(color, m_lastmove, moves);
+            board.add_global_captures(color, m_komove, moves);
+            board.save_critical_neighbours(color, m_lastmove, m_komove, moves);
+            if (moves.empty()) {
+                board.add_semeai_moves(color, m_lastmove, m_komove, moves);
             }
-            board.add_pattern_moves(color, m_lastmove, moves);
-            board.add_semeai_moves(color, m_lastmove, moves);
+            if (m_last_was_capture || (0.3f > rng->randflt())) {
+                board.add_near_nakade_moves(color, m_lastmove, m_komove, moves);
+            }
+            board.add_pattern_moves(color, m_lastmove, m_komove, moves);
         }
     }
-
-    // XXX: make this unneeded
-    moves.erase(std::remove_if(moves.begin(), moves.end(),
-                               [this](MovewFeatures & mwf) {
-                                   int sq = mwf.get_sq();
-                                   assert(sq > 0);
-                                   return sq == m_komove;
-                               }),
-                moves.end());
 
     constexpr int loop_amount = 4;
     // Random moves on the board

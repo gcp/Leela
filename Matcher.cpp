@@ -61,6 +61,6 @@ Matcher::Matcher() {
     }
 }
 
-int Matcher::matches(int color, int pattern) {
+int Matcher::matches(int color, int pattern) const {
     return m_patterns[color][pattern];
 }

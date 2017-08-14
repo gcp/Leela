@@ -174,11 +174,11 @@ protected:
     template <int N> void add_string_liberties(int vertex,
                                                std::array<int, N> & nbr_libs,
                                                size_t & nbr_libs_cnt);
-    void kill_neighbours(int vertex, movelist_t & moves);
+    void kill_neighbours(int vertex, int komove, movelist_t & moves);
     void try_capture(int color, int vertex, movelist_t & moves);
     FastBoard remove_dead();
     bool predict_solid_eye(const int move, const int color, const int vtx);
-    void check_nakade(int color, int vertex, movelist_t & moves);
+    void check_nakade(int color, int vertex, int komove, movelist_t & moves);
     int after_liberties_color(const int color, const int vertex);
     bool can_kill_neighbours(const int vertex);
     std::vector<int> killable_neighbours(const int string_parent, const int N);
@@ -187,11 +187,15 @@ protected:
     template<int N> bool saveable_string(const int string_parent,
                                          std::array<int, N> & nbr_libs,
                                          size_t & nbr_libs_cnt);
-    void save_critical_neighbours(int color, int vertex, movelist_t & moves);
-    void add_pattern_moves(int color, int vertex, movelist_t & moves);
-    void add_global_captures(int color, movelist_t & moves);
-    void add_near_nakade_moves(int color, int vertex, movelist_t & moves);
-    void add_semeai_moves(int color, int vertex, movelist_t & moves);
+    void save_critical_neighbours(int color, int vertex, int komove,
+                                  movelist_t & moves);
+    void add_pattern_moves(int color, int vertex, int komove,
+                           movelist_t & moves);
+    void add_global_captures(int color, int komove, movelist_t & moves);
+    void add_near_nakade_moves(int color, int vertex, int komove,
+                               movelist_t & moves);
+    void add_semeai_moves(int color, int vertex, int komove,
+                          movelist_t & moves);
 };
 
 #endif

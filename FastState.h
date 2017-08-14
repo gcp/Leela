@@ -64,7 +64,7 @@ protected:
     int walk_empty_list(int color);
     void play_move(int color, int vertex);
     void flag_move(MovewFeatures & mwf, int sq, int color,
-                   Matcher * matcher);
+                   const Matcher * matcher);
 };
 
 #endif

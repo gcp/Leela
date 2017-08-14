@@ -80,10 +80,10 @@ void GTP::setup_default_parameters() {
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
 #else
-    cfg_mature_threshold = 100;
-    cfg_expand_divider =  2.0f;
-    cfg_extra_symmetry =  3000;
-    cfg_eval_thresh = 10;
+    cfg_mature_threshold = 85;
+    cfg_expand_divider = 1.7f;
+    cfg_extra_symmetry = 3000;
+    cfg_eval_thresh = 9;
 #endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
@@ -96,7 +96,7 @@ void GTP::setup_default_parameters() {
     cfg_crit_his_1 = 9.03f;
     cfg_crit_his_2 = 2.58f;
     cfg_tactical = 10.89f;
-    cfg_bound = 1e6f;
+    cfg_bound = 24.0f;
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
@@ -110,8 +110,8 @@ void GTP::setup_default_parameters() {
 #endif
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix_opening = 0.721f;
-    cfg_mix_ending = 0.691f;
+    cfg_mix_opening = 0.66f;
+    cfg_mix_ending = 0.49f;
     cfg_rave_moves = 13;
     cfg_mc_softmax = 1.0f;
     cfg_logfile_handle = nullptr;

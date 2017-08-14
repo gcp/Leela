@@ -8,7 +8,7 @@ class Matcher {
 public:
     Matcher();
 
-    int matches(int color, int pattern);
+    int matches(int color, int pattern) const;
 
     /*
         return the "global" matcher

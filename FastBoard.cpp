@@ -1206,7 +1206,7 @@ int FastBoard::in_atari(int vertex) {
 }
 
 // loop over a string and try to kill neighbors
-void FastBoard::kill_neighbours(int vertex, movelist_t & moves) {
+void FastBoard::kill_neighbours(int vertex, int komove, movelist_t & moves) {
     int scolor = m_square[vertex];
     int kcolor = !scolor;
     int pos = vertex;
@@ -1234,19 +1234,21 @@ void FastBoard::kill_neighbours(int vertex, movelist_t & moves) {
                     }
                     if (!found) {
                         int atari = in_atari(ai);
-                        assert(m_square[atari] == EMPTY);
-                        MovewFeatures mwf(atari, MovewFeatures::CaptureTag{},
-                                          string_size(par));
-                        int sav_size = string_size(vertex);
-                        if (sav_size == 1) {
-                            mwf.add_flag(MWF_FLAG_SAVING_1);
-                        } else if (sav_size == 2) {
-                            mwf.add_flag(MWF_FLAG_SAVING_2);
-                        } else {
-                            assert(sav_size >= 3);
-                            mwf.add_flag(MWF_FLAG_SAVING_3P);
+                        if (atari != komove) {
+                            assert(m_square[atari] == EMPTY);
+                            moves.emplace_back(atari,
+                                               MovewFeatures::CaptureTag{},
+                                               string_size(par));
+                            int sav_size = string_size(vertex);
+                            if (sav_size == 1) {
+                                moves.back().add_flag(MWF_FLAG_SAVING_1);
+                            } else if (sav_size == 2) {
+                                moves.back().add_flag(MWF_FLAG_SAVING_2);
+                            } else {
+                                assert(sav_size >= 3);
+                                moves.back().add_flag(MWF_FLAG_SAVING_3P);
+                            }
                         }
-                        moves.push_back(mwf);
                         nbr_list[nbr_cnt++] = par;
                     }
                 }
@@ -1281,7 +1283,8 @@ int FastBoard::saving_size(int color, int vertex) {
 // look for a neighbors of vertex with "color" that are critical,
 // and add moves that save them to work
 // vertex is sure to be filled with !color
-void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & moves) {
+void FastBoard::save_critical_neighbours(int color, int vertex, int komove,
+                                         movelist_t & moves) {
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
 
@@ -1299,16 +1302,18 @@ void FastBoard::save_critical_neighbours(int color, int vertex, movelist_t & mov
                 //    i.e. it is not self-atari
                 // 2) capturing an opponent, which means that he should
                 //    also be in atari
-                moves.emplace_back(atari, MovewFeatures::SavingTag{},
-                                   string_size(par));
+                if (atari != komove) {
+                    moves.emplace_back(atari, MovewFeatures::SavingTag{},
+                                       string_size(par));
+                }
                 bool sa = self_atari(color, atari);
 
                 size_t startsize = moves.size();
-                kill_neighbours(ai, moves);
+                kill_neighbours(ai, komove, moves);
 
                 // saving moves failed, add this to critical points
                 // to try and capture
-                if (moves.size() == startsize && sa) {
+                if (moves.size() == startsize && (sa || (atari == komove))) {
                     m_critical.push_back(atari);
                 }
             }
@@ -1420,7 +1425,7 @@ bool FastBoard::self_atari(int color, int vertex) {
         
         if (get_square(ai) == FastBoard::EMPTY) {
             bool found = false;
-                    
+
             for (size_t i = 0; i < nbr_libs_cnt; i++) {
                 if (nbr_libs[i] == ai) {
                     found = true;
@@ -1640,7 +1645,7 @@ int FastBoard::get_pattern3_augment(const int sq, bool invert) {
     int idx7 = (sqs7 << 14) | (sqs4 << 12) | (sqs2 << 10) | (sqs6 <<  8)
              | (sqs1 <<  6) | (sqs5 <<  4) | (sqs3 <<  2) | (sqs0 <<  0);
     idx7 |= (lib2 << 19 | lib3 << 18 | lib0 << 17 | lib1 << 16);               
-             
+
     int idx8 = (sqs5 << 14) | (sqs6 << 12) | (sqs7 << 10) | (sqs3 <<  8)
              | (sqs4 <<  6) | (sqs0 <<  4) | (sqs1 <<  2) | (sqs2 <<  0);
     idx8 |= (lib3 << 19 | lib1 << 18 | lib2 << 17 | lib0 << 16);               
@@ -1696,7 +1701,7 @@ int FastBoard::get_pattern3_augment_spec(const int sq, int libspec, bool invert)
         012       0
         3 4      1 2
         567       3
-    */            
+    */
     int idx1 = (sqs0 << 14) | (sqs1 << 12) | (sqs2 << 10) | (sqs3 <<  8)
              | (sqs4 <<  6) | (sqs5 <<  4) | (sqs6 <<  2) | (sqs7 <<  0);
     idx1 |= (lib0 << 19 | lib1 << 18 | lib2 << 17 | lib3 << 16);             
@@ -1920,7 +1925,7 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
             sqs[i] = s_cinvert[(square_t)sqs[i]];
         }
     }
-  
+
     /*  
         012     a = 10  b = 11 c = 12 d = 13 e = 14 f = 15 g = 16
        34567    h = 17  i = 18 j = 19
@@ -1976,7 +1981,7 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
 
     idx7 =  (sqs[17] << 38) | (sqs[18] << 36) | (sqs[19] << 34) | (sqs[12] << 32)
           | (sqs[13] << 30) | (sqs[14] << 28) | (sqs[15] << 26) | (sqs[16] << 24)
-          | (sqs[ 8] << 22) | (sqs[ 9] << 20) | (sqs[10] << 18) | (sqs[11] << 16) 
+          | (sqs[ 8] << 22) | (sqs[ 9] << 20) | (sqs[10] << 18) | (sqs[11] << 16)
           | (sqs[ 3] << 14) | (sqs[ 4] << 12) | (sqs[ 5] << 10) | (sqs[ 6] <<  8) 
           | (sqs[ 7] <<  6) | (sqs[ 0] <<  4) | (sqs[ 1] <<  2) | (sqs[ 2] <<  0); 
           
@@ -1994,17 +1999,18 @@ uint64 FastBoard::get_pattern5(const int sq, bool invert, bool extend) {
     idx1 = std::min(idx1, idx3);
     idx5 = std::min(idx5, idx7);
     
-    idx1 = std::min(idx1, idx5);                  
+    idx1 = std::min(idx1, idx5);
           
     return idx1;          
 }
 
-void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves) {
+void FastBoard::add_pattern_moves(int color, int vertex, int komove,
+                                  movelist_t & moves) {
     for (int i = 0; i < 8; i++) {
         int sq = vertex + m_extradirs[i];
 
         if (m_square[sq] == EMPTY) {
-            if (!fast_ss_suicide(color, sq)) {
+            if (sq != komove && !fast_ss_suicide(color, sq)) {
                 moves.emplace_back(sq, MWF_FLAG_PATTERN);
             }
         }
@@ -2014,15 +2020,18 @@ void FastBoard::add_pattern_moves(int color, int vertex, movelist_t & moves) {
 }
 
 // add capture moves for color
-void FastBoard::add_global_captures(int color, movelist_t & moves) {
+void FastBoard::add_global_captures(int color, int komove, movelist_t & moves) {
     // walk critical squares
-    for (size_t i = 0; i < m_critical.size(); i++) {
-        try_capture(color, m_critical[i], moves);
+    for (auto & sq : m_critical) {
+        if (sq != komove) {
+            try_capture(color, sq, moves);
+        }
     }
     m_critical.clear();
 }
 
-void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
+void FastBoard::check_nakade(int color, int vertex, int komove,
+                             movelist_t & moves) {
     std::array<int, 6> nakade;
     std::array<int, 6> empty_counts;
     std::array<int, 5> nbr_to_coord;
@@ -2082,13 +2091,17 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
         return;
     } else if (sq_count == 3) {
         assert(nbr_to_coord[2] != 0);
-        moves.push_back(MovewFeatures(nbr_to_coord[2], MWF_FLAG_NAKADE));
+        if (nbr_to_coord[2] != komove) {
+            moves.emplace_back(nbr_to_coord[2], MWF_FLAG_NAKADE);
+        }
     } else if (sq_count == 4) {
         // Square 4 is dead but doesn't need immediate nakade
         // Pyramid 4 is dead
         if (empty_counts[3] == 1) {
             assert(nbr_to_coord[3] != 0);
-            moves.push_back(MovewFeatures(nbr_to_coord[3], MWF_FLAG_NAKADE));
+            if (nbr_to_coord[3] != komove) {
+                moves.emplace_back(nbr_to_coord[3], MWF_FLAG_NAKADE);
+            }
         } else if (empty_counts[2] == 2 && empty_counts[1] == 2) {
             // Straight 4 is alive
             // Bent 4 in the corner is ko
@@ -2114,7 +2127,9 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
             }
             if (bent4) {
                 assert(crit_2_lib_pnt);
-                moves.push_back(MovewFeatures(crit_2_lib_pnt, MWF_FLAG_NAKADE));
+                if (crit_2_lib_pnt != komove) {
+                    moves.emplace_back(crit_2_lib_pnt, MWF_FLAG_NAKADE);
+                }
             }
         }
         // Everything else lives
@@ -2122,11 +2137,15 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
         if (empty_counts[1] == 1 && empty_counts[3] == 1) {
             // Bulky 5 is dead
             assert(nbr_to_coord[3] != 0);
-            moves.push_back(MovewFeatures(nbr_to_coord[3], MWF_FLAG_NAKADE));
+            if (nbr_to_coord[3] != komove) {
+                moves.emplace_back(nbr_to_coord[3], MWF_FLAG_NAKADE);
+            }
         } else if (empty_counts[4] == 1) {
             // Crossed 5 is dead
             assert(nbr_to_coord[4] != 0);
-            moves.push_back(MovewFeatures(nbr_to_coord[4], MWF_FLAG_NAKADE));
+            if (nbr_to_coord[4] != komove) {
+                moves.emplace_back(nbr_to_coord[4], MWF_FLAG_NAKADE);
+            }
         }
         // Everything else lives
     } else if (sq_count == 6) {
@@ -2134,7 +2153,9 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
         if (empty_counts[1] == 2 && empty_counts[4] == 1) {
             assert(empty_counts[2] == 3);
             assert(nbr_to_coord[4] != 0);
-            moves.push_back(MovewFeatures(nbr_to_coord[4], MWF_FLAG_NAKADE));
+            if (nbr_to_coord[4] != komove) {
+                moves.emplace_back(nbr_to_coord[4], MWF_FLAG_NAKADE);
+            }
         } else if (empty_counts[2] == 4 && empty_counts[3] == 2) {
             // Rectangular 6 in the corner is dead
             int crit_3_lib_pnt = 0;
@@ -2157,7 +2178,9 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
             }
             if (rect6) {
                 assert(crit_3_lib_pnt);
-                moves.push_back(MovewFeatures(crit_3_lib_pnt, MWF_FLAG_NAKADE));
+                if (crit_3_lib_pnt != komove) {
+                    moves.emplace_back(crit_3_lib_pnt, MWF_FLAG_NAKADE);
+                }
             }
         }
         // Everything else lives
@@ -2165,13 +2188,14 @@ void FastBoard::check_nakade(int color, int vertex, movelist_t & moves) {
 }
 
 // add nakade moves for color
-void FastBoard::add_near_nakade_moves(int color, int vertex, movelist_t & moves) {
+void FastBoard::add_near_nakade_moves(int color, int vertex, int komove,
+                                      movelist_t & moves) {
     // empty square directly next to last stone?
     for (int k = 0; k < 4; k++) {
         int ai = vertex + m_dirs[k];
         if (m_square[ai] == EMPTY) {
             // nakade shape is made by color not to move
-            check_nakade(!color, ai, moves);
+            check_nakade(!color, ai, komove, moves);
         }
     }
 }
@@ -2300,7 +2324,7 @@ bool FastBoard::saveable_string(const int string_parent,
 }
 
 void FastBoard::add_semeai_moves(const int color, const int lastmove,
-                                 movelist_t & moves) {
+                                 int komove, movelist_t & moves) {
     constexpr int MAX_LIBERTY_CHECK = 3;
     // Check for own strings that are low on liberties
     std::vector<int> crit_own = critical_neighbours(color, lastmove,
@@ -2335,6 +2359,7 @@ void FastBoard::add_semeai_moves(const int color, const int lastmove,
                 if (can_kill_enemy) {
                     for (size_t i = 0; i < enemy_group_liberty_cnt; i++) {
                         int lib = enemy_group_liberties[i];
+                        if (lib == komove) continue;
                         auto own_end = own_group_liberties.cbegin()
                                      + own_group_liberty_cnt;
                         auto it = std::find(own_group_liberties.cbegin(),
