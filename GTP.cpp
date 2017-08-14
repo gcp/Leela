@@ -76,7 +76,7 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 20;
+    cfg_mature_threshold = 40;
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
