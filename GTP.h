@@ -42,6 +42,7 @@ extern float cfg_mc_softmax;
 extern int cfg_eval_thresh;
 extern int cfg_rave_moves;
 extern int cfg_extra_symmetry;
+extern int cfg_random_loops;
 extern std::string cfg_logfile;
 extern FILE* cfg_logfile_handle;
 extern bool cfg_quiet;

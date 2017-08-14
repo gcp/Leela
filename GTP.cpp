@@ -65,6 +65,7 @@ float cfg_beta;
 float cfg_patternbonus;
 int cfg_rave_moves;
 int cfg_extra_symmetry;
+int cfg_random_loops;
 std::string cfg_logfile;
 FILE* cfg_logfile_handle;
 bool cfg_quiet;
@@ -75,7 +76,7 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 20;
+    cfg_mature_threshold = 40;
     cfg_expand_divider = 2.0f;
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
@@ -114,6 +115,7 @@ void GTP::setup_default_parameters() {
     cfg_mix_ending = 0.49f;
     cfg_rave_moves = 13;
     cfg_mc_softmax = 1.0f;
+    cfg_random_loops = 4;
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
 }

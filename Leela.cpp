@@ -78,6 +78,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("eval_thresh", po::value<int>())
         ("rave_moves", po::value<int>())
         ("extra_symmetry", po::value<int>())
+        ("random_loops", po::value<int>())
 #endif
         ;
     po::variables_map vm;
@@ -181,6 +182,9 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("extra_symmetry")) {
         cfg_extra_symmetry = vm["extra_symmetry"].as<int>();
     }
+    if (vm.count("random_loops")) {
+        cfg_random_loops = vm["random_loops"].as<int>();
+    }
 #endif
 
     if (vm.count("logfile")) {
@@ -282,12 +286,16 @@ int main (int argc, char *argv[]) {
     Matcher::get_Matcher();
     Network::get_Network();
     // e^(x/t) = e^x^(1/t)
-    std::for_each(PolicyWeights::pattern_weights.begin(),
-                  PolicyWeights::pattern_weights.end(),
-                  [](float &f) { f = std::pow(f, 1.0f / cfg_mc_softmax); });
-    std::for_each(PolicyWeights::feature_weights.begin(),
-                  PolicyWeights::feature_weights.end(),
-                  [](float &f) { f = std::pow(f, 1.0f / cfg_mc_softmax); });
+    for (size_t i = 0; i < NUM_FEATURES; i++) {
+        PolicyWeights::feature_weights[i] *= PolicyWeights::feature_weights_sl[i];
+        PolicyWeights::feature_weights[i] =
+            std::pow(PolicyWeights::feature_weights[i], 1.0f / cfg_mc_softmax);
+    }
+    for (size_t i = 0; i < NUM_PATTERNS; i++) {
+        PolicyWeights::pattern_weights[i] *= PolicyWeights::pattern_weights_sl[i];
+        PolicyWeights::pattern_weights[i] =
+            std::pow(PolicyWeights::pattern_weights[i], 1.0f / cfg_mc_softmax);
+    }
 
     std::unique_ptr<GameState> maingame(new GameState);
 
