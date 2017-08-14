@@ -28,7 +28,7 @@ using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score, int expand_threshold,
                  int netscore_threshold, int movenum)
-    : m_firstchild(nullptr), m_nextsibling(nullptr),
+    : m_has_children(false), m_firstchild(nullptr), m_nextsibling(nullptr),
       m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
       m_eval_propagated(false), m_blackevals(0.0f),
       m_evalcount(0), m_movenum(movenum), m_is_evaluating(false),
@@ -122,12 +122,12 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
 
 void UCTNode::create_children(std::atomic<int> & nodecount,
                               FastState & state, bool at_root, bool use_nets) {
-    // acquire the lock
-    SMP::Lock lock(get_mutex());
-    // check whether somebody beat us to it
+    // check whether somebody beat us to it (atomic)
     if (has_children()) {
         return;
     }
+    // acquire the lock
+    SMP::Lock lock(get_mutex());
     // no successors in final state
     if (state.get_passes() >= 2) {
         return;
@@ -251,6 +251,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
 
     nodecount += childrenadded;
     sort_children();
+    m_has_children = true;
     m_has_netscore = true;
     m_is_netscoring = false;
     if (all_symmetries) {
@@ -316,15 +317,16 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     }
 
     nodecount += childrenadded;
+    m_has_children = true;
 }
 
 void UCTNode::run_value_net(FastState & state) {
-    // acquire the lock
-    SMP::Lock lock(get_mutex());
-    // check whether somebody beat us to it
+    // check whether somebody beat us to it (atomic)
     if (get_evalcount()) {
         return;
     }
+    // acquire the lock
+    SMP::Lock lock(get_mutex());
     if (m_is_evaluating) {
         return;
     }
@@ -415,7 +417,7 @@ void UCTNode::update(Playout & gameresult, int color, bool update_eval) {
 }
 
 bool UCTNode::has_children() const {
-    return m_firstchild != NULL;
+    return m_has_children;
 }
 
 double UCTNode::get_blackwins() const {
@@ -484,6 +486,7 @@ void UCTNode::set_evalcount(int evalcount) {
     m_evalcount = evalcount;
     // Set from TT. We don't need to re-eval if from hash.
     if (evalcount) {
+        SMP::Lock(get_mutex());
         set_eval_propagated();
     }
 }
@@ -734,14 +737,14 @@ void UCTNode::sort_children() {
 
     UCTNode * child = m_firstchild;
 
-    while (child != NULL) {
+    while (child != nullptr) {
         tmp.push_back(std::make_tuple(child->get_score(), child));
         child = child->m_nextsibling;
     }
 
     std::sort(tmp.begin(), tmp.end());
 
-    m_firstchild = NULL;
+    m_firstchild = nullptr;
 
     for (auto it = tmp.begin(); it != tmp.end(); ++it) {
         link_child(std::get<1>(*it));
@@ -755,7 +758,7 @@ void UCTNode::sort_root_children(int color) {
     UCTNode * child = m_firstchild;
     int maxvisits = 0;
 
-    while (child != NULL) {
+    while (child != nullptr) {
         int visits = child->get_visits();
         if (visits) {
             float winrate = child->get_mixed_score(color);
@@ -770,64 +773,61 @@ void UCTNode::sort_root_children(int color) {
     // reverse sort, because list reconstruction is backwards
     std::stable_sort(tmp.rbegin(), tmp.rend(), NodeComp(maxvisits));
 
-    m_firstchild = NULL;
+    m_firstchild = nullptr;
 
     for (auto it = tmp.begin(); it != tmp.end(); ++it) {
         link_child(std::get<2>(*it));
     }
 }
 
-UCTNode* UCTNode::get_first_child() {
+UCTNode* UCTNode::get_first_child() const {
     return m_firstchild;
 }
 
-UCTNode* UCTNode::get_sibling() {
+UCTNode* UCTNode::get_sibling() const {
     return m_nextsibling;
 }
 
-UCTNode* UCTNode::get_pass_child() {
-    UCTNode * child = m_firstchild;    
-    
-    while (child != NULL) {        
+UCTNode* UCTNode::get_pass_child() const {
+    UCTNode * child = m_firstchild;
+
+    while (child != nullptr) {
         if (child->m_move == FastBoard::PASS) {
             return child;
         }
-                        
-        child = child->m_nextsibling;       
-    }              
-    
-    return NULL;  
+        child = child->m_nextsibling;
+    }
+
+    return nullptr;
 }
 
-UCTNode* UCTNode::get_nopass_child() {
-    UCTNode * child = m_firstchild;    
-    
-    while (child != NULL) {        
+UCTNode* UCTNode::get_nopass_child() const {
+    UCTNode * child = m_firstchild;
+
+    while (child != NULL) {
         if (child->m_move != FastBoard::PASS) {
             return child;
         }
-                        
-        child = child->m_nextsibling;       
-    }              
-    
-    return NULL;  
+        child = child->m_nextsibling;
+    }
+
+    return nullptr;
 }
 
 void UCTNode::invalidate() {
-    SMP::Lock lock(get_mutex());
     m_valid = false;
 }
 
-bool UCTNode::valid() {
+bool UCTNode::valid() const {
     return m_valid;
 }
 
 // unsafe in SMP, we don't know if people hold pointers to the 
 // child which they might dereference
-void UCTNode::delete_child(UCTNode * del_child) {  
-    SMP::Lock lock(get_mutex());     
+void UCTNode::delete_child(UCTNode * del_child) {
+    SMP::Lock lock(get_mutex());
     assert(del_child != NULL);
-    
+
     if (del_child == m_firstchild) {           
         m_firstchild = m_firstchild->m_nextsibling; 
         delete del_child;       
@@ -855,6 +855,7 @@ void UCTNode::delete_child(UCTNode * del_child) {
 void UCTNode::updateRAVE(Playout & playout, int color) {
     float score = playout.get_score();
 
+    SMP::Lock lock(get_mutex());
     // siblings
     UCTNode * child = m_firstchild;
 

@@ -36,7 +36,7 @@ public:
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
     void invalidate();
-    bool valid();
+    bool valid() const;
     bool should_expand() const;
     bool should_netscore() const;
     int get_move() const;
@@ -66,10 +66,10 @@ public:
     void updateRAVE(Playout & playout, int color);
 
     UCTNode* uct_select_child(int color, bool use_nets);
-    UCTNode* get_first_child();
-    UCTNode* get_pass_child();
-    UCTNode* get_nopass_child();
-    UCTNode* get_sibling();
+    UCTNode* get_first_child() const;
+    UCTNode* get_pass_child() const;
+    UCTNode* get_nopass_child() const;
+    UCTNode* get_sibling() const;
 
     void sort_root_children(int color);
     void sort_children();
@@ -88,6 +88,7 @@ private:
                          bool all_symmetries);
     float smp_noise();
     // Tree data
+    std::atomic<bool> m_has_children;
     UCTNode* m_firstchild;
     UCTNode* m_nextsibling;
     // Move
@@ -107,7 +108,7 @@ private:
     int m_movenum;
     bool m_is_evaluating;    // mutex
     // alive (superko)
-    bool m_valid;
+    std::atomic<bool> m_valid;
     // extend node
     int m_expand_cnt;
     bool m_is_expanding;
