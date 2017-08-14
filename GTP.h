@@ -11,7 +11,7 @@ extern int cfg_max_playouts;
 extern bool cfg_enable_nets;
 extern bool cfg_komi_adjust;
 extern int cfg_mature_threshold;
-extern float cfg_expand_divider;
+extern int cfg_expand_threshold;
 extern int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
 extern std::vector<int> cfg_gpus;

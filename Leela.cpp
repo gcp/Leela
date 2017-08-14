@@ -52,7 +52,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
 #endif
 #ifdef USE_TUNER
         ("mature_threshold", po::value<int>())
-        ("expand_divider", po::value<float>())
+        ("expand_threshold", po::value<int>())
         ("beta", po::value<float>())
         ("patternbonus", po::value<float>())
         ("crit_mine_1", po::value<float>())
@@ -104,8 +104,8 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("mature_threshold")) {
         cfg_mature_threshold = vm["mature_threshold"].as<int>();
     }
-    if (vm.count("expand_divider")) {
-        cfg_expand_divider = vm["expand_divider"].as<float>();
+    if (vm.count("expand_threshold")) {
+        cfg_expand_threshold = vm["expand_threshold"].as<int>();
     }
     if (vm.count("crit_mine_1")) {
         cfg_crit_mine_1 = vm["crit_mine_1"].as<float>();

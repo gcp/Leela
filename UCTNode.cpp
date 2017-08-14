@@ -198,7 +198,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
     int childrenadded = 0;
     const int max_net_childs = 35;
     int netscore_threshold = cfg_mature_threshold;
-    int expand_threshold = ((float)cfg_mature_threshold)/cfg_expand_divider;
+    int expand_threshold = cfg_expand_threshold;
     int movenum = board.get_stone_count();
 
     SMP::Lock lock(get_mutex());
@@ -286,7 +286,7 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
             netscore_threshold = 50;
         }
     }
-    int expand_threshold = ((float)netscore_threshold)/cfg_expand_divider;
+    int expand_threshold = cfg_expand_threshold;
     int movenum = board.get_stone_count();
 
     SMP::Lock lock(get_mutex());

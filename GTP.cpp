@@ -34,7 +34,7 @@ int cfg_max_playouts;
 bool cfg_enable_nets;
 bool cfg_komi_adjust;
 int cfg_mature_threshold;
-float cfg_expand_divider;
+int cfg_expand_threshold;
 int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
 std::vector<int> cfg_gpus;
@@ -77,12 +77,12 @@ void GTP::setup_default_parameters() {
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
     cfg_mature_threshold = 40;
-    cfg_expand_divider = 2.0f;
+    cfg_expand_theshold = 20;
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
 #else
     cfg_mature_threshold = 85;
-    cfg_expand_divider = 1.7f;
+    cfg_expand_threshold = 50;
     cfg_extra_symmetry = 3000;
     cfg_eval_thresh = 9;
 #endif
