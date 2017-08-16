@@ -60,6 +60,7 @@
         "thread": "cpp",
         "tuple": "cpp",
         "utility": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "__mutex_base": "cpp"
     }
 }

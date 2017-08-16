@@ -42,7 +42,7 @@ public:
     int get_move() const;
     int get_visits() const;
     int get_ravevisits() const;
-    bool has_netscore() const { return m_has_netscore; }
+    bool has_netscore() const;
     float get_score() const;
     void set_score(float score);
     float get_eval(int tomove) const;

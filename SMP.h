@@ -10,7 +10,7 @@ namespace SMP {
     class Mutex {
     public:
         Mutex();
-        ~Mutex();
+        ~Mutex() = default;
         bool is_held();
         friend class Lock;
     private:
@@ -27,5 +27,8 @@ namespace SMP {
         Mutex * m_mutex;
     };
 }
+
+// Avoids accidentally creating a temporary
+#define LOCK(mutex, lock) SMP::Lock lock((mutex))
 
 #endif
