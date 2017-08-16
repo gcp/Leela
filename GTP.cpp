@@ -77,7 +77,7 @@ void GTP::setup_default_parameters() {
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
     cfg_mature_threshold = 40;
-    cfg_expand_theshold = 20;
+    cfg_expand_threshold = 20;
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
 #else
