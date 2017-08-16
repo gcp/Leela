@@ -23,8 +23,8 @@ using namespace Utils;
 void Book::bookgen_from_file(std::string filename) {
     std::unordered_map<uint64, int> hash_book;
     std::vector<std::string> games = SGFParser::chop_all(filename);
-    int gametotal = games.size();
-    int gamecount = 0;
+    size_t gametotal = games.size();
+    size_t gamecount = 0;
 
     myprintf("Total games in file: %d\n", gametotal);
 
@@ -41,7 +41,7 @@ void Book::bookgen_from_file(std::string filename) {
         SGFTree * treewalk = &(*sgftree);
         int counter = 0;
 
-        while (counter < movecount && counter < 30) {
+        while (counter < movecount && counter < 40) {
             assert(treewalk != NULL);
             assert(treewalk->get_state() != NULL);
             if (treewalk->get_state()->board.get_boardsize() != 19)
@@ -85,9 +85,9 @@ void Book::bookgen_from_file(std::string filename) {
     // Filter book
     std::map<uint64, int> filtered_book;
 
-    for(auto it = hash_book.begin(); it != hash_book.end(); ++it) {
-        if (it->second >= 10) {
-            filtered_book.insert(*it);
+    for(auto & it : hash_book) {
+        if (it.second >= 200) {
+            filtered_book.insert(it);
         }
     }
 
@@ -95,10 +95,10 @@ void Book::bookgen_from_file(std::string filename) {
     myprintf("%d filtered positions\n", filtered_book.size());
 
     std::ofstream out("BookData.h");
-    out << "static std::unordered_map<uint64, int> book_data = {" << std::endl;
-    for (auto it = filtered_book.begin(); it != filtered_book.end(); ++it) {
+    out << "static std::unordered_map<uint64, int> book_data{" << std::endl;
+    for (auto it = filtered_book.cbegin(); it != filtered_book.cend(); ++it) {
         out << boost::format("{0x%08X, %d}") % it->first % it->second;
-        if (boost::next(it) != filtered_book.end()) {
+        if (boost::next(it) != filtered_book.cend()) {
             out << "," << std::endl;
         }
     }
@@ -110,50 +110,56 @@ void Book::bookgen_from_file(std::string filename) {
 
 int Book::get_book_move(FastState & state) {
     auto moves = state.generate_moves(state.board.get_to_move());
+    std::vector<std::pair<int, int>> scored_moves;
     std::vector<std::pair<int, int>> candidate_moves;
-    std::vector<std::pair<int, int>> display_moves;
 
-    uint32 cumul = 0;
-
-    for (auto mit = moves.begin(); mit != moves.end(); ++mit) {
+    int max_score = 0;
+    for (auto & move : moves) {
         FastState currstate = state;
 
-        if (*mit != FastBoard::PASS) {
-            currstate.play_move(*mit);
+        if (move != FastBoard::PASS) {
+            currstate.play_move(move);
             uint64 hash = currstate.board.get_canonical_hash();
 
             auto bid = book_data.find(hash);
             if (bid != book_data.end()) {
-                cumul += bid->second;
-                candidate_moves.push_back(std::make_pair(*mit, cumul));
-#ifdef DUMP_BOOK
-                display_moves.push_back(std::make_pair(bid->second, *mit));
-#endif
+                max_score = std::max(max_score, bid->second);
+                scored_moves.emplace_back(bid->second, move);
             }
         }
     }
 
+    int cumul = 0;
+    int threshold = max_score / 20;
+    for (auto & candidate : scored_moves) {
+        if (candidate.first > threshold) {
+            cumul += candidate.first;
+            candidate_moves.emplace_back(cumul, candidate.second);
+        }
+    }
+
 #ifdef DUMP_BOOK
-    std::sort(display_moves.rbegin(), display_moves.rend());
-    for (int i = 0; i < display_moves.size(); i++) {
-        myprintf("%d %s\n",
-                 display_moves[i].first,
-                 state.move_to_text(display_moves[i].second).c_str());
+    std::sort(scored_moves.rbegin(), scored_moves.rend());
+    for (auto & move : scored_moves) {
+        if (move.first > threshold) {
+            myprintf("%d %s\n",
+                     move.first, state.move_to_text(move.second).c_str());
+        }
     }
 #endif
 
-    uint32 pick = Random::get_Rng()->randuint32(cumul);
+    int pick = Random::get_Rng()->randuint32(cumul);
     size_t candidate_count = candidate_moves.size();
 
     if (candidate_count > 0) {
         myprintf("%d book moves, %d total positions\n",
                  candidate_count, cumul);
-    }
 
-    for (size_t i = 0; i < candidate_count; i++) {
-        uint32 point = candidate_moves[i].second;
-        if (pick < point) {
-            return candidate_moves[i].first;
+        for (size_t i = 0; i < candidate_count; i++) {
+            int point = candidate_moves[i].first;
+            if (pick < point) {
+                return candidate_moves[i].second;
+            }
         }
     }
 

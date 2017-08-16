@@ -26,7 +26,7 @@ public:
     uint64 ko_hash;
 
 private:
-    std::vector<uint64> get_rotated_hashes(void);
+    std::array<uint64, 8> get_rotated_hashes(void);
 };
 
 #endif
