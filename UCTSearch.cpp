@@ -37,18 +37,15 @@ UCTSearch::UCTSearch(GameState & g)
     set_playout_limit(cfg_max_playouts);
     if (m_use_nets) {
         cfg_uct = 0.1713f;
-        cfg_mcts_fpu = 0.3625f;
         cfg_beta = 48.75f;
         cfg_patternbonus = 0.02f;
     } else {
         if (g.board.get_boardsize() <= 9) {
             cfg_uct = 0.0015f;
-            cfg_mcts_fpu = 1.25f;
             cfg_beta = 22.0f;
             cfg_patternbonus = 0.0035f;
         } else {
             cfg_uct = 0.00075f;
-            cfg_mcts_fpu = 1.05f;
             cfg_beta = 56.8f;
             cfg_patternbonus = 0.0044f;
         }
