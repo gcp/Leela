@@ -113,7 +113,7 @@ int Book::get_book_move(FastState & state) {
     std::vector<std::pair<int, int>> candidate_moves;
     std::vector<std::pair<int, int>> display_moves;
 
-    int cumul = 0;
+    uint32 cumul = 0;
 
     for (auto mit = moves.begin(); mit != moves.end(); ++mit) {
         FastState currstate = state;
@@ -142,7 +142,7 @@ int Book::get_book_move(FastState & state) {
     }
 #endif
 
-    int pick = Random::get_Rng()->randint32(cumul);
+    uint32 pick = Random::get_Rng()->randuint32(cumul);
     size_t candidate_count = candidate_moves.size();
 
     if (candidate_count > 0) {
@@ -151,7 +151,7 @@ int Book::get_book_move(FastState & state) {
     }
 
     for (size_t i = 0; i < candidate_count; i++) {
-        int point = candidate_moves[i].second;
+        uint32 point = candidate_moves[i].second;
         if (pick < point) {
             return candidate_moves[i].first;
         }

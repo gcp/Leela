@@ -80,7 +80,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
         && node->get_visits() > cfg_eval_thresh) {
         node->run_value_net(currstate);
 
-        SMP::Lock lock(node->get_mutex());
+        LOCK(node->get_mutex(), lock);
         // Check whether we have new evals to back up
         if (!node->has_eval_propagated() && node->get_evalcount()) {
             if (!node->has_eval_propagated()) {
@@ -665,7 +665,7 @@ std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
     res.append(next);
 
     // Resort according to move probability
-    SMP::Lock lock(parent.get_mutex());
+    LOCK(parent.get_mutex(), lock);
     parent.sort_children();
 
     return res;

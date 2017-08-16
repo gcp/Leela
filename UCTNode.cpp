@@ -40,7 +40,7 @@ UCTNode::UCTNode(int vertex, float score, int expand_threshold,
 }
 
 UCTNode::~UCTNode() {
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     UCTNode * next = m_firstchild;
 
     while (next != NULL) {
@@ -74,7 +74,7 @@ SMP::Mutex & UCTNode::get_mutex() {
 void UCTNode::netscore_children(std::atomic<int> & nodecount,
                                 FastState & state, bool at_root) {
     // acquire the lock
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     // check whether somebody beat us to it
     if (at_root && m_has_netscore) {
         return;
@@ -127,7 +127,7 @@ void UCTNode::create_children(std::atomic<int> & nodecount,
         return;
     }
     // acquire the lock
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     // no successors in final state
     if (state.get_passes() >= 2) {
         return;
@@ -201,7 +201,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
     int expand_threshold = cfg_expand_threshold;
     int movenum = board.get_stone_count();
 
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         // Check for duplicate moves, O(N^2)
@@ -290,7 +290,7 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     int expand_threshold = cfg_expand_threshold;
     int movenum = board.get_stone_count();
 
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         if (totalchildren - childrenseen <= maxchilds) {
@@ -326,7 +326,7 @@ void UCTNode::run_value_net(FastState & state) {
         return;
     }
     // acquire the lock
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     if (m_is_evaluating) {
         return;
     }
@@ -420,6 +420,10 @@ bool UCTNode::has_children() const {
     return m_has_children;
 }
 
+bool UCTNode::has_netscore() const {
+    return m_has_netscore;
+}
+
 double UCTNode::get_blackwins() const {
     return m_blackwins;
 }
@@ -486,7 +490,7 @@ void UCTNode::set_evalcount(int evalcount) {
     m_evalcount = evalcount;
     // Set from TT. We don't need to re-eval if from hash.
     if (evalcount) {
-        SMP::Lock(get_mutex());
+        LOCK(get_mutex(), lock);
         set_eval_propagated();
     }
 }
@@ -549,6 +553,8 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     int childbound;
     int parentvisits = 1; // XXX: this can be 0 now that we sqrt
     float best_probability = 0.0f;
+
+    LOCK(get_mutex(), lock);
     if (has_netscore()) {
         childbound = 35;
     } else {
@@ -558,7 +564,6 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
         }
     }
-    SMP::Lock lock(get_mutex());
 
     int childcount = 0;
     UCTNode * child = m_firstchild;
@@ -752,7 +757,7 @@ void UCTNode::sort_children() {
 }
 
 void UCTNode::sort_root_children(int color) {
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     std::vector<sortnode_t> tmp;
 
     UCTNode * child = m_firstchild;
@@ -825,7 +830,7 @@ bool UCTNode::valid() const {
 // unsafe in SMP, we don't know if people hold pointers to the 
 // child which they might dereference
 void UCTNode::delete_child(UCTNode * del_child) {
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     assert(del_child != NULL);
 
     if (del_child == m_firstchild) {           
@@ -855,7 +860,7 @@ void UCTNode::delete_child(UCTNode * del_child) {
 void UCTNode::updateRAVE(Playout & playout, int color) {
     float score = playout.get_score();
 
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     // siblings
     UCTNode * child = m_firstchild;
 
