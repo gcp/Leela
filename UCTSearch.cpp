@@ -47,10 +47,10 @@ UCTSearch::UCTSearch(GameState & g)
             cfg_beta = 22.0f;
             cfg_patternbonus = 0.0035f;
         } else {
-            cfg_uct = 0.001f;
-            cfg_mcts_fpu = 0.58f;
-            cfg_beta = 35.0f;
-            cfg_patternbonus = 0.0075f;
+            cfg_uct = 0.00075f;
+            cfg_mcts_fpu = 1.05f;
+            cfg_beta = 56.8f;
+            cfg_patternbonus = 0.0044f;
         }
     }
 }
