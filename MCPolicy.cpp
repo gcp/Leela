@@ -118,12 +118,12 @@ void MCPolicy::mse_from_file(std::string filename) {
         }
         bool blackwon = (who_won == FastBoard::BLACK);
 
-        constexpr int iterations = 512;
+        constexpr int iterations = 256;
         PolicyWeights::feature_gradients.fill(0.0f);
         PolicyWeights::pattern_gradients.fill(0.0f);
         float bwins = 0.0f;
         //float nwscore;
-        float black_score = blackwon ? 1.0f : 0.0f;
+        //float black_score = blackwon ? 1.0f : 0.0f;
 
         #pragma omp parallel
         {
@@ -139,7 +139,7 @@ void MCPolicy::mse_from_file(std::string filename) {
                 black_score = ((blackwon ? 1.0f : 0.0f) + nwscore) / 2.0f;
             }
 #endif
-
+#if 1
             // Get EV (V)
             #pragma omp for reduction(+:bwins) schedule(dynamic, 8)
             for (int i = 0; i < iterations; i++) {
@@ -153,7 +153,7 @@ void MCPolicy::mse_from_file(std::string filename) {
                     bwins += 1.0f / (float)iterations;
                 }
             }
-
+#endif
 #if 1
             // Policy Trace per thread
             #pragma omp for schedule(dynamic, 4)
@@ -165,12 +165,15 @@ void MCPolicy::mse_from_file(std::string filename) {
                 p.run(tmp, false, true, &policy_trace);
 
                 bool black_won = p.get_score() > 0.0f;
+                //if (black_won) {
+                 //   bwins += 1.0f / (float)iterations;
+                //}
                 policy_trace.trace_process(iterations, bwins, black_won);
             }
 #endif
         }
 
-        MCPolicy::adjust_weights(black_score, bwins);
+        MCPolicy::adjust_weights(1.0f, 0.0f);
 
        // myprintf("n=%d BW: %d Score: %1.4f NN: %1.4f ",
        //          count, blackwon, bwins, nwscore);
@@ -415,11 +418,11 @@ void PolicyTrace::accumulate_sl_gradient(int & correct, int & picks) {
 
 void PolicyTrace::trace_process(const int iterations, const float baseline,
                                 const bool blackwon) {
-    float z = 1.0f;
-    if (!blackwon) {
-        z = 0.0f;
-    }
-    float sign = z - baseline;
+    //float z = 1.0f;
+    //if (!blackwon) {
+    //    z = 0.0f;
+    //}
+    //float sign = z - baseline;
 
     if (trace.empty()) return;
 
@@ -435,6 +438,18 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
     std::vector<int> patterns;
 
     for (auto & decision : trace) {
+        float z = 0.0f;
+        // Side to move won
+        if (decision.black_to_move == blackwon) {
+            z = 1.0f;
+        }
+        // Baseline for side to move
+        float adj_baseline = baseline;
+        if (!decision.black_to_move) {
+            adj_baseline = 1.0f - baseline;
+        }
+        float sign = z - adj_baseline;
+
         candidate_scores.clear();
         candidate_scores.reserve(decision.candidates.size());
         // get real probabilities
@@ -514,11 +529,11 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
 }
 
 void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
-    constexpr float alpha = 0.01f;
+    constexpr float alpha = 0.002f;
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
-    constexpr float lambda = 1e-5f;
+    constexpr float lambda = 3e-5f;
 
     // Timestep for Adam (total updates)
     t++;
