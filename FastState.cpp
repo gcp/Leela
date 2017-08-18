@@ -125,35 +125,17 @@ int FastState::walk_empty_list(int color) {
 void FastState::flag_move(MovewFeatures & mwf, int sq, int color,
                           const Matcher * matcher) {
     assert(sq > 0);
-    std::pair<int, int> nbr_crit;
-    int full_pattern = board.get_pattern_fast_augment(sq, color, nbr_crit);
-    int pattern = matcher->matches(color, full_pattern);
+    //int full_pattern = board.get_pattern_fast_augment(sq, color);
+    //int pattern = matcher->matches(color, full_pattern);
+    //mwf.set_pattern(pattern);
+
+    bool invert_board = false;
+    if (color == FastBoard::WHITE) {
+        invert_board = true;
+    }
+    uint32 pattern = board.get_pattern3_augment(sq, invert_board);
     mwf.set_pattern(pattern);
-    //bool invert_board = false;
-    //if (color == FastBoard::WHITE) {
-    //    invert_board = true;
-    //}
-    //uint32 pattern = board.get_pattern3_augment(sq, invert_board);
     //mwf.set_pattern(Utils::pattern_hash(pattern));
-
-    //std::pair<int, int> nbr_crit_2 = board.nbr_criticality(color, sq);
-    //assert(nbr_crit_2.first == nbr_crit.first);
-    //assert(nbr_crit_2.second == nbr_crit.second);
-
-    if (nbr_crit.first == 1) {
-        mwf.add_flag(MWF_FLAG_CRIT_MINE_1);
-    } else  if (nbr_crit.first == 2) {
-        mwf.add_flag(MWF_FLAG_CRIT_MINE_2);
-    }  else  if (nbr_crit.first == 3) {
-        mwf.add_flag(MWF_FLAG_CRIT_MINE_3);
-    }
-    if (nbr_crit.second == 1) {
-        mwf.add_flag(MWF_FLAG_CRIT_HIS_1);
-    } else if (nbr_crit.second == 2) {
-        mwf.add_flag(MWF_FLAG_CRIT_HIS_2);
-    } else if (nbr_crit.second == 3) {
-        mwf.add_flag(MWF_FLAG_CRIT_HIS_3);
-    }
 
     if (board.self_atari(color, sq)) {
         if (board.is_suicide(sq, color)) {

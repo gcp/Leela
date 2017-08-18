@@ -92,8 +92,7 @@ public:
     int get_extra_dir(int i);
 
     int get_pattern_fast(const int sq);
-    int get_pattern_fast_augment(const int sq, const int color,
-                                 std::pair<int, int> & nbr);
+    int get_pattern_fast_augment(const int sq, const int color);
     int get_pattern3(const int sq, bool invert);
     int get_pattern3_augment(const int sq, bool invert);
     int get_pattern3_augment_spec(const int sq, int libspec, bool invert);

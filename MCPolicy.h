@@ -9,8 +9,8 @@
 #include <limits>
 
 // Scored features
-constexpr int NUM_PATTERNS = 8192;
-constexpr int NUM_FEATURES = 25;
+// constexpr int NUM_PATTERNS = 8192;
+constexpr int NUM_FEATURES = 19;
 constexpr int MWF_FLAG_PASS         =  0;
 constexpr int MWF_FLAG_NAKADE       =  1;
 constexpr int MWF_FLAG_PATTERN      =  2;
@@ -20,22 +20,16 @@ constexpr int MWF_FLAG_TOOBIG_SA    =  5;
 constexpr int MWF_FLAG_FORCE_SA     =  6;
 constexpr int MWF_FLAG_FORCEBIG_SA  =  7;
 constexpr int MWF_FLAG_RANDOM       =  8;
-constexpr int MWF_FLAG_CRIT_MINE_1  =  9;
-constexpr int MWF_FLAG_CRIT_MINE_2  = 10;
-constexpr int MWF_FLAG_CRIT_MINE_3  = 11;
-constexpr int MWF_FLAG_CRIT_HIS_1   = 12;
-constexpr int MWF_FLAG_CRIT_HIS_2   = 13;
-constexpr int MWF_FLAG_CRIT_HIS_3   = 14;
-constexpr int MWF_FLAG_SAVING_SA    = 15;
-constexpr int MWF_FLAG_SAVING_1     = 16;
-constexpr int MWF_FLAG_SAVING_2     = 17;
-constexpr int MWF_FLAG_SAVING_3P    = 18;
-constexpr int MWF_FLAG_CAPTURE_1    = 19;
-constexpr int MWF_FLAG_CAPTURE_2    = 20;
-constexpr int MWF_FLAG_CAPTURE_3P   = 21;
-constexpr int MWF_FLAG_SUICIDE      = 22;
-constexpr int MWF_FLAG_SEMEAI_2     = 23;
-constexpr int MWF_FLAG_SEMEAI_3     = 24;
+constexpr int MWF_FLAG_SAVING_SA    =  9;
+constexpr int MWF_FLAG_SAVING_1     = 10;
+constexpr int MWF_FLAG_SAVING_2     = 11;
+constexpr int MWF_FLAG_SAVING_3P    = 12;
+constexpr int MWF_FLAG_CAPTURE_1    = 13;
+constexpr int MWF_FLAG_CAPTURE_2    = 14;
+constexpr int MWF_FLAG_CAPTURE_3P   = 15;
+constexpr int MWF_FLAG_SUICIDE      = 16;
+constexpr int MWF_FLAG_SEMEAI_2     = 17;
+constexpr int MWF_FLAG_SEMEAI_3     = 18;
 
 class PolicyWeights {
 public:
