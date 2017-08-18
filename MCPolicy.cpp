@@ -533,7 +533,7 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
-    constexpr float lambda = 1e-4f;
+    constexpr float lambda = 3e-5f;
 
     // Timestep for Adam (total updates)
     t++;
