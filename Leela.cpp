@@ -285,7 +285,7 @@ int main (int argc, char *argv[]) {
     AttribScores::get_attribscores();
     Matcher::get_Matcher();
     Network::get_Network();
-#if 0
+#if 1
     // e^(x/t) = e^x^(1/t)
     for (size_t i = 0; i < NUM_FEATURES; i++) {
         PolicyWeights::feature_weights[i] *= PolicyWeights::feature_weights_sl[i];
