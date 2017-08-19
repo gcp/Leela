@@ -92,7 +92,7 @@ public:
     int get_extra_dir(int i);
 
     int get_pattern_fast(const int sq);
-    int get_pattern_fast_augment(const int sq, const int color);
+    int get_pattern_fast_augment(const int sq);
     int get_pattern3(const int sq, bool invert);
     int get_pattern3_augment(const int sq, bool invert);
     int get_pattern3_augment_spec(const int sq, int libspec, bool invert);
@@ -107,10 +107,10 @@ public:
     std::vector<int> influence(void);
     std::vector<int> moyo(void);
     std::vector<int> area(void);
-    int predict_is_alive(const int move, const int vertex);    
+    int predict_is_alive(const int move, const int vertex);
     bool predict_kill(const int move, const int groupid);
 
-    int eval(float komi); 
+    int eval(float komi);
     int get_prisoners(int side);
     int get_empty();
     int get_empty_vertex(int idx);
@@ -121,15 +121,15 @@ public:
     std::string move_to_text(int move);
     std::string move_to_text_sgf(int move);
     int text_to_move(std::string move);
-    std::string get_stone_list(); 
+    std::string get_stone_list();
     int string_size(int vertex);
-    std::vector<int> get_string_stones(int vertex);    
+    std::vector<int> get_string_stones(int vertex);
     std::string get_string(int vertex);
-    
-    void reset_board(int size);                    
-    void display_map(std::vector<int> influence);            
+
+    void reset_board(int size);
+    void display_map(std::vector<int> influence);
     void display_liberties(int lastmove = -1);
-    void display_board(int lastmove = -1);    
+    void display_board(int lastmove = -1);
 
     static bool starpoint(int size, int point);
     static bool starpoint(int size, int x, int y);

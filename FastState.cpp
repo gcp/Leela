@@ -125,17 +125,17 @@ int FastState::walk_empty_list(int color) {
 void FastState::flag_move(MovewFeatures & mwf, int sq, int color,
                           const Matcher * matcher) {
     assert(sq > 0);
-    //int full_pattern = board.get_pattern_fast_augment(sq, color);
-    //int pattern = matcher->matches(color, full_pattern);
-    //mwf.set_pattern(pattern);
-
-    bool invert_board = false;
-    if (color == FastBoard::WHITE) {
-        invert_board = true;
-    }
-    uint32 pattern = board.get_pattern3_augment(sq, invert_board);
+    int full_pattern = board.get_pattern_fast_augment(sq);
+    auto pattern = matcher->matches(color, full_pattern);
+    assert(pattern < std::numeric_limits<decltype(pattern)>::max());
     mwf.set_pattern(pattern);
-    //mwf.set_pattern(Utils::pattern_hash(pattern));
+
+    //bool invert_board = false;
+    //if (color == FastBoard::WHITE) {
+        //invert_board = true;
+    //}
+    //uint32 pattern = board.get_pattern3_augment(sq, invert_board);
+    //mwf.set_pattern(pattern);
 
     if (board.self_atari(color, sq)) {
         if (board.is_suicide(sq, color)) {

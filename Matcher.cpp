@@ -1,6 +1,7 @@
 #include "config.h"
 
-#include <math.h>
+#include <limits>
+#include <map>
 
 #include "Matcher.h"
 #include "FastBoard.h"
@@ -27,10 +28,22 @@ void Matcher::set_Matcher(Matcher * m) {
 
 // initialize matcher data
 Matcher::Matcher() {
-    constexpr int MAX_PAT_IDX = 1 << ((8 * 2) + 4);
+    constexpr int MAX_PAT_IDX = 1 << ((8 * 2) + (4 * 2));
 
     m_patterns[FastBoard::BLACK].resize(MAX_PAT_IDX);
     m_patterns[FastBoard::WHITE].resize(MAX_PAT_IDX);
+
+    // Translates patterns to their index in the
+    // valid patterns list.
+    std::map<int, size_t> pattern_indexes;
+
+    // Convert the map of valid patterns into a list
+    // of indexes and weights of the exact minimal size/
+    for (auto & pat : PolicyWeights::pattern_map) {
+        size_t pat_idx = pattern_indexes.size();
+        PolicyWeights::pattern_weights[pat_idx] = pat.second;
+        pattern_indexes.emplace(pat.first, pat_idx);
+    }
 
     // minimal board we need is 3x3
     FastBoard board;
@@ -49,18 +62,20 @@ Matcher::Matcher() {
         }
 
         int reducpat1 = board.get_pattern3_augment_spec(startvtx, w, false);
-        reducpat1 = Utils::pattern_hash(reducpat1);
+        auto it1 = pattern_indexes.find(reducpat1);
+        if (it1 != pattern_indexes.cend()) {
+            m_patterns[FastBoard::BLACK][i] = it1->second;
+        } else {
+            m_patterns[FastBoard::BLACK][i] =
+                std::numeric_limits<unsigned short>::max();
+        }
         int reducpat2 = board.get_pattern3_augment_spec(startvtx, w, true);
-        reducpat2 = Utils::pattern_hash(reducpat2);
-
-        // Most of this array will never be indexed, as most patterns
-        // don't or can't occur in actual games. pattern_hash maps the
-        // 2148 real patterns into 8192 indexes (minus 97 collisions).
-        m_patterns[FastBoard::BLACK][i] = reducpat1;
-        m_patterns[FastBoard::WHITE][i] = reducpat2;
+        auto it2 = pattern_indexes.find(reducpat2);
+        if (it2 != pattern_indexes.cend()) {
+            m_patterns[FastBoard::WHITE][i] = it2->second;
+        } else {
+            m_patterns[FastBoard::WHITE][i] =
+                std::numeric_limits<unsigned short>::max();
+        }
     }
-}
-
-int Matcher::matches(int color, int pattern) const {
-    return m_patterns[color][pattern];
 }

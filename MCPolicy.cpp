@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <algorithm>
 #include <string.h>
+#include <map>
+#include <unordered_map>
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
@@ -26,6 +28,8 @@ using namespace Utils;
 #include "PolicyWeightsSL.h"
 alignas(64) std::array<float, NUM_PATTERNS> PolicyWeights::pattern_gradients;
 alignas(64) std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
+// Filled by Matcher.cpp from PolicyWeights::pattern_map
+alignas(64) std::array<float, NUM_PATTERNS> PolicyWeights::pattern_weights;
 
 // Adam
 alignas(64) std::array<std::pair<float, float>, NUM_PATTERNS> pattern_adam{};
@@ -118,12 +122,12 @@ void MCPolicy::mse_from_file(std::string filename) {
         }
         bool blackwon = (who_won == FastBoard::BLACK);
 
-        constexpr int iterations = 512;
+        constexpr int iterations = 256;
         PolicyWeights::feature_gradients.fill(0.0f);
         PolicyWeights::pattern_gradients.fill(0.0f);
         float bwins = 0.0f;
         //float nwscore;
-        float black_score = blackwon ? 1.0f : 0.0f;
+        //float black_score = blackwon ? 1.0f : 0.0f;
 
         #pragma omp parallel
         {
@@ -170,7 +174,8 @@ void MCPolicy::mse_from_file(std::string filename) {
 #endif
         }
 
-        MCPolicy::adjust_weights(black_score, bwins);
+        //MCPolicy::adjust_weights(black_score, bwins);
+        MCPolicy::adjust_weights(1.0f, 0.0f);
 
        // myprintf("n=%d BW: %d Score: %1.4f NN: %1.4f ",
        //          count, blackwon, bwins, nwscore);
@@ -206,8 +211,14 @@ void MCPolicy::mse_from_file(std::string filename) {
             }
             out << std::endl;
             out << std::scientific;
-            for (int w = 0; w < NUM_PATTERNS; w++) {
-                out << PolicyWeights::pattern_weights[w] << "f," << std::endl;
+            std::map<int, float> active_pats;
+            for (int i = 0; i < PolicyWeights::pattern_weights.size(); i++) {
+                if  (PolicyWeights::pattern_weights[i] != 1.0f) {
+                    active_pats.emplace(i, PolicyWeights::pattern_weights[i]);
+                }
+            }
+            for (auto & pat : active_pats) {
+                out << "{ " << pat.first << ", " << pat.second << "f}," << std::endl;
             }
             out.close();
         }
@@ -237,7 +248,7 @@ void MCPolicy::mse_from_file2(std::string filename) {
 
     for (;;) {
         #pragma omp parallel for
-        for (size_t gameid = 0; gameid < 128; gameid++) {
+        for (int gameid = 0; gameid < 128; gameid++) {
             std::unique_ptr<SGFTree> sgftree(new SGFTree);
             try {
                 sgftree->load_from_string(games[Random::get_Rng()->randint32(gametotal)]);
@@ -415,7 +426,7 @@ void PolicyTrace::accumulate_sl_gradient(int & correct, int & picks) {
 
 void PolicyTrace::trace_process(const int iterations, const float baseline,
                                 const bool blackwon) {
-#if 1
+#if 0
     float z = 1.0f;
     if (!blackwon) {
         z = 0.0f;
@@ -437,7 +448,7 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
     std::vector<int> patterns;
 
     for (auto & decision : trace) {
-#if 0
+#if 1
         float z = 0.0f;
         // Side to move won
         if (decision.black_to_move == blackwon) {
@@ -492,7 +503,7 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
 
         patterns.clear();
         // get pat probabilities
-        std::array<float, NUM_PATTERNS> pattern_probabilities;
+        std::unordered_map<int, float> pattern_probabilities;
         for (size_t c = 0; c < candidate_scores.size(); c++) {
             if (!decision.candidates[c].is_pass()) {
                 int pat = decision.candidates[c].get_pattern();
@@ -533,7 +544,7 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
-    constexpr float lambda = 1e-5f;
+    constexpr float lambda = 5e-5f;
 
     // Timestep for Adam (total updates)
     t++;
@@ -566,7 +577,10 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     }
 
     // Give the vectorizer a chance
-    alignas(64) std::array<float, NUM_PATTERNS> adam_grad;
+    //alignas(64) std::array<float> adam_grad;
+    //adam_grad.reserve(NUM_PATTERNS);
+    std::unique_ptr<float[]> adam_grad(new float[NUM_PATTERNS]);
+    #pragma omp parallel for
     for (int i = 0; i < NUM_PATTERNS; i++) {
         float gradient = PolicyWeights::pattern_gradients[i];
         pattern_adam[i].first  = beta_1 * pattern_adam[i].first
@@ -580,6 +594,7 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
         adam_grad[i] = alpha * bc_m1_nag / (std::sqrt(bc_m2) + delta);
     }
 
+    #pragma omp parallel for
     for (int i = 0; i < NUM_PATTERNS; i++) {
         float orig_weight = PolicyWeights::pattern_weights[i];
         // Convert to theta

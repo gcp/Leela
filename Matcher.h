@@ -8,7 +8,9 @@ class Matcher {
 public:
     Matcher();
 
-    int matches(int color, int pattern) const;
+    auto matches(int color, int pattern) const {
+        return m_patterns[color][pattern];
+    };
 
     /*
         return the "global" matcher

@@ -7,9 +7,10 @@
 #include <array>
 #include <vector>
 #include <limits>
+#include <map>
 
 // Scored features
-// constexpr int NUM_PATTERNS = 8192;
+constexpr int NUM_PATTERNS = 23518;
 constexpr int NUM_FEATURES = 19;
 constexpr int MWF_FLAG_PASS         =  0;
 constexpr int MWF_FLAG_NAKADE       =  1;
@@ -33,12 +34,13 @@ constexpr int MWF_FLAG_SEMEAI_3     = 18;
 
 class PolicyWeights {
 public:
+    static std::map<int, float> PolicyWeights::pattern_map;
     alignas(64) static std::array<float, NUM_PATTERNS> pattern_gradients;
     alignas(64) static std::array<float, NUM_FEATURES> feature_gradients;
     alignas(64) static std::array<float, NUM_PATTERNS> pattern_weights;
     alignas(64) static std::array<float, NUM_FEATURES> feature_weights;
-    alignas(64) static const std::array<float, NUM_FEATURES> feature_weights_sl;
     alignas(64) static const std::array<float, NUM_PATTERNS> pattern_weights_sl;
+    alignas(64) static const std::array<float, NUM_FEATURES> feature_weights_sl;
 };
 
 class MovewFeatures {
@@ -94,7 +96,7 @@ public:
         //m_score *= PolicyWeights::feature_weights_sl[flag];
     }
     void set_pattern(int pattern) {
-        assert(pattern > 0);
+        assert(pattern < NUM_PATTERNS);
         m_pattern = pattern;
         m_score *= PolicyWeights::pattern_weights[m_pattern];
         //m_score *= PolicyWeights::pattern_weights_sl[m_pattern];
