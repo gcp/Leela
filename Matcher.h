@@ -8,7 +8,7 @@ class Matcher {
 public:
     Matcher();
 
-    auto matches(int color, int pattern) const {
+    auto matches(int color, int pattern) const -> unsigned short {
         return m_patterns[color][pattern];
     };
 

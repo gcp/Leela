@@ -29,7 +29,7 @@ using namespace Utils;
 alignas(64) std::array<float, NUM_PATTERNS> PolicyWeights::pattern_gradients;
 alignas(64) std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
 // Filled by Matcher.cpp from PolicyWeights::pattern_map
-alignas(64) std::array<float, NUM_PATTERNS> PolicyWeights::pattern_weights;
+alignas(64) std::array<float, NUM_PATTERNS> PolicyWeights::pattern_weights_sl;
 
 // Adam
 alignas(64) std::array<std::pair<float, float>, NUM_PATTERNS> pattern_adam{};
@@ -122,12 +122,12 @@ void MCPolicy::mse_from_file(std::string filename) {
         }
         bool blackwon = (who_won == FastBoard::BLACK);
 
-        constexpr int iterations = 256;
+        constexpr int iterations = 512;
         PolicyWeights::feature_gradients.fill(0.0f);
         PolicyWeights::pattern_gradients.fill(0.0f);
         float bwins = 0.0f;
         //float nwscore;
-        //float black_score = blackwon ? 1.0f : 0.0f;
+        float black_score = blackwon ? 1.0f : 0.0f;
 
         #pragma omp parallel
         {
@@ -174,8 +174,8 @@ void MCPolicy::mse_from_file(std::string filename) {
 #endif
         }
 
-        //MCPolicy::adjust_weights(black_score, bwins);
-        MCPolicy::adjust_weights(1.0f, 0.0f);
+        MCPolicy::adjust_weights(black_score, bwins);
+        //MCPolicy::adjust_weights(1.0f, 0.0f);
 
        // myprintf("n=%d BW: %d Score: %1.4f NN: %1.4f ",
        //          count, blackwon, bwins, nwscore);
@@ -211,14 +211,14 @@ void MCPolicy::mse_from_file(std::string filename) {
             }
             out << std::endl;
             out << std::scientific;
-            std::map<int, float> active_pats;
+            //std::map<int, float> active_pats;
             for (int i = 0; i < PolicyWeights::pattern_weights.size(); i++) {
-                if  (PolicyWeights::pattern_weights[i] != 1.0f) {
-                    active_pats.emplace(i, PolicyWeights::pattern_weights[i]);
-                }
-            }
-            for (auto & pat : active_pats) {
-                out << "{ " << pat.first << ", " << pat.second << "f}," << std::endl;
+                //if  (PolicyWeights::pattern_weights[i] != 1.0f) {
+                //    active_pats.emplace(i, PolicyWeights::pattern_weights[i]);
+                //}
+            //}
+            //for (auto & pat : active_pats) {
+                out << "{ " << PolicyWeights::pattern_weights[i] << "f}," << std::endl;
             }
             out.close();
         }
@@ -426,7 +426,7 @@ void PolicyTrace::accumulate_sl_gradient(int & correct, int & picks) {
 
 void PolicyTrace::trace_process(const int iterations, const float baseline,
                                 const bool blackwon) {
-#if 0
+#if 1
     float z = 1.0f;
     if (!blackwon) {
         z = 0.0f;
@@ -448,7 +448,7 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
     std::vector<int> patterns;
 
     for (auto & decision : trace) {
-#if 1
+#if 0
         float z = 0.0f;
         // Side to move won
         if (decision.black_to_move == blackwon) {
@@ -503,7 +503,8 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
 
         patterns.clear();
         // get pat probabilities
-        std::unordered_map<int, float> pattern_probabilities;
+        std::array<float, NUM_PATTERNS> pattern_probabilities;
+        //std::unordered_map<int, float> pattern_probabilities;
         for (size_t c = 0; c < candidate_scores.size(); c++) {
             if (!decision.candidates[c].is_pass()) {
                 int pat = decision.candidates[c].get_pattern();
@@ -577,9 +578,8 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     }
 
     // Give the vectorizer a chance
-    //alignas(64) std::array<float> adam_grad;
-    //adam_grad.reserve(NUM_PATTERNS);
-    std::unique_ptr<float[]> adam_grad(new float[NUM_PATTERNS]);
+    alignas(64) std::array<float, NUM_PATTERNS> adam_grad;
+    //std::unique_ptr<float[]> adam_grad(new float[NUM_PATTERNS]);
     #pragma omp parallel for
     for (int i = 0; i < NUM_PATTERNS; i++) {
         float gradient = PolicyWeights::pattern_gradients[i];
