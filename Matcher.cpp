@@ -41,7 +41,7 @@ Matcher::Matcher() {
     // of indexes and weights of the exact minimal size/
     for (auto & pat : PolicyWeights::pattern_map) {
         size_t pat_idx = pattern_indexes.size();
-        PolicyWeights::pattern_weights_sl[pat_idx] = pat.second;
+        // PolicyWeights::pattern_weights_sl[pat_idx] = pat.second;
         pattern_indexes.emplace(pat.first, pat_idx);
     }
 
