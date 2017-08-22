@@ -770,25 +770,6 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
         gtp_printf(id, "");
         return true;
-    } else if (command.find("genetune") == 0) {
-        std::unique_ptr<Genetic> genetic(new Genetic);
-
-        genetic->genetic_tune();
-
-        gtp_printf(id, "");
-        return true;
-    } else if (command.find("genesplit") == 0) {
-        std::istringstream cmdstream(command);
-        std::string tmp, filename;
-
-        cmdstream >> tmp;   // eat tune
-        cmdstream >> filename;
-
-        std::unique_ptr<Genetic> genetic(new Genetic);
-        genetic->genetic_split(filename);
-
-        gtp_printf(id, "");
-        return true;
     } else if (command.find("pn") == 0) {
         std::unique_ptr<PNSearch> pnsearch(new PNSearch(game));
 

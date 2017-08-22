@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include "Random.h"
+#include "Utils.h"
 
 Random* Random::get_Rng(void) {
     static thread_local Random s_rng;
@@ -20,18 +21,14 @@ Random::Random(int seed) {
     }
 }
 
-static inline uint64 rotl(const uint64 x, int k) {
-	return (x << k) | (x >> (64 - k));
-}
-
 uint64 Random::random(void) {
     const uint64 s0 = s[0];
     uint64 s1 = s[1];
     const uint64 result = s0 + s1;
 
     s1 ^= s0;
-    s[0] = rotl(s0, 55) ^ s1 ^ (s1 << 14);
-    s[1] = rotl(s1, 36);
+    s[0] = Utils::rotl(s0, 55) ^ s1 ^ (s1 << 14);
+    s[1] = Utils::rotl(s1, 36);
 
     return result;
 }
@@ -45,6 +42,9 @@ uint32 Random::randint32(const uint32 max) {
 }
 
 void Random::seedrandom(uint32 seed) {
+    // Magic values from Pierre L’Ecuyer,
+    // "Tables of Linear Congruental Generators of different sizes and
+    // good lattice structure"
     s[0] = (741103597 * seed);
     s[1] = (741103597 * s[0]);
 }

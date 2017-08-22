@@ -6,21 +6,22 @@
 
 class Matcher {
 public:
-    Matcher();
-
-    auto matches(int color, int pattern) const -> unsigned short {
-        return m_patterns[color][pattern];
-    };
+    int matches(int color, int pattern) const;
 
     /*
         return the "global" matcher
     */
     static Matcher* get_Matcher(void);
-    static void set_Matcher(Matcher * m);
 
 private:
-    static Matcher* s_matcher;
+    Matcher();
+    int PatHashG(uint32 pattern) const;
+    int PatHashV(uint32 d, uint32 pattern) const;
+    int PatIndex(uint32 pattern) const;
 
+    static constexpr size_t G_SIZE = 8192;
+    static constexpr size_t V_SIZE = 1 << 18;
+    static const std::array<int, G_SIZE> G;
     std::array<std::vector<unsigned short>, 2> m_patterns;
 };
 

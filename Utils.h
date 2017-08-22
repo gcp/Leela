@@ -47,6 +47,11 @@ namespace Utils {
     bool is_aligned(T* ptr, size_t alignment) {
         return (uintptr_t(ptr) & (alignment - 1)) == 0;
     }
+
+    template<typename T>
+    T rotl(const T x, const int k) {
+	    return (x << k) | (x >> (std::numeric_limits<T>::digits - k));
+    }
 }
 
 #endif

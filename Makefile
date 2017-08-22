@@ -54,7 +54,7 @@ CPPFLAGS += -MD -MP
 sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
 	  TimeControl.cpp UCTSearch.cpp Attributes.cpp Book.cpp \
 	  GameState.cpp Leela.cpp PNNode.cpp SGFParser.cpp Timing.cpp \
-	  Utils.cpp FastBoard.cpp Genetic.cpp Matcher.cpp PNSearch.cpp \
+	  Utils.cpp FastBoard.cpp Matcher.cpp PNSearch.cpp \
 	  SGFTree.cpp TTable.cpp Zobrist.cpp FastState.cpp GTP.cpp \
 	  MCOTable.cpp Random.cpp SMP.cpp UCTNode.cpp NN.cpp NNValue.cpp \
 	  OpenCL.cpp MCPolicy.cpp

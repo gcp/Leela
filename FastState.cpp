@@ -127,7 +127,6 @@ void FastState::flag_move(MovewFeatures & mwf, int sq, int color,
     assert(sq > 0);
     int full_pattern = board.get_pattern_fast_augment(sq);
     auto pattern = matcher->matches(color, full_pattern);
-    assert(pattern < std::numeric_limits<decltype(pattern)>::max());
     mwf.set_pattern(pattern);
 
     //bool invert_board = false;
