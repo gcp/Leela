@@ -96,8 +96,8 @@ void MCPolicy::mse_from_file(std::string filename) {
     //double sum_sq_nn = 0.0;
     int count = 0;
 
-    PolicyWeights::feature_weights.fill(1.0f);
-    PolicyWeights::pattern_weights.fill(1.0f);
+    //PolicyWeights::feature_weights.fill(1.0f);
+    //PolicyWeights::pattern_weights.fill(1.0f);
     Time start;
 
     while (1) {
@@ -545,7 +545,7 @@ void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
-    constexpr float lambda = 1e-6f;
+    constexpr float lambda = 0; //1e-7f;
 
     // Timestep for Adam (total updates)
     t++;

@@ -1253,6 +1253,7 @@ bool FastBoard::kill_neighbours(int vertex, int komove, movelist_t & moves) {
                                 assert(sav_size >= 3);
                                 moves.back().add_flag(MWF_FLAG_SAVING_3P);
                             }
+                            moves.back().add_flag(MWF_FLAG_SAVING_KILL);
                         }
                         nbr_list[nbr_cnt++] = par;
                     }
@@ -1311,7 +1312,8 @@ void FastBoard::save_critical_neighbours(int color, int vertex, int komove,
                 //    also be in atari
                 if (atari != komove) {
                     moves.emplace_back(atari, MovewFeatures::SavingTag{},
-                                       string_size(par));
+                                       string_size(par),
+                                       count_pliberties(atari));
                 }
                 bool sa = self_atari(color, atari);
                 bool kill = kill_neighbours(ai, komove, moves);

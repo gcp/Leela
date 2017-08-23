@@ -11,7 +11,7 @@
 
 // Scored features
 constexpr int NUM_PATTERNS = 23518;
-constexpr int NUM_FEATURES = 19;
+constexpr int NUM_FEATURES = 22;
 constexpr int MWF_FLAG_PASS         =  0;
 constexpr int MWF_FLAG_NAKADE       =  1;
 constexpr int MWF_FLAG_PATTERN      =  2;
@@ -25,12 +25,15 @@ constexpr int MWF_FLAG_SAVING_SA    =  9;
 constexpr int MWF_FLAG_SAVING_1     = 10;
 constexpr int MWF_FLAG_SAVING_2     = 11;
 constexpr int MWF_FLAG_SAVING_3P    = 12;
-constexpr int MWF_FLAG_CAPTURE_1    = 13;
-constexpr int MWF_FLAG_CAPTURE_2    = 14;
-constexpr int MWF_FLAG_CAPTURE_3P   = 15;
-constexpr int MWF_FLAG_SUICIDE      = 16;
-constexpr int MWF_FLAG_SEMEAI_2     = 17;
-constexpr int MWF_FLAG_SEMEAI_3     = 18;
+constexpr int MWF_FLAG_SAVING_2_LIB = 13;
+constexpr int MWF_FLAG_SAVING_3_LIB = 14;
+constexpr int MWF_FLAG_SAVING_KILL  = 15;
+constexpr int MWF_FLAG_CAPTURE_1    = 16;
+constexpr int MWF_FLAG_CAPTURE_2    = 17;
+constexpr int MWF_FLAG_CAPTURE_3P   = 18;
+constexpr int MWF_FLAG_SUICIDE      = 19;
+constexpr int MWF_FLAG_SEMEAI_2     = 20;
+constexpr int MWF_FLAG_SEMEAI_3     = 21;
 
 class PolicyWeights {
 public:
@@ -68,7 +71,7 @@ public:
         }
         add_flag(flag);
     }
-    explicit MovewFeatures(int vertex, SavingTag, int size)
+    explicit MovewFeatures(int vertex, SavingTag, int size, int libs)
         : m_vertex(vertex) {
         int flag;
         switch (size) {
@@ -84,6 +87,19 @@ public:
             break;
         }
         add_flag(flag);
+        switch (libs) {
+        case 0:
+            assert(false);
+            break;
+        case 2:
+            add_flag(MWF_FLAG_SAVING_2_LIB);
+            break;
+        case 3:
+            add_flag(MWF_FLAG_SAVING_3_LIB);
+            break;
+        default:
+            break;
+        }
     }
     int get_sq() const {
         return m_vertex;
@@ -93,13 +109,13 @@ public:
         assert(flag < NUM_FEATURES);
         m_flags |= 1 << flag;
         m_score *= PolicyWeights::feature_weights[flag];
-        m_score *= PolicyWeights::feature_weights_sl[flag];
+        //m_score *= PolicyWeights::feature_weights_sl[flag];
     }
     void set_pattern(int pattern) {
         assert(pattern < NUM_PATTERNS);
         m_pattern = pattern;
         m_score *= PolicyWeights::pattern_weights[m_pattern];
-        m_score *= PolicyWeights::pattern_weights_sl[m_pattern];
+        //m_score *= PolicyWeights::pattern_weights_sl[m_pattern];
     }
     int get_pattern() const {
         assert(m_pattern > 0);
