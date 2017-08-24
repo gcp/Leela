@@ -1218,6 +1218,8 @@ bool FastBoard::kill_neighbours(int vertex, int komove, movelist_t & moves) {
     do {
         assert(m_square[pos] == scolor);
 
+        //XXX: test speed
+        //if (count_neighbours(!color, vertex)) {
         for (int k = 0; k < 4; k++) {
             int ai = pos + m_dirs[k];
 
@@ -1260,6 +1262,7 @@ bool FastBoard::kill_neighbours(int vertex, int komove, movelist_t & moves) {
                 }
             }
         }
+        //}
 
         pos = m_next[pos];
     } while (pos != vertex);
