@@ -101,7 +101,7 @@ void MCPolicy::mse_from_file(std::string filename) {
     Time start;
 
     while (1) {
-        int pick = Random::get_Rng()->randint32(gametotal);
+        int pick = Random::get_Rng()->randuint32(gametotal);
 
         std::unique_ptr<SGFTree> sgftree(new SGFTree);
         try {
@@ -113,7 +113,7 @@ void MCPolicy::mse_from_file(std::string filename) {
         int handicap = sgftree->get_state()->get_handicap();
 
         int movecount = sgftree->count_mainline_moves();
-        int move_pick = Random::get_Rng()->randint32(movecount);
+        int move_pick = Random::get_Rng()->randuint16(movecount);
         // GameState state = sgftree->follow_mainline_state(move_pick);
         KoState * state = sgftree->get_state_from_mainline(move_pick);
 
@@ -251,7 +251,7 @@ void MCPolicy::mse_from_file2(std::string filename) {
         for (int gameid = 0; gameid < 128; gameid++) {
             std::unique_ptr<SGFTree> sgftree(new SGFTree);
             try {
-                sgftree->load_from_string(games[Random::get_Rng()->randint32(gametotal)]);
+                sgftree->load_from_string(games[Random::get_Rng()->randuint32(gametotal)]);
             } catch (...) {
                 #pragma omp atomic
                 count++;

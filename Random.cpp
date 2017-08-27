@@ -21,32 +21,39 @@ Random::Random(int seed) {
     }
 }
 
+// This is xoroshiro128+.
+// Note that the last bit isn't entirely random, so don't use it,
+// if possible.
 uint64 Random::random(void) {
-    const uint64 s0 = s[0];
-    uint64 s1 = s[1];
+    const uint64 s0 = m_s[0];
+    uint64 s1 = m_s[1];
     const uint64 result = s0 + s1;
 
     s1 ^= s0;
-    s[0] = Utils::rotl(s0, 55) ^ s1 ^ (s1 << 14);
-    s[1] = Utils::rotl(s1, 36);
+    m_s[0] = Utils::rotl(s0, 55) ^ s1 ^ (s1 << 14);
+    m_s[1] = Utils::rotl(s1, 36);
 
     return result;
 }
 
-uint32 Random::randint16(const uint16 max) {
+uint16 Random::randuint16(const uint16 max) {
     return ((random() >> 48) * max) >> 16;
 }
 
-uint32 Random::randint32(const uint32 max) {
+uint32 Random::randuint32(const uint32 max) {
     return ((random() >> 32) * (uint64)max) >> 32;
 }
 
+uint32 Random::randuint32() {
+    return random() >> 32;
+}
+
 void Random::seedrandom(uint32 seed) {
-    // Magic values from Pierre Lâ€™Ecuyer,
+    // Magic values from Pierre L’Ecuyer,
     // "Tables of Linear Congruental Generators of different sizes and
     // good lattice structure"
-    s[0] = (741103597 * seed);
-    s[1] = (741103597 * s[0]);
+    m_s[0] = (741103597 * seed);
+    m_s[1] = (741103597 * m_s[0]);
 }
 
 float Random::randflt(void) {

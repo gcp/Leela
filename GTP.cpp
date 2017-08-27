@@ -76,13 +76,13 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 40;
-    cfg_expand_threshold = 20;
+    cfg_mature_threshold = 25;
+    cfg_expand_threshold = 15;
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
 #else
     cfg_mature_threshold = 85;
-    cfg_expand_threshold = 50;
+    cfg_expand_threshold = 25;
     cfg_extra_symmetry = 3000;
     cfg_eval_thresh = 9;
 #endif
@@ -97,15 +97,16 @@ void GTP::setup_default_parameters() {
     cfg_crit_his_1 = 9.03f;
     cfg_crit_his_2 = 2.58f;
     cfg_tactical = 10.89f;
-    cfg_bound = 24.0f;
+    cfg_bound = 32.0f;
     cfg_regular_self_atari = 0.768f;
     cfg_useless_self_atari = 0.0326f;
     cfg_pass_score = 1.41e-5f;
     cfg_fpu = 1.1f;
+    cfg_mcts_fpu = 1.1f;
     cfg_puct = 1.1f;
     cfg_psa = 0.0018f;
 #ifdef USE_SEARCH
-    cfg_softmax_temp = 0.70f;
+    cfg_softmax_temp = 0.75f;
 #else
     cfg_softmax_temp = 0.094f;
 #endif

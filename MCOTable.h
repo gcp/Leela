@@ -1,39 +1,38 @@
 #ifndef MCOTABLE_H_INCLUDED
 #define MCOTABLE_H_INCLUDED
 
-#include <vector>
+#include <array>
+#include <atomic>
+#include "FastBoard.h"
 #include "Playout.h"
 #include "SMP.h"
 
 class MCOwnerTable {
-public:        
+public:
     /*
         return the global TT
-    */            
+    */
     static MCOwnerTable * get_MCO();
-    static void clear();    
-    
+    static void clear();
+
     /*
         update_blackowns corresponding entry
-    */            
-    void update_owns(Playout::bitboard_t & blacksq, bool blackwon);        
-    
-    float get_blackown(const int color, const int vertex);    
-    int get_blackown_i(const int color, const int vertex);
-    int get_criticality_i(const int vertex);
-    float get_criticality_f(const int vertex);
-    bool is_primed();    
-    
-private:   
+    */
+    void update_owns(Playout::bitboard_t & blacksq, bool blackwon);
+
+    float get_blackown(const int color, const int vertex) const;
+    int get_blackown_i(const int color, const int vertex) const;
+    float get_criticality_f(const int vertex) const;
+    bool is_primed() const;
+
+private:
     MCOwnerTable();
 
-    std::vector<int> m_mcblackowner;
-    std::vector<int> m_mcwinowner;
-    int m_mcsimuls;
-    int m_blackwins;
+    std::array<std::atomic<int>, FastBoard::MAXSQ> m_mcblackowner;
+    std::array<std::atomic<int>, FastBoard::MAXSQ> m_mcwinowner;
+    std::atomic<int> m_mcsimuls;
+    std::atomic<int> m_blackwins;
     SMP::Mutex m_mutex;
-
-    static MCOwnerTable* s_mcowntable;       
 };
 
 #endif

@@ -181,7 +181,7 @@ void Genetic::genetic_tune() {
             int mother;            
             
             for (int i = 0; i < 4; i++) {
-                int select = Random::get_Rng()->randint32(pool.size());
+                int select = Random::get_Rng()->randuint32(pool.size());
                 if (poolmse[select] < bestfather) {
                     bestfather = poolmse[select];
                     father = select;
@@ -189,7 +189,7 @@ void Genetic::genetic_tune() {
             }
             
             for (int i = 0; i < 4; i++) {
-                int select = Random::get_Rng()->randint32(pool.size());
+                int select = Random::get_Rng()->randuint32(pool.size());
                 if (poolmse[select] < bestmother) {
                     bestmother = poolmse[select];
                     mother = select;

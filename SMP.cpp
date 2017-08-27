@@ -7,9 +7,6 @@ SMP::Mutex::Mutex() {
     m_lock = false;
 }
 
-SMP::Mutex::~Mutex() {
-}
-
 bool SMP::Mutex::is_held() {
     return m_lock.load(std::memory_order_acquire);
 }
