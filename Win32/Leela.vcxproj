@@ -84,15 +84,15 @@
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\include;C:\boost\boost_1_64_0\;C:\Projects\OpenCL-ICD-Loader\inc;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build64;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\lib\intel64_win;C:\boost\boost_1_64_0\stage\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\include;C:\boost\boost_1_65_0\;C:\Projects\OpenCL-ICD-Loader\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build64;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\lib\intel64_win;C:\boost\boost_1_65_0\stage\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\include;C:\boost\boost_1_64_0\;C:\Projects\OpenCL-ICD-Loader\inc;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build64;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\lib\intel64_win;C:\boost\boost_1_64_0\stage\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\include;C:\boost\boost_1_65_0\;C:\Projects\OpenCL-ICD-Loader\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build64;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\lib\intel64_win;C:\boost\boost_1_65_0\stage\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -205,7 +205,6 @@
     <ClCompile Include="..\FastState.cpp" />
     <ClCompile Include="..\FullBoard.cpp" />
     <ClCompile Include="..\GameState.cpp" />
-    <ClCompile Include="..\Genetic.cpp" />
     <ClCompile Include="..\GTP.cpp" />
     <ClCompile Include="..\KoState.cpp" />
     <ClCompile Include="..\Leela.cpp" />
@@ -249,6 +248,7 @@
     <ClInclude Include="..\MCPolicy.h" />
     <ClInclude Include="..\Network.h" />
     <ClInclude Include="..\OpenCL.h" />
+    <ClInclude Include="..\PatHash.h" />
     <ClInclude Include="..\Playout.h" />
     <ClInclude Include="..\PNNode.h" />
     <ClInclude Include="..\PNSearch.h" />

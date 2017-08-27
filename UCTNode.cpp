@@ -265,19 +265,19 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
                             FastBoard & board,
                             Network::Netresult & nodelist,
                             bool use_nets) {
-    int totalchildren = nodelist.size();
+    size_t totalchildren = nodelist.size();
     if (!totalchildren) return;
 
     // sort (this will reverse scores, but linking is backwards too)
     std::sort(nodelist.begin(), nodelist.end());
 
     // link the nodes together, we only really link the last few
-    int maxchilds = 35;     // about 35 -> 4M visits
+    size_t maxchilds = 35;     // about 35 -> 4M visits
     if (use_nets) {
         maxchilds = 15;     // XXX: run formula but can't be much
     }
     int childrenadded = 0;
-    int childrenseen = 0;
+    size_t childrenseen = 0;
 
     int netscore_threshold = cfg_mature_threshold;
     if (!use_nets) {
@@ -616,7 +616,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 float denom = 1.0f + child->get_visits();
 
                 float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
-                float puct = cfg_puct * psa * (std::sqrt(parentvisits) / denom);
+                float puct = cfg_puct * psa * ((float)std::sqrt(parentvisits) / denom);
                 // float cts = cfg_puct * std::sqrt(numerator / denom);
                 // Alternate is to remove psa in puct but without log(parentvis)
 
@@ -632,7 +632,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                     mti = (cfg_psa / psa);
                 }
 
-                value = winrate - mti + cfg_puct * psa * std::sqrt(parentvisits);
+                value = winrate - mti + cfg_puct * psa * (float)std::sqrt(parentvisits);
                 assert(value > -1000.0f);
             }
         } else {

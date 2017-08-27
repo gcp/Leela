@@ -101,7 +101,7 @@ void MCPolicy::mse_from_file(std::string filename) {
     Time start;
 
     while (1) {
-        int pick = Random::get_Rng()->randuint32(gametotal);
+        size_t pick = Random::get_Rng()->randuint32(gametotal);
 
         std::unique_ptr<SGFTree> sgftree(new SGFTree);
         try {
