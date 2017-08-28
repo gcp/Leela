@@ -37,20 +37,17 @@ UCTSearch::UCTSearch(GameState & g)
     set_playout_limit(cfg_max_playouts);
     if (m_use_nets) {
         cfg_uct = 0.1713f;
-        cfg_mcts_fpu = 0.3625f;
         cfg_beta = 48.75f;
         cfg_patternbonus = 0.02f;
     } else {
         if (g.board.get_boardsize() <= 9) {
             cfg_uct = 0.0015f;
-            cfg_mcts_fpu = 1.25f;
             cfg_beta = 22.0f;
             cfg_patternbonus = 0.0035f;
         } else {
-            cfg_uct = 0.001f;
-            cfg_mcts_fpu = 0.58f;
-            cfg_beta = 35.0f;
-            cfg_patternbonus = 0.0075f;
+            cfg_uct = 0.00075f;
+            cfg_beta = 56.8f;
+            cfg_patternbonus = 0.0044f;
         }
     }
 }
@@ -80,9 +77,9 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
         && node->get_visits() > cfg_eval_thresh) {
         node->run_value_net(currstate);
 
+        LOCK(node->get_mutex(), lock);
         // Check whether we have new evals to back up
         if (!node->has_eval_propagated() && node->get_evalcount()) {
-            SMP::Lock lock(node->get_mutex());
             if (!node->has_eval_propagated()) {
                 noderesult.set_eval(node->get_blackevals());
                 node->set_eval_propagated();
@@ -665,7 +662,7 @@ std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
     res.append(next);
 
     // Resort according to move probability
-    SMP::Lock lock(parent.get_mutex());
+    LOCK(parent.get_mutex(), lock);
     parent.sort_children();
 
     return res;

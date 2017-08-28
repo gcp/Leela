@@ -48,8 +48,6 @@ private:
 
     std::vector<TTEntry> m_buckets;
     SMP::Mutex m_mutex;
-
-    static TTable* s_ttable;
 };
 
 #endif

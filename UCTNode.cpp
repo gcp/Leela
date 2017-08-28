@@ -28,7 +28,7 @@ using namespace Utils;
 
 UCTNode::UCTNode(int vertex, float score, int expand_threshold,
                  int netscore_threshold, int movenum)
-    : m_firstchild(nullptr), m_nextsibling(nullptr),
+    : m_has_children(false), m_firstchild(nullptr), m_nextsibling(nullptr),
       m_move(vertex), m_blackwins(0.0), m_visits(0), m_score(score),
       m_eval_propagated(false), m_blackevals(0.0f),
       m_evalcount(0), m_movenum(movenum), m_is_evaluating(false),
@@ -40,7 +40,7 @@ UCTNode::UCTNode(int vertex, float score, int expand_threshold,
 }
 
 UCTNode::~UCTNode() {
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     UCTNode * next = m_firstchild;
 
     while (next != NULL) {
@@ -74,7 +74,7 @@ SMP::Mutex & UCTNode::get_mutex() {
 void UCTNode::netscore_children(std::atomic<int> & nodecount,
                                 FastState & state, bool at_root) {
     // acquire the lock
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     // check whether somebody beat us to it
     if (at_root && m_has_netscore) {
         return;
@@ -122,12 +122,12 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
 
 void UCTNode::create_children(std::atomic<int> & nodecount,
                               FastState & state, bool at_root, bool use_nets) {
-    // acquire the lock
-    SMP::Lock lock(get_mutex());
-    // check whether somebody beat us to it
+    // check whether somebody beat us to it (atomic)
     if (has_children()) {
         return;
     }
+    // acquire the lock
+    LOCK(get_mutex(), lock);
     // no successors in final state
     if (state.get_passes() >= 2) {
         return;
@@ -201,7 +201,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
     int expand_threshold = cfg_expand_threshold;
     int movenum = board.get_stone_count();
 
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         // Check for duplicate moves, O(N^2)
@@ -251,6 +251,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
 
     nodecount += childrenadded;
     sort_children();
+    m_has_children = true;
     m_has_netscore = true;
     m_is_netscoring = false;
     if (all_symmetries) {
@@ -264,19 +265,19 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
                             FastBoard & board,
                             Network::Netresult & nodelist,
                             bool use_nets) {
-    int totalchildren = nodelist.size();
+    size_t totalchildren = nodelist.size();
     if (!totalchildren) return;
 
     // sort (this will reverse scores, but linking is backwards too)
     std::sort(nodelist.begin(), nodelist.end());
 
     // link the nodes together, we only really link the last few
-    int maxchilds = 35;     // about 35 -> 4M visits
+    size_t maxchilds = 35;     // about 35 -> 4M visits
     if (use_nets) {
         maxchilds = 15;     // XXX: run formula but can't be much
     }
     int childrenadded = 0;
-    int childrenseen = 0;
+    size_t childrenseen = 0;
 
     int netscore_threshold = cfg_mature_threshold;
     if (!use_nets) {
@@ -289,7 +290,7 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     int expand_threshold = cfg_expand_threshold;
     int movenum = board.get_stone_count();
 
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
 
     for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         if (totalchildren - childrenseen <= maxchilds) {
@@ -316,15 +317,16 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     }
 
     nodecount += childrenadded;
+    m_has_children = true;
 }
 
 void UCTNode::run_value_net(FastState & state) {
-    // acquire the lock
-    SMP::Lock lock(get_mutex());
-    // check whether somebody beat us to it
+    // check whether somebody beat us to it (atomic)
     if (get_evalcount()) {
         return;
     }
+    // acquire the lock
+    LOCK(get_mutex(), lock);
     if (m_is_evaluating) {
         return;
     }
@@ -415,7 +417,11 @@ void UCTNode::update(Playout & gameresult, int color, bool update_eval) {
 }
 
 bool UCTNode::has_children() const {
-    return m_firstchild != NULL;
+    return m_has_children;
+}
+
+bool UCTNode::has_netscore() const {
+    return m_has_netscore;
 }
 
 double UCTNode::get_blackwins() const {
@@ -484,6 +490,7 @@ void UCTNode::set_evalcount(int evalcount) {
     m_evalcount = evalcount;
     // Set from TT. We don't need to re-eval if from hash.
     if (evalcount) {
+        LOCK(get_mutex(), lock);
         set_eval_propagated();
     }
 }
@@ -546,6 +553,8 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     int childbound;
     int parentvisits = 1; // XXX: this can be 0 now that we sqrt
     float best_probability = 0.0f;
+
+    LOCK(get_mutex(), lock);
     if (has_netscore()) {
         childbound = 35;
     } else {
@@ -555,7 +564,6 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
             childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
         }
     }
-    SMP::Lock lock(get_mutex());
 
     int childcount = 0;
     UCTNode * child = m_firstchild;
@@ -608,7 +616,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 float denom = 1.0f + child->get_visits();
 
                 float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
-                float puct = cfg_puct * psa * (std::sqrt(parentvisits) / denom);
+                float puct = cfg_puct * psa * ((float)std::sqrt(parentvisits) / denom);
                 // float cts = cfg_puct * std::sqrt(numerator / denom);
                 // Alternate is to remove psa in puct but without log(parentvis)
 
@@ -624,7 +632,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                     mti = (cfg_psa / psa);
                 }
 
-                value = winrate - mti + cfg_puct * psa * std::sqrt(parentvisits);
+                value = winrate - mti + cfg_puct * psa * (float)std::sqrt(parentvisits);
                 assert(value > -1000.0f);
             }
         } else {
@@ -734,14 +742,14 @@ void UCTNode::sort_children() {
 
     UCTNode * child = m_firstchild;
 
-    while (child != NULL) {
+    while (child != nullptr) {
         tmp.push_back(std::make_tuple(child->get_score(), child));
         child = child->m_nextsibling;
     }
 
     std::sort(tmp.begin(), tmp.end());
 
-    m_firstchild = NULL;
+    m_firstchild = nullptr;
 
     for (auto it = tmp.begin(); it != tmp.end(); ++it) {
         link_child(std::get<1>(*it));
@@ -749,13 +757,13 @@ void UCTNode::sort_children() {
 }
 
 void UCTNode::sort_root_children(int color) {
-    SMP::Lock lock(get_mutex());
+    LOCK(get_mutex(), lock);
     std::vector<sortnode_t> tmp;
 
     UCTNode * child = m_firstchild;
     int maxvisits = 0;
 
-    while (child != NULL) {
+    while (child != nullptr) {
         int visits = child->get_visits();
         if (visits) {
             float winrate = child->get_mixed_score(color);
@@ -770,64 +778,61 @@ void UCTNode::sort_root_children(int color) {
     // reverse sort, because list reconstruction is backwards
     std::stable_sort(tmp.rbegin(), tmp.rend(), NodeComp(maxvisits));
 
-    m_firstchild = NULL;
+    m_firstchild = nullptr;
 
     for (auto it = tmp.begin(); it != tmp.end(); ++it) {
         link_child(std::get<2>(*it));
     }
 }
 
-UCTNode* UCTNode::get_first_child() {
+UCTNode* UCTNode::get_first_child() const {
     return m_firstchild;
 }
 
-UCTNode* UCTNode::get_sibling() {
+UCTNode* UCTNode::get_sibling() const {
     return m_nextsibling;
 }
 
-UCTNode* UCTNode::get_pass_child() {
-    UCTNode * child = m_firstchild;    
-    
-    while (child != NULL) {        
+UCTNode* UCTNode::get_pass_child() const {
+    UCTNode * child = m_firstchild;
+
+    while (child != nullptr) {
         if (child->m_move == FastBoard::PASS) {
             return child;
         }
-                        
-        child = child->m_nextsibling;       
-    }              
-    
-    return NULL;  
+        child = child->m_nextsibling;
+    }
+
+    return nullptr;
 }
 
-UCTNode* UCTNode::get_nopass_child() {
-    UCTNode * child = m_firstchild;    
-    
-    while (child != NULL) {        
+UCTNode* UCTNode::get_nopass_child() const {
+    UCTNode * child = m_firstchild;
+
+    while (child != NULL) {
         if (child->m_move != FastBoard::PASS) {
             return child;
         }
-                        
-        child = child->m_nextsibling;       
-    }              
-    
-    return NULL;  
+        child = child->m_nextsibling;
+    }
+
+    return nullptr;
 }
 
 void UCTNode::invalidate() {
-    SMP::Lock lock(get_mutex());
     m_valid = false;
 }
 
-bool UCTNode::valid() {
+bool UCTNode::valid() const {
     return m_valid;
 }
 
 // unsafe in SMP, we don't know if people hold pointers to the 
 // child which they might dereference
-void UCTNode::delete_child(UCTNode * del_child) {  
-    SMP::Lock lock(get_mutex());     
+void UCTNode::delete_child(UCTNode * del_child) {
+    LOCK(get_mutex(), lock);
     assert(del_child != NULL);
-    
+
     if (del_child == m_firstchild) {           
         m_firstchild = m_firstchild->m_nextsibling; 
         delete del_child;       
@@ -855,6 +860,7 @@ void UCTNode::delete_child(UCTNode * del_child) {
 void UCTNode::updateRAVE(Playout & playout, int color) {
     float score = playout.get_score();
 
+    LOCK(get_mutex(), lock);
     // siblings
     UCTNode * child = m_firstchild;
 

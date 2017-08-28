@@ -1,6 +1,12 @@
 default:
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -ffast-math -march=native -flto -fopenmp -std=c++11 -DNDEBUG -D_CONSOLE'  \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -ffast-math -march=native -fopenmp -flto -std=c++11 -DNDEBUG -D_CONSOLE'  \
+		LDFLAGS='$(LDFLAGS) -fopenmp -flto -g' \
+		leela
+
+macgcc:
+	$(MAKE) CC=gcc-7 CXX=g++-7 \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -flax-vector-conversions -Wno-deprecated-declarations -ffast-math -march=native -fopenmp -std=c++11 -DNDEBUG -D_CONSOLE'  \
 		LDFLAGS='$(LDFLAGS) -fopenmp -g' \
 		leela
 
@@ -24,9 +30,16 @@ clang:
 
 asan:
 	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=address -fno-omit-frame-pointer -O1 -g -fopenmp -std=c++11 -D_CONSOLE' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=address -fno-omit-frame-pointer -O2 -g -fopenmp -std=c++11 -D_CONSOLE -DNDEBUG' \
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address -fopenmp' \
 		leela
+
+ubsan:
+	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=undefined -fno-omit-frame-pointer -O1 -g -fopenmp -std=c++11 -D_CONSOLE -DNDEBUG' \
+		LDFLAGS='$(LDFLAGS) -g -fsanitize=undefined -fopenmp' \
+		leela
+
 
 LIBS = -lboost_program_options
 #DYNAMIC_LIBS += -lboost_system -lboost_filesystem -lcaffe-nv -lprotobuf -lglog
