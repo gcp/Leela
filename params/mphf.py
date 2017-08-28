@@ -93,6 +93,8 @@ def CreatePHF(dict):
     print([len(x) for x in patterns[0:min(len(patterns), 20)]])
     for b in range(gsize):
         pattern = patterns[b]
+        # In the original algorithm there was a 1 here,
+        # causing 1-element buckets to get placed directly
         if len(pattern) == 0:
             break
         d = 0
@@ -130,6 +132,7 @@ def CreatePHF(dict):
     print("Empy buckets left: %d" % (gsize - b - 1))
 
     # Process patterns with one key and use a negative value of d
+    # Leela avoids this because it requires a branch
     freelist = []
     for i in range(size):
         if values[i] is None:

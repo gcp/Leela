@@ -1,17 +1,13 @@
 #include "config.h"
 
 #include <limits>
-#include <map>
-// #define GEN_MPHF
-#ifdef GEN_MPHF
-#include <iostream>
-#include <fstream>
-#endif
+#include <unordered_map>
 #include "Matcher.h"
 #include "FastBoard.h"
 #include "Utils.h"
 #include "MCPolicy.h"
-#include "PatHash.h"
+#include "Patterns.h"
+#include "PatternHash.h"
 
 Matcher* Matcher::get_Matcher(void) {
     static Matcher s_matcher;
@@ -39,36 +35,36 @@ int Matcher::matches(int color, int pattern) const {
 
 // initialize matcher data
 Matcher::Matcher() {
-    constexpr int MAX_PAT_IDX = 1 << ((8 * 2) + (4 * 2));
-
     m_patterns[FastBoard::BLACK].resize(V_SIZE);
     m_patterns[FastBoard::WHITE].resize(V_SIZE);
 
-    // Translates patterns to their index in the
-    // valid patterns list.
-    std::map<int, size_t> pattern_indexes;
+#ifdef DEBUG
+    // Crash
+    unsigned short fill = std::numeric_limits<decltype(fill)>::max();
+#else
+    // Don't crash
+    unsigned short fill = 0;
+#endif
+    std::fill(begin(m_patterns[0]), end(m_patterns[0]), fill);
+    std::fill(begin(m_patterns[1]), end(m_patterns[1]), fill);
 
-    // Convert the map of valid patterns into a list
-    // of indexes and weights of the exact minimal size
-    for (auto & pat : PolicyWeights::pattern_map) {
+    std::unordered_map<int, size_t> pattern_indexes;
+
+    // Convert the list of valid patterns into a list
+    // of indexes of the exact minimal size
+    for (auto const& pat : PolicyWeights::live_patterns) {
         size_t pat_idx = pattern_indexes.size();
-        // PolicyWeights::pattern_weights_sl[pat_idx] = pat.second;
-        pattern_indexes.emplace(pat.first, pat_idx);
+        pattern_indexes.emplace(pat, pat_idx);
     }
 
     // minimal board we need is 3x3
     FastBoard board;
     board.reset_board(3);
 
-#ifdef GEN_MPHF
-    std::string filename = "patterns.txt";
-    std::ofstream out(filename);
-#endif
-
     // center square
     int startvtx = board.get_vertex(1, 1);
 
-    for (int i = 0; i < MAX_PAT_IDX; i++) {
+    for (auto i : Matcher::Patterns) {
         int w = i;
         // fill board
         for (int k = 7; k >= 0; k--) {
@@ -77,26 +73,19 @@ Matcher::Matcher() {
             w = w >> 2;
         }
 
-        int patindex = PatIndex(i);
-
         int reducpat1 = board.get_pattern3_augment_spec(startvtx, w, false);
+        int reducpat2 = board.get_pattern3_augment_spec(startvtx, w, true);
+
+        int pathash = PatIndex(i);
+
         auto it1 = pattern_indexes.find(reducpat1);
         if (it1 != pattern_indexes.cend()) {
-#ifdef GEN_MPHF
-            out << i << std::endl;
-#endif
-            m_patterns[FastBoard::BLACK][patindex] = it1->second;
+            m_patterns[FastBoard::BLACK][pathash] = it1->second;
         }
-        int reducpat2 = board.get_pattern3_augment_spec(startvtx, w, true);
+
         auto it2 = pattern_indexes.find(reducpat2);
         if (it2 != pattern_indexes.cend()) {
-#ifdef GEN_MPHF
-            out << i << std::endl;
-#endif
-            m_patterns[FastBoard::WHITE][patindex] = it2->second;
+            m_patterns[FastBoard::WHITE][pathash] = it2->second;
         }
     }
-#ifdef GEN_MPHF
-    out.close();
-#endif
 }

@@ -26,9 +26,10 @@ using namespace Utils;
 
 #include "PolicyWeights.h"
 #include "PolicyWeightsSL.h"
+#include "PatternsLive.h"
 alignas(64) std::array<float, NUM_PATTERNS> PolicyWeights::pattern_gradients;
 alignas(64) std::array<float, NUM_FEATURES> PolicyWeights::feature_gradients;
-// Filled by Matcher.cpp from PolicyWeights::pattern_map
+// Filled by Matcher.cpp from PolicyWeights::live_patterns
 // alignas(64) const std::array<float, NUM_PATTERNS> PolicyWeights::pattern_weights_sl;
 
 // Adam
@@ -36,52 +37,6 @@ alignas(64) std::array<std::pair<float, float>, NUM_PATTERNS> pattern_adam{};
 alignas(64) std::array<std::pair<float, float>, NUM_FEATURES> feature_adam{};
 int t{0};
 
-#if 0
-void MCPolicy::hash_test() {
-    std::atomic<int> mincol{4096};
-
-    // 97 collisions 2148 -> 8192
-    uint32 c1 = 0xc54be620;
-    uint32 c2 = 0x7766d421;
-    uint32 s1 = 26;
-    uint32 s2 = 20;
-
-    #pragma omp parallel for
-    for (size_t inf = 0; inf < SIZE_MAX; inf++) {
-
-        c1  = (uint32)Random::get_Rng()->random();
-        c2  = (uint32)Random::get_Rng()->random();
-        s1  = (uint32)Random::get_Rng()->randint16(32);
-        s2  = (uint32)Random::get_Rng()->randint16(32);
-
-        int pat_hash[8192];
-        memset(pat_hash, 0, sizeof(pat_hash));
-        int coll = 0;
-
-        for (auto & patw : PolicyWeights::pattern_weights) {
-            int pat = patw.first;
-            uint32 h = pat;
-
-            h  = Utils::rotl32(h, 11) ^ ((h + c1) >> s1);
-            h *= c2;
-            h ^= h >> s2;
-
-            int hash = h & (8192 - 1);
-            if (pat_hash[hash]) {
-                coll++;
-            }
-            pat_hash[hash]++;
-        }
-
-        if (coll < mincol) {
-            myprintf("c: %x %x s: %d %d, collisions: %d\n", c1, c2, s1, s2, coll);
-            mincol = coll;
-        }
-    }
-
-    exit(EXIT_SUCCESS);
-}
-#endif
 
 void MCPolicy::mse_from_file(std::string filename) {
     std::vector<std::string> games = SGFParser::chop_all(filename);

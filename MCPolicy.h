@@ -37,7 +37,7 @@ constexpr int MWF_FLAG_SEMEAI_3     = 21;
 
 class PolicyWeights {
 public:
-    static std::map<int, float> pattern_map;
+    static const std::array<int, NUM_PATTERNS> live_patterns;
     alignas(64) static std::array<float, NUM_PATTERNS> pattern_gradients;
     alignas(64) static std::array<float, NUM_FEATURES> feature_gradients;
     alignas(64) static std::array<float, NUM_PATTERNS> pattern_weights;
@@ -89,7 +89,8 @@ public:
         add_flag(flag);
         switch (libs) {
         case 0:
-            assert(false);
+            // assert(false);
+            // We don't exclude suicide nor atari during movegen
             break;
         case 2:
             add_flag(MWF_FLAG_SAVING_2_LIB);
