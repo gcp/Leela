@@ -11,13 +11,10 @@ Script ./clopgtp
 # For GammaParameter, quadratic regression is performed on log(x)
 # Warning: 123 and not 123.0 should be used for IntegerParameter
 
-IntegerGammaParameter  expand_threshold    1       1000
-GammaParameter         bound               0.05     100.0
-GammaParameter         mc_softmax          0.1       10.0
-GammaParameter         uct                 0.00001   10.0
-GammaParameter         mcts_fpu            0.05      10.0
-GammaParameter         beta                1.0    10000.0
-GammaParameter         patternbonus        0.00001    1.0
+IntegerGammaParameter  expand_threshold    1        1000
+GammaParameter         uct                 0.00001    10.0
+GammaParameter         beta                1.0      1000.0
+GammaParameter         patternbonus        0.00001     1.0
 
 Processor cpu1
 Processor cpu2
