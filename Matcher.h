@@ -15,6 +15,7 @@ private:
     int PatHashG(uint32 pattern) const;
     int PatHashV(uint32 d, uint32 pattern) const;
     int PatIndex(uint32 pattern) const;
+    void rescale_policy_weights();
 
     // List of patterns we need to process
     static constexpr size_t VALID_PATTERNS = 181203;

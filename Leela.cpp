@@ -285,19 +285,7 @@ int main (int argc, char *argv[]) {
     AttribScores::get_attribscores();
     Matcher::get_Matcher();
     Network::get_Network();
-#if 0
-    // e^(x/t) = e^x^(1/t)
-    for (size_t i = 0; i < NUM_FEATURES; i++) {
-        PolicyWeights::feature_weights[i] *= PolicyWeights::feature_weights_sl[i];
-        PolicyWeights::feature_weights[i] =
-            std::pow(PolicyWeights::feature_weights[i], 1.0f / cfg_mc_softmax);
-    }
-    for (size_t i = 0; i < NUM_PATTERNS; i++) {
-        PolicyWeights::pattern_weights[i] *= PolicyWeights::pattern_weights_sl[i];
-        PolicyWeights::pattern_weights[i] =
-            std::pow(PolicyWeights::pattern_weights[i], 1.0f / cfg_mc_softmax);
-    }
-#endif
+
     std::unique_ptr<GameState> maingame(new GameState);
 
     /* set board limits */

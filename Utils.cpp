@@ -132,7 +132,11 @@ void Utils::GUIprintf(const char *fmt, ...) {
     std::lock_guard<std::mutex> guard(GUImutex);
     if (GUIQ != nullptr) {
         char buffer[512];
+#ifdef WIN32
         vsprintf_s(buffer, 512, fmt, ap);
+#else
+        vsnprintf(buffer, 512, fmt, ap);
+#endif
         wxCommandEvent* myevent = new wxCommandEvent(GUIQ_T);
         myevent->SetString(wxString(buffer));
         ::wxQueueEvent(GUIQ, myevent);
