@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <limits>
+#include <cmath>
 #include <unordered_map>
 #include "Matcher.h"
 #include "FastBoard.h"

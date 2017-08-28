@@ -235,20 +235,20 @@ void UCTSearch::dump_stats(KoState & state, UCTNode & parent) {
     int movecount = 0;
     UCTNode * node = bestnode;
 
-    while (node != NULL) {
-        if (++movecount > 6) break;
+    while (node != nullptr) {
+        if (++movecount > 2 && node->get_visits() < cfg_expand_threshold) break;
 
         std::string tmp = state.move_to_text(node->get_move());
         std::string pvstring(tmp);
 
         if (!m_use_nets) {
-        myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: ",
-                      tmp.c_str(),
-                      node->get_visits(),
-                      node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
-                      node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
-                      node->get_ravevisits(),
-                      node->get_score() * 100.0f);
+            myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: ",
+                        tmp.c_str(),
+                        node->get_visits(),
+                        node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
+                        node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
+                        node->get_ravevisits(),
+                        node->get_score() * 100.0f);
         } else {
             myprintf("%4s -> %7d (W: %5.2f%%) (U: %5.2f%%) (V: %5.2f%%: %6d) (N: %4.1f%%) PV: ",
                 tmp.c_str(),
@@ -772,7 +772,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
         }
 #endif
 #ifdef USE_SEARCH
-        if (m_rootstate.get_movenum() < 30) {
+        if (m_rootstate.get_movenum() < 30 && cfg_allow_book) {
             int bookmove = Book::get_book_move(m_rootstate);
             if (bookmove != FastBoard::PASS) {
                 return bookmove;

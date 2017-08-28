@@ -6,6 +6,7 @@
 #include "GameState.h"
 
 extern bool cfg_allow_pondering;
+extern bool cfg_allow_book;
 extern int cfg_num_threads;
 extern int cfg_max_playouts;
 extern bool cfg_enable_nets;

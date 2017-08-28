@@ -44,6 +44,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("komiadjust,k", "Adjust komi one point in my disadvantage (territory scoring).")
         ("noponder", "Disable pondering.")
         ("nonets", "Disable use of neural networks.")
+        ("nobook", "Disable use of the fuseki library.")
 #ifdef USE_OPENCL
         ("gpu",  po::value<std::vector<int> >(),
                 "ID of the OpenCL device(s) to use (disables autodetection).")
@@ -217,6 +218,10 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
 
     if (vm.count("nonets")) {
         cfg_enable_nets = false;
+    }
+
+    if (vm.count("nobook")) {
+        cfg_allow_book = false;
     }
 
     if (vm.count("komiadjust")) {
