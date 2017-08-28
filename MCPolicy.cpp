@@ -541,11 +541,11 @@ void PolicyTrace::trace_process(const int iterations, const float baseline,
 }
 
 void MCPolicy::adjust_weights(float black_eval, float black_winrate) {
-    constexpr float alpha = 0.01f;
+    constexpr float alpha = 0.002f;
     constexpr float beta_1 = 0.9f;
     constexpr float beta_2 = 0.999f;
     constexpr float delta = 1e-8f;
-    constexpr float lambda = 3e-6f;
+    constexpr float lambda = 2e-7;
 
     // Timestep for Adam (total updates)
     t++;
