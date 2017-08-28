@@ -41,17 +41,8 @@ int cfg_lagbuffer_cs;
 std::vector<int> cfg_gpus;
 int cfg_rowtiles;
 #endif
-float cfg_crit_mine_1;
-float cfg_crit_mine_2;
-float cfg_crit_his_1;
-float cfg_crit_his_2;
-float cfg_regular_self_atari;
-float cfg_useless_self_atari;
-float cfg_tactical;
 float cfg_bound;
-float cfg_pass_score;
 float cfg_fpu;
-float cfg_mcts_fpu;
 float cfg_cutoff_offset;
 float cfg_cutoff_ratio;
 float cfg_puct;
@@ -94,17 +85,8 @@ void GTP::setup_default_parameters() {
     cfg_gpus = { };
     cfg_rowtiles = 5;
 #endif
-    cfg_crit_mine_1 = 4.16f;
-    cfg_crit_mine_2 = 1.81f;
-    cfg_crit_his_1 = 9.03f;
-    cfg_crit_his_2 = 2.58f;
-    cfg_tactical = 10.89f;
     cfg_bound = 32.0f;
-    cfg_regular_self_atari = 0.768f;
-    cfg_useless_self_atari = 0.0326f;
-    cfg_pass_score = 1.41e-5f;
     cfg_fpu = 1.1f;
-    cfg_mcts_fpu = 1.1f;
     cfg_puct = 1.1f;
     cfg_psa = 0.0018f;
 #ifdef USE_SEARCH
@@ -131,9 +113,9 @@ bool GTP::perform_self_test(GameState & state) {
     // Perform self-test
     auto vec = Network::get_Network()->get_scored_moves(
         &state, Network::Ensemble::DIRECT, 0);
-    testPassed &= vec[60].first > 0.225 && vec[60].first < 0.226;
+    testPassed &= vec[60].first > 0.173 && vec[60].first < 0.174;
     testPassed &= vec[60].second == 88;
-    testPassed &= vec[72].first > 0.211 && vec[72].first < 0.212;
+    testPassed &= vec[72].first > 0.180 && vec[72].first < 0.181;
     testPassed &= vec[72].second == 100;
     if (testPassed) {
         myprintf("passed.\n");

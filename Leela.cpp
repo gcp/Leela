@@ -56,17 +56,8 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("expand_threshold", po::value<int>())
         ("beta", po::value<float>())
         ("patternbonus", po::value<float>())
-        ("crit_mine_1", po::value<float>())
-        ("crit_mine_2", po::value<float>())
-        ("crit_his_1", po::value<float>())
-        ("crit_his_2", po::value<float>())
-        ("tactical", po::value<float>())
         ("bound", po::value<float>())
-        ("regular_self_atari", po::value<float>())
-        ("useless_self_atari", po::value<float>())
-        ("pass_score", po::value<float>())
         ("fpu", po::value<float>())
-        ("mcts_fpu", po::value<float>())
         ("puct", po::value<float>())
         ("uct", po::value<float>())
         ("psa", po::value<float>())
@@ -108,38 +99,11 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("expand_threshold")) {
         cfg_expand_threshold = vm["expand_threshold"].as<int>();
     }
-    if (vm.count("crit_mine_1")) {
-        cfg_crit_mine_1 = vm["crit_mine_1"].as<float>();
-    }
-    if (vm.count("crit_mine_2")) {
-        cfg_crit_mine_2 = vm["crit_mine_2"].as<float>();
-    }
-    if (vm.count("crit_his_1")) {
-        cfg_crit_his_1 = vm["crit_his_1"].as<float>();
-    }
-    if (vm.count("crit_his_2")) {
-        cfg_crit_his_2 = vm["crit_his_2"].as<float>();
-    }
-    if (vm.count("tactical")) {
-        cfg_tactical = vm["tactical"].as<float>();
-    }
     if (vm.count("bound")) {
         cfg_bound = vm["bound"].as<float>();
     }
-    if (vm.count("regular_self_atari")) {
-        cfg_regular_self_atari = vm["regular_self_atari"].as<float>();
-    }
-    if (vm.count("useless_self_atari")) {
-        cfg_useless_self_atari = vm["useless_self_atari"].as<float>();
-    }
-    if (vm.count("pass_score")) {
-        cfg_pass_score = vm["pass_score"].as<float>();
-    }
     if (vm.count("fpu")) {
         cfg_fpu = vm["fpu"].as<float>();
-    }
-    if (vm.count("mcts_fpu")) {
-        cfg_mcts_fpu = vm["mcts_fpu"].as<float>();
     }
     if (vm.count("puct")) {
         cfg_puct = vm["puct"].as<float>();

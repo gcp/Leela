@@ -18,17 +18,8 @@ extern int cfg_lagbuffer_cs;
 extern std::vector<int> cfg_gpus;
 extern int cfg_rowtiles;
 #endif
-extern float cfg_crit_mine_1;
-extern float cfg_crit_mine_2;
-extern float cfg_crit_his_1;
-extern float cfg_crit_his_2;
-extern float cfg_regular_self_atari;
-extern float cfg_useless_self_atari;
-extern float cfg_tactical;
 extern float cfg_bound;
-extern float cfg_pass_score;
 extern float cfg_fpu;
-extern float cfg_mcts_fpu;
 extern float cfg_cutoff_offset;
 extern float cfg_cutoff_ratio;
 extern float cfg_puct;

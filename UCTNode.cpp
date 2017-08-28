@@ -646,7 +646,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
                 uctvalue = winrate + cfg_uct * std::sqrt(numerator / child->get_visits());
                 patternbonus = sqrtf((child->get_score() * cfg_patternbonus) / child->get_visits());
             } else {
-                uctvalue = cfg_mcts_fpu;
+                uctvalue = 1.1f;
                 patternbonus = sqrtf(child->get_score() * cfg_patternbonus);
             }
 

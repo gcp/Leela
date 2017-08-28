@@ -43,9 +43,9 @@ ubsan:
 
 LIBS = -lboost_program_options
 #DYNAMIC_LIBS += -lboost_system -lboost_filesystem -lcaffe-nv -lprotobuf -lglog
-LIBS += -lopenblas
+#LIBS += -lopenblas
 DYNAMIC_LIBS += -lpthread
-#DYNAMIC_LIBS += -lOpenCL
+DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
 #DYNAMIC_LIBS += -lmkl_rt
