@@ -126,7 +126,7 @@ void SGFTree::populate_states(void) {
     it = m_properties.find("GM");
     if (it != m_properties.end()) {
         if (it->second != "1") {
-            throw new std::runtime_error("SGF Game is not a Go game");
+            throw std::runtime_error("SGF Game is not a Go game");
         } else {
             if (!m_properties.count("SZ")) {
                 // No size, but SGF spec defines default size for Go
@@ -271,7 +271,7 @@ void SGFTree::copy_state(SGFTree & tree) {
 
 void SGFTree::apply_move(int color, int move) {      
     if (move != FastBoard::PASS && m_state.board.get_square(move) != FastBoard::EMPTY) {
-        throw new std::runtime_error("Illegal move");
+        throw std::runtime_error("Illegal move");
     }
     m_state.play_move(color, move);    
 }

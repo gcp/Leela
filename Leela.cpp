@@ -77,7 +77,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     try {
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
-    }  catch(boost::program_options::error& e) {
+    }  catch(const boost::program_options::error& e) {
         myprintf("ERROR: %s\n", e.what());
         exit(EXIT_FAILURE);
     }

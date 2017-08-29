@@ -73,7 +73,7 @@ std::vector<std::string> SGFParser::chop_all(std::string filename,
     std::ifstream ins(filename.c_str(), std::ifstream::binary | std::ifstream::in);
 
     if (ins.fail()) {
-        throw new std::runtime_error("Error opening file");
+        throw std::runtime_error("Error opening file");
     }
 
     auto result = chop_stream(ins, stopat);
@@ -210,7 +210,7 @@ int SGFParser::count_games_in_file(std::string filename) {
     std::ifstream ins(filename.c_str(), std::ifstream::binary | std::ifstream::in);
 
     if (ins.fail()) {
-        throw new std::runtime_error("Error opening file");
+        throw std::runtime_error("Error opening file");
     }
 
     int count = 0;

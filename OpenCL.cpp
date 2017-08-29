@@ -660,7 +660,7 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
         queue.enqueueNDRangeKernel(*m_convolve_kernel, cl::NullRange,
                                    cl::NDRange(channels, outputs, rowTiles),
                                    cl::NDRange(channelGroup, outputGroup, rowGroup));
-    } catch (cl::Error &e) {
+    } catch (const cl::Error &e) {
         myprintf("Error in convolve: %s: %d\n", e.what(), e.err());
         return;
     }
@@ -676,7 +676,7 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
         queue.enqueueNDRangeKernel(merge_kernel, cl::NullRange,
                                    cl::NDRange(outputs, boardsize),
                                    cl::NDRange(std::min(8, outputs), 19));
-    } catch (cl::Error &e) {
+    } catch (const cl::Error &e) {
         myprintf("Error in merge: %s: %d\n", e.what(), e.err());
         return;
     }
@@ -706,7 +706,7 @@ void OpenCL_Network::batchnorm(int outputs,
         queue.enqueueNDRangeKernel(batchnorm_kernel, cl::NullRange,
                                    cl::NDRange(outputs, channel_size),
                                    cl::NDRange(std::min(8, outputs), channelGroup));
-    } catch (cl::Error &e) {
+    } catch (const cl::Error &e) {
         std::cerr << "Error in batchnorm: " << e.what() << ": "
             << e.err() << std::endl;
         return;
@@ -732,7 +732,7 @@ void OpenCL_Network::innerproduct(int inputs,
         queue.enqueueNDRangeKernel(innerproduct_kernel, cl::NullRange,
                                    cl::NDRange(outputs),
                                    cl::NDRange(std::min(16, outputs)));
-    } catch (cl::Error &e) {
+    } catch (const cl::Error &e) {
         std::cerr << "Error in innerproduct: " << e.what() << ": "
             << e.err() << std::endl;
         return;
@@ -759,7 +759,7 @@ void OpenCL::initialize(void) {
     std::vector<cl::Platform> platforms;
     try {
         cl::Platform::get(&platforms);
-    } catch (cl::Error &e) {
+    } catch (const cl::Error &e) {
         myprintf("OpenCL: %s\n", e.what());
         return;
     }
@@ -792,7 +792,7 @@ void OpenCL::initialize(void) {
         std::vector<cl::Device> devices;
         try {
             p.getDevices(CL_DEVICE_TYPE_ALL, &devices);
-        } catch (cl::Error &e) {
+        } catch (const cl::Error &e) {
             myprintf("Error getting device(s): %s: %d\n", e.what(), e.err());
             devices.clear();
         }
@@ -862,14 +862,14 @@ void OpenCL::initialize(void) {
         m_program = cl::Program(sourceCode_convolve15
                                 + sourceCode_convolve3
                                 + sourceCode_utility);
-    } catch (cl::Error &e) {
+    } catch (const cl::Error &e) {
         myprintf("Error getting kernels: %s: %d", e.what(), e.err());
         return;
     }
     // Build program for these specific devices
     try {
         m_program.build("-cl-mad-enable -cl-fast-relaxed-math -cl-no-signed-zeros -cl-denorms-are-zero");
-    } catch (cl::Error &e) {
+    } catch (const cl::Error &e) {
         myprintf("Error building: %s\n",
                   m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault()).c_str());
         return;

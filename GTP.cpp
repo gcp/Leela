@@ -185,9 +185,10 @@ std::string GTP::get_life_list(GameState & game, bool live) {
     // remove multiple mentions of the same string
     // unique reorders and returns new iterator, erase actually deletes
     std::sort(stringlist.begin(), stringlist.end());
-    stringlist.erase(std::unique(stringlist.begin(), stringlist.end()), stringlist.end());
+    stringlist.erase(std::unique(stringlist.begin(), stringlist.end()),
+                     stringlist.end());
 
-    for (unsigned int i = 0; i < stringlist.size(); i++) {
+    for (size_t i = 0; i < stringlist.size(); i++) {
         result += (i == 0 ? "" : "\n") + stringlist[i];
     }
 
@@ -674,20 +675,28 @@ bool GTP::execute(GameState & game, std::string xinput) {
         int movenum;
 
         cmdstream >> tmp;   // eat loadsgf
-
         cmdstream >> filename;
-        cmdstream >> movenum;
 
-        if (cmdstream.fail()) {
-            movenum = 999;
+        if (!cmdstream.fail()) {
+            cmdstream >> movenum;
+
+            if (cmdstream.fail()) {
+                movenum = 999;
+            }
+        } else {
+            gtp_fail_printf(id, "Missing filename.");
+            return true;
         }
 
         std::unique_ptr<SGFTree> sgftree(new SGFTree);
 
-        sgftree->load_from_file(filename);
-        game = sgftree->follow_mainline_state(movenum);
-
-        gtp_printf(id, "");
+        try {
+            sgftree->load_from_file(filename);
+            game = sgftree->follow_mainline_state(movenum);
+            gtp_printf(id, "");
+        } catch (const std::exception& e) {
+            gtp_fail_printf(id, "Could not open file: %s", e.what());
+        }
         return true;
     } else if (command.find("kgs-chat") == 0) {
         // kgs-chat (game|private) Name Message

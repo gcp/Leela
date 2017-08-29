@@ -70,15 +70,15 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Projects\OpenCL-ICD-Loader\inc;C:\Projects\OpenBLAS\dist\include;C:\boost\boost_1_62_0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build;C:\Projects\OpenBLAS\dist\lib;C:\boost\boost_1_62_0\stage\lib32;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Projects\OpenCL-ICD-Loader\inc;C:\Projects\OpenBLAS\dist\include;C:\boost\boost_1_65_0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build;C:\Projects\OpenBLAS\dist\lib;C:\boost\boost_1_65_0\stage\lib32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.2.187\windows\mkl\include;C:\Projects\OpenCL-ICD-Loader\inc;C:\boost\boost_1_62_0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\boost\boost_1_62_0\stage\lib32;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.2.187\windows\mkl\lib\ia32_win;C:\Projects\OpenCL-ICD-Loader\build;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\include;C:\Projects\OpenCL-ICD-Loader\inc;C:\boost\boost_1_65_0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\boost\boost_1_65_0\stage\lib32;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\lib\ia32_win;C:\Projects\OpenCL-ICD-Loader\build;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -249,6 +249,8 @@
     <ClInclude Include="..\Network.h" />
     <ClInclude Include="..\OpenCL.h" />
     <ClInclude Include="..\PatHash.h" />
+    <ClInclude Include="..\Patterns.h" />
+    <ClInclude Include="..\PatternsLive.h" />
     <ClInclude Include="..\Playout.h" />
     <ClInclude Include="..\PNNode.h" />
     <ClInclude Include="..\PNSearch.h" />
