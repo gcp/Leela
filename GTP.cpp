@@ -694,8 +694,8 @@ bool GTP::execute(GameState & game, std::string xinput) {
             sgftree->load_from_file(filename);
             game = sgftree->follow_mainline_state(movenum);
             gtp_printf(id, "");
-        } catch (const std::exception& e) {
-            gtp_fail_printf(id, "Could not open file: %s", e.what());
+        } catch (const std::exception&) {
+            gtp_fail_printf(id, "cannot load file");
         }
         return true;
     } else if (command.find("kgs-chat") == 0) {

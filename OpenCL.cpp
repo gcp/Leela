@@ -869,7 +869,7 @@ void OpenCL::initialize(void) {
     // Build program for these specific devices
     try {
         m_program.build("-cl-mad-enable -cl-fast-relaxed-math -cl-no-signed-zeros -cl-denorms-are-zero");
-    } catch (const cl::Error &e) {
+    } catch (const cl::Error&) {
         myprintf("Error building: %s\n",
                   m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault()).c_str());
         return;
