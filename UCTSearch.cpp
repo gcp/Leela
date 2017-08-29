@@ -159,10 +159,17 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
     }
 
     using TRowVector = std::vector<std::pair<std::string, std::string>>;
-    using TDataVector = std::vector<TRowVector>;
+    using TDataVector = std::tuple<int, std::vector<TRowVector>>;
 
-    auto analysis_data = new TDataVector();
-    auto move_data = new std::vector<std::pair<std::string, float>>();
+    using TMoveData = std::vector<std::pair<std::string, float>>;
+
+    std::unique_ptr<TDataVector> analysis_packet(new TDataVector);
+    std::unique_ptr<TMoveData> move_data(new TMoveData);
+
+    // Remember side to move for these variations
+    std::get<0>(*analysis_packet) = color;
+    auto & analysis_data = std::get<1>(*analysis_packet);
+
     node = bestnode;
     int movecount = 0;
     while (node != nullptr) {
@@ -175,43 +182,41 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
             tmpstate.play_move(node->get_move());
             pvstring += " " + get_pv(tmpstate, *node);
 
-            std::vector<std::pair<std::string, std::string>> row;
-            row.push_back(std::make_pair(std::string("Move"), movestr));
-            row.push_back(std::make_pair(std::string("Effort%"),
-                std::to_string(100.0 * node->get_visits() / (double)total_visits)));
-            row.push_back(std::make_pair(std::string("Simulations"),
-                std::to_string(node->get_visits())));
-            row.push_back(std::make_pair(std::string("Win%"),
+            TRowVector row;
+            row.emplace_back(std::string("Move"), movestr);
+            row.emplace_back(std::string("Effort%"),
+                std::to_string(100.0 * node->get_visits() / (double)total_visits));
+            row.emplace_back(std::string("Simulations"),
+                std::to_string(node->get_visits()));
+            row.emplace_back(std::string("Win%"),
                 node->get_visits() > 0 ?
                     std::to_string(node->get_mixed_score(color)*100.0f) :
-                    std::string("-")));
+                    std::string("-"));
             if (m_use_nets) {
-                row.push_back(std::make_pair(std::string("MC Win%"),
+                row.emplace_back(std::string("MC Win%"),
                     node->get_visits() > 0 ?
                     std::to_string(node->get_winrate(color)*100.0f) :
-                    std::string("-")));
-                row.push_back(std::make_pair(std::string("Net Win%"),
+                    std::string("-"));
+                row.emplace_back(std::string("Net Win%"),
                     node->get_evalcount() > 0 ?
                     std::to_string(node->get_eval(color)*100.0f) :
-                    std::string("-")));
+                    std::string("-"));
             }
-            row.push_back(std::make_pair(
+            row.emplace_back(
                 m_use_nets ? std::string("Net Prob%") : std::string("Eval"),
-                std::to_string(node->get_score() * 100.0f)));
-            row.push_back(std::make_pair(std::string("PV"), pvstring));
+                std::to_string(node->get_score() * 100.0f));
+            row.emplace_back(std::string("PV"), pvstring);
 
-            analysis_data->push_back(row);
-
-            move_data->push_back(
-                std::make_pair(movestr,
-                               (float)(node->get_visits() / (double)total_visits)));
+            analysis_data.emplace_back(row);
+            move_data->emplace_back(movestr,
+                                    (float)(node->get_visits() / (double)total_visits));
         }
 
         node = node->get_sibling();
     }
 
-    GUIAnalysis((void*)analysis_data);
-    GUIBestMoves((void*)move_data);
+    GUIAnalysis((void*)analysis_packet.release());
+    GUIBestMoves((void*)move_data.release());
 #endif
 }
 
