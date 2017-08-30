@@ -274,19 +274,12 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     // link the nodes together, we only really link the last few
     size_t maxchilds = 35;     // about 35 -> 4M visits
     if (use_nets) {
-        maxchilds = 15;     // XXX: run formula but can't be much
+        maxchilds = cfg_rave_moves;
     }
     int childrenadded = 0;
     size_t childrenseen = 0;
 
     int netscore_threshold = cfg_mature_threshold;
-    if (!use_nets) {
-        if (board.get_boardsize() <= 9) {
-            netscore_threshold = 30;
-        } else {
-            netscore_threshold = 50;
-        }
-    }
     int expand_threshold = cfg_expand_threshold;
     int movenum = board.get_stone_count();
 

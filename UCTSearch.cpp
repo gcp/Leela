@@ -35,10 +35,11 @@ UCTSearch::UCTSearch(GameState & g)
       m_quiet(false) {
     set_use_nets(cfg_enable_nets);
     set_playout_limit(cfg_max_playouts);
+#if 0
     if (m_use_nets) {
-        cfg_uct = 0.0125f;
-        cfg_beta = 12.0f;
-        cfg_patternbonus = 0.012f;
+        cfg_uct = 0.012f;
+        cfg_beta = 12.5f;
+        cfg_patternbonus = 0.014f;
 #ifdef USE_OPENCL
         cfg_expand_threshold = 15;
 #else
@@ -57,6 +58,7 @@ UCTSearch::UCTSearch(GameState & g)
             cfg_expand_threshold = 35;
         }
     }
+#endif
 }
 
 void UCTSearch::set_runflag(std::atomic<bool> * flag) {
