@@ -79,12 +79,10 @@ void GTP::setup_default_parameters() {
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
     cfg_mature_threshold = 25;
-    cfg_expand_threshold = 15;
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
 #else
     cfg_mature_threshold = 85;
-    cfg_expand_threshold = 25;
     cfg_extra_symmetry = 3000;
     cfg_eval_thresh = 9;
 #endif
