@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
 
     qsrand(seed);
 
-    QString orig_cmdline("./leela_ref --gtp --noponder --threads 1");
-    QString tune_cmdline("./leela --gtp --noponder --threads 1");
+    QString orig_cmdline("./leela_ref --gtp --noponder --threads 1 --nonets");
+    QString tune_cmdline("./leela --gtp --noponder --threads 1 --nonets");
 
     parmset ps;
     foreach (ps, vps) {
@@ -108,9 +108,9 @@ int main(int argc, char *argv[])
 
     cerr << "Original is black: " << orig_is_black << endl;
 
-#if 1
-    orig_process.write(qPrintable("boardsize 9\n"));
-    tune_process.write(qPrintable("boardsize 9\n"));
+#if 0
+    orig_process.write(qPrintable("boardsize 13\n"));
+    tune_process.write(qPrintable("boardsize 13\n"));
     orig_process.waitForBytesWritten(-1);
     tune_process.waitForBytesWritten(-1);
     if (!waitForReadyRead(orig_process)) {
@@ -139,8 +139,8 @@ int main(int argc, char *argv[])
     cerr << "Started, board successfully set." << endl;
 #endif
 
-    orig_process.write(qPrintable("time_settings 120 0 0\n"));
-    tune_process.write(qPrintable("time_settings 120 0 0\n"));
+    orig_process.write(qPrintable("time_settings 600 0 0\n"));
+    tune_process.write(qPrintable("time_settings 600 0 0\n"));
     orig_process.waitForBytesWritten(-1);
     tune_process.waitForBytesWritten(-1);
     if (!waitForReadyRead(orig_process)) {

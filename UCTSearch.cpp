@@ -36,9 +36,9 @@ UCTSearch::UCTSearch(GameState & g)
     set_use_nets(cfg_enable_nets);
     set_playout_limit(cfg_max_playouts);
     if (m_use_nets) {
-        cfg_uct = 0.015f;
-        cfg_beta = 10.0f;
-        cfg_patternbonus = 0.0085f;
+        cfg_uct = 0.0125f;
+        cfg_beta = 12.0f;
+        cfg_patternbonus = 0.012f;
 #ifdef USE_OPENCL
         cfg_expand_threshold = 15;
 #else
@@ -52,8 +52,8 @@ UCTSearch::UCTSearch(GameState & g)
             cfg_expand_threshold = 16;
         } else {
             cfg_uct = 0.01f;
-            cfg_beta = 40.0f;
-            cfg_patternbonus = 0.0018f;
+            cfg_beta = 20.0f;
+            cfg_patternbonus = 0.0007f;
             cfg_expand_threshold = 35;
         }
     }
