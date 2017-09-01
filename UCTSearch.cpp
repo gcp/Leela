@@ -35,11 +35,11 @@ UCTSearch::UCTSearch(GameState & g)
       m_quiet(false) {
     set_use_nets(cfg_enable_nets);
     set_playout_limit(cfg_max_playouts);
-#if 0
+#if 1
     if (m_use_nets) {
-        cfg_uct = 0.012f;
-        cfg_beta = 12.5f;
-        cfg_patternbonus = 0.014f;
+        cfg_uct = 0.075f;
+        cfg_beta = 37.0;
+        cfg_patternbonus = 0.045f;
 #ifdef USE_OPENCL
         cfg_expand_threshold = 15;
 #else
@@ -47,15 +47,20 @@ UCTSearch::UCTSearch(GameState & g)
 #endif
     } else {
         if (g.board.get_boardsize() <= 9) {
-            cfg_uct = 0.05f;
-            cfg_beta = 50.0f;
+            cfg_uct = 0.01f;
+            cfg_beta = 16.5f;
             cfg_patternbonus = 0.0025f;
             cfg_expand_threshold = 16;
+        } else if (g.board.get_boardsize() <= 13) {
+            cfg_uct = 0.01f;
+            cfg_beta = 22.0f;
+            cfg_patternbonus = 0.0035f;
+            cfg_expand_threshold = 20;
         } else {
             cfg_uct = 0.01f;
-            cfg_beta = 20.0f;
-            cfg_patternbonus = 0.0007f;
-            cfg_expand_threshold = 35;
+            cfg_beta = 25.5f;
+            cfg_patternbonus = 0.0078f;
+            cfg_expand_threshold = 30;
         }
     }
 #endif
