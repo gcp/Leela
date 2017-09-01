@@ -70,12 +70,10 @@ void GTP::setup_default_parameters() {
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
     cfg_mature_threshold = 25;
-    cfg_expand_threshold = 15;
     cfg_extra_symmetry =  350;
     cfg_eval_thresh = 2;
 #else
     cfg_mature_threshold = 85;
-    cfg_expand_threshold = 25;
     cfg_extra_symmetry = 3000;
     cfg_eval_thresh = 9;
 #endif
@@ -98,7 +96,7 @@ void GTP::setup_default_parameters() {
     cfg_cutoff_ratio = 4.72f;
     cfg_mix_opening = 0.66f;
     cfg_mix_ending = 0.49f;
-    cfg_rave_moves = 13;
+    cfg_rave_moves = 10;
     cfg_mc_softmax = 1.0f;
     cfg_random_loops = 4;
     cfg_logfile_handle = nullptr;

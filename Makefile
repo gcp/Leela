@@ -24,8 +24,8 @@ debug:
 
 clang:
 	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -g -march=native -flto -fopenmp -std=c++11 -D_CONSOLE -DNDEBUG' \
-		LDFLAGS='$(LDFLAGS) -flto -fuse-linker-plugin -fopenmp' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -flto -g -march=native -std=c++11 -D_CONSOLE -DNDEBUG' \
+		LDFLAGS='$(LDFLAGS) -flto -fuse-linker-plugin' \
 		leela
 
 asan:

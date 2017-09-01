@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
 
     qsrand(seed);
 
-    QString orig_cmdline("./leela_ref --gtp --noponder --threads 1");
-    QString tune_cmdline("./leela --gtp --noponder --threads 1");
+    QString orig_cmdline("./leela_ref --gtp --noponder --threads 1 --nonets");
+    QString tune_cmdline("./leela --gtp --noponder --threads 1 --nonets");
 
     parmset ps;
     foreach (ps, vps) {
