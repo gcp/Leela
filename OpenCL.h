@@ -79,7 +79,7 @@ public:
     template <unsigned long W, unsigned long B>
     void push_innerproduct(std::array<float, W> & weights,
                            std::array<float, B> & biases) {
-        int layer = get_layer_count();
+        size_t layer = get_layer_count();
         push_weights(layer, weights);
         push_weights(layer, biases);
         m_layers[layer].is_innerproduct = true;
