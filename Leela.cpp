@@ -36,7 +36,7 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("threads,t", po::value<int>()->default_value(cfg_num_threads),
                       "Number of threads to use.")
         ("playouts,p", po::value<int>(),
-                       "Handicap by limiting the number of playouts.")
+                       "Weaken engine by limiting the number of playouts.")
         ("lagbuffer,b", po::value<int>()->default_value(cfg_lagbuffer_cs),
                         "Safety margin for time usage in centiseconds.")
         ("logfile,l", po::value<std::string>(), "File to log input/output to.")
@@ -178,6 +178,12 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
 
     if (vm.count("playouts")) {
         cfg_max_playouts = vm["playouts"].as<int>();
+        if (!vm.count("noponder")) {
+            myprintf("Nonsensical options: Playouts are restricted but "
+                     "thinking on the opponent's time is still allowed. "
+                     "Add --noponder if you want a weakened engine.\n");
+            exit(EXIT_FAILURE);
+        }
     }
 
     if (vm.count("nonets")) {
