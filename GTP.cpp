@@ -403,7 +403,6 @@ bool GTP::execute(GameState & game, std::string xinput) {
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
-
         return true;
     } else if (command.find("kgs-genmove_cleanup") == 0) {
         std::istringstream cmdstream(command);
@@ -434,18 +433,26 @@ bool GTP::execute(GameState & game, std::string xinput) {
             game.set_komi(new_komi);
             game.set_passes(0);
 
-            std::unique_ptr<UCTSearch> search(new UCTSearch(game));
+            {
+                std::unique_ptr<UCTSearch> search(new UCTSearch(game));
 
-            int move = search->think(who, UCTSearch::NOPASS);
-            game.play_move(who, move);
+                int move = search->think(who, UCTSearch::NOPASS);
+                game.play_move(who, move);
+
+                std::string vertex = game.move_to_text(move);
+                gtp_printf(id, "%s", vertex.c_str());
+            }
+            if (cfg_allow_pondering) {
+                // now start pondering
+                if (game.get_last_move() != FastBoard::RESIGN) {
+                    std::unique_ptr<UCTSearch> search(new UCTSearch(game));
+                    search->ponder();
+                }
+            }
             game.set_komi(old_komi);
-
-            std::string vertex = game.move_to_text(move);
-            gtp_printf(id, "%s", vertex.c_str());
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
-
         return true;
     } else if (command.find("undo") == 0) {
         if (game.undo_move()) {
