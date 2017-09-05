@@ -9,6 +9,7 @@
 #include <QDir>
 #include <QRegularExpression>
 #include <QUuid>
+#include <QDebug>
 #include <iostream>
 
 typedef QPair<QString, float> parmset;
@@ -33,7 +34,17 @@ int main(int argc, char *argv[])
     // Map streams
     QTextStream cin(stdin, QIODevice::ReadOnly);
     QTextStream cout(stdout, QIODevice::WriteOnly);
+#if 1
     QTextStream cerr(stderr, QIODevice::WriteOnly);
+#else
+    // Log stderr to file
+    QFile caFile("output.txt");
+    caFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append);
+    if(!caFile.isOpen()){
+        qDebug() << "- Error, unable to open" << "outputFilename" << "for output";
+    }
+    QTextStream cerr(&caFile);
+#endif
 
     // (2) Set up something that will trigger events
     QTimer::singleShot(0, &app, SLOT(quit()));
@@ -72,8 +83,8 @@ int main(int argc, char *argv[])
 
     qsrand(seed);
 
-    QString orig_cmdline("./leela_ref --gtp --noponder --threads 1 --nonets");
-    QString tune_cmdline("./leela --gtp --noponder --threads 1 --nonets");
+    QString orig_cmdline("./leela_ref --gtp --noponder --threads 1");
+    QString tune_cmdline("./leela --gtp --noponder --threads 1");
 
     parmset ps;
     foreach (ps, vps) {
@@ -81,6 +92,12 @@ int main(int argc, char *argv[])
         tune_cmdline += ps.first;
         tune_cmdline += " ";
         tune_cmdline += QString::number(ps.second);
+    }
+
+    // SSH if needed
+    if (procid != "local") {
+        orig_cmdline = "ssh -y " + procid + " " + orig_cmdline;
+        tune_cmdline = "ssh -y " + procid + " " + tune_cmdline;
     }
 
     cerr << orig_cmdline << endl;
@@ -295,6 +312,9 @@ int main(int argc, char *argv[])
         QString gnugo_cmdline("gnugo --score aftermath ");
         gnugo_cmdline += " --positional-superko --chinese-rules -l ";
         gnugo_cmdline += sgf_name;
+        if (procid != "local") {
+            gnugo_cmdline = "ssh -y " + procid + " " + gnugo_cmdline;
+        }
         gnugo_process.start(gnugo_cmdline);
         gnugo_process.waitForFinished(-1);
 
@@ -361,9 +381,11 @@ int main(int argc, char *argv[])
     return app.exec();
 
 orig_crash:
+    cerr << "Original crashed" << endl;
     cout << "W" << endl;
     return app.exec();
 tune_crash:
+    cerr << "Tuned crashed" << endl;
     cout << "L" << endl;
     return app.exec();
 }
