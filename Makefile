@@ -24,7 +24,7 @@ debug:
 
 clang:
 	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -flto -g -march=native -std=c++11 -D_CONSOLE -DNDEBUG' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -flto -mtune=generic -std=c++11 -D_CONSOLE -DNDEBUG' \
 		LDFLAGS='$(LDFLAGS) -flto -fuse-linker-plugin' \
 		leela
 
@@ -43,9 +43,9 @@ ubsan:
 
 LIBS = -lboost_program_options
 #DYNAMIC_LIBS += -lboost_system -lboost_filesystem -lcaffe-nv -lprotobuf -lglog
-LIBS += -lopenblas
+#LIBS += -lopenblas
 DYNAMIC_LIBS += -lpthread
-#DYNAMIC_LIBS += -lOpenCL
+DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
 #DYNAMIC_LIBS += -lmkl_rt
