@@ -213,6 +213,7 @@
     <ClCompile Include="..\MCPolicy.cpp" />
     <ClCompile Include="..\Network.cpp" />
     <ClCompile Include="..\NN.cpp" />
+    <ClCompile Include="..\NN128.cpp" />
     <ClCompile Include="..\NNValue.cpp" />
     <ClCompile Include="..\OpenCL.cpp" />
     <ClCompile Include="..\Playout.cpp" />
