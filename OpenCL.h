@@ -51,9 +51,9 @@ public:
 
     template <unsigned long M, unsigned long V>
     void push_batchnorm(unsigned int channel_size,
-                        std::array<float, M> & means,
-                        std::array<float, V> & variances,
-                        std::array<float, 1> & scale) {
+                        const std::array<float, M> & means,
+                        const std::array<float, V> & variances,
+                        const std::array<float, 1> & scale) {
         size_t layer = get_layer_count();
         push_weights(layer, means);
         push_weights(layer, variances);
@@ -66,8 +66,8 @@ public:
 
     template <unsigned long W, unsigned long B>
     void push_convolve(unsigned int filter_size,
-                       std::array<float, W> & weights,
-                       std::array<float, B> & biases) {
+                       const std::array<float, W> & weights,
+                       const std::array<float, B> & biases) {
         size_t layer = get_layer_count();
         push_weights(layer, weights);
         push_weights(layer, biases);
@@ -77,8 +77,8 @@ public:
     }
 
     template <unsigned long W, unsigned long B>
-    void push_innerproduct(std::array<float, W> & weights,
-                           std::array<float, B> & biases) {
+    void push_innerproduct(const std::array<float, W> & weights,
+                           const std::array<float, B> & biases) {
         size_t layer = get_layer_count();
         push_weights(layer, weights);
         push_weights(layer, biases);
@@ -96,10 +96,10 @@ public:
 
 private:
     template <unsigned long W>
-    void push_weights(size_t layer, std::array<float, W> & weights) {
-        add_weights(layer, W, &weights[0]);
+    void push_weights(size_t layer, const std::array<float, W> & weights) {
+        add_weights(layer, W, weights.data());
     }
-    void add_weights(size_t layer, size_t size, float * weights);
+    void add_weights(size_t layer, size_t size, const float * weights);
     void convolve(int filter_size, int channels, int outputs,
                   cl::Buffer& input, cl::Buffer& output, cl::Buffer& merge,
                   std::vector<cl::Buffer>& weights);

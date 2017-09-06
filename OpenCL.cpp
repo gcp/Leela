@@ -473,15 +473,16 @@ void OpenCL::thread_init() {
 
 void OpenCL_Network::add_weights(size_t layer,
                                  size_t size,
-                                 float * weights) {
+                                 const float * weights) {
     if (layer >= m_layers.size()) {
         m_layers.push_back(Layer());
     }
 
-    size_t weightSize = size * sizeof(float);
+    size_t weightSize = size *
+        sizeof(std::remove_pointer<decltype(weights)>::type);
 
     cl::Buffer bufferWeights = cl::Buffer(CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                                          weightSize, weights);
+                                          weightSize, const_cast<float*>(weights));
 
     m_layers.back().weights.push_back(bufferWeights);
 }
