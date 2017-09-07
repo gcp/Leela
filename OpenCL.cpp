@@ -746,8 +746,10 @@ static std::string opencl_dev_type_to_string(T type) {
         return "CPU";
     } else if (type == CL_DEVICE_TYPE_GPU) {
         return "GPU";
+    } else if (type == CL_DEVICE_TYPE_ACCELERATOR) {
+        return "Accelerator";
     } else {
-        return "R U SERIOUS?";
+        return "Unknown";
     }
 }
 
