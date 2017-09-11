@@ -696,7 +696,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
 
         try {
             sgftree->load_from_file(filename);
-            game = sgftree->follow_mainline_state(movenum);
+            game = sgftree->follow_mainline_state(movenum - 1);
             gtp_printf(id, "");
         } catch (const std::exception&) {
             gtp_fail_printf(id, "cannot load file");
