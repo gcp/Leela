@@ -9,7 +9,7 @@
 class TTEntry {
 public:
     TTEntry()
-        : m_hash(0), m_blackwins(0.0f), m_visits(0) {
+        : m_hash(0) {
     };
 
     uint64 m_hash;
@@ -31,23 +31,19 @@ public:
     /*
         update corresponding entry
     */
-    void update(uint64 hash, const UCTNode * node);
+    void update(uint64 hash, const float komi, const UCTNode * node);
 
     /*
         sync given node with TT
     */
-    void sync(uint64 hash, UCTNode * node);
-
-    /*
-        wipe TT on rule/komi changes
-    */
-    void clear();
+    void sync(uint64 hash, const float komi, UCTNode * node);
 
 private:
     TTable(int size = 500000);
 
-    std::vector<TTEntry> m_buckets;
     SMP::Mutex m_mutex;
+    std::vector<TTEntry> m_buckets;
+    float m_komi;
 };
 
 #endif

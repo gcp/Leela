@@ -15,12 +15,7 @@ TTable::TTable(int size) {
     m_buckets.resize(size);
 }
 
-void TTable::clear(void) {
-    LOCK(m_mutex, lock);
-    std::fill(m_buckets.begin(), m_buckets.end(), TTEntry());
-}
-
-void TTable::update(uint64 hash, const UCTNode * node) {
+void TTable::update(uint64 hash, const float komi, const UCTNode * node) {
     LOCK(m_mutex, lock);
 
     unsigned int index = (unsigned int)hash;
@@ -34,17 +29,23 @@ void TTable::update(uint64 hash, const UCTNode * node) {
     m_buckets[index].m_blackwins  = node->get_blackwins();
     m_buckets[index].m_eval_sum   = node->get_blackevals();
     m_buckets[index].m_eval_count = node->get_evalcount();
+
+    if (m_komi != komi) {
+        std::fill(begin(m_buckets), end(m_buckets), TTEntry());
+        m_komi = komi;
+    }
 }
 
-void TTable::sync(uint64 hash, UCTNode * node) {
+void TTable::sync(uint64 hash, const float komi, UCTNode * node) {
     LOCK(m_mutex, lock);
 
     unsigned int index = (unsigned int)hash;
     index %= m_buckets.size();
+
     /*
         check for hash fail
     */
-    if (m_buckets[index].m_hash != hash) {
+    if (m_buckets[index].m_hash != hash || m_komi != komi) {
         return;
     }
 

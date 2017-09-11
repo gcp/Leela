@@ -321,7 +321,6 @@ bool GTP::execute(GameState & game, std::string xinput) {
         if (!cmdstream.fail()) {
             if (komi != old_komi) {
                 game.set_komi(komi);
-                TTable::get_TT()->clear();
             }
             gtp_printf(id, "");
         } else {

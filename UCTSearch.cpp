@@ -79,10 +79,11 @@ void UCTSearch::set_use_nets(bool flag) {
 Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     const int color = currstate.get_to_move();
     const uint64 hash = currstate.board.get_hash();
+    const float komi = currstate.get_komi();
     Playout noderesult;
     bool update_eval = true;
 
-    TTable::get_TT()->sync(hash, node);
+    TTable::get_TT()->sync(hash, komi, node);
 
     if (m_use_nets
         && !node->get_evalcount()
@@ -142,7 +143,7 @@ Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
     }
 
     node->update(noderesult, color, update_eval);
-    TTable::get_TT()->update(hash, node);
+    TTable::get_TT()->update(hash, komi, node);
 
     return noderesult;
 }
