@@ -71,10 +71,10 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
                 } else {
                     break;
                 }     
-                
-                MCOwnerTable::clear();                                                    
+
+                MCOwnerTable::get_MCO()->clear();
                 Playout::mc_owner(*state);
-                
+
                 std::vector<int> territory = state->board.influence();
                 std::vector<int> moyo = state->board.moyo();
                 //std::vector<int> territory;
@@ -122,7 +122,7 @@ void AttribScores::gather_attributes(std::string filename, LearnVector & data) {
             KoState * state = treewalk->get_state();
             int tomove = state->get_to_move();                                                
             
-            MCOwnerTable::clear();            
+            MCOwnerTable::get_MCO()->clear();
             Playout::mc_owner(*state);
             
             std::vector<int> territory = state->board.influence();

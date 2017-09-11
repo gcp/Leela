@@ -172,16 +172,20 @@ void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
     }
 
     using TRowVector = std::vector<std::pair<std::string, std::string>>;
-    using TDataVector = std::tuple<int, std::vector<TRowVector>>;
+    using TDataVector = std::tuple<int, float, std::vector<TRowVector>>;
 
     using TMoveData = std::vector<std::pair<std::string, float>>;
 
     std::unique_ptr<TDataVector> analysis_packet(new TDataVector);
     std::unique_ptr<TMoveData> move_data(new TMoveData);
 
-    // Remember side to move for these variations
+    // 0: Remember side to move for these variations
+    // 1: Score estimate
+    // 2: vector of Moves with each having string/string pairs
     std::get<0>(*analysis_packet) = color;
-    auto & analysis_data = std::get<1>(*analysis_packet);
+    std::get<1>(*analysis_packet) = MCOwnerTable::get_MCO()->get_board_score();
+
+    auto & analysis_data = std::get<2>(*analysis_packet);
 
     node = bestnode;
     int movecount = 0;
@@ -803,7 +807,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     }
 
     // do some preprocessing for move ordering
-    MCOwnerTable::clear();
+    MCOwnerTable::get_MCO()->clear();
     float territory;
     float mc_score = Playout::mc_owner(m_rootstate, 64, &territory);
     if (m_use_nets) {
@@ -965,7 +969,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
 }
 
 void UCTSearch::ponder() {
-    MCOwnerTable::clear();
+    MCOwnerTable::get_MCO()->clear();
     Playout::mc_owner(m_rootstate, 64);
 
 #ifdef USE_SEARCH

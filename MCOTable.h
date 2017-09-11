@@ -13,16 +13,18 @@ public:
         return the global TT
     */
     static MCOwnerTable * get_MCO();
-    static void clear();
+    void clear();
 
     /*
         update_blackowns corresponding entry
     */
-    void update_owns(Playout::bitboard_t & blacksq, bool blackwon);
+    void update_owns(Playout::bitboard_t & blacksq,
+                     bool blackwon, float board_score);
 
     float get_blackown(const int color, const int vertex) const;
     int get_blackown_i(const int color, const int vertex) const;
     float get_criticality_f(const int vertex) const;
+    float get_board_score() const;
     bool is_primed() const;
 
 private:
@@ -32,7 +34,7 @@ private:
     std::array<std::atomic<int>, FastBoard::MAXSQ> m_mcwinowner;
     std::atomic<int> m_mcsimuls;
     std::atomic<int> m_blackwins;
-    SMP::Mutex m_mutex;
+    std::atomic<double> m_blackscore;
 };
 
 #endif

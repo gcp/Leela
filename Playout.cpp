@@ -22,29 +22,29 @@ Playout::Playout() :
     m_sq[1].reset();
 }
 
-float Playout::get_score() {
+float Playout::get_score() const {
     assert(m_run);
     assert(m_score > -2.00f && m_score < 2.00f);
 
     return m_score;
 }
 
-float Playout::get_territory() {
+float Playout::get_territory() const {
     assert(m_run);
     return m_territory;
 }
 
-void Playout::set_eval( float eval) {
+void Playout::set_eval(float eval) {
     m_blackeval = eval;
     m_eval_valid = true;
 }
 
-float Playout::get_eval() {
+float Playout::get_eval() const {
     assert(m_eval_valid == true);
     return m_blackeval;
 }
 
-bool Playout::has_eval() {
+bool Playout::has_eval() const {
     return m_eval_valid;
 }
 
@@ -95,21 +95,21 @@ void Playout::run(FastState & state, bool postpassout, bool resigning,
         }
     }
 
-    float score = state.calculate_mc_score();
+    float board_score = state.calculate_mc_score();
 
     // update MCO in one swoop
     bool blackwon;
-    if (score == 0.0f) {
+    if (board_score == 0.0f) {
         blackwon = (Random::get_Rng()->randfix<2>() == 0);
     } else {
-        blackwon = (score > 0.0f);
+        blackwon = (board_score > 0.0f);
     }
-    MCOwnerTable::get_MCO()->update_owns(blackowns, blackwon);
+    MCOwnerTable::get_MCO()->update_owns(blackowns, blackwon, board_score);
 
     m_run = true;
-    m_territory = score;
+    m_territory = board_score;
     // Scale to -1.0 <--> 1.0
-    m_score = score / (boardsize * boardsize);
+    m_score = board_score / (boardsize * boardsize);
 }
 
 bool Playout::passthrough(int color, int vertex) {
@@ -210,7 +210,7 @@ float Playout::mc_owner(FastState & state, const int iterations, float* points) 
     }
 
     if (points != nullptr) {
-        *points = board_score / (float)iterations;;
+        *points = board_score / (float)iterations;
     }
 
     return score;

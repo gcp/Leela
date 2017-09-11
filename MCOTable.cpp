@@ -1,9 +1,11 @@
 #include "config.h"
 #include <cassert>
-#include <vector>
 
 #include "MCOTable.h"
 #include "FastBoard.h"
+#include "Utils.h"
+
+using Utils::atomic_add;
 
 MCOwnerTable* MCOwnerTable::get_MCO() {
     static MCOwnerTable s_mcowntable;
@@ -13,10 +15,11 @@ MCOwnerTable* MCOwnerTable::get_MCO() {
 MCOwnerTable::MCOwnerTable() {
     m_mcsimuls = 0;
     m_blackwins = 0;
+    m_blackscore = 0.0f;
 }
 
 void MCOwnerTable::update_owns(Playout::bitboard_t & blacksq,
-                               bool blackwon) {
+                               bool blackwon, float board_score) {
     for (size_t i = 0; i < blacksq.size(); i++) {
         if (blacksq[i]) {
             m_mcblackowner[i]++;
@@ -33,6 +36,11 @@ void MCOwnerTable::update_owns(Playout::bitboard_t & blacksq,
     if (blackwon) {
         m_blackwins++;
     }
+    atomic_add(m_blackscore, (double)board_score);
+}
+
+float MCOwnerTable::get_board_score() const {
+    return (float)(m_blackscore / (double)m_mcsimuls);
 }
 
 int MCOwnerTable::get_blackown_i(const int color, const int vertex) const {
@@ -85,10 +93,11 @@ float MCOwnerTable::get_criticality_f(const int vtx) const {
 }
 
 void MCOwnerTable::clear() {
-    std::fill(get_MCO()->m_mcblackowner.begin(), get_MCO()->m_mcblackowner.end(), 0);
-    std::fill(get_MCO()->m_mcwinowner.begin(), get_MCO()->m_mcwinowner.end(), 0);
-    get_MCO()->m_mcsimuls  = 0;
-    get_MCO()->m_blackwins = 0;
+    std::fill(begin(m_mcblackowner), end(m_mcblackowner), 0);
+    std::fill(begin(m_mcwinowner), end(m_mcwinowner), 0);
+    m_mcsimuls  = 0;
+    m_blackwins = 0;
+    m_blackscore = 0.0f;
 }
 
 bool MCOwnerTable::is_primed() const {

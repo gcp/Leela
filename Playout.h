@@ -10,8 +10,8 @@
 
 class Playout {
 public:
-    typedef std::bitset<FastBoard::MAXSQ> bitboard_t;
-    typedef std::array<bitboard_t, 2> color_bitboard_t;
+    using bitboard_t = std::bitset<FastBoard::MAXSQ>;
+    using color_bitboard_t = std::array<bitboard_t, 2>;
 
     static const int AUTOGAMES = 200000;
     static void do_playout_benchmark(GameState & game);
@@ -22,11 +22,11 @@ public:
     Playout();
     void run(FastState & state, bool postpassout, bool resigning,
              PolicyTrace * trace = nullptr);
-    float get_score();
-    float get_territory();
+    float get_score() const;
+    float get_territory() const;
     void set_eval(float eval);
-    float get_eval();
-    bool has_eval();
+    float get_eval() const;
+    bool has_eval() const;
     bool passthrough(int color, int vertex);
 private:
     bool m_run;
