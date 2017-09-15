@@ -31,11 +31,11 @@ const std::array<FastBoard::square_t, 4> FastBoard::s_cinvert = {
     WHITE, BLACK, EMPTY, INVAL
 };
 
-int FastBoard::get_boardsize(void) {
+int FastBoard::get_boardsize(void) const {
     return m_boardsize;
 }
 
-int FastBoard::get_vertex(int x, int y) {
+int FastBoard::get_vertex(int x, int y) const {
     assert(x >= 0 && x < MAXBOARDSIZE);
     assert(y >= 0 && y < MAXBOARDSIZE);
     assert(x >= 0 && x < m_boardsize);
@@ -48,7 +48,7 @@ int FastBoard::get_vertex(int x, int y) {
     return vertex;
 }
 
-std::pair<int, int> FastBoard::get_xy(int vertex) {
+std::pair<int, int> FastBoard::get_xy(int vertex) const {
     std::pair<int, int> xy;
 
     //int vertex = ((y + 1) * (get_boardsize() + 2)) + (x + 1);
@@ -66,7 +66,7 @@ std::pair<int, int> FastBoard::get_xy(int vertex) {
     return xy;
 }
 
-FastBoard::square_t FastBoard::get_square(int vertex) {
+FastBoard::square_t FastBoard::get_square(int vertex) const {
     assert(vertex >= 0 && vertex < MAXSQ);
     assert(vertex >= 0 && vertex < m_maxsq);
 
@@ -81,7 +81,7 @@ void FastBoard::set_square(int vertex, FastBoard::square_t content) {
     m_square[vertex] = content;
 }
 
-FastBoard::square_t FastBoard::get_square(int x, int y) {
+FastBoard::square_t FastBoard::get_square(int x, int y) const {
     return get_square(get_vertex(x,y));
 }
 

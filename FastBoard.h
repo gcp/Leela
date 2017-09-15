@@ -56,14 +56,14 @@ public:
     using movelist_t = std::vector<MovewFeatures>;
     using scoredmoves_t = std::vector<movescore_t>;
 
-    int get_boardsize(void);
-    square_t get_square(int x, int y);
-    square_t get_square(int vertex);
-    int get_vertex(int i, int j);
+    int get_boardsize(void) const;
+    square_t get_square(int x, int y) const;
+    square_t get_square(int vertex) const ;
+    int get_vertex(int i, int j) const;
     void set_square(int x, int y, square_t content);
     void set_square(int vertex, square_t content);
     int rotate_vertex(int vertex, int symmetry);
-    std::pair<int, int> get_xy(int vertex);
+    std::pair<int, int> get_xy(int vertex) const;
     int get_groupid(int vertex);
 
     bool is_suicide(int i, int color);

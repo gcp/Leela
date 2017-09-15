@@ -36,34 +36,30 @@ SGFTree * SGFTree::get_child(unsigned int count) {
     }
 }
 
-// this follows the entire line, and doesn't really
-// need the intermediate states
+// This follows the entire line, and doesn't really need the intermediate
+// states, just the moves. As a consequence, states that contain more than
+// just moves won't have any effect.
 GameState SGFTree::follow_mainline_state(unsigned int movenum) {
-    GameState result;        
     SGFTree * link = this;
-        
-    KoState & helper = result;
-    helper = *(get_state());   
-    
-    // game history is not correctly initialized by above
-    // so reanchor
-    result.anchor_game_history(); 
-    
+    // This initializes a starting state from a KoState and
+    // sets up the game history.
+    GameState result(get_state());
+
     int tomove = result.get_to_move();
-    
-    for (unsigned int i = 0; i <= movenum && link != NULL; i++) {
+
+    for (unsigned int i = 0; i <= movenum && link != nullptr; i++) {
         // root position has no associated move
-        if (i != 0) {    
+        if (i != 0) {
             int move = link->get_move(tomove);
-            if (move != SGFTree::EOT) {        
+            if (move != SGFTree::EOT) {
                 result.play_move(move);
                 tomove = !tomove;
             }
         }
-                
+
         link = link->get_child(0);
     }
-    
+
     return result;
 }
 
@@ -104,6 +100,7 @@ void SGFTree::load_from_string(std::string gamebuff) {
 
     // Set up the root state to defaults
     init_state();
+
     // populates the states from the moves
     // split this up in root node, achor (handicap), other nodes
     populate_states();
@@ -121,6 +118,7 @@ void SGFTree::load_from_file(std::string filename, int index) {
 void SGFTree::populate_states(void) {
     PropertyMap::iterator it;
     bool valid_size = false;
+    bool has_handicap = false;
 
     // first check for go game setup in properties
     it = m_properties.find("GM");
@@ -176,6 +174,7 @@ void SGFTree::populate_states(void) {
         std::istringstream strm(size);
         float handicap;
         strm >> handicap;
+        has_handicap = (handicap > 0.0f);
         m_state.set_handicap((int)handicap);
     }
 
@@ -201,41 +200,48 @@ void SGFTree::populate_states(void) {
     }
 
     // Verify Aya results consistency
+    // We don't really expect to find GN with W+R/B+R in real games,
+    // and even if we don't this shouldn't hurt.
     it = m_properties.find("GN");
     if (it != m_properties.end()) {
         std::string result = it->second;
         if (boost::algorithm::starts_with(result, "W+R")) {
             if (m_winner == FastBoard::BLACK) {
                 m_winner = FastBoard::INVAL;
-                std::cerr << "s";
             }
         } else if (boost::algorithm::starts_with(result, "B+R")) {
             if (m_winner == FastBoard::WHITE) {
                 m_winner = FastBoard::INVAL;
-                std::cerr << "s";
             }
         }
     }
 
-    // handicap stone
-    std::pair<PropertyMap::iterator, 
-              PropertyMap::iterator> abrange = m_properties.equal_range("AB");
-    for (it = abrange.first; it != abrange.second; ++it) {
-        std::string move = it->second;      
+    // handicap stones
+    auto prop_pair_ab = m_properties.equal_range("AB");
+    // Do we have a handicap specified but no handicap stones placed in
+    // the same node? Then the SGF file is corrupt. Let's see if we can find
+    // them in the next node, which is a common bug in some Go apps.
+    if (has_handicap && prop_pair_ab.first == prop_pair_ab.second) {
+        if (!m_children.empty()) {
+            auto& successor = m_children[0];
+            prop_pair_ab = successor.m_properties.equal_range("AB");
+        }
+    }
+    // Loop through the stone list and apply
+    for (auto it = prop_pair_ab.first; it != prop_pair_ab.second; ++it) {
+        auto move = it->second;
         int vtx = string_to_vertex(move);
-        apply_move(FastBoard::BLACK, vtx);                        
-    }            
-    
-    //XXX:count handicap stones
-    
-    std::pair<PropertyMap::iterator, 
-              PropertyMap::iterator> awrange = m_properties.equal_range("AW");
-    for (it = awrange.first; it != awrange.second; ++it) {
-        std::string move = it->second;      
+        apply_move(FastBoard::BLACK, vtx);
+    }
+
+    // XXX: count handicap stones
+    const auto& prop_pair_aw = m_properties.equal_range("AW");
+    for (auto it = prop_pair_aw.first; it != prop_pair_aw.second; ++it) {
+        auto move = it->second;
         int vtx = string_to_vertex(move);
-        apply_move(FastBoard::WHITE, vtx);                
-    }                 
-    
+        apply_move(FastBoard::WHITE, vtx);
+    }
+
     it = m_properties.find("PL");
     if (it != m_properties.end()) {
         std::string who = it->second;
@@ -243,46 +249,53 @@ void SGFTree::populate_states(void) {
             m_state.set_to_move(FastBoard::WHITE);
         } else if (who == "B") {
             m_state.set_to_move(FastBoard::BLACK);
-        }        
-    }     
-    
+        }
+    }
+
     // now for all children play out the moves
-    std::vector<SGFTree>::iterator stateit;
-    
-    for (stateit = m_children.begin(); stateit != m_children.end(); ++stateit) {
+    for (auto& child_state : m_children) {
         // propagate state
-        stateit->copy_state(*this);
+        child_state.copy_state(*this);
 
         // XXX: maybe move this to the recursive call
         // get move for side to move
-        int move = stateit->get_move(m_state.get_to_move());
-
+        int move = child_state.get_move(m_state.get_to_move());
         if (move != EOT) {
-            stateit->apply_move(move);
+            child_state.apply_move(move);
         }
-        stateit->populate_states();
+
+        child_state.populate_states();
     }
 }
 
-void SGFTree::copy_state(SGFTree & tree) {
+void SGFTree::copy_state(const SGFTree& tree) {
     m_initialized = tree.m_initialized;
     m_state = tree.m_state;
 }
 
-void SGFTree::apply_move(int color, int move) {      
-    if (move != FastBoard::PASS && m_state.board.get_square(move) != FastBoard::EMPTY) {
-        throw std::runtime_error("Illegal move");
+void SGFTree::apply_move(int color, int move) {
+    if (move != FastBoard::PASS && move != FastBoard::RESIGN) {
+        int curr_sq = m_state.board.get_square(move);
+        if (curr_sq == !color || curr_sq == FastBoard::INVAL) {
+            throw std::runtime_error("Illegal move");
+        }
+        // Playing on an occupied square is legal in SGF setup,
+        // but we can't really handle it. So just ignore and hope that works.
+        if (curr_sq == color) {
+            return;
+        }
+        assert(curr_sq == FastBoard::EMPTY);
     }
-    m_state.play_move(color, move);    
+    m_state.play_move(color, move);
 }
 
-void SGFTree::apply_move(int move) {  
+void SGFTree::apply_move(int move) {
     int color = m_state.get_to_move();
-    apply_move(color, move);    
+    apply_move(color, move);
 }
 
 void SGFTree::add_property(std::string property, std::string value) {
-    m_properties.insert(std::make_pair(property, value));
+    m_properties.emplace(property, value);
 }
 
 SGFTree * SGFTree::add_child() {
@@ -294,44 +307,44 @@ SGFTree * SGFTree::add_child() {
     return &(m_children.back());
 }
 
-int SGFTree::string_to_vertex(std::string movestring) {
+int SGFTree::string_to_vertex(const std::string& movestring) const {
     if (movestring.size() == 0) {
         return FastBoard::PASS;
     }
-    
+
     if (m_state.board.get_boardsize() <= 19) {
         if (movestring == "tt") {
             return FastBoard::PASS;
         }
     }
-    
+
     int bsize = m_state.board.get_boardsize();
-    
+
     char c1 = movestring[0];
     char c2 = movestring[1];
-    
+
     int cc1;
     int cc2;
 
     if (c1 >= 'A' && c1 <= 'Z') {
-        cc1 = 26 + c1 - 'A';        
+        cc1 = 26 + c1 - 'A';
     } else {
-        cc1 = c1 - 'a';     
-    }        
+        cc1 = c1 - 'a';
+    }
     if (c2 >= 'A' && c2 <= 'Z') {
         cc2 = bsize - 26 - (c2 - 'A') - 1;
     } else {
         cc2 = bsize - (c2 - 'a') - 1;
     }
-    
+
     // catch illegal SGF
     if (cc1 < 0 || cc1 >= bsize
         || cc2 < 0 || cc2 >= bsize) {
         throw std::runtime_error("Illegal SGF move");
     }
-    
+
     int vtx = m_state.board.get_vertex(cc1, cc2);
-    
+
     return vtx;
 }
 

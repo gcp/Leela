@@ -17,11 +17,11 @@ public:
 
     void play_pass(void);
     void play_move(int color, int vertex);
-    void play_move(int vertex);               
-          
-private:         
-    std::vector<uint64> ko_hash_history;   
-    std::vector<uint64> hash_history;     
+    void play_move(int vertex);
+
+private:
+    std::vector<uint64> ko_hash_history;
+    std::vector<uint64> hash_history;
 };
 
 #endif

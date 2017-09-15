@@ -36,10 +36,10 @@ private:
     void populate_states(void);
     void apply_move(int color, int move);
     void apply_move(int move);
-    void copy_state(SGFTree & state);
-    int string_to_vertex(std::string move);
+    void copy_state(const SGFTree& state);
+    int string_to_vertex(const std::string& move) const;
 
-    typedef std::multimap<std::string, std::string> PropertyMap;
+    using PropertyMap = std::multimap<std::string, std::string>;
 
     bool m_initialized{false};
     KoState m_state;
