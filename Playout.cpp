@@ -138,7 +138,7 @@ void Playout::do_playout_benchmark(GameState & game) {
     ThreadGroup tg(thread_pool);
     for (int i = 0; i < cpus; i++) {
         tg.add_task([iters_per_thread, &game, &len, &board_score,
-                              playoutlen, resign, boardsize]() {
+                              playoutlen, resign]() {
             GameState mygame = game;
             float thread_len = 0.0f;
             float thread_board_score = 0.0f;
