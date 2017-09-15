@@ -23,20 +23,20 @@ debug:
 		leela
 
 clang:
-	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
+	$(MAKE) CC=clang-5.0 CXX=clang++-5.0 \
 		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -flto -mtune=generic -std=c++11 -D_CONSOLE -DNDEBUG' \
 		LDFLAGS='$(LDFLAGS) -flto -fuse-linker-plugin' \
 		leela
 
 asan:
-	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
+	$(MAKE) CC=clang-5.0 CXX=clang++-5.0 \
 		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=address -fno-omit-frame-pointer -O2 -g -fopenmp -std=c++11 -D_CONSOLE -DNDEBUG' \
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address -fopenmp' \
 		leela
 
 ubsan:
-	$(MAKE) CC=clang-4.0 CXX=clang++-4.0 \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=undefined -fno-omit-frame-pointer -O1 -g -fopenmp -std=c++11 -D_CONSOLE -DNDEBUG' \
+	$(MAKE) CC=clang-5.0 CXX=clang++-5.0 \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=undefined -fno-omit-frame-pointer -O2 -g -fopenmp -std=c++11 -D_CONSOLE -DNDEBUG' \
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=undefined -fopenmp' \
 		leela
 
