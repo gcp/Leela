@@ -173,7 +173,6 @@ public:
 
 class MCPolicy {
 public:
-    static void hash_test(void);
     static void adjust_weights(float black_eval, float black_winrate);
     static void mse_from_file(std::string filename);
     static void mse_from_file2(std::string filename);
