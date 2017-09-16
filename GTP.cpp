@@ -18,7 +18,6 @@
 #include "UCTNode.h"
 #include "SGFTree.h"
 #include "AttribScores.h"
-#include "Genetic.h"
 #include "PNSearch.h"
 #include "Network.h"
 #include "Book.h"

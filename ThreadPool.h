@@ -24,6 +24,7 @@
     distribution.
 */
 
+#include <cstddef>
 #include <vector>
 #include <thread>
 #include <queue>
@@ -39,7 +40,7 @@ class ThreadPool {
 public:
     ThreadPool() = default;
     ~ThreadPool();
-    void initialize(size_t);
+    void initialize(std::size_t);
     template<class F, class... Args>
     auto add_task(F&& f, Args&&... args)
         -> std::future<typename std::result_of<F(Args...)>::type>;
@@ -105,25 +106,21 @@ class ThreadGroup {
 public:
     ThreadGroup(ThreadPool & pool) : m_pool(pool) {};
     template<class F, class... Args>
-    void add_task(F&& f, Args&&... args);
-    void wait_all();
+    void add_task(F&& f, Args&&... args) {
+        m_taskresults.emplace_back(
+            m_pool.add_task(std::forward<F>(f), std::forward<Args>(args)...)
+        );
+    };
+    void wait_all() {
+        for (auto && result: m_taskresults) {
+            result.get();
+        }
+    };
 private:
     ThreadPool & m_pool;
     std::vector<std::future<void>> m_taskresults;
 };
 
-template<class F, class... Args>
-inline void ThreadGroup::add_task(F&& f, Args&&... args) {
-    m_taskresults.emplace_back(
-        m_pool.add_task(std::forward<F>(f), std::forward<Args>(args)...)
-    );
-}
-
-inline void ThreadGroup::wait_all() {
-    for (auto && result: m_taskresults) {
-        result.get();
-    }
-}
 }
 
 #endif

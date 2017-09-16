@@ -12,7 +12,6 @@
 #include "Zobrist.h"
 #include "AttribScores.h"
 #include "MCOTable.h"
-#include "Genetic.h"
 #include "GTP.h"
 #include "MCPolicy.h"
 

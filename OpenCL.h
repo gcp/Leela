@@ -49,7 +49,7 @@ class OpenCL_Network {
 public:
     using event_callback =  void (CL_CALLBACK *) (cl_event, cl_int, void *);
 
-    template <unsigned long M, unsigned long V>
+    template <size_t M, size_t V>
     void push_batchnorm(unsigned int channel_size,
                         const std::array<float, M> & means,
                         const std::array<float, V> & variances,
@@ -64,7 +64,7 @@ public:
         m_layers[layer].filter_size = channel_size;
     }
 
-    template <unsigned long W, unsigned long B>
+    template <size_t W, size_t B>
     void push_convolve(unsigned int filter_size,
                        const std::array<float, W> & weights,
                        const std::array<float, B> & biases) {
@@ -76,7 +76,7 @@ public:
         m_layers[layer].channels = W / (B * filter_size * filter_size);
     }
 
-    template <unsigned long W, unsigned long B>
+    template <size_t W, size_t B>
     void push_innerproduct(const std::array<float, W> & weights,
                            const std::array<float, B> & biases) {
         size_t layer = get_layer_count();
@@ -95,7 +95,7 @@ public:
                  event_callback cb, void * data);
 
 private:
-    template <unsigned long W>
+    template <size_t W>
     void push_weights(size_t layer, const std::array<float, W> & weights) {
         add_weights(layer, W, weights.data());
     }
