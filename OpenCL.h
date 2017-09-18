@@ -36,7 +36,6 @@ private:
     cl::Kernel m_merge_kernel;
     cl::Kernel m_batchnorm_kernel;
     cl::Kernel m_innerproduct_kernel;
-    cl::Event m_complete_event;
     cl::Buffer m_inBuffer;
     cl::Buffer m_tmpBuffer;
     cl::Buffer m_mergeBuffer;

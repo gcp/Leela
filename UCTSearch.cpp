@@ -728,9 +728,6 @@ bool UCTSearch::playout_limit_reached() {
 }
 
 void UCTWorker::operator()() {
-#ifdef USE_OPENCL
-    opencl.thread_init();
-#endif
     do {
         KoState currstate = m_rootstate;
         m_search->play_simulation(currstate, m_root);
@@ -773,9 +770,6 @@ int UCTSearch::think(int color, passflag_t passflag) {
     // Start counting time for us
     m_rootstate.start_clock(color);
 
-#ifdef USE_OPENCL
-    opencl.thread_init();
-#endif
     // set side to move
     m_rootstate.board.set_to_move(color);
 
