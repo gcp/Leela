@@ -851,7 +851,13 @@ void OpenCL::initialize(void) {
     myprintf("Selected device: %s\n", trim(best_device.getInfo<CL_DEVICE_NAME>()).c_str());
     myprintf("with OpenCL %2.1f capability\n", best_version);
 
-    cl::Context context(best_device);
+    cl::Context context;
+    try {
+        context = cl::Context(best_device);
+    } catch (const cl::Error &e) {
+        myprintf("Error creating OpenCL context: %s: %d", e.what(), e.err());
+        return;
+    }
     cl::Context::setDefault(context);
     cl::Device::setDefault(best_device);
 
