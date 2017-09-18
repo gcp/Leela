@@ -123,7 +123,7 @@ PNSearch::status_t PNSearch::check_group(int groupid) {
 }
 
 std::string PNSearch::get_pv(KoState * state, PNNode * node) {    
-    std::string res("");    
+    std::string res;
 
     PNNode * oldnode = NULL;
     PNNode * critical = node;
