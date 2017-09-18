@@ -671,8 +671,11 @@ std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
     // This breaks best probility = first in tree assumption
     parent.sort_root_children(state.get_to_move());
 
+    LOCK(parent.get_mutex(), lock);
     UCTNode * bestchild = parent.get_first_child();
     int bestmove = bestchild->get_move();
+    lock.unlock();
+
     std::string tmp = state.move_to_text(bestmove);
 
     std::string res(tmp);
@@ -684,7 +687,7 @@ std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
     res.append(next);
 
     // Resort according to move probability
-    LOCK(parent.get_mutex(), lock);
+    lock.lock();
     parent.sort_children();
 
     return res;
