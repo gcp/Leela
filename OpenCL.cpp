@@ -457,7 +457,7 @@ std::atomic<int> * OpenCL::get_thread_results_outstanding() {
     return &opencl_thread_data.m_results_outstanding;
 }
 
-void OpenCL::thread_init() {
+void OpenCL::ensure_thread_initialized() {
     if (!opencl_thread_data.m_is_initialized) {
         // Make kernels
         opencl_thread_data.m_convolve3_kernel = cl::Kernel(m_program, "convolve3");
@@ -494,6 +494,7 @@ void OpenCL_Network::forward(std::vector<float>& input,
     constexpr int height = 19;
     constexpr size_t one_plane = width * height * sizeof(float);
 
+    opencl.ensure_thread_initialized();
     opencl_thread_data.m_results_outstanding.fetch_add(1, std::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
@@ -662,8 +663,9 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
                                    cl::NDRange(channels, outputs, rowTiles),
                                    cl::NDRange(channelGroup, outputGroup, rowGroup));
     } catch (const cl::Error &e) {
-        myprintf("Error in convolve: %s: %d\n", e.what(), e.err());
-        return;
+        std::cerr << "Error in convolve: " << e.what() << ": "
+	        << e.err() << std::endl;
+        throw;
     }
 
     cl::Kernel & merge_kernel = opencl_thread_data.m_merge_kernel;
@@ -678,8 +680,9 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
                                    cl::NDRange(outputs, boardsize),
                                    cl::NDRange(std::min(8, outputs), 19));
     } catch (const cl::Error &e) {
-        myprintf("Error in merge: %s: %d\n", e.what(), e.err());
-        return;
+        std::cerr << "Error in merge: " << e.what() << ": "
+	        << e.err() << std::endl;
+        throw;
     }
 }
 
@@ -710,7 +713,7 @@ void OpenCL_Network::batchnorm(int outputs,
     } catch (const cl::Error &e) {
         std::cerr << "Error in batchnorm: " << e.what() << ": "
             << e.err() << std::endl;
-        return;
+        throw;
     }
 }
 
@@ -736,7 +739,7 @@ void OpenCL_Network::innerproduct(int inputs,
     } catch (const cl::Error &e) {
         std::cerr << "Error in innerproduct: " << e.what() << ": "
             << e.err() << std::endl;
-        return;
+        throw;
     }
 }
 
@@ -764,7 +767,7 @@ void OpenCL::initialize(void) {
         cl::Platform::get(&platforms);
     } catch (const cl::Error &e) {
         myprintf("OpenCL: %s\n", e.what());
-        return;
+        throw;
     }
 
     float best_version = 0.0f;
@@ -799,7 +802,7 @@ void OpenCL::initialize(void) {
             myprintf("Error getting device(s): %s: %d\n", e.what(), e.err());
             devices.clear();
         }
-        for (auto &d : devices) {
+        for (auto& d : devices) {
             myprintf("Device ID:     %d\n", id);
             myprintf("Device name:   %s\n",
                      trim(d.getInfo<CL_DEVICE_NAME>()).c_str());
@@ -843,7 +846,7 @@ void OpenCL::initialize(void) {
     }
 
     if (!found_device) {
-        return;
+        throw std::runtime_error("No suitable OpenCL device found.");
     }
 
     cl::Platform::setDefault(best_platform);
@@ -856,7 +859,7 @@ void OpenCL::initialize(void) {
         context = cl::Context(best_device);
     } catch (const cl::Error &e) {
         myprintf("Error creating OpenCL context: %s: %d", e.what(), e.err());
-        return;
+        throw;
     }
     cl::Context::setDefault(context);
     cl::Device::setDefault(best_device);
@@ -873,18 +876,18 @@ void OpenCL::initialize(void) {
                                 + sourceCode_utility);
     } catch (const cl::Error &e) {
         myprintf("Error getting kernels: %s: %d", e.what(), e.err());
-        return;
+        throw;
     }
     // Build program for these specific devices
     try {
         m_program.build("-cl-mad-enable -cl-fast-relaxed-math -cl-no-signed-zeros -cl-denorms-are-zero");
     } catch (const cl::Error&) {
-        myprintf("Error building: %s\n",
-                  m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault()).c_str());
-        return;
+        myprintf("Error building kernels: %s\n",
+                    m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault()).c_str());
+        throw;
     }
 
-    thread_init();
+    ensure_thread_initialized();
 
     m_wavefront_size =
         opencl_thread_data.m_convolve3_kernel.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(
@@ -896,7 +899,7 @@ void OpenCL::initialize(void) {
 
     myprintf("Max workgroup size: %d\n", m_max_workgroup_size);
     myprintf("Max workgroup dimensions: ");
-    for (size_t d : m_max_workgroup_dims) {
+    for (auto d : m_max_workgroup_dims) {
         myprintf("%d ", d);
     }
     myprintf("\n");

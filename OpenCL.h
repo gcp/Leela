@@ -114,7 +114,7 @@ class OpenCL {
     friend class OpenCL_Network;
 public:
     void initialize();
-    void thread_init(void);
+    void ensure_thread_initialized(void);
 
     std::string get_device_name();
     bool thread_can_issue();

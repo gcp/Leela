@@ -699,7 +699,6 @@ float Network::get_value_internal(
     }
 #ifdef USE_OPENCL
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
-    opencl.thread_init();
     opencl_value_net.forward(input_data, output_data, nullptr, nullptr);
     // Sigmoid
     float winrate_sig = (1.0f + std::tanh(output_data[0])) / 2.0f;
@@ -774,7 +773,6 @@ Network::Netresult Network::get_scored_moves_internal(
     }
 #ifdef USE_OPENCL
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
-    opencl.thread_init();
     opencl_policy_net.forward(input_data, output_data, nullptr, nullptr);
     softmax(output_data, softmax_data, cfg_softmax_temp);
     std::vector<float>& outputs = softmax_data;
