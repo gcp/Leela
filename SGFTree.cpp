@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <memory>
+#include <ctime>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -402,8 +403,13 @@ std::string SGFTree::state_to_string(GameState * pstate, int compcolor) {
 
     float komi = state->get_komi();
     int size = state->board.get_boardsize();
+    time_t now;
+    time(&now);
+    char timestr[sizeof "2017-10-16"];
+    strftime(timestr, sizeof timestr, "%F", localtime(&now));
 
     header.append("(;GM[1]FF[4]RU[Chinese]");
+    header.append("DT[" + std::string(timestr) + "]");
     header.append("SZ[" + std::to_string(size) + "]");
     header.append("KM[" + str(boost::format("%.1f") % komi) + "]");
     if (compcolor == FastBoard::WHITE) {
