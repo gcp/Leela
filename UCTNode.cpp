@@ -313,7 +313,7 @@ void UCTNode::link_nodelist(std::atomic<int> & nodecount,
     m_has_children = true;
 }
 
-void UCTNode::run_value_net(FastState & state) {
+void UCTNode::run_value_net(GameState & state) {
     // check whether somebody beat us to it (atomic)
     if (get_evalcount()) {
         return;

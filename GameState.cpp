@@ -55,7 +55,7 @@ bool GameState::undo_move(void) {
         //game_history.pop_back();
 
         // this is not so nice, but it should work
-        KoState & f = *this; 
+        KoState & f = *this;
         f = game_history[m_movenum];
 
         // This also restores hashes as they're part of state

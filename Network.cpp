@@ -144,7 +144,7 @@ Network * Network::get_Network(void) {
     return s_Net;
 }
 
-void Network::benchmark(FastState * state) {
+void Network::benchmark(GameState * state) {
     {
         // Policy
         int BENCH_AMOUNT = 2000;
@@ -181,7 +181,7 @@ void Network::benchmark(FastState * state) {
         ThreadGroup tg(thread_pool);
         for (int i = 0; i < cpus; i++) {
             tg.add_task([iters_per_thread, state]() {
-                FastState mystate = *state;
+                GameState mystate = *state;
                 for (int loop = 0; loop < iters_per_thread; loop++) {
                     auto vec = get_value(&mystate, Ensemble::RANDOM_ROTATION);
                 }
@@ -587,7 +587,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
 }
 #endif
 
-float Network::get_value(FastState * state, Ensemble ensemble) {
+float Network::get_value(GameState * state, Ensemble ensemble) {
     if (state->board.get_boardsize() != 19) {
         assert(false);
         return 0.5f;
@@ -1045,163 +1045,46 @@ void Network::gather_features_policy(FastState * state, NNPlanes & planes,
     }
 }
 
-void Network::gather_features_value(FastState * state, NNPlanes & planes) {
-    planes.resize(32);
-    BoardPlane& empt_color   = planes[0];
-    BoardPlane& move_color   = planes[1];
-    BoardPlane& othr_color   = planes[2];
-    BoardPlane& libs_1       = planes[3];
-    BoardPlane& libs_2       = planes[4];
-    BoardPlane& libs_3       = planes[5];
-    BoardPlane& libs_4       = planes[6];
-    BoardPlane& libs_5       = planes[7];
-    BoardPlane& libs_6p      = planes[8];
-    BoardPlane& libs_1_e     = planes[9];
-    BoardPlane& libs_2_e     = planes[10];
-    BoardPlane& libs_3_e     = planes[11];
-    BoardPlane& libs_4_e     = planes[12];
-    BoardPlane& libs_5_e     = planes[13];
-    BoardPlane& libs_6p_e    = planes[14];
-    BoardPlane& after_1      = planes[15];
-    BoardPlane& after_2      = planes[16];
-    BoardPlane& after_3      = planes[17];
-    BoardPlane& after_4      = planes[18];
-    BoardPlane& after_5      = planes[19];
-    BoardPlane& after_6p     = planes[20];
-    BoardPlane& after_1_e    = planes[21];
-    BoardPlane& after_2_e    = planes[22];
-    BoardPlane& after_3_e    = planes[23];
-    BoardPlane& after_4_e    = planes[24];
-    BoardPlane& after_5_e    = planes[25];
-    BoardPlane& after_6p_e   = planes[26];
-    BoardPlane& ladder       = planes[27];
-    BoardPlane& ladder_win   = planes[28];
-    BoardPlane& has_komi     = planes[29];
-    BoardPlane& line_3       = planes[30];
-    BoardPlane& komove       = planes[31];
+void Network::gather_features_value(GameState * state, NNPlanes & planes) {
+    planes.resize(18);
+    const size_t our_offset   = 0;
+    const size_t their_offset = 8;
+    BoardPlane& black_to_move  = planes[16];
+    BoardPlane& white_to_move  = planes[17];
 
-    bool white_has_komi = true;
-    if (std::fabs(state->get_komi()) <= 0.75f) {
-        white_has_komi = false;
+    bool whites_move = state->get_to_move() == FastBoard::WHITE;
+    if (whites_move) {
+        white_to_move.set();
+    } else {
+        black_to_move.set();
     }
 
-    int tomove = state->get_to_move();
-    // collect white, black occupation planes
-    for (int j = 0; j < 19; j++) {
-        for(int i = 0; i < 19; i++) {
-            int vtx = state->board.get_vertex(i, j);
-            FastBoard::square_t color =
-                state->board.get_square(vtx);
-            int idx = j * 19 + i;
-            if (i == 2 || i == 16 || j == 2 || j == 16) {
-                line_3[idx] = true;
-            }
-            if (color != FastBoard::EMPTY) {
-                // White gets extra points in scoring
-                if (color == FastBoard::WHITE && white_has_komi) {
-                    has_komi[idx] = true;
-                }
-                if (color == tomove) {
-                    move_color[idx] = true;
-                } else {
-                    othr_color[idx] = true;
-                }
-                int rlibs = state->board.count_rliberties(vtx);
-                if (rlibs == 1) {
+    for (int h = 0; h < 8; h++) {
+        int tomove = state->get_to_move();
+        // collect white, black occupation planes
+        for (int j = 0; j < 19; j++) {
+            for(int i = 0; i < 19; i++) {
+                int vtx = state->board.get_vertex(i, j);
+                FastBoard::square_t color =
+                    state->board.get_square(vtx);
+                int idx = j * 19 + i;
+                if (color != FastBoard::EMPTY) {
                     if (color == tomove) {
-                        libs_1[idx] = true;
+                        planes[our_offset + h][idx] = true;
                     } else {
-                        libs_1_e[idx] = true;
+                        planes[their_offset + h][idx] = true;
                     }
-                } else if (rlibs == 2) {
-                    if (color == tomove) {
-                       libs_2[idx] = true;
-                    } else {
-                        libs_2_e[idx] = true;
-                    }
-                } else if (rlibs == 3) {
-                    if (color == tomove) {
-                        libs_3[idx] = true;
-                    } else {
-                        libs_3_e[idx] = true;
-                    }
-                } else if (rlibs == 4) {
-                    if (color == tomove) {
-                        libs_4[idx] = true;
-                    } else {
-                        libs_4_e[idx] = true;
-                    }
-                } else if (rlibs == 5) {
-                    if (color == tomove) {
-                        libs_5[idx] = true;
-                    } else {
-                        libs_5_e[idx] = true;
-                    }
-                }  else if (rlibs >= 6) {
-                    if (color == tomove) {
-                        libs_6p[idx] = true;
-                    } else {
-                        libs_6p_e[idx] = true;
-                    }
-                }
-            } else {
-                empt_color[idx] = true;
-
-                std::pair<int, int> p =
-                    state->board.after_liberties(tomove, vtx);
-                int al = p.first;
-                if (al == 1) {
-                    after_1[idx] = true;
-                } else if (al == 2) {
-                    after_2[idx] = true;
-                } else if (al == 3) {
-                    after_3[idx] = true;
-                } else if (al == 4) {
-                    after_4[idx] = true;
-                } else if (al == 5) {
-                    after_5[idx] = true;
-                } else if (al >= 6) {
-                    after_6p[idx] = true;
-                }
-                int at = p.second;
-                if (at == 1) {
-                    after_1_e[idx] = true;
-                } else if (at == 2) {
-                    after_2_e[idx] = true;
-                } else if (at == 3) {
-                    after_3_e[idx] = true;
-                } else if (at == 4) {
-                    after_4_e[idx] = true;
-                } else if (at == 5) {
-                    after_5_e[idx] = true;
-                } else if (at >= 6) {
-                    after_6p_e[idx] = true;
-                }
-
-                int ss = state->board.saving_size(tomove, vtx);
-                int ae = state->board.count_pliberties(vtx);
-                if (ae == 2) {
-                    if (ss > 0) {
-                        bool ll = state->board.check_losing_ladder(tomove, vtx);
-                        ladder[idx] = ll;
-                    }
-                }
-                if (state->board.check_winning_ladder(tomove, vtx)) {
-                    ladder_win[idx] = true;
                 }
             }
         }
-    }
-
-    if (state->get_komove() > 0) {
-        std::pair<int, int> kosq = state->board.get_xy(state->get_komove());
-        int idx = kosq.second * 19 + kosq.first;
-        komove[idx] = true;
+        if (!state->undo_move()) {
+            break;
+        }
     }
 }
 
 void Network::gather_traindata(std::string filename, TrainVector& data) {
-    std::vector<std::string> games = SGFParser::chop_all(filename);
+    auto games = SGFParser::chop_all(filename);
     int gametotal = games.size();
     int gamecount = 0;
 
@@ -1209,10 +1092,8 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
     size_t test_pos = 0;
 
     myprintf("Total games in file: %d\n", gametotal);
-    myprintf("Shuffling...\n");
-    std::random_shuffle(games.begin(), games.end());
 
-    while (gamecount < gametotal) {
+    while (gamecount < 2 * gametotal) {
         std::unique_ptr<SGFTree> sgftree(new SGFTree);
 
         try {
@@ -1336,6 +1217,7 @@ skipnext:
     std::cout << test_pos << " testing positions." << std::endl;
 
     myprintf("Gathering pass done.\n");
+    exit(0);
 }
 
 int Network::rev_rotate_nn_idx(const int vertex, int symmetry) {

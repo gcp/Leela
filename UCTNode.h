@@ -32,7 +32,7 @@ public:
                     FastState & state,
                     Network::Netresult & raw_netlist,
                     bool all_symmetries);
-    void run_value_net(FastState & state);
+    void run_value_net(GameState & state);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
     void invalidate();

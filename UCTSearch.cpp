@@ -76,7 +76,7 @@ void UCTSearch::set_use_nets(bool flag) {
     }
 }
 
-Playout UCTSearch::play_simulation(KoState & currstate, UCTNode* const node) {
+Playout UCTSearch::play_simulation(GameState & currstate, UCTNode* const node) {
     const int color = currstate.get_to_move();
     const uint64 hash = currstate.board.get_hash();
     const float komi = currstate.get_komi();
@@ -729,7 +729,7 @@ bool UCTSearch::playout_limit_reached() {
 
 void UCTWorker::operator()() {
     do {
-        KoState currstate = m_rootstate;
+        GameState currstate = m_rootstate;
         m_search->play_simulation(currstate, m_root);
         m_search->increment_playouts();
     } while(m_search->is_running() && !m_search->playout_limit_reached());
@@ -844,7 +844,7 @@ int UCTSearch::think(int color, passflag_t passflag) {
     bool keeprunning = true;
     int last_update = 0;
     do {
-        KoState currstate = m_rootstate;
+        GameState currstate = m_rootstate;
 
         play_simulation(currstate, &m_root);
         increment_playouts();
@@ -978,7 +978,7 @@ void UCTSearch::ponder() {
         tg.add_task(UCTWorker(m_rootstate, this, &m_root));
     }
     do {
-        KoState currstate = m_rootstate;
+        GameState currstate = m_rootstate;
         play_simulation(currstate, &m_root);
         increment_playouts();
     } while(!Utils::input_pending() && (!m_hasrunflag || (*m_runflag)));

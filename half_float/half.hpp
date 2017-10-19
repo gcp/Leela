@@ -197,7 +197,16 @@
 #endif
 
 #ifdef __CUDA_ARCH__
-#include "caffe/util/gpu_math_functions.cuh"
+  #include "caffe/util/half.cuh"
+  #include "caffe/util/gpu_math_functions.cuh"
+#endif
+
+#if !defined(CPU_ONLY) && defined(__CUDA_ARCH__)
+  #define CAFFE_UTIL_HD __host__ __device__
+  #define CAFFE_UTIL_IHD __inline__ __host__ __device__
+#else
+  #define CAFFE_UTIL_HD
+  #define CAFFE_UTIL_IHD inline
 #endif
 
 /// Default rounding mode.
@@ -956,7 +965,7 @@ namespace half_float
 		friend struct std::hash<half>;
 	#endif
 
-	public:
+   public:
 		/// Default constructor.
 		/// This initializes the half to 0. Although this does not match the builtin types' default-initialization semantics
 		/// and may be less efficient than no initialization, it is needed to provide proper value-initialization semantics.
@@ -964,21 +973,16 @@ namespace half_float
 		CAFFE_UTIL_HD
 		half() : data_() {}
 
+    template<typename H>
     CAFFE_UTIL_HD
-    __half geth() const {
-      __half h;
-      h.x = data_;
-      return h;
+    const H* gethp() const {
+      return reinterpret_cast<const H*>(&data_);
     }
 
+    template<typename H>
     CAFFE_UTIL_HD
-    const __half* gethp() const {
-      return reinterpret_cast<const __half*>(this);
-    }
-
-    CAFFE_UTIL_HD
-    __half* gethp() {
-      return reinterpret_cast<__half*>(this);
+    H* gethp() {
+      return reinterpret_cast<H*>(&data_);
     }
 
     CAFFE_UTIL_HD
@@ -995,8 +999,6 @@ namespace half_float
   	/// Copy constructor.
 		/// \tparam T type of concrete half expression
 		/// \param rhs half expression to copy from
-//		half(detail::expr rhs) : data_(detail::float2half<round_style>(rhs)) {}
-
     CAFFE_UTIL_HD
 		half(detail::expr rhs) {
       assign(rhs);
@@ -1004,9 +1006,6 @@ namespace half_float
 
 		/// Conversion constructor.
 		/// \param rhs float to convert
-//		template<typename T>
-//		half(const T& rhs) : data_(detail::float2half<round_style>((float)rhs)) {}
-
     template<typename T>
     CAFFE_UTIL_HD
     half(const T& rhs) {
@@ -1030,8 +1029,8 @@ namespace half_float
 //		operator float() const { return detail::half2float(data_); }
     CAFFE_UTIL_HD operator float() const {
 #ifdef __CUDA_ARCH__
-      __half h;
-      h.x = data_;
+      ::half h;
+      h.setx(data_);
       return __half2float(h);
 #else
       return detail::half2float(data_);
@@ -1040,7 +1039,7 @@ namespace half_float
 
     CAFFE_UTIL_HD void assign(float rhs) {
 #ifdef __CUDA_ARCH__
-      data_ = float2half_clip(rhs).x;
+      data_ = float2half_clip(rhs).x();
 #else
       data_ = detail::float2half<round_style>(rhs);
 #endif
@@ -1117,9 +1116,9 @@ namespace half_float
       float after = static_cast<float>(*this);
       if (before == after && before != 0.f && rhs != 0.f) {
 #ifdef __CUDA_ARCH__
-        CUPRINTF("GPU PRECISION LOSS: %g -= %g\n", before, rhs);
+        printf("GPU PRECISION LOSS: %g -= %g\n", before, rhs);
 #else
-        CUPRINTF("CPU PRECISION LOSS: %g -= %g\n", before, rhs);
+        printf("CPU PRECISION LOSS: %g -= %g\n", before, rhs);
 #endif
       }
 #else

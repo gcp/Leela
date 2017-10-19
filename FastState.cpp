@@ -365,7 +365,8 @@ void FastState::play_move(int color, int vertex) {
         int kosq = board.update_board(color, vertex, capture);
 
         m_komove = kosq;
-        std::rotate(rbegin(m_lastmove), rbegin(m_lastmove) + 1, rend(m_lastmove));
+        std::rotate(rbegin(m_lastmove), rbegin(m_lastmove) + 1,
+                    rend(m_lastmove));
         m_lastmove[0] = vertex;
         m_last_was_capture = capture;
 
@@ -435,7 +436,8 @@ void FastState::display_state() {
     } else {
         myprintf("White (O) to move");
     }
-    myprintf("    White (O) Prisoners: %d\n", board.get_prisoners(FastBoard::WHITE));
+    myprintf("    White (O) Prisoners: %d\n",
+             board.get_prisoners(FastBoard::WHITE));
 
     board.display_board(get_last_move());
 }

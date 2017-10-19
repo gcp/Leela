@@ -18,6 +18,7 @@ class UCTNode;
 #endif
 
 #include "FastState.h"
+#include "GameState.h"
 
 // Move attributes
 class Network {
@@ -31,20 +32,17 @@ public:
     struct TrainPosition {
         NNPlanes planes;
         PredMoves moves;
-        //float stm_score;
-        //float stm_won;
-        //float stm_score_tanh;
-        //float stm_won_tanh;
+        float stm_won_tanh;
     };
     using TrainVector = std::vector<TrainPosition>;
     using scored_node = std::pair<float, int>;
     using Netresult = std::vector<scored_node>;
 
     static Netresult get_scored_moves(FastState * state,
-                               Ensemble ensemble,
-                               int rotation = -1);
-    static float get_value(FastState *state,
-                    Ensemble ensemble);
+                                      Ensemble ensemble,
+                                      int rotation = -1);
+    static float get_value(GameState *state,
+                           Ensemble ensemble);
     static constexpr int POLICY_CHANNELS = 32;
     static constexpr int VALUE_CHANNELS = 32;
 #ifdef USE_OPENCL
@@ -60,7 +58,7 @@ public:
                             Ensemble ensemble, int rotation = -1);
 #endif
     void initialize();
-    void benchmark(FastState * state);
+    void benchmark(GameState * state);
     static void show_heatmap(FastState * state, Netresult & netres, bool topmoves);
     void autotune_from_file(std::string filename);
     static Network* get_Network(void);
@@ -83,7 +81,7 @@ private:
     void train_network(TrainVector& tv, size_t&, size_t&);
     static void gather_features_policy(FastState * state, NNPlanes & planes,
                                        BoardPlane** ladder = nullptr);
-    static void gather_features_value(FastState * state, NNPlanes & planes);
+    static void gather_features_value(GameState * state, NNPlanes & planes);
     static Network* s_Net;
 };
 
