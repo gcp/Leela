@@ -23,9 +23,8 @@ void FastState::init_game(int size, float komi) {
     m_movenum = 0;
 
     m_komove = 0;
-    m_lastmove = 0;
+    std::fill(begin(m_lastmove), end(m_lastmove), 0);
     m_last_was_capture = false;
-    m_onebutlastmove = m_lastmove;
     m_komi = komi;
     m_handicap = 0;
     m_passes = 0;
@@ -45,9 +44,8 @@ void FastState::reset_game(void) {
     m_handicap = 0;
     m_komove = 0;
 
-    m_lastmove = 0;
+    std::fill(begin(m_lastmove), end(m_lastmove), 0);
     m_last_was_capture = false;
-    m_onebutlastmove = m_lastmove;
 }
 
 void FastState::reset_board(void) {
@@ -174,17 +172,17 @@ int FastState::play_random_move(int color, PolicyTrace * trace) {
     Random * rng = Random::get_Rng();
 
     // Local moves, or tactical ones
-    if (m_lastmove > 0 && m_lastmove < board.m_maxsq) {
-        if (board.get_square(m_lastmove) == !color) {
+    if (get_last_move() > 0 && get_last_move() < board.m_maxsq) {
+        if (board.get_square(get_last_move()) == !color) {
             board.add_global_captures(color, m_komove, moves);
-            board.save_critical_neighbours(color, m_lastmove, m_komove, moves);
+            board.save_critical_neighbours(color, get_last_move(), m_komove, moves);
             if (moves.empty()) {
-                board.add_semeai_moves(color, m_lastmove, m_komove, moves);
+                board.add_semeai_moves(color, get_last_move(), m_komove, moves);
             }
             if (m_last_was_capture || (0.3f > rng->randflt())) {
-                board.add_near_nakade_moves(color, m_lastmove, m_komove, moves);
+                board.add_near_nakade_moves(color, get_last_move(), m_komove, moves);
             }
-            board.add_pattern_moves(color, m_lastmove, m_komove, moves);
+            board.add_pattern_moves(color, get_last_move(), m_komove, moves);
         }
     }
 
@@ -263,17 +261,17 @@ void FastState::generate_trace(int color, PolicyTrace & trace, int move) {
     Random * rng = Random::get_Rng();
 
     // Local moves, or tactical ones
-    if (m_lastmove > 0 && m_lastmove < board.m_maxsq) {
-        if (board.get_square(m_lastmove) == !color) {
+    if (get_last_move() > 0 && get_last_move() < board.m_maxsq) {
+        if (board.get_square(get_last_move()) == !color) {
             board.add_global_captures(color, m_komove, moves);
-            board.save_critical_neighbours(color, m_lastmove, m_komove, moves);
+            board.save_critical_neighbours(color, get_last_move(), m_komove, moves);
             if (moves.empty()) {
-                board.add_semeai_moves(color, m_lastmove, m_komove, moves);
+                board.add_semeai_moves(color, get_last_move(), m_komove, moves);
             }
             if (m_last_was_capture || (0.3f > rng->randflt())) {
-                board.add_near_nakade_moves(color, m_lastmove, m_komove, moves);
+                board.add_near_nakade_moves(color, get_last_move(), m_komove, moves);
             }
-            board.add_pattern_moves(color, m_lastmove, m_komove, moves);
+            board.add_pattern_moves(color, get_last_move(), m_komove, moves);
         }
     }
 
@@ -333,9 +331,9 @@ int FastState::play_move_fast(int vertex) {
         set_passes(0);
     }
 
-    m_onebutlastmove = m_lastmove;
+    std::rotate(rbegin(m_lastmove), rbegin(m_lastmove) + 1, rend(m_lastmove));
+    m_lastmove[0] = vertex;
     m_last_was_capture = capture;
-    m_lastmove = vertex;
     board.m_tomove = !board.m_tomove;
     m_movenum++;
 
@@ -345,9 +343,9 @@ int FastState::play_move_fast(int vertex) {
 void FastState::play_pass(void) {
     m_movenum++;
 
-    m_onebutlastmove = m_lastmove;
+    std::rotate(rbegin(m_lastmove), rbegin(m_lastmove) + 1, rend(m_lastmove));
+    m_lastmove[0] = FastBoard::PASS;
     m_last_was_capture = false;
-    m_lastmove = FastBoard::PASS;
 
     board.hash  ^= 0xABCDABCDABCDABCDULL;
     board.m_tomove = !board.m_tomove;
@@ -367,9 +365,9 @@ void FastState::play_move(int color, int vertex) {
         int kosq = board.update_board(color, vertex, capture);
 
         m_komove = kosq;
-        m_onebutlastmove = m_lastmove;
+        std::rotate(rbegin(m_lastmove), rbegin(m_lastmove) + 1, rend(m_lastmove));
+        m_lastmove[0] = vertex;
         m_last_was_capture = capture;
-        m_lastmove = vertex;
 
         m_movenum++;
 
@@ -388,7 +386,7 @@ void FastState::play_move(int color, int vertex) {
     }
 }
 
-int FastState::get_movenum() {
+int FastState::get_movenum() const {
     return m_movenum;
 }
 
@@ -400,15 +398,15 @@ float FastState::calculate_mc_score(void) {
     return board.final_mc_score(m_komi + m_handicap);
 }
 
-int FastState::get_last_move(void) {
-    return m_lastmove;
+int FastState::get_last_move(void) const {
+    return m_lastmove.front();
 }
 
-int FastState::get_prevlast_move() {
-    return m_onebutlastmove;
+int FastState::get_prevlast_move() const {
+    return m_lastmove[1];
 }
 
-int FastState::get_passes() {
+int FastState::get_passes() const {
     return m_passes;
 }
 
@@ -421,7 +419,7 @@ void FastState::increment_passes() {
     if (m_passes > 4) m_passes = 4;
 }
 
-int FastState::get_to_move() {
+int FastState::get_to_move() const {
     return board.m_tomove;
 }
 
@@ -439,7 +437,7 @@ void FastState::display_state() {
     }
     myprintf("    White (O) Prisoners: %d\n", board.get_prisoners(FastBoard::WHITE));
 
-    board.display_board(m_lastmove);
+    board.display_board(get_last_move());
 }
 
 std::string FastState::move_to_text(int move) {
@@ -559,7 +557,7 @@ float FastState::final_score(float *winrate, bool mark_dead) {
     return workstate.board.area_score(get_komi() + get_handicap());
 }
 
-float FastState::get_komi() {
+float FastState::get_komi() const {
     return m_komi;
 }
 
@@ -567,10 +565,10 @@ void FastState::set_handicap(int hcap) {
     m_handicap = hcap;
 }
 
-int FastState::get_handicap() {
+int FastState::get_handicap() const {
     return m_handicap;
 }
 
-int FastState::get_komove() {
+int FastState::get_komove() const {
     return m_komove;
 }

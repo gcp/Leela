@@ -2,6 +2,8 @@
 #include <cctype>
 #include <string>
 #include <sstream>
+#include <algorithm>
+#include <array>
 
 #include "config.h"
 
@@ -83,7 +85,9 @@ void GameState::play_move(int color, int vertex) {
     } else {
         KoState::play_pass();
         if (vertex == FastBoard::RESIGN) {
-            m_lastmove = vertex;
+            std::rotate(rbegin(m_lastmove), rbegin(m_lastmove) + 1,
+                        rend(m_lastmove));
+            m_lastmove[0] = vertex;
             m_last_was_capture = false;
         }
     }

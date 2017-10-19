@@ -1,42 +1,42 @@
 default:
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -ffast-math -march=native -fopenmp -flto -std=c++11 -DNDEBUG -D_CONSOLE'  \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -ffast-math -march=native -fopenmp -flto -std=c++14 -DNDEBUG -D_CONSOLE'  \
 		LDFLAGS='$(LDFLAGS) -fopenmp -flto -g' \
 		leela
 
 macgcc:
 	$(MAKE) CC=gcc-7 CXX=g++-7 \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -flax-vector-conversions -Wno-deprecated-declarations -ffast-math -march=native -fopenmp -std=c++11 -DNDEBUG -D_CONSOLE'  \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O3 -g -flax-vector-conversions -Wno-deprecated-declarations -ffast-math -march=native -fopenmp -std=c++14 -DNDEBUG -D_CONSOLE'  \
 		LDFLAGS='$(LDFLAGS) -fopenmp -g' \
 		leela
 
 gcc32b:
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -pipe -O2 -g -m32 -std=c++11 -DNDEBUG -D_CONSOLE'  \
+		CXXFLAGS='$(CXXFLAGS) -Wall -pipe -O2 -g -m32 -std=c++14 -DNDEBUG -D_CONSOLE'  \
 		LDFLAGS='$(LDFLAGS) -m32' \
 		leela
 
 debug:
 	$(MAKE) CC=gcc CXX=g++ \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O0 -g -fopenmp -std=c++11 -D_CONSOLE' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -pipe -O0 -g -fopenmp -std=c++14 -D_CONSOLE' \
 		LDFLAGS='$(LDFLAGS) -fopenmp -g' \
 		leela
 
 clang:
 	$(MAKE) CC=clang-5.0 CXX=clang++-5.0 \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -flto -mtune=generic -std=c++11 -D_CONSOLE -DNDEBUG' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -O3 -ffast-math -flto -mtune=generic -std=c++14 -D_CONSOLE -DNDEBUG' \
 		LDFLAGS='$(LDFLAGS) -flto -fuse-linker-plugin' \
 		leela
 
 asan:
 	$(MAKE) CC=clang-5.0 CXX=clang++-5.0 \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=address -fno-omit-frame-pointer -O2 -g -fopenmp -std=c++11 -D_CONSOLE -DNDEBUG' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=address -fno-omit-frame-pointer -O2 -g -fopenmp -std=c++14 -D_CONSOLE -DNDEBUG' \
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=address -fopenmp' \
 		leela
 
 ubsan:
 	$(MAKE) CC=clang-5.0 CXX=clang++-5.0 \
-		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=undefined -fno-omit-frame-pointer -O2 -g -fopenmp -std=c++11 -D_CONSOLE -DNDEBUG' \
+		CXXFLAGS='$(CXXFLAGS) -Wall -Wextra -fsanitize=undefined -fno-omit-frame-pointer -O2 -g -fopenmp -std=c++14 -D_CONSOLE -DNDEBUG' \
 		LDFLAGS='$(LDFLAGS) -g -fsanitize=undefined -fopenmp' \
 		leela
 

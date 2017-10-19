@@ -24,11 +24,11 @@ public:
     void generate_trace(int color, PolicyTrace & trace, int move);
 
     void set_komi(float komi);
-    float get_komi();
+    float get_komi() const;
     void set_handicap(int hcap);
-    int get_handicap();
-    int get_passes();
-    int get_to_move();
+    int get_handicap() const;
+    int get_passes() const;
+    int get_to_move() const;
     void set_to_move(int tomove);
     void set_passes(int val);
     void increment_passes();
@@ -39,10 +39,10 @@ public:
     std::vector<int> final_score_map(bool mark_dead = true);
     std::vector<bool> mark_dead(float *winrate = nullptr);
 
-    int get_movenum();
-    int get_last_move();
-    int get_prevlast_move();
-    int get_komove();
+    int get_movenum() const;
+    int get_last_move() const;
+    int get_prevlast_move() const;
+    int get_komove() const;
     void display_state();
     std::string move_to_text(int move);
 
@@ -53,9 +53,8 @@ public:
     int m_passes;
     int m_komove;
     size_t m_movenum;
-    int m_lastmove;
+    std::array<int, 16> m_lastmove;
     bool m_last_was_capture;
-    int m_onebutlastmove;
 
 protected:
     FastBoard::movelist_t moves;
