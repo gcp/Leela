@@ -1059,6 +1059,8 @@ void Network::gather_features_value(GameState * state, NNPlanes & planes) {
         black_to_move.set();
     }
 
+    // Go back in time, fill history boards
+    size_t backtracks = 0;
     for (int h = 0; h < 8; h++) {
         int tomove = state->get_to_move();
         // collect white, black occupation planes
@@ -1079,7 +1081,14 @@ void Network::gather_features_value(GameState * state, NNPlanes & planes) {
         }
         if (!state->undo_move()) {
             break;
+        } else {
+            backtracks++;
         }
+    }
+
+    // Now go back to present day
+    for (size_t h = 0; h < backtracks; h++) {
+        state->forward_move();
     }
 }
 
@@ -1093,44 +1102,37 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
 
     myprintf("Total games in file: %d\n", gametotal);
 
-    while (gamecount < 2 * gametotal) {
-        std::unique_ptr<SGFTree> sgftree(new SGFTree);
-
+    while (gamecount < 8 * gametotal) {
+        auto sgftree = std::make_unique<SGFTree>();
+        auto rand_idx = Random::get_Rng()->randuint32(gametotal);
         try {
-            sgftree->load_from_string(games[gamecount]);
+            sgftree->load_from_string(games[rand_idx]);
         } catch (...) {
         };
 
-        SGFTree * treewalk = &(*sgftree);
+        auto treewalk = sgftree.get();
         size_t counter = 0;
 
-        size_t movecount = sgftree->count_mainline_moves();
-        std::vector<int> tree_moves = sgftree->get_mainline();
+        auto tree_moves = sgftree->get_mainline();
+        auto state = std::make_unique<GameState>(sgftree->follow_mainline_state());
+        state->rewind();
+
         int who_won = sgftree->get_winner();
-        int handicap = sgftree->get_state()->get_handicap();
-        //float komi = sgftree->get_state()->get_komi();
-        if (handicap) {
-            goto skipnext;
-        }
-        // 5.5, 6.5, 7.5
-        //if (std::abs(komi) > 0.75f && (std::abs(komi) < 5.25f || std::abs(komi) > 7.75f)) {
-        //    goto skipnext;
-        //}
+        bool doloop = true;
+        // Accept all komis and handicaps
+        // But reject no usable result
         if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE) {
             goto skipnext;
         }
+        if (state->board.get_boardsize() != 19) {
+            goto skipnext;
+        }
 
-        while (counter < movecount) {
-            assert(treewalk != NULL);
-            assert(treewalk->get_state() != NULL);
-            if (treewalk->get_state()->board.get_boardsize() != 19)
-                break;
-
-            KoState * state = treewalk->get_state();
+        do {
             int tomove = state->get_to_move();
             int move;
 
-            if (treewalk->get_child(0) != NULL) {
+            if (treewalk->get_child(0) != nullptr) {
                 move = treewalk->get_child(0)->get_move(tomove);
                 if (move == SGFTree::EOT) {
                     break;
@@ -1142,55 +1144,30 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
             assert(move == tree_moves[counter]);
             int this_move = -1;
 
-            std::vector<int> moves = state->generate_moves(tomove);
+            auto moves = state->generate_moves(tomove);
             bool moveseen = false;
-            for(auto it = moves.begin(); it != moves.end(); ++it) {
-                if (*it == move) {
+            for(auto & gen_move : moves) {
+                if (gen_move == move) {
                     if (move != FastBoard::PASS) {
                         // get x y coords for actual move
                         std::pair<int, int> xy = state->board.get_xy(move);
                         this_move = (xy.second * 19) + xy.first;
+                    } else {
+                        this_move = FastBoard::PASS;
                     }
                     moveseen = true;
                 }
             }
 
-            bool has_next_moves = counter + 2 < tree_moves.size();
-            if (!has_next_moves) {
-                goto skipnext;
-            }
-
-            has_next_moves  = tree_moves[counter + 1] != FastBoard::PASS;
-            has_next_moves &= tree_moves[counter + 2] != FastBoard::PASS;
-
-            if (!has_next_moves) {
-                goto skipnext;
-            }
-
-            //int skip = Random::get_Rng()->randfix<8>();
-            if (/*skip == 0*/ 1) {
-                if (moveseen && move != FastBoard::PASS && has_next_moves) {
+            int skip = Random::get_Rng()->randfix<8>();
+            if (skip == 0) {
+                if (moveseen) {
                     TrainPosition position;
-                    //position.stm_won = (tomove == who_won ? 1.0f : 0.0f);
-                    //position.stm_won_tanh = (tomove == who_won ? 1.0f : -1.0f);
-                    //float frac = (float)counter / (float)movecount;
-                    //position.stm_score = (frac * position.stm_won)
-                        //+ ((1.0f - frac) * 0.5f);
-                    //position.stm_score_tanh = (frac * position.stm_won_tanh)
-                        //+ ((1.0f - frac) * 0.0f);
-                    //gather_features_value(state, position.planes);
-                    position.moves[0] = this_move;
-                    // add next 2 moves to position
-                    // we do not check them for legality
-                    int next_move = tree_moves[counter + 1];
-                    int next_next_move = tree_moves[counter + 2];
-                    std::pair<int, int> xy = state->board.get_xy(next_move);
-                    position.moves[1] = (xy.second * 19) + xy.first;
-                    xy = state->board.get_xy(next_next_move);
-                    position.moves[2] = (xy.second * 19) + xy.first;
-                    gather_features_policy(state, position.planes);
-                    data.push_back(position);
-                } else if (move != FastBoard::PASS) {
+                    position.stm_won_tanh = (tomove == who_won ? 1.0f : -1.0f);
+                    position.move = this_move;
+                    gather_features_value(state.get(), position.planes);
+                    data.emplace_back(position);
+                } else {
                     myprintf("Mainline move not found: %d\n", move);
                     goto skipnext;
                 }
@@ -1198,15 +1175,15 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
 
             counter++;
             treewalk = treewalk->get_child(0);
-        }
+        } while (state->forward_move());
 
 skipnext:
         gamecount++;
-        if (gamecount % 100 == 0) {
+        if (gamecount % (8*100) == 0) {
             myprintf("Game %d, %d new positions, %d total\n",
-                     gamecount, data.size(), train_pos + data.size());
+                     gamecount/16, data.size(), train_pos + data.size());
         }
-        if (gamecount % (50000) == 0) {
+        if (gamecount % (250000) == 0) {
             train_network(data, train_pos, test_pos);
         }
     }
@@ -1290,12 +1267,11 @@ void Network::train_network(TrainVector& data,
     std::unique_ptr<caffe::db::Transaction> test_label_txn(test_label_db->NewTransaction());
 
     std::cout << "Shuffling training data...";
-    std::random_shuffle(data.begin(), data.end());
+    std::random_shuffle(begin(data), end(data));
     std::cout << "writing: ";
 
     size_t data_pos = 0;
-    for (auto it = data.begin(); it != data.end(); ++it) {
-        TrainPosition& position = *it;
+    for (auto & position : data) {
         NNPlanes& nnplanes = position.planes;
 
         // train data
@@ -1314,11 +1290,6 @@ void Network::train_network(TrainVector& data,
                 int rot_idx = rotate_nn_idx((int)b, symmetry);
                 tmp[rot_idx] = val;
             }
-            if (p == 0) {
-                assert(tmp[rot_move] == true);
-            } else if (p == 1 || p == 2) {
-                assert(tmp[rot_move] == false);
-            }
             for (size_t b = 0; b < tmp.size(); b++) {
                 buffer[(p * (19 * 19)) + b] = (int)tmp[b];
             }
@@ -1329,21 +1300,19 @@ void Network::train_network(TrainVector& data,
 
         // labels
         caffe::Datum datum_label;
-        datum_label.set_channels(3);
+        datum_label.set_channels(2);
         datum_label.set_height(1);
         datum_label.set_width(1);
 
-        int this_move = rotate_nn_idx(position.moves[0], symmetry);
-        int next_move = rotate_nn_idx(position.moves[1], symmetry);
-        int next_next_move = rotate_nn_idx(position.moves[2], symmetry);
+        int this_move;
+        if (position.move != FastBoard::PASS) {
+            this_move = rotate_nn_idx(position.move, symmetry);
+        } else {
+            this_move = 19 * 19;
+        }
 
         datum_label.add_float_data(this_move);
-        datum_label.add_float_data(next_move);
-        datum_label.add_float_data(next_next_move);
-        //datum_label.add_float_data((float)position.stm_score);
-        //datum_label.add_float_data((float)position.stm_won);
-        //datum_label.add_float_data((float)position.stm_score_tanh);
-        //datum_label.add_float_data((float)position.stm_won_tanh);
+        datum_label.add_float_data((float)position.stm_won_tanh);
         std::string label_out;
         datum_label.SerializeToString(&label_out);
 

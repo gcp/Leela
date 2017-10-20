@@ -28,10 +28,9 @@ public:
     };
     using BoardPlane = std::bitset<19*19>;
     using NNPlanes = std::vector<BoardPlane>;
-    using PredMoves = std::array<int, 3>;
     struct TrainPosition {
         NNPlanes planes;
-        PredMoves moves;
+        int move;
         float stm_won_tanh;
     };
     using TrainVector = std::vector<TrainPosition>;
