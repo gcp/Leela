@@ -26,8 +26,11 @@ public:
 
     void add_property(std::string property, std::string value);
     SGFTree * add_child();
-    SGFTree * get_child(unsigned int count);
+    SGFTree * get_child(size_t count);
     int get_move(int tomove);
+    bool is_initialized() const {
+        return m_initialized;
+    };
     FastBoard::square_t get_winner();
 
     static std::string state_to_string(GameState * state, int compcolor);

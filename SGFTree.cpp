@@ -28,7 +28,7 @@ KoState * SGFTree::get_state(void) {
     return &m_state;
 }
 
-SGFTree * SGFTree::get_child(unsigned int count) {
+SGFTree * SGFTree::get_child(size_t count) {
     if (count < m_children.size()) {
         assert(m_initialized);
         return &(m_children[count]);
@@ -46,18 +46,19 @@ GameState SGFTree::follow_mainline_state(unsigned int movenum) {
     // sets up the game history.
     GameState result(get_state());
 
-    int tomove = result.get_to_move();
-
     for (unsigned int i = 0; i <= movenum && link != nullptr; i++) {
         // root position has no associated move
         if (i != 0) {
-            int move = link->get_move(tomove);
+            int move = link->get_move(result.get_to_move());
             if (move != SGFTree::EOT) {
+                if (move != FastBoard::PASS && move != FastBoard::EMPTY
+                    && result.board.get_square(move) != FastBoard::EMPTY) {
+                    // Fail loading
+                    return result;
+                }
                 result.play_move(move);
-                tomove = !tomove;
             }
         }
-
         link = link->get_child(0);
     }
 
@@ -320,6 +321,9 @@ int SGFTree::string_to_vertex(const std::string& movestring) const {
     }
 
     int bsize = m_state.board.get_boardsize();
+    if (bsize == 0) {
+        throw std::runtime_error("Node has 0 sized board");
+    }
 
     char c1 = movestring[0];
     char c2 = movestring[1];
@@ -380,7 +384,7 @@ std::vector<int> SGFTree::get_mainline() {
     int tomove = link->m_state.get_to_move();
     link = link->get_child(0);
 
-    while (link != NULL) {
+    while (link != nullptr && link->is_initialized()) {
         int move = link->get_move(tomove);
         if (move != SGFTree::EOT) {
             moves.push_back(move);
