@@ -1118,7 +1118,6 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
         state->rewind();
 
         int who_won = sgftree->get_winner();
-        bool doloop = true;
         // Accept all komis and handicaps
         // But reject no usable result
         if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE) {

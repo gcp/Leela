@@ -22,6 +22,7 @@ private:
     unsigned int filter_size{0};
     bool is_batchnorm{false};
     bool is_innerproduct{false};
+    bool is_splitter{false};
     std::vector<cl::Buffer> weights;
 };
 
@@ -31,6 +32,7 @@ class ThreadData {
 private:
     bool m_is_initialized{false};
     cl::CommandQueue m_commandqueue;
+    cl::Kernel m_convolve1_kernel;
     cl::Kernel m_convolve3_kernel;
     cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;
@@ -84,6 +86,19 @@ public:
         m_layers[layer].is_innerproduct = true;
         m_layers[layer].channels = W / B;
         m_layers[layer].outputs = B;
+    }
+
+    void push_split(int channels) {
+        size_t layer = get_layer_count();
+        push_noweight_layer(layer);
+        m_layers[layer].is_splitter = true;
+        m_layers[layer].channels = channels;
+    }
+
+    void push_noweight_layer(size_t layer) {
+        if (layer >= m_layers.size()) {
+            m_layers.push_back(Layer());
+        }
     }
 
     size_t get_layer_count() {

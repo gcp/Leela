@@ -1,7 +1,7 @@
 # 123645638 training positions.
 #   5151909 testing positions.
-#  482 990 x 256
-#   20 125 x 256
+#  482 990 x 32
+#   20 125 x 32
 # The train/test net protocol buffer definition
 net: "train-test.prototxt"
 
@@ -13,21 +13,19 @@ test_iter: 2000
 # every 1/10th epoch
 test_interval: 50000
 
-base_lr: 0.001
+base_lr: 0.01
 momentum: 0.9
-#weight_decay: 0.0004
-
 lr_policy: "fixed"
-#lr_policy: "poly"
-#power: 1.0
+
+weight_decay: 0.0001
 
 # Display every n iterations
 display: 10000
 average_loss: 10000
 
 # The total number of iterations
-# 100 epoch
-max_iter: 48299000
+# 100 M minibatches
+max_iter: 100000000
 
 # snapshot intermediate results
 snapshot: 50000
@@ -35,6 +33,5 @@ snapshot_prefix: "snapshot"
 
 # solver mode: CPU or GPU
 type: Nesterov
-#type: "Adam"
 #type: "SGD"
 solver_mode: GPU

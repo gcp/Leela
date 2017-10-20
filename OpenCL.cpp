@@ -25,6 +25,84 @@ using namespace Utils;
 static std::string sourceCode_convolve15 = R"(
     __kernel
     __attribute__((work_group_size_hint(8, 16, 1)))
+    void convolve1(
+                   __global const float * in,
+                   __global float * merge,
+                   __global const float * weights,
+                   __local float * channel_buff,
+                   __local float * row_buff) {
+        // cl::NDRange global(channels, outputs, row);
+        const int c   = get_global_id(0);  // channel
+        const int o   = get_global_id(1);  // output
+        const int row = get_global_id(2);  // row
+
+        const int channels = get_global_size(0);
+        const int outputs  = get_global_size(1);
+
+        // cl::NDRange local(2, (1->32), 1);
+        const int lx = get_local_id(0);
+        const int ly = get_local_id(1);
+
+        const int chan_buff_size = 8;
+        const int out_buff_size  = get_local_size(1);
+        const int row_buff_size  = 7;
+        const int chan_shift     = 3;
+
+        // input = channels * height * width
+        // output = outputs * height * width
+        // weights = output * channels * filter
+        // merge = channels * outputs * height * width
+
+        const int width = 19;
+        const int height = 19;
+        const int strip_size = width;
+
+        // Copy the input channels (strips) locally
+        if (out_buff_size < 19 && ly == 0) {
+            // strip-row
+            for (int w = 0; w < width; w++) {
+                channel_buff[lx * width + w] =
+                    in[(c * height + row) * width + w];
+            }
+        } else if (out_buff_size >= 19 && ly < 19) {
+            // Every thread copies a column
+            channel_buff[lx * width + ly] = in[(c * height + row) * width + ly];
+        }
+
+        // Copy the filter we are applying locally
+        __private float filter_buff = weights[(o * channels + c)];
+
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        int out_lane = 0;
+        int out_cw   = 0;
+        #pragma unroll
+        for (int cw = 0; cw < width; cw++) {
+            int fid = lx * strip_size;
+            float out  = channel_buff[fid + cw] * filter_buff;
+            row_buff[(ly * chan_buff_size + lx) * row_buff_size + out_lane] = out;
+            out_lane++;
+            // Row buffer full or last lane?
+            if (out_lane == row_buff_size || (cw == width - 1)) {
+                barrier(CLK_LOCAL_MEM_FENCE);
+                if (lx < out_lane) {
+                    float val;
+                    val  = row_buff[(ly * chan_buff_size + 0) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 1) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 2) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 3) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 4) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 5) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 6) * row_buff_size + lx];
+                    val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
+                    merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
+           }
+           out_cw  += row_buff_size;
+           out_lane = 0;
+       }
+    }
+    __kernel
+    __attribute__((work_group_size_hint(8, 16, 1)))
     void convolve5(
                    __global const float * in,
                    __global float * merge,
@@ -460,6 +538,7 @@ std::atomic<int> * OpenCL::get_thread_results_outstanding() {
 void OpenCL::ensure_thread_initialized() {
     if (!opencl_thread_data.m_is_initialized) {
         // Make kernels
+        opencl_thread_data.m_convolve1_kernel = cl::Kernel(m_program, "convolve1");
         opencl_thread_data.m_convolve3_kernel = cl::Kernel(m_program, "convolve3");
         opencl_thread_data.m_convolve5_kernel = cl::Kernel(m_program, "convolve5");
         opencl_thread_data.m_merge_kernel = cl::Kernel(m_program, "merge");
@@ -541,6 +620,13 @@ void OpenCL_Network::forward(std::vector<float>& input,
                          tmpBuffer,
                          layer.weights);
             std::swap(inBuffer, tmpBuffer);
+        } else if (layer.is_splitter) {
+            //assert(layer.channels == 1);
+            // copy everything to output (we'll overwrite the latter parts)
+            //queue.enqueueCopyBuffer(tmpBuffer, outBuffer, 0, 0, finalSize);
+            // copy back the latter parts into our working buffer
+            // so essentially shift things to the front
+            //queue.enqueueCopyBuffer(outBuffer, tmpBuffer, moveSize, 0, finalSize - moveSize);
         } else {
             // convolution
             convolve(layer.filter_size,
@@ -597,9 +683,11 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
     cl::Kernel * m_convolve_kernel = nullptr;
     if (filter_size == 3) {
         m_convolve_kernel = &opencl_thread_data.m_convolve3_kernel;
-    } else {
-        assert(filter_size == 5);
+    } else if (filter_size == 5) {
         m_convolve_kernel = &opencl_thread_data.m_convolve5_kernel;
+    } else {
+        assert(filter_size == 1);
+        m_convolve_kernel = &opencl_thread_data.m_convolve1_kernel;
     }
 
     constexpr int channelGroup = 8;
@@ -637,6 +725,10 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
         rowTileSize =  (19 + rowTiles - 1) / rowTiles;
     } else if (filter_size == 5) {
         stripSize = filter_size * width * sizeof(float);
+        rowTiles    = 19;
+        rowTileSize =  1;
+    } else {
+        stripSize = width * sizeof(float);
         rowTiles    = 19;
         rowTileSize =  1;
     }
