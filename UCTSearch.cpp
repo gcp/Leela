@@ -729,8 +729,8 @@ bool UCTSearch::playout_limit_reached() {
 
 void UCTWorker::operator()() {
     do {
-        GameState currstate = m_rootstate;
-        m_search->play_simulation(currstate, m_root);
+        auto currstate = std::make_unique<GameState>(m_rootstate);
+        m_search->play_simulation(*currstate, m_root);
         m_search->increment_playouts();
     } while(m_search->is_running() && !m_search->playout_limit_reached());
 #ifdef USE_OPENCL
@@ -844,9 +844,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     bool keeprunning = true;
     int last_update = 0;
     do {
-        GameState currstate = m_rootstate;
+        auto currstate = std::make_unique<GameState>(m_rootstate);
 
-        play_simulation(currstate, &m_root);
+        play_simulation(*currstate, &m_root);
         increment_playouts();
 
         Time elapsed;
@@ -978,8 +978,8 @@ void UCTSearch::ponder() {
         tg.add_task(UCTWorker(m_rootstate, this, &m_root));
     }
     do {
-        GameState currstate = m_rootstate;
-        play_simulation(currstate, &m_root);
+        auto currstate = std::make_unique<GameState>(m_rootstate);
+        play_simulation(*currstate, &m_root);
         increment_playouts();
     } while(!Utils::input_pending() && (!m_hasrunflag || (*m_runflag)));
 

@@ -69,7 +69,6 @@ void MCPolicy::mse_from_file(std::string filename) {
 
         int movecount = sgftree->count_mainline_moves();
         int move_pick = Random::get_Rng()->randuint16(movecount);
-        // GameState state = sgftree->follow_mainline_state(move_pick);
         KoState * state = sgftree->get_state_from_mainline(move_pick);
 
         if (who_won != FastBoard::BLACK && who_won != FastBoard::WHITE) {

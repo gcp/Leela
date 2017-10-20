@@ -49,7 +49,7 @@ uint32 Random::randuint32() {
 }
 
 void Random::seedrandom(uint32 seed) {
-    // Magic values from Pierre L’Ecuyer,
+    // Magic values from Pierre L'Ecuyer,
     // "Tables of Linear Congruental Generators of different sizes and
     // good lattice structure"
     m_s[0] = (741103597 * seed);
