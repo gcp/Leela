@@ -449,8 +449,6 @@ static std::string sourceCode_utility = R"(
         for (int c = 0; c < channels; c++) {
             sum += in[(c * boardsize + b) * outputs + o];
         }
-        // ELU
-        sum = sum > 0 ? sum : 1.0f * (half_exp(sum) - 1.0f);
         out[o * boardsize + b] = sum;
     }
 
@@ -458,8 +456,7 @@ static std::string sourceCode_utility = R"(
                         __global const float * in,
                         __global float * out,
                         __constant const float * means,
-                        __constant const float * variances,
-                        __constant const float * scale) {
+                        __constant const float * variances) {
 
         // cl::NDRange global(outputs, 19*19);
         const int gx = get_global_id(0);
@@ -474,12 +471,13 @@ static std::string sourceCode_utility = R"(
 
         const float epsilon = 1e-5;
 
-        const float mean = means[o] / scale[0];
-        const float variance = epsilon + variances[o] / scale[0];
+        const float mean = means[o];
+        const float variance = epsilon + variances[o];
         const float scale_stddiv = 1.0f / sqrt(variance);
 
-        out[o * channel_size + b] = scale_stddiv
-                                    * (in[o * channel_size + b] - mean);
+        // ReLU
+        float sum = scale_stddiv * (in[o * channel_size + b] - mean);
+        out[o * channel_size + b] = sum > 0 ? sum : 0.0f;
     }
 
     __kernel void innerproduct(
@@ -510,15 +508,14 @@ static std::string sourceCode_utility = R"(
         }
         val += biases[o];
         if (outputs > 1) {
-            val = val > 0 ? val : 1.0f * (half_exp(val) - 1.0f);
+            val = val > 0 ? val : 0.0f;
         }
         out[o] = val;
     }
 )";
 
 OpenCL opencl;
-OpenCL_Network opencl_policy_net;
-OpenCL_Network opencl_value_net;
+OpenCL_Network opencl_net;
 thread_local ThreadData opencl_thread_data;
 
 bool OpenCL::thread_can_issue() {
@@ -797,7 +794,6 @@ void OpenCL_Network::batchnorm(int outputs,
         batchnorm_kernel.setArg(1, bufferOutput);
         batchnorm_kernel.setArg(2, weights[0]);
         batchnorm_kernel.setArg(3, weights[1]);
-        batchnorm_kernel.setArg(4, weights[2]);
 
         queue.enqueueNDRangeKernel(batchnorm_kernel, cl::NullRange,
                                    cl::NDRange(outputs, channel_size),

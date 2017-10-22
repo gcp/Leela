@@ -25,11 +25,11 @@ public:
     float get_raverate() const;
     double get_blackwins() const;
     void create_children(std::atomic<int> & nodecount,
-                         FastState & state, bool at_root, bool use_nets);
+                         GameState & state, bool at_root, bool use_nets);
     void netscore_children(std::atomic<int> & nodecount,
-                           FastState & state, bool at_root);
+                           GameState & state, bool at_root);
     void scoring_cb(std::atomic<int> * nodecount,
-                    FastState & state,
+                    GameState & state,
                     Network::Netresult & raw_netlist,
                     bool all_symmetries);
     void run_value_net(GameState & state);

@@ -51,90 +51,125 @@ Network* Network::s_Net = nullptr;
 std::unique_ptr<caffe::Net> Network::s_net;
 #endif
 
-#ifdef USE_OPENCL
-extern const std::array<float, 102400> conv1_w;
-extern const std::array<float, 128> conv1_b;
-extern const std::array<float, 221184> conv2_w;
-extern const std::array<float, 192> conv2_b;
-extern const std::array<float, 331776> conv3_w;
-extern const std::array<float, 192> conv3_b;
-extern const std::array<float, 331776> conv4_w;
-extern const std::array<float, 192> conv4_b;
-extern const std::array<float, 331776> conv5_w;
-extern const std::array<float, 192> conv5_b;
-extern const std::array<float, 331776> conv6_w;
-extern const std::array<float, 192> conv6_b;
-extern const std::array<float, 331776> conv7_w;
-extern const std::array<float, 192> conv7_b;
-extern const std::array<float, 331776> conv8_w;
-extern const std::array<float, 192> conv8_b;
-extern const std::array<float, 331776> conv9_w;
-extern const std::array<float, 192> conv9_b;
-extern const std::array<float, 331776> conv10_w;
-extern const std::array<float, 192> conv10_b;
-extern const std::array<float, 331776> conv11_w;
-extern const std::array<float, 192> conv11_b;
-extern const std::array<float, 331776> conv12_w;
-extern const std::array<float, 192> conv12_b;
-extern const std::array<float, 1728> conv13_w;
-extern const std::array<float, 1> conv13_b;
-#else
-extern const std::array<float, 76800> conv1_w;
-extern const std::array<float, 96> conv1_b;
-extern const std::array<float, 110592> conv2_w;
-extern const std::array<float, 128> conv2_b;
-extern const std::array<float, 147456> conv3_w;
-extern const std::array<float, 128> conv3_b;
-extern const std::array<float, 147456> conv4_w;
-extern const std::array<float, 128> conv4_b;
-extern const std::array<float, 147456> conv5_w;
-extern const std::array<float, 128> conv5_b;
-extern const std::array<float, 147456> conv6_w;
-extern const std::array<float, 128> conv6_b;
-extern const std::array<float, 147456> conv7_w;
-extern const std::array<float, 128> conv7_b;
-extern const std::array<float, 147456> conv8_w;
-extern const std::array<float, 128> conv8_b;
-extern const std::array<float, 147456> conv9_w;
-extern const std::array<float, 128> conv9_b;
-extern const std::array<float, 147456> conv10_w;
-extern const std::array<float, 128> conv10_b;
-extern const std::array<float, 147456> conv11_w;
-extern const std::array<float, 128> conv11_b;
-extern const std::array<float, 147456> conv12_w;
-extern const std::array<float, 128> conv12_b;
-extern const std::array<float, 1152> conv13_w;
-extern const std::array<float, 1> conv13_b;
-#endif
+extern std::array<float, 41472> conv1_w;
+extern std::array<float, 256> conv1_b;
+extern std::array<float, 256> bn1_w1;
+extern std::array<float, 256> bn1_w2;
+extern std::array<float, 589824> conv2_w;
+extern std::array<float, 256> conv2_b;
+extern std::array<float, 256> bn2_w1;
+extern std::array<float, 256> bn2_w2;
+extern std::array<float, 589824> conv3_w;
+extern std::array<float, 256> conv3_b;
+extern std::array<float, 256> bn3_w1;
+extern std::array<float, 256> bn3_w2;
+extern std::array<float, 589824> conv4_w;
+extern std::array<float, 256> conv4_b;
+extern std::array<float, 256> bn4_w1;
+extern std::array<float, 256> bn4_w2;
+extern std::array<float, 589824> conv5_w;
+extern std::array<float, 256> conv5_b;
+extern std::array<float, 256> bn5_w1;
+extern std::array<float, 256> bn5_w2;
+extern std::array<float, 589824> conv6_w;
+extern std::array<float, 256> conv6_b;
+extern std::array<float, 256> bn6_w1;
+extern std::array<float, 256> bn6_w2;
+extern std::array<float, 589824> conv7_w;
+extern std::array<float, 256> conv7_b;
+extern std::array<float, 256> bn7_w1;
+extern std::array<float, 256> bn7_w2;
+extern std::array<float, 589824> conv8_w;
+extern std::array<float, 256> conv8_b;
+extern std::array<float, 256> bn8_w1;
+extern std::array<float, 256> bn8_w2;
+extern std::array<float, 589824> conv9_w;
+extern std::array<float, 256> conv9_b;
+extern std::array<float, 256> bn9_w1;
+extern std::array<float, 256> bn9_w2;
+extern std::array<float, 589824> conv10_w;
+extern std::array<float, 256> conv10_b;
+extern std::array<float, 256> bn10_w1;
+extern std::array<float, 256> bn10_w2;
+extern std::array<float, 589824> conv11_w;
+extern std::array<float, 256> conv11_b;
+extern std::array<float, 256> bn11_w1;
+extern std::array<float, 256> bn11_w2;
+extern std::array<float, 589824> conv12_w;
+extern std::array<float, 256> conv12_b;
+extern std::array<float, 256> bn12_w1;
+extern std::array<float, 256> bn12_w2;
+extern std::array<float, 589824> conv13_w;
+extern std::array<float, 256> conv13_b;
+extern std::array<float, 256> bn13_w1;
+extern std::array<float, 256> bn13_w2;
+extern std::array<float, 589824> conv14_w;
+extern std::array<float, 256> conv14_b;
+extern std::array<float, 256> bn14_w1;
+extern std::array<float, 256> bn14_w2;
+extern std::array<float, 589824> conv15_w;
+extern std::array<float, 256> conv15_b;
+extern std::array<float, 256> bn15_w1;
+extern std::array<float, 256> bn15_w2;
+extern std::array<float, 589824> conv16_w;
+extern std::array<float, 256> conv16_b;
+extern std::array<float, 256> bn16_w1;
+extern std::array<float, 256> bn16_w2;
+extern std::array<float, 589824> conv17_w;
+extern std::array<float, 256> conv17_b;
+extern std::array<float, 256> bn17_w1;
+extern std::array<float, 256> bn17_w2;
+extern std::array<float, 589824> conv18_w;
+extern std::array<float, 256> conv18_b;
+extern std::array<float, 256> bn18_w1;
+extern std::array<float, 256> bn18_w2;
+extern std::array<float, 589824> conv19_w;
+extern std::array<float, 256> conv19_b;
+extern std::array<float, 256> bn19_w1;
+extern std::array<float, 256> bn19_w2;
+extern std::array<float, 589824> conv20_w;
+extern std::array<float, 256> conv20_b;
+extern std::array<float, 256> bn20_w1;
+extern std::array<float, 256> bn20_w2;
+extern std::array<float, 589824> conv21_w;
+extern std::array<float, 256> conv21_b;
+extern std::array<float, 256> bn21_w1;
+extern std::array<float, 256> bn21_w2;
+extern std::array<float, 589824> conv22_w;
+extern std::array<float, 256> conv22_b;
+extern std::array<float, 256> bn22_w1;
+extern std::array<float, 256> bn22_w2;
+extern std::array<float, 589824> conv23_w;
+extern std::array<float, 256> conv23_b;
+extern std::array<float, 256> bn23_w1;
+extern std::array<float, 256> bn23_w2;
+extern std::array<float, 589824> conv24_w;
+extern std::array<float, 256> conv24_b;
+extern std::array<float, 256> bn24_w1;
+extern std::array<float, 256> bn24_w2;
+extern std::array<float, 589824> conv25_w;
+extern std::array<float, 256> conv25_b;
+extern std::array<float, 256> bn25_w1;
+extern std::array<float, 256> bn25_w2;
 
-extern const std::array<float, 51200> val_conv1_w;
-extern const std::array<float, 64> val_conv1_b;
-extern const std::array<float, 36864> val_conv2_w;
-extern const std::array<float, 64> val_conv2_b;
-extern const std::array<float, 36864> val_conv3_w;
-extern const std::array<float, 64> val_conv3_b;
-extern const std::array<float, 36864> val_conv4_w;
-extern const std::array<float, 64> val_conv4_b;
-extern const std::array<float, 36864> val_conv5_w;
-extern const std::array<float, 64> val_conv5_b;
-extern const std::array<float, 36864> val_conv6_w;
-extern const std::array<float, 64> val_conv6_b;
-extern const std::array<float, 36864> val_conv7_w;
-extern const std::array<float, 64> val_conv7_b;
-extern const std::array<float, 36864> val_conv8_w;
-extern const std::array<float, 64> val_conv8_b;
-extern const std::array<float, 36864> val_conv9_w;
-extern const std::array<float, 64> val_conv9_b;
-extern const std::array<float, 36864> val_conv10_w;
-extern const std::array<float, 64> val_conv10_b;
-extern const std::array<float, 36864> val_conv11_w;
-extern const std::array<float, 64> val_conv11_b;
-extern const std::array<float, 576> val_conv12_w;
-extern const std::array<float, 1> val_conv12_b;
-extern const std::array<float, 92416> val_ip13_w;
-extern const std::array<float, 256> val_ip13_b;
-extern const std::array<float, 256> val_ip14_w;
-extern const std::array<float, 1> val_ip14_b;
+extern std::array<float, 512> conv26_w;
+extern std::array<float, 2> conv26_b;
+extern std::array<float, 2> bn26_w1;
+extern std::array<float, 2> bn26_w2;
+
+extern std::array<float, 261364> ip27_w;
+extern std::array<float, 362> ip27_b;
+
+extern std::array<float, 256> conv28_w;
+extern std::array<float, 1> conv28_b;
+extern std::array<float, 1> bn28_w1;
+extern std::array<float, 1> bn28_w2;
+
+extern std::array<float, 92416> ip29_w;
+extern std::array<float, 256> ip29_b;
+
+extern std::array<float, 256> ip30_w;
+extern std::array<float, 1> ip30_b;
 
 Network * Network::get_Network(void) {
     if (!s_Net) {
@@ -146,8 +181,7 @@ Network * Network::get_Network(void) {
 
 void Network::benchmark(GameState * state) {
     {
-        // Policy
-        int BENCH_AMOUNT = 2000;
+        int BENCH_AMOUNT = 100;
         int cpus = cfg_num_threads;
         int iters_per_thread = (BENCH_AMOUNT + (cpus - 1)) / cpus;
 
@@ -156,7 +190,7 @@ void Network::benchmark(GameState * state) {
         ThreadGroup tg(thread_pool);
         for (int i = 0; i < cpus; i++) {
             tg.add_task([iters_per_thread, state]() {
-                FastState mystate = *state;
+                GameState mystate = *state;
                 for (int loop = 0; loop < iters_per_thread; loop++) {
                     auto vec = get_scored_moves(&mystate, Ensemble::RANDOM_ROTATION);
                 }
@@ -166,32 +200,7 @@ void Network::benchmark(GameState * state) {
 
         Time end;
 
-        myprintf("%5d predictions in %5.2f seconds -> %d p/s\n",
-                 BENCH_AMOUNT,
-                 (float)Time::timediff(start,end)/100.0,
-                 (int)((float)BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
-    }
-    {
-        // Value
-        int BENCH_AMOUNT = 10000;
-        int cpus = cfg_num_threads;
-        int iters_per_thread = (BENCH_AMOUNT + (cpus - 1)) / cpus;
-
-        Time start;
-        ThreadGroup tg(thread_pool);
-        for (int i = 0; i < cpus; i++) {
-            tg.add_task([iters_per_thread, state]() {
-                GameState mystate = *state;
-                for (int loop = 0; loop < iters_per_thread; loop++) {
-                    auto vec = get_value(&mystate, Ensemble::RANDOM_ROTATION);
-                }
-            });
-        };
-        tg.wait_all();
-
-        Time end;
-
-        myprintf("%5d evaluations in %5.2f seconds -> %d p/s\n",
+        myprintf("%5d evaluations in %5.2f seconds -> %d n/s\n",
                  BENCH_AMOUNT,
                  (float)Time::timediff(start,end)/100.0,
                  (int)((float)BENCH_AMOUNT/((float)Time::timediff(start,end)/100.0)));
@@ -203,34 +212,59 @@ void Network::initialize(void) {
     myprintf("Initializing OpenCL\n");
     opencl.initialize();
     myprintf("Transferring weights to GPU...");
-    opencl_policy_net.push_convolve(5, conv1_w, conv1_b);
-    opencl_policy_net.push_convolve(3, conv2_w, conv2_b);
-    opencl_policy_net.push_convolve(3, conv3_w, conv3_b);
-    opencl_policy_net.push_convolve(3, conv4_w, conv4_b);
-    opencl_policy_net.push_convolve(3, conv5_w, conv5_b);
-    opencl_policy_net.push_convolve(3, conv6_w, conv6_b);
-    opencl_policy_net.push_convolve(3, conv7_w, conv7_b);
-    opencl_policy_net.push_convolve(3, conv8_w, conv8_b);
-    opencl_policy_net.push_convolve(3, conv9_w, conv9_b);
-    opencl_policy_net.push_convolve(3, conv10_w, conv10_b);
-    opencl_policy_net.push_convolve(3, conv11_w, conv11_b);
-    opencl_policy_net.push_convolve(3, conv12_w, conv12_b);
-    opencl_policy_net.push_convolve(3, conv13_w, conv13_b);
+    opencl_net.push_convolve(3, conv1_w, conv1_b);
+    opencl_net.push_batchnorm(256, bn1_w1, bn1_w2);
+    opencl_net.push_convolve(3, conv2_w, conv2_b);
+    opencl_net.push_batchnorm(256, bn2_w1, bn2_w2);
+    opencl_net.push_convolve(3, conv3_w, conv3_b);
+    opencl_net.push_batchnorm(256, bn3_w1, bn3_w2);
+    opencl_net.push_convolve(3, conv4_w, conv4_b);
+    opencl_net.push_batchnorm(256, bn4_w1, bn4_w2);
+    opencl_net.push_convolve(3, conv5_w, conv5_b);
+    opencl_net.push_batchnorm(256, bn5_w1, bn5_w2);
+    opencl_net.push_convolve(3, conv6_w, conv6_b);
+    opencl_net.push_batchnorm(256, bn6_w1, bn6_w2);
+    opencl_net.push_convolve(3, conv7_w, conv7_b);
+    opencl_net.push_batchnorm(256, bn7_w1, bn7_w2);
+    opencl_net.push_convolve(3, conv8_w, conv8_b);
+    opencl_net.push_batchnorm(256, bn8_w1, bn8_w2);
+    opencl_net.push_convolve(3, conv9_w, conv9_b);
+    opencl_net.push_batchnorm(256, bn9_w1, bn9_w2);
+    opencl_net.push_convolve(3, conv10_w, conv10_b);
+    opencl_net.push_batchnorm(256, bn10_w1, bn10_w2);
+    opencl_net.push_convolve(3, conv11_w, conv11_b);
+    opencl_net.push_batchnorm(256, bn11_w1, bn11_w2);
+    opencl_net.push_convolve(3, conv12_w, conv12_b);
+    opencl_net.push_batchnorm(256, bn12_w1, bn12_w2);
+    opencl_net.push_convolve(3, conv13_w, conv13_b);
+    opencl_net.push_batchnorm(256, bn13_w1, bn13_w2);
+    opencl_net.push_convolve(3, conv14_w, conv14_b);
+    opencl_net.push_batchnorm(256, bn14_w1, bn14_w2);
+    opencl_net.push_convolve(3, conv15_w, conv15_b);
+    opencl_net.push_batchnorm(256, bn15_w1, bn15_w2);
+    opencl_net.push_convolve(3, conv16_w, conv16_b);
+    opencl_net.push_batchnorm(256, bn16_w1, bn16_w2);
+    opencl_net.push_convolve(3, conv17_w, conv17_b);
+    opencl_net.push_batchnorm(256, bn17_w1, bn17_w2);
+    opencl_net.push_convolve(3, conv18_w, conv18_b);
+    opencl_net.push_batchnorm(256, bn18_w1, bn18_w2);
+    opencl_net.push_convolve(3, conv19_w, conv19_b);
+    opencl_net.push_batchnorm(256, bn19_w1, bn19_w2);
+    opencl_net.push_convolve(3, conv20_w, conv20_b);
+    opencl_net.push_batchnorm(256, bn20_w1, bn20_w2);
+    opencl_net.push_convolve(3, conv21_w, conv21_b);
+    opencl_net.push_batchnorm(256, bn21_w1, bn21_w2);
+    opencl_net.push_convolve(3, conv22_w, conv22_b);
+    opencl_net.push_batchnorm(256, bn22_w1, bn22_w2);
+    opencl_net.push_convolve(3, conv23_w, conv23_b);
+    opencl_net.push_batchnorm(256, bn23_w1, bn23_w2);
+    opencl_net.push_convolve(3, conv24_w, conv24_b);
+    opencl_net.push_batchnorm(256, bn24_w1, bn24_w2);
+    opencl_net.push_convolve(3, conv25_w, conv25_b);
+    opencl_net.push_batchnorm(256, bn25_w1, bn25_w2);
 
-    opencl_value_net.push_convolve(5, val_conv1_w, val_conv1_b);
-    opencl_value_net.push_convolve(3, val_conv2_w, val_conv2_b);
-    opencl_value_net.push_convolve(3, val_conv3_w, val_conv3_b);
-    opencl_value_net.push_convolve(3, val_conv4_w, val_conv4_b);
-    opencl_value_net.push_convolve(3, val_conv5_w, val_conv5_b);
-    opencl_value_net.push_convolve(3, val_conv6_w, val_conv6_b);
-    opencl_value_net.push_convolve(3, val_conv7_w, val_conv7_b);
-    opencl_value_net.push_convolve(3, val_conv8_w, val_conv8_b);
-    opencl_value_net.push_convolve(3, val_conv9_w, val_conv9_b);
-    opencl_value_net.push_convolve(3, val_conv10_w, val_conv10_b);
-    opencl_value_net.push_convolve(3, val_conv11_w, val_conv11_b);
-    opencl_value_net.push_convolve(3, val_conv12_w, val_conv12_b);
-    opencl_value_net.push_innerproduct(val_ip13_w, val_ip13_b);
-    opencl_value_net.push_innerproduct(val_ip14_w, val_ip14_b);
+    //opencl_value_net.push_innerproduct(val_ip13_w, val_ip13_b);
+    //opencl_value_net.push_innerproduct(val_ip14_w, val_ip14_b);
     myprintf("done\n");
 #endif
 #ifdef USE_BLAS
@@ -378,15 +412,10 @@ void convolve(std::vector<float>& input,
                 &col[0], spatial_out,
                 0.0f, &output[0], spatial_out);
 
-    auto lambda_ELU = [](float val) { return (val > 0.0f) ?
-                                      val : 1.0f * (std::exp(val) - 1.0f); };
-    //auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
-    //                                   val : 0.0f; };
-
     for (unsigned int o = 0; o < outputs; o++) {
         for (unsigned int b = 0; b < spatial_out; b++) {
             output[(o * spatial_out) + b] =
-                lambda_ELU(biases[o] + output[(o * spatial_out) + b]);
+                biases[o] + output[(o * spatial_out) + b];
         }
     }
 }
@@ -407,15 +436,13 @@ void innerproduct(std::vector<float>& input,
                 &input[0], 1,
                 0.0f, &output[0], 1);
 
-    auto lambda_ELU = [](float val) { return (val > 0.0f) ?
-                                      val : 1.0f * (std::exp(val) - 1.0f); };
-    //auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
-    //                                   val : 0.0f; };
+    auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
+                                       val : 0.0f; };
 
     for (unsigned int o = 0; o < outputs; o++) {
         float val = biases[o] + output[o];
         if (outputs > 1) {
-            val = lambda_ELU(val);
+            val = lambda_ReLU(val);
         }
         output[o] = val;
     }
@@ -424,23 +451,24 @@ void innerproduct(std::vector<float>& input,
 template<unsigned int channels,
          unsigned int spatial_size>
 void batchnorm(std::vector<float>& input,
-               std::array<float, channels>& means,
-               std::array<float, channels>& variances,
-               std::array<float, 1> scale,
+               const std::array<float, channels>& means,
+               const std::array<float, channels>& variances,
                std::vector<float>& output)
 {
     constexpr float epsilon = 1e-5;
 
+    auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
+                                       val : 0.0f; };
+
     for (unsigned int c = 0; c < channels; ++c) {
-        float mean = means[c] / scale[0];
-        float variance = variances[c] / scale[0];
-        variance += epsilon;
+        float mean = means[c];
+        float variance = variances[c] + epsilon;
         float scale_stddiv = 1.0f / std::sqrt(variance);
 
         float * out = &output[c * spatial_size];
         float const * in  = &input[c * spatial_size];
         for (unsigned int b = 0; b < spatial_size; b++) {
-            out[b] = scale_stddiv * (in[b] - mean);
+            out[b] = lambda_ReLU(scale_stddiv * (in[b] - mean));
         }
     }
 }
@@ -471,13 +499,12 @@ void Network::softmax(std::vector<float>& input,
 class CallbackData {
 public:
     std::atomic<int> * m_nodecount;
-    FastState m_state;
+    GameState m_state;
     UCTNode * m_node;
     int m_rotation;
     std::atomic<int> * m_thread_results_outstanding;
     std::vector<float> m_output_data;
     std::vector<float> m_input_data;
-    Network::BoardPlane m_ladder;
 };
 
 extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
@@ -506,19 +533,6 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
         }
     }
 
-    /* prune losing ladders completely */
-    for (auto & sm : result) {
-        std::pair<int, int> xy = cb_data->m_state.board.get_xy(sm.second);
-        int bitmappos = (xy.second * 19) + xy.first;
-        if (cb_data->m_ladder[bitmappos]) {
-            //myprintf("Ladder at %s (%d) score %f\n",
-            //         state->board.move_to_text(sm.second).c_str(),
-            //         sm.second,
-            //         sm.first);
-            sm.first = 0.0f;
-        }
-    }
-
     // Network::show_heatmap(&cb_data->m_state, result, false);
 
     cb_data->m_node->scoring_cb(cb_data->m_nodecount, cb_data->m_state,
@@ -533,7 +547,7 @@ extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
 }
 
 void Network::async_scored_moves(std::atomic<int> * nodecount,
-                                 FastState * state,
+                                 GameState * state,
                                  UCTNode * node,
                                  Ensemble ensemble,
                                  int rotation) {
@@ -552,8 +566,7 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     CallbackData * cb_data = new CallbackData();
 
     NNPlanes planes;
-    BoardPlane *ladder;
-    gather_features_policy(state, planes, &ladder);
+    gather_features(state, planes);
 
     constexpr int width = 19;
     constexpr int height = 19;
@@ -566,9 +579,8 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
     cb_data->m_thread_results_outstanding = opencl.get_thread_results_outstanding();
     //assert(cb_data->m_thread_result_outstanding.load(boost::memory_order_acquire) == 0);
     cb_data->m_rotation = rotation;
-    cb_data->m_ladder = *ladder;
 
-    for (int c = 0; c < Network::POLICY_CHANNELS; ++c) {
+    for (int c = 0; c < Network::INPUT_CHANNELS; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
                 int vtx = rotate_nn_idx(h * 19 + w, rotation);
@@ -580,56 +592,21 @@ void Network::async_scored_moves(std::atomic<int> * nodecount,
 
     void * data = static_cast<void*>(cb_data);
 
-    opencl_policy_net.forward(cb_data->m_input_data,
-                                    cb_data->m_output_data,
-                                    forward_cb, data);
+    opencl_net.forward(cb_data->m_input_data,
+                       cb_data->m_output_data,
+                       forward_cb, data);
 }
 #endif
 
-float Network::get_value(GameState * state, Ensemble ensemble) {
-    if (state->board.get_boardsize() != 19) {
-        assert(false);
-        return 0.5f;
-    }
-
-    NNPlanes planes;
-    gather_features_value(state, planes);
-    float result;
-
-    if (ensemble == DIRECT) {
-        result = get_value_internal(state, planes, 0);
-    } else if (ensemble == RANDOM_ROTATION) {
-        int rotation = Random::get_Rng()->randfix<8>();
-        result = get_value_internal(state, planes, rotation);
-    } else {
-        assert(ensemble == AVERAGE_ALL);
-        result = get_value_internal(state, planes, 0);
-        //myprintf("%5.4f ", result);
-        for (int r = 1; r < 8; r++) {
-            float sum_res = get_value_internal(state, planes, r);
-            //myprintf("%5.4f ", sum_res);
-            result += sum_res;
-        }
-        result /= 8.0f;
-    }
-
-    //if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
-    //    myprintf("==> %5.4f\n", result);
-    //}
-
-    return result;
-}
-
 Network::Netresult Network::get_scored_moves(
-    FastState * state, Ensemble ensemble, int rotation) {
+    GameState * state, Ensemble ensemble, int rotation) {
     Netresult result;
     if (state->board.get_boardsize() != 19) {
         return result;
     }
 
     NNPlanes planes;
-    BoardPlane* ladder;
-    gather_features_policy(state, planes, &ladder);
+    gather_features(state, planes);
 
     if (ensemble == DIRECT) {
         assert(rotation >= 0 && rotation <= 7);
@@ -652,19 +629,6 @@ Network::Netresult Network::get_scored_moves(
                       [](scored_node & sn){ sn.first /= 8.0f; });
     }
 
-    /* prune losing ladders completely */
-    for (auto & sm : result) {
-        std::pair<int, int> xy = state->board.get_xy(sm.second);
-        int bitmappos = (xy.second * 19) + xy.first;
-        if ((*ladder)[bitmappos]) {
-            //myprintf("Ladder at %s (%d) score %f\n",
-            //         state->board.move_to_text(sm.second).c_str(),
-            //         sm.second,
-            //         sm.first);
-            sm.first = 0.0f;
-        }
-    }
-
     // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
     //     show_heatmap(state, result, true);
     // }
@@ -672,74 +636,8 @@ Network::Netresult Network::get_scored_moves(
     return result;
 }
 
-float Network::get_value_internal(
-    FastState * state, NNPlanes & planes, int rotation) {
-    assert(rotation >= 0 && rotation <= 7);
-    float result;
-
-    constexpr int channels = VALUE_CHANNELS;
-    constexpr int width = 19;
-    constexpr int height = 19;
-    constexpr int max_channels = MAX_VALUE_CHANNELS;
-    std::vector<float> orig_input_data(planes.size() * width * height);
-    std::vector<float> input_data(max_channels * width * height);
-    std::vector<float> output_data(max_channels * width * height);
-    std::vector<float> winrate_data(256);
-    std::vector<float> winrate_out(1);
-
-    for (int c = 0; c < channels; ++c) {
-        for (int h = 0; h < height; ++h) {
-            for (int w = 0; w < width; ++w) {
-                int vtx = rotate_nn_idx(h * 19 + w, rotation);
-                orig_input_data[(c * height + h) * width + w] =
-                    (float)planes[c][vtx];
-            }
-        }
-    }
-#ifdef USE_OPENCL
-    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
-    opencl_value_net.forward(input_data, output_data, nullptr, nullptr);
-    // Sigmoid
-    float winrate_sig = (1.0f + std::tanh(output_data[0])) / 2.0f;
-    result = winrate_sig;
-#elif defined(USE_BLAS)
-    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
-
-    convolve<5, 32, 64>(input_data, val_conv1_w, val_conv1_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv2_w, val_conv2_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv3_w, val_conv3_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv4_w, val_conv4_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv5_w, val_conv5_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv6_w, val_conv6_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv7_w, val_conv7_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv8_w, val_conv8_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv9_w, val_conv9_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv10_w, val_conv10_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64, 64>(input_data, val_conv11_w, val_conv11_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 64,  1>(input_data, val_conv12_w, val_conv12_b, output_data);
-    // Now get the score
-    innerproduct<361, 256>(output_data, val_ip13_w, val_ip13_b, winrate_data);
-    innerproduct<256, 1>(winrate_data, val_ip14_w, val_ip14_b, winrate_out);
-    // Sigmoid
-    float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
-    result = winrate_sig;
- #endif
-    return result;
-}
-
 Network::Netresult Network::get_scored_moves_internal(
-    FastState * state, NNPlanes & planes, int rotation) {
+    GameState * state, NNPlanes & planes, int rotation) {
     Netresult result;
     assert(rotation >= 0 && rotation <= 7);
 #ifdef USE_CAFFE
@@ -752,29 +650,49 @@ Network::Netresult Network::get_scored_moves_internal(
     assert(height == state->board.get_boardsize());
     float* orig_input_data = input_layer->mutable_cpu_data<float>();
 #else
-    constexpr int channels = POLICY_CHANNELS;
+    constexpr int channels = INPUT_CHANNELS;
+    assert(channels == planes.size());
     constexpr int width = 19;
     constexpr int height = 19;
     constexpr int max_channels = MAX_CHANNELS;
-    std::vector<float> orig_input_data(planes.size() * width * height);
     std::vector<float> input_data(max_channels * width * height);
     std::vector<float> output_data(max_channels * width * height);
-    std::vector<float> softmax_data(width * height);
+    std::vector<float> policy_data_1(2 * width * height);
+    std::vector<float> policy_data_2(2 * width * height);
+    std::vector<float> value_data_1(1 * width * height);
+    std::vector<float> value_data_2(1 * width * height);
+    std::vector<float> softmax_data((width * height) + 1);
+    std::vector<float> winrate_data(256);
+    std::vector<float> winrate_out(1);
+    std::vector<float> policy_out(362);
 #endif
     for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < height; ++h) {
             for (int w = 0; w < width; ++w) {
                 int vtx = rotate_nn_idx(h * 19 + w, rotation);
-                orig_input_data[(c * height + h) * width + w] =
+                input_data[(c * height + h) * width + w] =
                     (float)planes[c][vtx];
             }
         }
     }
 #ifdef USE_OPENCL
-    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
-    opencl_policy_net.forward(input_data, output_data, nullptr, nullptr);
-    softmax(output_data, softmax_data, cfg_softmax_temp);
+    opencl_net.forward(input_data, output_data, nullptr, nullptr);
+    // Get the mvoes
+    convolve<1, 256, 2>(output_data, conv26_w, conv26_b, policy_data_1);
+    batchnorm<2, 361>(policy_data_1, bn26_w1, bn26_w2, policy_data_2);
+    innerproduct<2*361, 362>(policy_data_2, ip27_w, ip27_b, policy_out);
+    softmax(policy_out, softmax_data, cfg_softmax_temp);
     std::vector<float>& outputs = softmax_data;
+
+    // Now get the score
+    convolve<1, 256, 1>(output_data, conv28_w, conv28_b, value_data_1);
+    batchnorm<1, 361>(value_data_1, bn28_w1, bn28_w2, value_data_2);
+    innerproduct<361, 256>(value_data_2, ip29_w, ip29_b, winrate_data);
+    innerproduct<256, 1>(winrate_data, ip30_w, ip30_b, winrate_out);
+
+    // Sigmoid
+    float winrate_sig = (1.0f + std::tanh(output_data[0])) / 2.0f;
+    float val_result = winrate_sig;
 #elif defined(USE_BLAS)
     // XXX really only need the first 24
     std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
@@ -818,7 +736,7 @@ Network::Netresult Network::get_scored_moves_internal(
 #endif
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         int rot_idx = rev_rotate_nn_idx(idx, rotation);
-        float val = outputs[rot_idx];
+        float val = policy_out[rot_idx];
         int x = idx % 19;
         int y = idx / 19;
         int vtx = state->board.get_vertex(x, y);
@@ -879,172 +797,7 @@ void Network::show_heatmap(FastState * state, Netresult& result, bool topmoves) 
     }
 }
 
-void Network::gather_features_policy(FastState * state, NNPlanes & planes,
-                                     BoardPlane** ladder_out) {
-    planes.resize(32);
-    BoardPlane& empt_color   = planes[0];
-    BoardPlane& move_color   = planes[1];
-    BoardPlane& othr_color   = planes[2];
-    BoardPlane& libs_1       = planes[3];
-    BoardPlane& libs_2       = planes[4];
-    BoardPlane& libs_3       = planes[5];
-    BoardPlane& libs_4       = planes[6];
-    BoardPlane& libs_5p      = planes[7];
-    BoardPlane& libs_1_e     = planes[8];
-    BoardPlane& libs_2_e     = planes[9];
-    BoardPlane& libs_3_e     = planes[10];
-    BoardPlane& libs_4_e     = planes[11];
-    BoardPlane& libs_5p_e    = planes[12];
-    BoardPlane& after_1      = planes[13];
-    BoardPlane& after_2      = planes[14];
-    BoardPlane& after_3      = planes[15];
-    BoardPlane& after_4      = planes[16];
-    BoardPlane& after_5      = planes[17];
-    BoardPlane& after_6p     = planes[18];
-    BoardPlane& after_1_e    = planes[19];
-    BoardPlane& after_2_e    = planes[20];
-    BoardPlane& after_3_e    = planes[21];
-    BoardPlane& after_4_e    = planes[22];
-    BoardPlane& after_5_e    = planes[23];
-    BoardPlane& after_6p_e   = planes[24];
-    BoardPlane& ladder       = planes[25];
-    BoardPlane& ladder_win   = planes[26];
-    BoardPlane& komove       = planes[27];
-    BoardPlane& movehist1    = planes[28];
-    BoardPlane& movehist2    = planes[29];
-    BoardPlane& has_komi     = planes[30];
-    BoardPlane& line_3       = planes[31];
-
-    if (ladder_out) {
-        *ladder_out = &ladder;
-    }
-
-    bool white_has_komi = true;
-    if (std::fabs(state->get_komi()) <= 0.75f) {
-        white_has_komi = false;
-    }
-
-    int tomove = state->get_to_move();
-    // collect white, black occupation planes
-    for (int j = 0; j < 19; j++) {
-        for(int i = 0; i < 19; i++) {
-            int vtx = state->board.get_vertex(i, j);
-            FastBoard::square_t color =
-                state->board.get_square(vtx);
-            int idx = j * 19 + i;
-            if (i == 2 || i == 16 || j == 2 || j == 16) {
-                line_3[idx] = true;
-            }
-            if (color != FastBoard::EMPTY) {
-                // White gets extra points in scoring
-                if (color == FastBoard::WHITE && white_has_komi) {
-                    has_komi[idx] = true;
-                }
-                if (color == tomove) {
-                    move_color[idx] = true;
-                } else {
-                    othr_color[idx] = true;
-                }
-                int rlibs = state->board.count_rliberties(vtx);
-                if (rlibs == 1) {
-                    if (color == tomove) {
-                        libs_1[idx] = true;
-                    } else {
-                        libs_1_e[idx] = true;
-                    }
-                } else if (rlibs == 2) {
-                    if (color == tomove) {
-                        libs_2[idx] = true;
-                    } else {
-                        libs_2_e[idx] = true;
-                    }
-                } else if (rlibs == 3) {
-                    if (color == tomove) {
-                        libs_3[idx] = true;
-                    } else {
-                        libs_3_e[idx] = true;
-                    }
-                } else if (rlibs == 4) {
-                    if (color == tomove) {
-                        libs_4[idx] = true;
-                    } else {
-                        libs_4_e[idx] = true;
-                    }
-                } else if (rlibs >= 5) {
-                    if (color == tomove) {
-                        libs_5p[idx] = true;
-                    } else {
-                        libs_5p_e[idx] = true;
-                    }
-                }
-            } else {
-                empt_color[idx] = true;
-
-                std::pair<int, int> p =
-                    state->board.after_liberties(tomove, vtx);
-                int al = p.first;
-                if (al == 1) {
-                    after_1[idx] = true;
-                } else if (al == 2) {
-                    after_2[idx] = true;
-                } else if (al == 3) {
-                    after_3[idx] = true;
-                } else if (al == 4) {
-                    after_4[idx] = true;
-                } else if (al == 5) {
-                    after_5[idx] = true;
-                } else if (al >= 6) {
-                    after_6p[idx] = true;
-                }
-                int at = p.second;
-                if (at == 1) {
-                    after_1_e[idx] = true;
-                } else if (at == 2) {
-                    after_2_e[idx] = true;
-                } else if (at == 3) {
-                    after_3_e[idx] = true;
-                } else if (at == 4) {
-                    after_4_e[idx] = true;
-                } else if (at == 5) {
-                    after_5_e[idx] = true;
-                } else if (at >= 6) {
-                    after_6p_e[idx] = true;
-                }
-
-                int ae = state->board.count_pliberties(vtx);
-                if (ae == 2) {
-                    int ss = state->board.saving_size(tomove, vtx);
-                    if (ss > 0) {
-                        bool ll = state->board.check_losing_ladder(tomove, vtx);
-                        ladder[idx] = ll;
-                    }
-                }
-                if (state->board.check_winning_ladder(tomove, vtx)) {
-                    ladder_win[idx] = true;
-                }
-            }
-        }
-    }
-
-    if (state->get_last_move() > 0) {
-        std::pair<int, int> lastmove = state->board.get_xy(state->get_last_move());
-        int idx = lastmove.second * 19 + lastmove.first;
-        movehist1[idx] = true;
-        if (state->get_prevlast_move() > 0) {
-            std::pair<int, int> prevlast = state->board.get_xy(state->get_prevlast_move());
-            int idxp = prevlast.second * 19 + prevlast.first;
-            movehist2[idxp] = true;
-        }
-    }
-
-    if (state->get_komove() > 0) {
-        std::pair<int, int> kosq = state->board.get_xy(state->get_komove());
-        int idx = kosq.second * 19 + kosq.first;
-        komove[idx] = true;
-    }
-}
-
-void Network::gather_features_value(GameState * state, NNPlanes & planes) {
+void Network::gather_features(GameState * state, NNPlanes & planes) {
     planes.resize(18);
     const size_t our_offset   = 0;
     const size_t their_offset = 8;
@@ -1163,7 +916,7 @@ void Network::gather_traindata(std::string filename, TrainVector& data) {
                     TrainPosition position;
                     position.stm_won_tanh = (tomove == who_won ? 1.0f : -1.0f);
                     position.move = this_move;
-                    gather_features_value(state.get(), position.planes);
+                    gather_features(state.get(), position.planes);
                     data.emplace_back(position);
                 } else {
                     myprintf("Mainline move not found: %d\n", move);

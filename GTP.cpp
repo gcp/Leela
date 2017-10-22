@@ -68,9 +68,9 @@ void GTP::setup_default_parameters() {
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
 #ifdef USE_OPENCL
-    cfg_mature_threshold = 25;
-    cfg_extra_symmetry =  350;
-    cfg_eval_thresh = 2;
+    cfg_mature_threshold = 1;
+    cfg_extra_symmetry =  1;
+    cfg_eval_thresh = 1;
 #else
     cfg_mature_threshold = 85;
     cfg_extra_symmetry = 3000;
@@ -87,7 +87,7 @@ void GTP::setup_default_parameters() {
     cfg_puct = 1.1f;
     cfg_psa = 0.0018f;
 #ifdef USE_SEARCH
-    cfg_softmax_temp = 0.75f;
+    cfg_softmax_temp = 1.0f;
 #else
     cfg_softmax_temp = 0.094f;
 #endif
@@ -485,30 +485,9 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_printf(id, "0");
         }
         return true;
-    } else if (command.find("vn_winrate") == 0) {
-        float net_score = Network::get_Network()->get_value(&game,
-                                                            Network::Ensemble::AVERAGE_ALL);
-        gtp_printf(id, "%f", net_score);
-        return true;
     } else if (command.find("mc_winrate") == 0) {
         float mc_winrate = Playout::mc_owner(game, 512);
         gtp_printf(id, "%f", mc_winrate);
-        return true;
-    } else if (command.find("winrate") == 0) {
-        float mc_winrate = Playout::mc_owner(game, 512);
-        float net_score = Network::get_Network()->get_value(&game,
-                                                            Network::Ensemble::AVERAGE_ALL);
-        float comb_winrate = UCTNode::score_mix_function(game.get_movenum(),
-                                                         net_score, mc_winrate);
-        gtp_printf(id, "%f", comb_winrate);
-        return true;
-    } else if (command.find("winrate") == 0) {
-        float mc_winrate = Playout::mc_owner(game, 512);
-        float net_score = Network::get_Network()->get_value(&game,
-                                                            Network::Ensemble::AVERAGE_ALL);
-        float comb_winrate = UCTNode::score_mix_function(game.get_movenum(),
-                                                         net_score, mc_winrate);
-        gtp_printf(id, "%f", comb_winrate);
         return true;
     } else if (command.find("final_status_list") == 0) {
         if (command.find("alive") != std::string::npos) {

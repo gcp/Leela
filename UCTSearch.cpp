@@ -808,8 +808,9 @@ int UCTSearch::think(int color, passflag_t passflag) {
     float territory;
     float mc_score = Playout::mc_owner(m_rootstate, 64, &territory);
     if (m_use_nets) {
-        float net_score = Network::get_Network()->get_value(&m_rootstate,
-                                                            Network::Ensemble::AVERAGE_ALL);
+        float net_score = 0.5f;
+            //Network::get_Network()->get_value(&m_rootstate,
+            //                                                Network::Ensemble::AVERAGE_ALL);
         myprintf("MC winrate=%f, NN eval=%f, score=", mc_score, net_score);
     } else {
          myprintf("MC winrate=%f, score=", mc_score);

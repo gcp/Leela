@@ -37,23 +37,15 @@ public:
     using scored_node = std::pair<float, int>;
     using Netresult = std::vector<scored_node>;
 
-    static Netresult get_scored_moves(FastState * state,
+    static Netresult get_scored_moves(GameState * state,
                                       Ensemble ensemble,
                                       int rotation = -1);
-    static float get_value(GameState *state,
-                           Ensemble ensemble);
-    static constexpr int POLICY_CHANNELS = 32;
-    static constexpr int VALUE_CHANNELS = 18;
-#ifdef USE_OPENCL
-    static constexpr int MAX_CHANNELS = 192;
-#else
-    static constexpr int MAX_CHANNELS = 128;
-#endif
-    static constexpr int MAX_VALUE_CHANNELS = 64;
+    static constexpr int INPUT_CHANNELS = 18;
+    static constexpr int MAX_CHANNELS = 256;
 
 #ifdef USE_OPENCL
     void async_scored_moves(std::atomic<int> * nodecount,
-                            FastState * state, UCTNode * node,
+                            GameState * state, UCTNode * node,
                             Ensemble ensemble, int rotation = -1);
 #endif
     void initialize();
@@ -73,14 +65,10 @@ private:
 #endif
 
     static Netresult get_scored_moves_internal(
-      FastState * state, NNPlanes & planes, int rotation);
-    static float get_value_internal(
-      FastState * state, NNPlanes & planes, int rotation);
+      GameState * state, NNPlanes & planes, int rotation);
     void gather_traindata(std::string filename, TrainVector& tv);
     void train_network(TrainVector& tv, size_t&, size_t&);
-    static void gather_features_policy(FastState * state, NNPlanes & planes,
-                                       BoardPlane** ladder = nullptr);
-    static void gather_features_value(GameState * state, NNPlanes & planes);
+    static void gather_features(GameState * state, NNPlanes & planes);
     static Network* s_Net;
 };
 

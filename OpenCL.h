@@ -53,12 +53,10 @@ public:
     template <size_t M, size_t V>
     void push_batchnorm(unsigned int channel_size,
                         const std::array<float, M> & means,
-                        const std::array<float, V> & variances,
-                        const std::array<float, 1> & scale) {
+                        const std::array<float, V> & variances) {
         size_t layer = get_layer_count();
         push_weights(layer, means);
         push_weights(layer, variances);
-        push_weights(layer, scale);
         m_layers[layer].is_batchnorm = true;
         m_layers[layer].channels = M;
         m_layers[layer].outputs = M;
@@ -149,8 +147,7 @@ private:
 };
 
 extern OpenCL opencl;
-extern OpenCL_Network opencl_policy_net;
-extern OpenCL_Network opencl_value_net;
+extern OpenCL_Network opencl_net;
 extern thread_local ThreadData opencl_thread_data;
 
 #endif

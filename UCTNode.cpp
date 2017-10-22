@@ -72,7 +72,7 @@ SMP::Mutex & UCTNode::get_mutex() {
 }
 
 void UCTNode::netscore_children(std::atomic<int> & nodecount,
-                                FastState & state, bool at_root) {
+                                GameState & state, bool at_root) {
     // acquire the lock
     LOCK(get_mutex(), lock);
     // check whether somebody beat us to it
@@ -121,7 +121,7 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
 }
 
 void UCTNode::create_children(std::atomic<int> & nodecount,
-                              FastState & state, bool at_root, bool use_nets) {
+                              GameState & state, bool at_root, bool use_nets) {
     // check whether somebody beat us to it (atomic)
     if (has_children()) {
         return;
@@ -168,7 +168,7 @@ void UCTNode::create_children(std::atomic<int> & nodecount,
 }
 
 void UCTNode::scoring_cb(std::atomic<int> * nodecount,
-                         FastState & state,
+                         GameState & state,
                          Network::Netresult & raw_netlist,
                          bool all_symmetries) {
     FastBoard & board = state.board;
@@ -330,9 +330,9 @@ void UCTNode::run_value_net(GameState & state) {
     // Let simulations proceed
     lock.unlock();
 
-    float eval =
-        Network::get_Network()->get_value(&state,
-                                          Network::Ensemble::RANDOM_ROTATION);
+    float eval = 0.5f;
+   //     Network::get_Network()->get_value(&state,
+   //                                       Network::Ensemble::RANDOM_ROTATION);
 
     // DCNN returns winrate as side to move
     int tomove = state.board.get_to_move();
