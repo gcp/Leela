@@ -252,8 +252,8 @@ void Network::initialize(void) {
     myprintf("Initializing DCNN...");
     Caffe::set_mode(Caffe::GPU);
 
-    s_net.reset(new Net("model_5722.txt", TEST));
-    s_net->CopyTrainedLayersFrom("model_5779.caffemodel");
+    s_net.reset(new Net("model_zero.txt", TEST));
+    s_net->CopyTrainedLayersFrom("model_zero.caffemodel");
 
     myprintf("Inputs: %d Outputs: %d\n",
         s_net->num_inputs(), s_net->num_outputs());
@@ -289,12 +289,11 @@ void Network::initialize(void) {
         myprintf("layer %d (%s)", layer_num, (*it)->type());
         auto & blobs = (*it)->blobs();
         if (blobs.size() > 0) myprintf(" = ");
-        for (auto pars = blobs.begin(); pars != blobs.end(); ++pars) {
+        for (auto& pars : blobs) {
             const Blob & blob = *(*pars);
             total_weights += blob.count();
             myprintf("%s ", blob.shape_string().c_str());
             if (boost::next(pars) != blobs.end()) myprintf("+ ");
-
 #ifdef WRITE_WEIGHTS
             out << "// " << blob.shape_string() << std::endl;
             if (strcmp((*it)->type(), "Convolution") == 0) {

@@ -9,8 +9,10 @@ layer {
   }
   data_param {
     source: "leela_train"
-    batch_size: 32
+    batch_size: 4
     backend: LEVELDB
+    threads: 1
+    parser_threads: 1
   }
 }
 
@@ -24,8 +26,10 @@ layer {
   }
   data_param {
     source: "leela_test"
-    batch_size: 32
+    batch_size: 4
     backend: LEVELDB
+    threads: 1
+    parser_threads: 1
   }
 }
 
@@ -39,8 +43,10 @@ layer {
   }
   data_param {
     source: "leela_train_label"
-    batch_size: 32
+    batch_size: 4
     backend: LEVELDB
+    threads: 1
+    parser_threads: 1
   }
 }
 
@@ -54,8 +60,10 @@ layer {
   }
   data_param {
     source: "leela_test_label"
-    batch_size: 32
+    batch_size: 4
     backend: LEVELDB
+    threads: 1
+    parser_threads: 1
   }
 }
 
@@ -2953,7 +2961,7 @@ layer {
 }
 
 layer {
-  name: "pol1"
+  name: "p_conv1"
   type: "Convolution"
   bottom: "elt79"
   top: "pol1"
@@ -2971,21 +2979,21 @@ layer {
 }
 
 layer {
-  name: "pol1"
+  name: "p_bn1"
   type: "BatchNorm"
   bottom: "pol1"
   top: "pol1"
 }
 
 layer {
-  name: "pol1"
+  name: "p_relu1"
   type: "ReLU"
   bottom: "pol1"
   top: "pol1"
 }
 
 layer {
-  name: "pol2"
+  name: "p_ip1"
   type: "InnerProduct"
   inner_product_param {
     num_output: 362
@@ -3001,7 +3009,7 @@ layer {
 }
 
 layer {
-  name: "val1"
+  name: "v_conv1"
   type: "Convolution"
   bottom: "elt79"
   top: "val1"
@@ -3017,22 +3025,23 @@ layer {
     }
   }
 }
+
 layer {
-  name: "val1"
+  name: "v_bn1"
   type: "BatchNorm"
   bottom: "val1"
   top: "val1"
 }
 
 layer {
-  name: "val1"
+  name: "v_relu1"
   type: "ReLU"
   bottom: "val1"
   top: "val1"
 }
 
 layer {
-  name: "val2"
+  name: "v_ip1"
   type: "InnerProduct"
   inner_product_param {
     num_output: 256
@@ -3048,14 +3057,14 @@ layer {
 }
 
 layer {
-  name: "val2"
+  name: "v_relu2"
   type: "ReLU"
   bottom: "val2"
   top: "val2"
 }
 
 layer {
-  name: "val3"
+  name: "v_ip2"
   type: "InnerProduct"
   inner_product_param {
     num_output: 1
@@ -3071,7 +3080,7 @@ layer {
 }
 
 layer {
-  name: "val4"
+  name: "v_tanh"
   type: "TanH"
   bottom: "val3"
   top: "score"

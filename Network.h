@@ -43,7 +43,7 @@ public:
     static float get_value(GameState *state,
                            Ensemble ensemble);
     static constexpr int POLICY_CHANNELS = 32;
-    static constexpr int VALUE_CHANNELS = 32;
+    static constexpr int VALUE_CHANNELS = 18;
 #ifdef USE_OPENCL
     static constexpr int MAX_CHANNELS = 192;
 #else
