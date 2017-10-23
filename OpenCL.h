@@ -8,11 +8,8 @@
 #define CL_HPP_ENABLE_EXCEPTIONS
 #include <CL/cl2.hpp>
 
-#include <atomic>
 #include <string>
 #include <vector>
-
-#include "SMP.h"
 
 class Layer {
     friend class OpenCL_Network;
@@ -23,6 +20,7 @@ private:
     bool is_batchnorm{false};
     bool is_innerproduct{false};
     bool is_splitter{false};
+    bool is_residual_block{false};
     std::vector<cl::Buffer> weights;
 };
 
@@ -41,6 +39,7 @@ private:
     cl::Buffer m_tmpBuffer;
     cl::Buffer m_mergeBuffer;
     cl::Buffer m_outBuffer;
+    cl::Buffer m_residualBuffer;
     bool m_buffers_allocated{false};
 };
 
@@ -82,6 +81,31 @@ public:
         m_layers[layer].outputs = B;
     }
 
+    template <size_t W, size_t B, size_t M, size_t V>
+    void push_residual(unsigned int filter_size,
+                       const std::array<float, W> & weights_1,
+                       const std::array<float, B> & biases_1,
+                       const std::array<float, M> & means_1,
+                       const std::array<float, V> & variances_1,
+                       const std::array<float, W> & weights_2,
+                       const std::array<float, B> & biases_2,
+                       const std::array<float, M> & means_2,
+                       const std::array<float, V> & variances_2) {
+        size_t layer = get_layer_count();
+        push_weights(layer, weights_1);
+        push_weights(layer, biases_1);
+        push_weights(layer, means_1);
+        push_weights(layer, variances_1);
+        push_weights(layer, weights_2);
+        push_weights(layer, biases_2);
+        push_weights(layer, means_2);
+        push_weights(layer, variances_2);
+        m_layers[layer].is_residual_block = true;
+        m_layers[layer].outputs = B;
+        m_layers[layer].filter_size = filter_size;
+        m_layers[layer].channels = W / (B * filter_size * filter_size);
+    }
+
     void push_split(int channels) {
         size_t layer = get_layer_count();
         push_noweight_layer(layer);
@@ -110,8 +134,9 @@ private:
     void convolve(int filter_size, int channels, int outputs,
                   cl::Buffer& input, cl::Buffer& output, cl::Buffer& merge,
                   std::vector<cl::Buffer>& weights);
-    void batchnorm(int outputs, int channel_size, cl::Buffer & input,
-                   cl::Buffer & output, std::vector<cl::Buffer>& weights);
+    void batchnorm(int outputs, int channel_size, cl::Buffer& input,
+                   cl::Buffer& output, cl::Buffer* residual,
+                   std::vector<cl::Buffer>& weights);
     void innerproduct(int inputs, int outputs,
                       cl::Buffer& input, cl::Buffer& output,
                       std::vector<cl::Buffer>& weights);

@@ -67,15 +67,9 @@ void GTP::setup_default_parameters() {
     cfg_num_threads = std::max(1, std::min(SMP::get_num_cpus(), MAX_CPUS));
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
-#ifdef USE_OPENCL
     cfg_mature_threshold = 1;
     cfg_extra_symmetry =  1;
     cfg_eval_thresh = 1;
-#else
-    cfg_mature_threshold = 85;
-    cfg_extra_symmetry = 3000;
-    cfg_eval_thresh = 9;
-#endif
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
 #ifdef USE_OPENCL
@@ -86,11 +80,7 @@ void GTP::setup_default_parameters() {
     cfg_fpu = 1.1f;
     cfg_puct = 1.1f;
     cfg_psa = 0.0018f;
-#ifdef USE_SEARCH
     cfg_softmax_temp = 1.0f;
-#else
-    cfg_softmax_temp = 0.094f;
-#endif
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
     cfg_mix_opening = 0.66f;

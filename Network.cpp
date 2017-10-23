@@ -212,57 +212,34 @@ void Network::initialize(void) {
     myprintf("Initializing OpenCL\n");
     opencl.initialize();
     myprintf("Transferring weights to GPU...");
+    // input
     opencl_net.push_convolve(3, conv1_w, conv1_b);
     opencl_net.push_batchnorm(256, bn1_w1, bn1_w2);
-    opencl_net.push_convolve(3, conv2_w, conv2_b);
-    opencl_net.push_batchnorm(256, bn2_w1, bn2_w2);
-    opencl_net.push_convolve(3, conv3_w, conv3_b);
-    opencl_net.push_batchnorm(256, bn3_w1, bn3_w2);
-    opencl_net.push_convolve(3, conv4_w, conv4_b);
-    opencl_net.push_batchnorm(256, bn4_w1, bn4_w2);
-    opencl_net.push_convolve(3, conv5_w, conv5_b);
-    opencl_net.push_batchnorm(256, bn5_w1, bn5_w2);
-    opencl_net.push_convolve(3, conv6_w, conv6_b);
-    opencl_net.push_batchnorm(256, bn6_w1, bn6_w2);
-    opencl_net.push_convolve(3, conv7_w, conv7_b);
-    opencl_net.push_batchnorm(256, bn7_w1, bn7_w2);
-    opencl_net.push_convolve(3, conv8_w, conv8_b);
-    opencl_net.push_batchnorm(256, bn8_w1, bn8_w2);
-    opencl_net.push_convolve(3, conv9_w, conv9_b);
-    opencl_net.push_batchnorm(256, bn9_w1, bn9_w2);
-    opencl_net.push_convolve(3, conv10_w, conv10_b);
-    opencl_net.push_batchnorm(256, bn10_w1, bn10_w2);
-    opencl_net.push_convolve(3, conv11_w, conv11_b);
-    opencl_net.push_batchnorm(256, bn11_w1, bn11_w2);
-    opencl_net.push_convolve(3, conv12_w, conv12_b);
-    opencl_net.push_batchnorm(256, bn12_w1, bn12_w2);
-    opencl_net.push_convolve(3, conv13_w, conv13_b);
-    opencl_net.push_batchnorm(256, bn13_w1, bn13_w2);
-    opencl_net.push_convolve(3, conv14_w, conv14_b);
-    opencl_net.push_batchnorm(256, bn14_w1, bn14_w2);
-    opencl_net.push_convolve(3, conv15_w, conv15_b);
-    opencl_net.push_batchnorm(256, bn15_w1, bn15_w2);
-    opencl_net.push_convolve(3, conv16_w, conv16_b);
-    opencl_net.push_batchnorm(256, bn16_w1, bn16_w2);
-    opencl_net.push_convolve(3, conv17_w, conv17_b);
-    opencl_net.push_batchnorm(256, bn17_w1, bn17_w2);
-    opencl_net.push_convolve(3, conv18_w, conv18_b);
-    opencl_net.push_batchnorm(256, bn18_w1, bn18_w2);
-    opencl_net.push_convolve(3, conv19_w, conv19_b);
-    opencl_net.push_batchnorm(256, bn19_w1, bn19_w2);
-    opencl_net.push_convolve(3, conv20_w, conv20_b);
-    opencl_net.push_batchnorm(256, bn20_w1, bn20_w2);
-    opencl_net.push_convolve(3, conv21_w, conv21_b);
-    opencl_net.push_batchnorm(256, bn21_w1, bn21_w2);
-    opencl_net.push_convolve(3, conv22_w, conv22_b);
-    opencl_net.push_batchnorm(256, bn22_w1, bn22_w2);
-    opencl_net.push_convolve(3, conv23_w, conv23_b);
-    opencl_net.push_batchnorm(256, bn23_w1, bn23_w2);
-    opencl_net.push_convolve(3, conv24_w, conv24_b);
-    opencl_net.push_batchnorm(256, bn24_w1, bn24_w2);
-    opencl_net.push_convolve(3, conv25_w, conv25_b);
-    opencl_net.push_batchnorm(256, bn25_w1, bn25_w2);
-
+    // residual blocks
+    opencl_net.push_residual(3, conv2_w, conv2_b, bn2_w1, bn2_w2,
+                                conv3_w, conv3_b, bn3_w1, bn3_w2);
+    opencl_net.push_residual(3, conv4_w, conv4_b, bn4_w1, bn4_w2,
+                                conv5_w, conv5_b, bn5_w1, bn5_w2);
+    opencl_net.push_residual(3, conv6_w, conv6_b, bn6_w1, bn6_w2,
+                                conv7_w, conv7_b, bn7_w1, bn7_w2);
+    opencl_net.push_residual(3, conv8_w, conv8_b, bn8_w1, bn8_w2,
+                                conv9_w, conv9_b, bn9_w1, bn9_w2);
+    opencl_net.push_residual(3, conv10_w, conv10_b, bn10_w1, bn10_w2,
+                                conv11_w, conv11_b, bn11_w1, bn11_w2);
+    opencl_net.push_residual(3, conv12_w, conv12_b, bn12_w1, bn12_w2,
+                                conv13_w, conv13_b, bn13_w1, bn13_w2);
+    opencl_net.push_residual(3, conv14_w, conv14_b, bn14_w1, bn14_w2,
+                                conv15_w, conv15_b, bn15_w1, bn15_w2);
+    opencl_net.push_residual(3, conv16_w, conv16_b, bn16_w1, bn16_w2,
+                                conv17_w, conv17_b, bn17_w1, bn17_w2);
+    opencl_net.push_residual(3, conv18_w, conv18_b, bn18_w1, bn18_w2,
+                                conv19_w, conv19_b, bn19_w1, bn19_w2);
+    opencl_net.push_residual(3, conv20_w, conv20_b, bn20_w1, bn20_w2,
+                                conv21_w, conv21_b, bn21_w1, bn21_w2);
+    opencl_net.push_residual(3, conv22_w, conv22_b, bn22_w1, bn22_w2,
+                                conv23_w, conv23_b, bn23_w1, bn23_w2);
+    opencl_net.push_residual(3, conv24_w, conv24_b, bn24_w1, bn24_w2,
+                                conv25_w, conv25_b, bn25_w1, bn25_w2);
     //opencl_value_net.push_innerproduct(val_ip13_w, val_ip13_b);
     //opencl_value_net.push_innerproduct(val_ip14_w, val_ip14_b);
     myprintf("done\n");
@@ -441,7 +418,7 @@ void innerproduct(std::vector<float>& input,
 
     for (unsigned int o = 0; o < outputs; o++) {
         float val = biases[o] + output[o];
-        if (outputs > 1) {
+        if (outputs == 256) {
             val = lambda_ReLU(val);
         }
         output[o] = val;
@@ -576,7 +553,7 @@ Network::Netresult Network::get_scored_moves_internal(
     }
 #ifdef USE_OPENCL
     opencl_net.forward(input_data, output_data);
-    // Get the mvoes
+    // Get the moves
     convolve<1, 256, 2>(output_data, conv26_w, conv26_b, policy_data_1);
     batchnorm<2, 361>(policy_data_1, bn26_w1, bn26_w2, policy_data_2);
     innerproduct<2*361, 362>(policy_data_2, ip27_w, ip27_b, policy_out);
@@ -590,7 +567,7 @@ Network::Netresult Network::get_scored_moves_internal(
     innerproduct<256, 1>(winrate_data, ip30_w, ip30_b, winrate_out);
 
     // Sigmoid
-    float winrate_sig = (1.0f + std::tanh(output_data[0])) / 2.0f;
+    float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
     float val_result = winrate_sig;
 #elif defined(USE_BLAS)
     convolve<5,  32,  96>(input_data, conv1_w, conv1_b, output_data);
@@ -656,6 +633,9 @@ void Network::show_heatmap(FastState * state, Netresult& result, bool topmoves) 
     for (int i = display_map.size() - 1; i >= 0; --i) {
         myprintf("%s\n", display_map[i].c_str());
     }
+    assert(result.first.back().second == FastBoard::PASS);
+    myprintf("pass: %d\n", result.first.back().first);
+    myprintf("winrate: %f\n", result.second);
 
     if (topmoves) {
         std::stable_sort(moves.rbegin(), moves.rend());
