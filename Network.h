@@ -51,7 +51,8 @@ public:
     std::string get_backend();
     static int rotate_nn_idx(const int vertex, int symmetry);
     static int rev_rotate_nn_idx(const int vertex, int symmetry);
-    static void softmax(std::vector<float>& input, std::vector<float>& output,
+    static void softmax(const std::vector<float>& input,
+                        std::vector<float>& output,
                         float temperature = 1.0f);
 
 private:

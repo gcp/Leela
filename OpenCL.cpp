@@ -97,9 +97,9 @@ static std::string sourceCode_convolve1 = R"(
                     val += row_buff[(ly * chan_buff_size + 7) * row_buff_size + lx];
                     merge[(((c >> chan_shift) * height + row) * width + out_cw + lx) * outputs + o] = val;
                 }
+                out_cw  += row_buff_size;
+                out_lane = 0;
            }
-           out_cw  += row_buff_size;
-           out_lane = 0;
        }
     }
 )";
@@ -304,7 +304,7 @@ static std::string sourceCode_utility = R"(
     __kernel void batchnorm(
                         __global const float * in,
                         __global float * out,
-                        __global float * residual,
+                        __global const float * residual,
                         __constant const float * means,
                         __constant const float * variances) {
 
@@ -362,7 +362,7 @@ static std::string sourceCode_utility = R"(
             val += in[i] * weights[o * inputs + i];
         }
         val += biases[o];
-        if (outputs > 1) {
+        if (outputs == 256) {
             val = val > 0 ? val : 0.0f;
         }
         out[o] = val;
@@ -403,35 +403,34 @@ void OpenCL_Network::add_weights(size_t layer,
     m_layers.back().weights.push_back(bufferWeights);
 }
 
-void OpenCL_Network::forward(std::vector<float>& input,
+void OpenCL_Network::forward(const std::vector<float>& input,
                              std::vector<float>& output) {
     constexpr int width = 19;
     constexpr int height = 19;
     constexpr size_t one_plane = width * height * sizeof(float);
 
     opencl.ensure_thread_initialized();
-    size_t inSize = sizeof(float) * input.size();
-    size_t outSize = sizeof(float) * output.size();
-    size_t midSize = one_plane * Network::MAX_CHANNELS;
-    size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
+    const size_t midSize = one_plane * Network::MAX_CHANNELS;
+    const size_t inSize = sizeof(float) * input.size();
+    const size_t outSize = sizeof(float) * output.size();
+    const size_t finalSize = m_layers.back().outputs * one_plane;
+    assert(outSize == finalSize);
 
     if (!opencl_thread_data.m_buffers_allocated) {
-        size_t alloc_inSize = one_plane * Network::MAX_CHANNELS;
-        size_t alloc_outSize = one_plane * Network::MAX_CHANNELS;
-        size_t alloc_finalSize = one_plane * Network::MAX_CHANNELS;
+        size_t alloc_midSize = one_plane * Network::MAX_CHANNELS;
         size_t alloc_mergeSize = one_plane *
             Network::MAX_CHANNELS * (Network::MAX_CHANNELS / 2);
 
         opencl_thread_data.m_inBuffer = cl::Buffer(
-            CL_MEM_READ_WRITE, alloc_inSize);
+            CL_MEM_READ_WRITE, alloc_midSize);
         opencl_thread_data.m_tmpBuffer = cl::Buffer(
-            CL_MEM_READ_WRITE, alloc_outSize);
+            CL_MEM_READ_WRITE, alloc_midSize);
+        opencl_thread_data.m_residualBuffer = cl::Buffer(
+            CL_MEM_READ_WRITE, alloc_midSize);
         opencl_thread_data.m_mergeBuffer = cl::Buffer(
             CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, alloc_mergeSize);
         opencl_thread_data.m_outBuffer = cl::Buffer(
-            CL_MEM_WRITE_ONLY, alloc_finalSize);
-        opencl_thread_data.m_residualBuffer = cl::Buffer(
-                CL_MEM_READ_WRITE, alloc_inSize);
+            CL_MEM_WRITE_ONLY, finalSize);
         opencl_thread_data.m_buffers_allocated = true;
     }
 
@@ -442,9 +441,10 @@ void OpenCL_Network::forward(std::vector<float>& input,
     cl::Buffer & residualBuffer = opencl_thread_data.m_residualBuffer;
     cl::CommandQueue & queue = opencl_thread_data.m_commandqueue;
 
+    // XXX: this copies a lot of zeroes
     queue.enqueueWriteBuffer(inBuffer, CL_FALSE, 0, inSize, input.data());
 
-    for (auto & layer : m_layers) {
+    for (auto& layer : m_layers) {
         if (layer.is_batchnorm) {
             batchnorm(layer.outputs,
                       layer.filter_size,
@@ -535,14 +535,6 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
     constexpr int width = 19;
     constexpr int height = 19;
     constexpr int boardsize = width * height;
-    unsigned int filter_len = filter_size * filter_size;
-
-    size_t inSize = width * height * channels * sizeof(float);
-
-    // Every input channel is this big
-    size_t chanSize = width * height * sizeof(float);
-
-    size_t outputGroup;
 
     cl::Kernel * m_convolve_kernel = nullptr;
     if (filter_size == 3) {
@@ -562,11 +554,10 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
     }
 
     constexpr int rowGroup = 1;
-    outputGroup = std::min(outputs, 32);
+    size_t outputGroup = std::min(outputs, 32);
 
     // Total output size after reducing
     size_t outSize = width * height * outputs * sizeof(float);
-
     // Produce channel * output planes and merge them at the end
     size_t mergeSize = (channels >> channelShift) * outSize;
 
@@ -616,6 +607,7 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
     }
 
     cl::Kernel & merge_kernel = opencl_thread_data.m_merge_kernel;
+    assert(channels % (1 << channelShift) == 0);
 
     try {
         merge_kernel.setArg(0, bufferMerge);

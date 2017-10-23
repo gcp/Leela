@@ -214,7 +214,7 @@ void Network::initialize(void) {
     myprintf("Transferring weights to GPU...");
     // input
     opencl_net.push_convolve(3, conv1_w, conv1_b);
-    opencl_net.push_batchnorm(256, bn1_w1, bn1_w2);
+    opencl_net.push_batchnorm(361, bn1_w1, bn1_w2);
     // residual blocks
     opencl_net.push_residual(3, conv2_w, conv2_b, bn2_w1, bn2_w2,
                                 conv3_w, conv3_b, bn3_w1, bn3_w2);
@@ -309,27 +309,27 @@ void Network::initialize(void) {
                 if (pars == blobs.begin()) {
                     conv_count++;
                     out << "std::array<float, " << blob.count()
-                        << "> val_conv" << conv_count << "_w = {{" << std::endl;
+                        << "> conv" << conv_count << "_w = {{" << std::endl;
                 } else {
                     out << "std::array<float, " << blob.count()
-                        << "> val_conv" << conv_count << "_b = {{" << std::endl;
+                        << "> conv" << conv_count << "_b = {{" << std::endl;
                 }
             } else if (strcmp((*it)->type(), "BatchNorm") == 0) {
                 out << "std::array<float, " << blob.count()
-                    << "> val_bn" << conv_count << "_w" << (pars - blobs.begin()) + 1
+                    << "> bn" << conv_count << "_w" << (pars - blobs.begin()) + 1
                     << " = {{" << std::endl;
             } else if (strcmp((*it)->type(), "InnerProduct") == 0) {
                 if (pars == blobs.begin()) {
                     conv_count++;
                     out << "std::array<float, " << blob.count()
-                        << "> val_ip" << conv_count << "_w = {{" << std::endl;
+                        << "> ip" << conv_count << "_w = {{" << std::endl;
                 } else {
                     out << "std::array<float, " << blob.count()
-                        << "> val_ip" << conv_count << "_b = {{" << std::endl;
+                        << "> ip" << conv_count << "_b = {{" << std::endl;
                 }
             } else {
                 out << "std::array<float, " << blob.count()
-                    << "> val_sc" << conv_count << "_w" << (pars - blobs.begin()) + 1
+                    << "> sc" << conv_count << "_w" << (pars - blobs.begin()) + 1
                     << " = {{" << std::endl;
             }
             for (int idx = 0; idx < blob.count(); idx++) {
@@ -353,7 +353,7 @@ void Network::initialize(void) {
 template<unsigned int filter_size,
          unsigned int channels, unsigned int outputs,
          size_t W, size_t B>
-void convolve(std::vector<float>& input,
+void convolve(const std::vector<float>& input,
               const std::array<float, W>& weights,
               const std::array<float, B>& biases,
               std::vector<float>& output) {
@@ -398,7 +398,7 @@ void convolve(std::vector<float>& input,
 template<unsigned int inputs,
          unsigned int outputs,
          size_t W, size_t B>
-void innerproduct(std::vector<float>& input,
+void innerproduct(const std::vector<float>& input,
                   const std::array<float, W>& weights,
                   const std::array<float, B>& biases,
                   std::vector<float>& output) {
@@ -425,7 +425,7 @@ void innerproduct(std::vector<float>& input,
 
 template<unsigned int channels,
          unsigned int spatial_size>
-void batchnorm(std::vector<float>& input,
+void batchnorm(const std::vector<float>& input,
                const std::array<float, channels>& means,
                const std::array<float, channels>& variances,
                std::vector<float>& output)
@@ -449,7 +449,7 @@ void batchnorm(std::vector<float>& input,
 }
 #endif
 
-void Network::softmax(std::vector<float>& input,
+void Network::softmax(const std::vector<float>& input,
                       std::vector<float>& output,
                       float temperature) {
     assert(&input != &output);
@@ -534,10 +534,10 @@ Network::Netresult Network::get_scored_moves_internal(
     std::vector<float> policy_data_2(2 * width * height);
     std::vector<float> value_data_1(1 * width * height);
     std::vector<float> value_data_2(1 * width * height);
+    std::vector<float> policy_out((width * height) + 1);
     std::vector<float> softmax_data((width * height) + 1);
     std::vector<float> winrate_data(256);
     std::vector<float> winrate_out(1);
-    std::vector<float> policy_out(362);
 #endif
     for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < height; ++h) {
@@ -565,7 +565,7 @@ Network::Netresult Network::get_scored_moves_internal(
 
     // Sigmoid
     float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
-#elif defined(USE_BLAS)
+#elif defined(USE_BLAS) && !defined(USE_OPENCL)
     convolve<5,  32,  96>(input_data, conv1_w, conv1_b, output_data);
     std::swap(input_data, output_data);
     softmax(output_data, softmax_data, cfg_softmax_temp);

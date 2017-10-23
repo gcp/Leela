@@ -119,11 +119,11 @@ public:
         }
     }
 
-    size_t get_layer_count() {
+    size_t get_layer_count() const {
         return m_layers.size();
     }
 
-    void forward(std::vector<float>& input, std::vector<float>& output);
+    void forward(const std::vector<float>& input, std::vector<float>& output);
 
 private:
     template <size_t W>

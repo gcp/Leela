@@ -8,7 +8,7 @@
 
 template <unsigned long channels,
           unsigned long filter_size>
-void im2col(std::vector<float>& input,
+void im2col(const std::vector<float>& input,
             std::vector<float>& output) {
     constexpr unsigned int height = 19;
     constexpr unsigned int width = 19;
