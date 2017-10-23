@@ -583,6 +583,7 @@ void OpenCL_Network::convolve(int filter_size, int channels, int outputs,
         stripSize = width * sizeof(float);
         rowTiles    = 19;
         rowTileSize =  1;
+        assert(channelGroup == 8); // hardcoded in kernel
     }
 
     int rowBuffer = std::min<int>(channelGroup, 7);

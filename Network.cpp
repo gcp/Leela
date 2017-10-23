@@ -240,8 +240,6 @@ void Network::initialize(void) {
                                 conv23_w, conv23_b, bn23_w1, bn23_w2);
     opencl_net.push_residual(3, conv24_w, conv24_b, bn24_w1, bn24_w2,
                                 conv25_w, conv25_b, bn25_w1, bn25_w2);
-    //opencl_value_net.push_innerproduct(val_ip13_w, val_ip13_b);
-    //opencl_value_net.push_innerproduct(val_ip14_w, val_ip14_b);
     myprintf("done\n");
 #endif
 #ifdef USE_BLAS
@@ -586,7 +584,7 @@ Network::Netresult Network::get_scored_moves_internal(
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         if (idx < 19*19) {
             int rot_idx = rev_rotate_nn_idx(idx, rotation);
-            float val = policy_out[rot_idx];
+            float val = outputs[rot_idx];
             int x = idx % 19;
             int y = idx / 19;
             int vtx = state->board.get_vertex(x, y);
@@ -594,7 +592,7 @@ Network::Netresult Network::get_scored_moves_internal(
                 result.emplace_back(val, vtx);
             }
         } else {
-            result.emplace_back(policy_out[idx], FastBoard::PASS);
+            result.emplace_back(outputs[idx], FastBoard::PASS);
         }
     }
 
@@ -634,7 +632,8 @@ void Network::show_heatmap(FastState * state, Netresult& result, bool topmoves) 
         myprintf("%s\n", display_map[i].c_str());
     }
     assert(result.first.back().second == FastBoard::PASS);
-    myprintf("pass: %d\n", result.first.back().first);
+    int pass_score = int(result.first.back().first * 1000);
+    myprintf("pass: %d\n", pass_score);
     myprintf("winrate: %f\n", result.second);
 
     if (topmoves) {
