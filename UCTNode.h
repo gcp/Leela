@@ -19,8 +19,8 @@ public:
     ~UCTNode();
     bool first_visit() const;
     bool has_children() const;
-    float create_children(std::atomic<int> & nodecount,
-                          GameState & state, bool at_root);
+    bool create_children(std::atomic<int> & nodecount,
+                         GameState & state, bool at_root);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
     void invalidate();
@@ -30,6 +30,7 @@ public:
     bool has_netscore() const;
     float get_score() const;
     void set_score(float score);
+    float get_eval() const;
     float get_eval(int tomove) const;
     double get_blackevals() const;
     int get_evalcount() const;
@@ -39,7 +40,7 @@ public:
     void set_evalcount(int evalcount);
     void set_eval(float eval);
     void accumulate_eval(float eval);
-    void update(bool update_eval, int color, float eval = 0.5f);
+    void update(int color, bool update_eval, float eval = 0.5f);
 
     UCTNode* uct_select_child(int color, bool use_nets);
     UCTNode* get_first_child() const;
@@ -79,6 +80,7 @@ private:
     std::atomic<bool> m_valid{true};
     // is someone adding scores to this node?
     bool m_is_expanding{false};
+    bool m_is_netscoring{false};
     // dcnn node XXX redundant has_children
     bool m_has_netscore{false};
     int m_symmetries_done{0};

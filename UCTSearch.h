@@ -9,6 +9,18 @@
 #include "UCTNode.h"
 #include "Playout.h"
 
+class SearchResult {
+public:
+    SearchResult() = default;
+    explicit SearchResult(float e)
+        : m_valid(true), m_eval(e) {};
+    bool valid() { return m_valid;  }
+    float eval() { return m_eval;  }
+private:
+    bool m_valid{false};
+    float m_eval{0.0f};
+};
+
 class UCTSearch {
 public:
     /*
@@ -37,16 +49,14 @@ public:
     bool is_running();
     bool playout_limit_reached();
     void increment_playouts();
-    float play_simulation(GameState & currstate, UCTNode * const node);
-    std::tuple<float, float, float> get_scores();
+    SearchResult play_simulation(GameState & currstate, UCTNode * const node);
+    float get_scores();
 
 private:
     void dump_stats(KoState & state, UCTNode & parent);
     void dump_GUI_stats(GameState & state, UCTNode & parent);
     std::string get_pv(KoState & state, UCTNode & parent);
-    void dump_thinking();
     void dump_analysis();
-    void dump_order2(void);
     int get_best_move(passflag_t passflag);
     int get_best_move_nosearch(std::vector<std::pair<float, int>> moves,
                                float score, passflag_t passflag);

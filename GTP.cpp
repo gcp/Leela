@@ -17,8 +17,6 @@
 #include "UCTSearch.h"
 #include "UCTNode.h"
 #include "SGFTree.h"
-#include "AttribScores.h"
-#include "PNSearch.h"
 #include "Network.h"
 #include "Book.h"
 #include "TTable.h"
@@ -709,28 +707,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
             gtp_fail_printf(id, "syntax not understood");
         }
         return true;
-    } else if (command.find("tune") == 0) {
-        std::istringstream cmdstream(command);
-        std::string tmp, filename;
-
-        cmdstream >> tmp;   // eat tune
-
-        cmdstream >> filename;
-
-        std::unique_ptr<AttribScores> scores(new AttribScores);
-
-        scores->autotune_from_file(filename);
-
-        gtp_printf(id, "");
-        return true;
-    } else if (command.find("pn") == 0) {
-        std::unique_ptr<PNSearch> pnsearch(new PNSearch(game));
-
-        pnsearch->classify_groups();
-
-        gtp_printf(id, "");
-        return true;
-    }  else if (command.find("nettune") == 0) {
+    } else if (command.find("nettune") == 0) {
         std::istringstream cmdstream(command);
         std::string tmp, filename;
 

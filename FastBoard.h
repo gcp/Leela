@@ -181,7 +181,7 @@ protected:
     void check_nakade(int color, int vertex, int komove, movelist_t & moves);
     int after_liberties_color(const int color, const int vertex);
     bool can_kill_neighbours(const int vertex);
-    std::vector<int> killable_neighbours(const int string_parent, const int N);
+    std::vector<int> killable_neighbours(const int string_parent, const size_t N);
     std::vector<int> critical_neighbours(const int color, const int vertex,
                                          const int N);
     template<int N> bool saveable_string(const int string_parent,

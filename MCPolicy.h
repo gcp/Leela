@@ -161,7 +161,7 @@ public:
 
     void add_to_trace(bool black_to_move,
                       std::vector<MovewFeatures> & moves,
-                      int chosen_idx) {
+                      size_t chosen_idx) {
         trace.emplace_back(black_to_move, moves, moves[chosen_idx]);
     }
 

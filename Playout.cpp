@@ -17,7 +17,7 @@
 using namespace Utils;
 
 Playout::Playout() :
-    m_run(false), m_eval_valid(false) {
+    m_run(false) {
     m_sq[0].reset();
     m_sq[1].reset();
 }
@@ -32,20 +32,6 @@ float Playout::get_score() const {
 float Playout::get_territory() const {
     assert(m_run);
     return m_territory;
-}
-
-void Playout::set_eval(float eval) {
-    m_blackeval = eval;
-    m_eval_valid = true;
-}
-
-float Playout::get_eval() const {
-    assert(m_eval_valid == true);
-    return m_blackeval;
-}
-
-bool Playout::has_eval() const {
-    return m_eval_valid;
 }
 
 void Playout::run(FastState & state, bool postpassout, bool resigning,
@@ -114,11 +100,11 @@ void Playout::run(FastState & state, bool postpassout, bool resigning,
 
 bool Playout::passthrough(int color, int vertex) {
     assert(m_run);
-    
+
     if (vertex == FastBoard::PASS) {
         return false;
     }
-    
+
     return m_sq[color][vertex];
 }
 

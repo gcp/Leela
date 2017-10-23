@@ -54,36 +54,36 @@ SMP::Mutex & UCTNode::get_mutex() {
     return m_nodemutex;
 }
 
-float UCTNode::create_children(std::atomic<int> & nodecount,
-                               GameState & state, bool at_root) {
+bool UCTNode::create_children(std::atomic<int> & nodecount,
+                              GameState & state, bool at_root) {
     // check whether somebody beat us to it (atomic)
     if (has_children()) {
-        return;
+        return false;
     }
     // acquire the lock
     LOCK(get_mutex(), lock);
     // no successors in final state
     if (state.get_passes() >= 2) {
-        return;
+        return false;
     }
     // check whether somebody beat us to it
     if (at_root && m_has_netscore) {
-        return;
+        return false;
     }
     if (m_visits < m_symmetries_done * cfg_extra_symmetry) {
-        return;
+        return false;
     }
     if (m_symmetries_done >= 8) {
         assert(!at_root);
-        return;
+        return false;
     }
     // Someone else is running the expansion
     if (m_is_expanding) {
-        return;
+        return false;
     }
     // Someone else is running an extra netscore
     if (m_is_netscoring) {
-        return;
+        return false;
     }
     // We'll be the one queueing this node for expansion, stop others
     m_is_expanding = true;
@@ -95,11 +95,12 @@ float UCTNode::create_children(std::atomic<int> & nodecount,
                            Network::Ensemble::DIRECT), m_symmetries_done);
 
     // DCNN returns winrate as side to move
-    int eval = raw_netlist.second;
-    int tomove = state.board.get_to_move();
+    auto eval = raw_netlist.second;
+    auto tomove = state.board.get_to_move();
     if (tomove == FastBoard::WHITE) {
         eval = 1.0f - eval;
     }
+    accumulate_eval(eval);
 
     FastBoard & board = state.board;
     std::vector<Network::scored_node> nodelist;
@@ -115,7 +116,7 @@ float UCTNode::create_children(std::atomic<int> & nodecount,
             nodelist.emplace_back(node);
         }
     }
-    link_nodelist(nodecount, board, nodelist);
+    link_nodelist(nodecount, board, nodelist, at_root);
 
     return eval;
 }
@@ -173,7 +174,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
 
     LOCK(get_mutex(), lock);
 
-    for (const auto& node : nodelist) {
+    for (auto it = nodelist.cbegin(); it != nodelist.cend(); ++it) {
         // Check for duplicate moves, O(N^2)
         bool found = false;
         UCTNode * child = m_firstchild;
@@ -187,19 +188,19 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
         if (!found) {
             // Not added yet, is it highly scored?
             if (std::distance(it, nodelist.cend()) <= max_net_childs) {
-                UCTNode * vtx = new UCTNode(node.second, node.first);
+                UCTNode * vtx = new UCTNode(it->second, it->first);
                 link_child(vtx);
                 childrenadded++;
             }
         } else {
             // Average_all run at the root
             if (all_symmetries) {
-                child->set_score(node.first);
+                child->set_score(it->first);
             } else {
                 assert(m_symmetries_done > 0 && m_symmetries_done < 8);
                 float oldscore = child->get_score();
                 float factor = 1.0f / ((float)m_symmetries_done + 1.0f);
-                child->set_score(node.first * factor
+                child->set_score(it->first * factor
                                  + oldscore * (1.0f - factor));
             }
         }
@@ -280,8 +281,13 @@ int UCTNode::get_visits() const {
     return m_visits;
 }
 
+float UCTNode::get_eval() const {
+    assert(m_evalcount);
+    return m_blackevals / (double)m_evalcount;
+}
+
 float UCTNode::get_eval(int tomove) const {
-    float score = m_blackevals / (double)m_evalcount;
+    float score = get_eval();
     if (tomove == FastBoard::WHITE) {
         score = 1.0f - score;
     }
@@ -305,8 +311,8 @@ int UCTNode::get_evalcount() const {
 }
 
 void UCTNode::accumulate_eval(float eval) {
+    m_evalcount += 1;
     atomic_add(m_blackevals, (double)eval);
-    m_evalcount  += 1;
 }
 
 float UCTNode::smp_noise(void) {
@@ -322,37 +328,29 @@ float UCTNode::smp_noise(void) {
 }
 
 UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
-    UCTNode * best = NULL;
+    UCTNode * best = nullptr;
     float best_value = -1000.0f;
     int childbound;
     int parentvisits = 1; // XXX: this can be 0 now that we sqrt
     float best_probability = 0.0f;
 
     LOCK(get_mutex(), lock);
-    if (has_netscore()) {
-        childbound = 35;
-    } else {
-        if (use_nets) {
-            childbound = cfg_rave_moves;
-        } else {
-            childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
-        }
-    }
-
+    childbound = std::max(2, (int)(((log((double)get_visits()) - 3.0) * 3.0) + 2.0));
+    //childbound = 35;
     int childcount = 0;
     UCTNode * child = m_firstchild;
 
     // count parentvisits
-    // XXX: wtf do we count this??? don't we know?
+    // XXX: wtf do we count this??? don't we know? hash?
     // make sure we are at a valid successor
-    while (child != NULL && !child->valid()) {
+    while (child != nullptr && !child->valid()) {
         child = child->m_nextsibling;
     }
-    while (child != NULL && childcount < childbound) {
+    while (child != nullptr  && childcount < childbound) {
         parentvisits      += child->get_visits();
         child = child->m_nextsibling;
         // make sure we are at a valid successor
-        while (child != NULL && !child->valid()) {
+        while (child != nullptr && !child->valid()) {
             child = child->m_nextsibling;
         }
         childcount++;
@@ -363,73 +361,46 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
     childcount = 0;
     child = m_firstchild;
     // make sure we are at a valid successor
-    while (child != NULL && !child->valid()) {
+    while (child != nullptr && !child->valid()) {
         child = child->m_nextsibling;
     }
     if (has_netscore()) {
         // first move
-        if (child != NULL) {
+        if (child != nullptr) {
             best_probability = child->get_score();
         }
         assert(best_probability > 0.001f);
         cutoff_ratio = cfg_cutoff_offset + cfg_cutoff_ratio * numerator;
     }
-    while (child != NULL && childcount < childbound) {
+    while (child != nullptr && childcount < childbound) {
         float value;
 
-        if (has_netscore()) {
-            if (child->get_score() * cutoff_ratio < best_probability) {
-                break;
-            }
+        if (child->get_score() * cutoff_ratio < best_probability) {
+            break;
+        }
 
-            if (!child->first_visit()) {
-                // "UCT" part
-                float winrate = child->get_mixed_score(color);
-                winrate += smp_noise();
-                float psa = child->get_score();
-                float denom = 1.0f + child->get_visits();
+        if (child->get_evalcount()) {
+            // "UCT" part
+            float winrate = child->get_eval(color);
+            winrate += smp_noise();
+            float psa = child->get_score();
+            float denom = 1.0f + child->get_visits();
 
-                float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
-                float puct = cfg_puct * psa * ((float)std::sqrt(parentvisits) / denom);
-                // float cts = cfg_puct * std::sqrt(numerator / denom);
-                // Alternate is to remove psa in puct but without log(parentvis)
-
-                value = winrate - mti + puct;
-            } else {
-                float winrate = cfg_fpu;
-                winrate += smp_noise();
-                float psa = child->get_score();
-                float mti;
-                if (parentvisits > 1) {
-                    mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
-                } else {
-                    mti = (cfg_psa / psa);
-                }
-
-                value = winrate - mti + cfg_puct * psa * (float)std::sqrt(parentvisits);
-                assert(value > -1000.0f);
-            }
+            float mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
+            float puct = cfg_puct * psa * ((float)std::sqrt(parentvisits) / denom);
+            value = winrate - mti + puct;
         } else {
-            float uctvalue;
-            float patternbonus;
-            assert(child->get_ravevisits() > 0);
-            if (!child->first_visit()) {
-                // "UCT" part
-                float winrate = child->get_mixed_score(color);
-                winrate += smp_noise();
-                uctvalue = winrate + cfg_uct * std::sqrt(numerator / child->get_visits());
-                patternbonus = sqrtf((child->get_score() * cfg_patternbonus) / child->get_visits());
+            float winrate = cfg_fpu;
+            winrate += smp_noise();
+            float psa = child->get_score();
+            float mti;
+            if (parentvisits > 1) {
+                mti = (cfg_psa / psa) * std::sqrt(numerator / parentvisits);
             } else {
-                uctvalue = 1.1f;
-                patternbonus = sqrtf(child->get_score() * cfg_patternbonus);
+                mti = (cfg_psa / psa);
             }
 
-            // RAVE part
-            float ravewinrate = child->get_raverate();
-            float ravevalue = ravewinrate + patternbonus;
-            float beta = std::max(0.0, 1.0 - log(1.0 + child->get_visits()) / cfg_beta);
-
-            value = beta * ravevalue + (1.0f - beta) * uctvalue;
+            value = winrate - mti + cfg_puct * psa * (float)std::sqrt(parentvisits);
             assert(value > -1000.0f);
         }
         assert(value > -1000.0f);
@@ -441,13 +412,13 @@ UCTNode* UCTNode::uct_select_child(int color, bool use_nets) {
 
         child = child->m_nextsibling;
         // make sure we are at a valid successor
-        while (child != NULL && !child->valid()) {
+        while (child != nullptr && !child->valid()) {
             child = child->m_nextsibling;
         }
         childcount++;
     }
 
-    assert(best != NULL);
+    assert(best != nullptr);
 
     return best;
 }
@@ -477,9 +448,9 @@ public:
         }
 
         // first check: are playouts comparable and sufficient?
-        // then winrate counts
-        if (std::get<1>(a) > cfg_mature_threshold
-            && std::get<1>(b) > cfg_mature_threshold
+        // then winrate count
+        if (std::get<1>(a) > 0
+            && std::get<1>(b) > 0
             && std::get<1>(a) * 2 > m_maxvisits
             && std::get<1>(b) * 2 > m_maxvisits) {
 
@@ -521,12 +492,12 @@ void UCTNode::sort_children() {
         child = child->m_nextsibling;
     }
 
-    std::sort(begin(tmp.), end(tmp));
+    std::sort(begin(tmp), end(tmp));
 
     m_firstchild = nullptr;
 
     for (auto& sortnode : tmp) {
-        link_child(std::get<1>(tmp));
+        link_child(std::get<1>(sortnode));
     }
 }
 
@@ -539,8 +510,8 @@ void UCTNode::sort_root_children(int color) {
 
     while (child != nullptr) {
         int visits = child->get_visits();
-        if (visits) {
-            float winrate = child->get_mixed_score(color);
+        if (child->get_evalcount()) {
+            float winrate = child->get_eval(color);
             tmp.emplace_back(winrate, visits, child);
         } else {
             tmp.emplace_back(0.0f, 0, child);

@@ -430,7 +430,7 @@ void batchnorm(const std::vector<float>& input,
                const std::array<float, channels>& variances,
                std::vector<float>& output)
 {
-    constexpr float epsilon = 1e-5;
+    constexpr float epsilon = 1e-5f;
 
     auto lambda_ReLU = [](float val) { return (val > 0.0f) ?
                                        val : 0.0f; };
@@ -585,8 +585,8 @@ Network::Netresult Network::get_scored_moves_internal(
     std::vector<scored_node> result;
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         if (idx < 19*19) {
-            int rot_idx = rev_rotate_nn_idx(idx, rotation);
-            float val = outputs[rot_idx];
+            auto rot_idx = rev_rotate_nn_idx(idx, rotation);
+            auto val = outputs[rot_idx];
             int x = idx % 19;
             int y = idx / 19;
             int vtx = state->board.get_vertex(x, y);
@@ -630,7 +630,7 @@ void Network::show_heatmap(FastState * state, Netresult& result, bool topmoves) 
         }
     }
 
-    for (int i = display_map.size() - 1; i >= 0; --i) {
+    for (auto i = display_map.size() - 1; i >= 0; --i) {
         myprintf("%s\n", display_map[i].c_str());
     }
     assert(result.first.back().second == FastBoard::PASS);
@@ -703,8 +703,8 @@ void Network::gather_features(GameState * state, NNPlanes & planes) {
 
 void Network::gather_traindata(std::string filename, TrainVector& data) {
     auto games = SGFParser::chop_all(filename);
-    int gametotal = games.size();
-    int gamecount = 0;
+    auto gametotal = games.size();
+    auto gamecount = size_t{0};
 
     size_t train_pos = 0;
     size_t test_pos = 0;

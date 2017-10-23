@@ -10,7 +10,6 @@
 #include "Utils.h"
 #include "Playout.h"
 #include "Zobrist.h"
-#include "AttribScores.h"
 #include "MCOTable.h"
 #include "GTP.h"
 #include "MCPolicy.h"
@@ -315,13 +314,6 @@ void FastState::generate_trace(int color, PolicyTrace & trace, int move) {
     trace.add_to_trace(color == FastBoard::BLACK, moves, move_index);
 }
 
-float FastState::score_move(std::vector<int> & territory, std::vector<int> & moyo, int vertex) {
-    Attributes att;
-    att.get_from_move(this, territory, moyo, vertex);
-
-    return AttribScores::get_attribscores()->team_strength(att);
-}
-
 int FastState::play_move_fast(int vertex) {
     bool capture = false;
     if (vertex == FastBoard::PASS) {
@@ -387,7 +379,7 @@ void FastState::play_move(int color, int vertex) {
     }
 }
 
-int FastState::get_movenum() const {
+size_t FastState::get_movenum() const {
     return m_movenum;
 }
 

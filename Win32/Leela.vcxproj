@@ -82,8 +82,8 @@
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\include;C:\boost\boost_1_65_0\;C:\Projects\OpenCL-ICD-Loader\inc;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build64;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\lib\intel64_win;C:\boost\boost_1_65_0\stage\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\include;C:\boost\boost_1_65_1\;C:\Projects\OpenCL-ICD-Loader\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Projects\OpenCL-ICD-Loader\build64;C:\Program Files %28x86%29\IntelSWTools\compilers_and_libraries_2017.4.210\windows\mkl\lib\intel64_win;C:\boost\boost_1_65_1\stage\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -196,8 +196,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\AttribScores.cpp" />
-    <ClCompile Include="..\Attributes.cpp" />
     <ClCompile Include="..\Book.cpp" />
     <ClCompile Include="..\FastBoard.cpp" />
     <ClCompile Include="..\FastState.cpp" />
@@ -216,8 +214,6 @@
     <ClCompile Include="..\NWeights4.cpp" />
     <ClCompile Include="..\OpenCL.cpp" />
     <ClCompile Include="..\Playout.cpp" />
-    <ClCompile Include="..\PNNode.cpp" />
-    <ClCompile Include="..\PNSearch.cpp" />
     <ClCompile Include="..\Random.cpp" />
     <ClCompile Include="..\SGFParser.cpp" />
     <ClCompile Include="..\SGFTree.cpp" />
@@ -252,8 +248,6 @@
     <ClInclude Include="..\Patterns.h" />
     <ClInclude Include="..\PatternsLive.h" />
     <ClInclude Include="..\Playout.h" />
-    <ClInclude Include="..\PNNode.h" />
-    <ClInclude Include="..\PNSearch.h" />
     <ClInclude Include="..\PolicyWeights.h" />
     <ClInclude Include="..\PolicyWeightsSL.h" />
     <ClInclude Include="..\Random.h" />

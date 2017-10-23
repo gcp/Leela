@@ -39,7 +39,7 @@ public:
     std::vector<int> final_score_map(bool mark_dead = true);
     std::vector<bool> mark_dead(float *winrate = nullptr);
 
-    int get_movenum() const;
+    size_t get_movenum() const;
     int get_last_move() const;
     int get_prevlast_move() const;
     int get_komove() const;

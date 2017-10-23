@@ -49,20 +49,24 @@ void UCTSearch::set_use_nets(bool flag) {
     }
 }
 
-float UCTSearch::play_simulation(GameState & currstate, UCTNode* const node) {
+SearchResult UCTSearch::play_simulation(GameState & currstate, UCTNode* const node) {
     const int color = currstate.get_to_move();
     const uint64 hash = currstate.board.get_hash();
     const float komi = currstate.get_komi();
-    float noderesult;
-    bool update_result = true;
+    bool has_updated = false;
+    SearchResult result;
 
     TTable::get_TT()->sync(hash, komi, node);
 
     if (!node->has_children() && m_nodes < MAX_TREE_SIZE) {
-        noderesult = node->create_children(m_nodes, currstate, false);
+        bool success = node->create_children(m_nodes, currstate, false);
+        if (success) {
+            result = SearchResult(node->get_eval(color));
+            has_updated = true;
+        }
     }
 
-    if (node->has_children()) {
+    if (node->has_children() && !result.valid()) {
         UCTNode * next = node->uct_select_child(color, m_use_nets);
 
         if (next != nullptr) {
@@ -72,26 +76,21 @@ float UCTSearch::play_simulation(GameState & currstate, UCTNode* const node) {
                 currstate.play_move(move);
 
                 if (!currstate.superko()) {
-                    noderesult = play_simulation(currstate, next);
+                    result = play_simulation(currstate, next);
                 } else {
                     next->invalidate();
-                    update_result = false;
                 }
             } else {
                 currstate.play_pass();
-                noderesult = play_simulation(currstate, next);
+                result = play_simulation(currstate, next);
             }
-        } else {
-            update_result = false;
         }
-    } else {
-        update_result = false;
     }
 
-    node->update(color, update_result, noderesult);
+    node->update(color, result.valid() && !has_updated, result.eval());
     TTable::get_TT()->update(hash, komi, node);
 
-    return noderesult;
+    return result;
 }
 
 void UCTSearch::dump_GUI_stats(GameState & state, UCTNode & parent) {
@@ -318,9 +317,9 @@ bool UCTSearch::allow_early_exit() {
     }
 
     double n1 = first->get_visits();
-    double p1 = first->get_mixed_score(color);
+    double p1 = first->get_eval(color);
     double n2 = second->get_visits();
-    double p2 = second->get_mixed_score(color);
+    double p2 = second->get_eval(color);
     double low, high;
 
     // Variance of Bernoulli distribution is p(1-p) = 0.25
@@ -450,8 +449,8 @@ int UCTSearch::get_best_move_nosearch(std::vector<std::pair<float, int>> moves,
 }
 
 
-int UCTSearch::get_best_move(passflag_t passflag) { 
-    int color = m_rootstate.board.get_to_move();    
+int UCTSearch::get_best_move(passflag_t passflag) {
+    int color = m_rootstate.board.get_to_move();
 
     // make sure best is first
     m_root.sort_root_children(color);
@@ -465,7 +464,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         }
     }
 
-    float bestscore = m_root.get_first_child()->get_winrate(color);
+    float bestscore = m_root.get_first_child()->get_eval(color);
 
     // do we want to fiddle with the best move because of the rule set?
      if (passflag & UCTSearch::NOPASS) {
@@ -473,13 +472,13 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         if (bestmove == FastBoard::PASS) {
             UCTNode * nopass = m_root.get_nopass_child();
 
-            if (nopass != NULL) {
+            if (nopass != nullptr) {
                 myprintf("Preferring not to pass.\n");
                 bestmove = nopass->get_move();
                 if (nopass->first_visit()) {
                     bestscore = 1.0f;
                 } else {
-                    bestscore = nopass->get_winrate(color);
+                    bestscore = nopass->get_eval(color);
                 }
             } else {
                 myprintf("Pass is the only acceptable move.\n");
@@ -525,7 +524,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
                     if (nopass->first_visit()) {
                         bestscore = 1.0f;
                     } else {
-                        bestscore = nopass->get_winrate(color);
+                        bestscore = nopass->get_eval(color);
                     }
                 } else {
                     myprintf("No alternative to passing.\n");
@@ -536,7 +535,6 @@ int UCTSearch::get_best_move(passflag_t passflag) {
         }
     }
 
-    float besteval = m_root.get_first_child()->get_eval(color);
     int visits = m_root.get_first_child()->get_visits();
 
     // if we aren't passing, should we consider resigning?
@@ -546,8 +544,7 @@ int UCTSearch::get_best_move(passflag_t passflag) {
             size_t movetresh= (m_rootstate.board.get_boardsize()
                                 * m_rootstate.board.get_boardsize()) / 3;
             // bad score and visited enough
-            if (((bestscore < 0.20f && besteval < 0.15f)
-                 || (bestscore < 0.10f))
+            if (bestscore < 0.15f
                 && visits > 90
                 && m_rootstate.m_movenum > movetresh) {
                 myprintf("Score looks bad. Resigning.\n");
@@ -557,31 +554,6 @@ int UCTSearch::get_best_move(passflag_t passflag) {
     }
 
     return bestmove;
-}
-
-void UCTSearch::dump_order2(void) {            
-    std::vector<int> moves = m_rootstate.generate_moves(m_rootstate.get_to_move());
-    std::vector<std::pair<float, std::string> > ord_list;            
-        
-    std::vector<int> territory = m_rootstate.board.influence();
-    std::vector<int> moyo = m_rootstate.board.moyo();
-    for (size_t i = 0; i < moves.size(); i++) {
-        if (moves[i] > 0) {
-            ord_list.push_back(std::make_pair(
-                               m_rootstate.score_move(territory, moyo, moves[i]), 
-                               m_rootstate.move_to_text(moves[i])));
-        }
-    } 
-    
-    std::stable_sort(ord_list.rbegin(), ord_list.rend());
-    
-    myprintf("\nOrder Table\n");
-    myprintf("--------------------\n");
-    for (size_t i = 0; i < std::min<size_t>(10, ord_list.size()); i++) {
-        myprintf("%4s -> %10.10f\n", ord_list[i].second.c_str(), 
-                                     ord_list[i].first); 
-    }
-    myprintf("--------------------\n");        
 }
 
 std::string UCTSearch::get_pv(KoState & state, UCTNode & parent) {
@@ -619,22 +591,13 @@ void UCTSearch::dump_analysis(void) {
     int color = tempstate.board.get_to_move();
 
     std::string pvstring = get_pv(tempstate, m_root);
-    float winrate = 100.0f * m_root.get_winrate(color);
-    float mixrate = 100.0f * m_root.get_mixed_score(color);
-
-    if (m_use_nets && m_root.get_evalcount()) {
-        float eval = 100.0f * m_root.get_eval(color);
-        myprintf("Nodes: %d, Win: %5.2f%% (MC:%5.2f%%/VN:%5.2f%%), PV: %s\n",
-                 m_root.get_visits(),
-                 mixrate, winrate, eval, pvstring.c_str());
-    } else {
-        myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n",
-                 m_root.get_visits(), winrate, pvstring.c_str());
-    }
+    float winrate = 100.0f * m_root.get_eval(color);
+    myprintf("Nodes: %d, Win: %5.2f%%, PV: %s\n",
+                m_root.get_visits(), winrate, pvstring.c_str());
 
     if (!m_quiet) {
         GUIprintf("Nodes: %d, Win: %5.2f%%, PV: %s", m_root.get_visits(),
-                   mixrate, pvstring.c_str());
+                   winrate, pvstring.c_str());
     } else {
         GUIprintf("%d nodes searched", m_root.get_visits());
     }
@@ -656,7 +619,7 @@ void UCTWorker::operator()() {
     } while(m_search->is_running() && !m_search->playout_limit_reached());
 }
 
-std::tuple<float, float, float> UCTSearch::get_scores() {
+float UCTSearch::get_scores() {
     int color = m_rootstate.board.get_to_move();
 
     // make sure best is first
@@ -664,20 +627,15 @@ std::tuple<float, float, float> UCTSearch::get_scores() {
 
     // do we have statistics on the moves?
     if (m_root.get_first_child() == nullptr) {
-        return std::make_tuple(-1.0f, -1.0f, -1.0f);
+        return -1.0f;
     }
 
     UCTNode* bestnode = m_root.get_first_child();
 
-    float bestmc =
-       (bestnode->first_visit() ? -1.0f : bestnode->get_winrate(FastBoard::BLACK));
     float bestvn =
-       (bestnode->get_evalcount() == 0 ? -1.0f : bestnode->get_eval(FastBoard::BLACK));
-    float bestscore =
-        ((bestnode->first_visit() || (bestnode->get_evalcount() == 0))
-         ? -1.0f : bestnode->get_mixed_score(FastBoard::BLACK));
+        (bestnode->get_evalcount() == 0 ? -1.0f : bestnode->get_eval(FastBoard::BLACK));
 
-    return std::make_tuple(bestscore, bestmc, bestvn);
+    return bestvn;
 }
 
 void UCTSearch::increment_playouts() {
@@ -721,32 +679,23 @@ int UCTSearch::think(int color, passflag_t passflag) {
         GUIprintf("Thinking...");
     }
 
+#ifdef USE_SEARCH
+    // create a sorted list off legal moves (make sure we
+    // play something legal and decent even in time trouble)
+    m_root.create_children(m_nodes, m_rootstate, true);
+    m_root.kill_superkos(m_rootstate);
+
     // do some preprocessing for move ordering
     MCOwnerTable::get_MCO()->clear();
     float territory;
     float mc_score = Playout::mc_owner(m_rootstate, 64, &territory);
-    if (m_use_nets) {
-        float net_score = 0.5f;
-            //Network::get_Network()->get_value(&m_rootstate,
-            //                                                Network::Ensemble::AVERAGE_ALL);
-        myprintf("MC winrate=%f, NN eval=%f, score=", mc_score, net_score);
-    } else {
-         myprintf("MC winrate=%f, score=", mc_score);
-    }
+    myprintf("MC winrate=%f, NN eval=%f, score=", mc_score, m_root.get_eval(color));
     if (territory > 0.0f) {
         myprintf("B+%3.1f\n", territory);
-    } else {
+    }
+    else {
         myprintf("W+%3.1f\n", -territory);
     }
-
-#ifdef USE_SEARCH
-    // create a sorted list off legal moves (make sure we
-    // play something legal and decent even in time trouble)
-    m_root.create_children(m_nodes, m_rootstate, true, m_use_nets);
-    if (m_use_nets) {
-        m_root.netscore_children(m_nodes, m_rootstate, true);
-    }
-    m_root.kill_superkos(m_rootstate);
 
     m_run = true;
     m_playouts = 0;
@@ -860,12 +809,12 @@ int UCTSearch::think(int color, passflag_t passflag) {
     Time elapsed;
     int centiseconds_elapsed = Time::timediff(start, elapsed);
     if (centiseconds_elapsed > 0) {
-        myprintf("\n%d visits, %d nodes, %d playouts, %d p/s\n\n",
+        myprintf("%d visits, %d nodes, %d playouts, %d n/s\n\n",
                  m_root.get_visits(),
                  (int)m_nodes,
                  (int)m_playouts,
                  (m_playouts * 100) / (centiseconds_elapsed+1));
-        GUIprintf("%d visits, %d nodes, %d playouts, %d p/s",
+        GUIprintf("%d visits, %d nodes, %d playouts, %d n/s",
                  m_root.get_visits(),
                   (int)m_nodes,
                   (int)m_playouts,

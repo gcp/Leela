@@ -19,7 +19,6 @@
 #include "Random.h"
 #include "Utils.h"
 #include "Matcher.h"
-#include "AttribScores.h"
 #include "ThreadPool.h"
 #include "MCPolicy.h"
 
@@ -54,23 +53,14 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
                      "Split up the board in # tiles.")
 #endif
 #ifdef USE_TUNER
-        ("mature_threshold", po::value<int>())
-        ("expand_threshold", po::value<int>())
-        ("beta", po::value<float>())
-        ("patternbonus", po::value<float>())
         ("bound", po::value<float>())
         ("fpu", po::value<float>())
         ("puct", po::value<float>())
-        ("uct", po::value<float>())
         ("psa", po::value<float>())
         ("cutoff_offset", po::value<float>())
         ("cutoff_ratio", po::value<float>())
-        ("mix_opening", po::value<float>())
-        ("mix_ending", po::value<float>())
         ("softmax_temp", po::value<float>())
         ("mc_softmax", po::value<float>())
-        ("eval_thresh", po::value<int>())
-        ("rave_moves", po::value<int>())
         ("extra_symmetry", po::value<int>())
         ("random_loops", po::value<int>())
 #endif
@@ -95,12 +85,6 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
 
 #ifdef USE_TUNER
-    if (vm.count("mature_threshold")) {
-        cfg_mature_threshold = vm["mature_threshold"].as<int>();
-    }
-    if (vm.count("expand_threshold")) {
-        cfg_expand_threshold = vm["expand_threshold"].as<int>();
-    }
     if (vm.count("bound")) {
         cfg_bound = vm["bound"].as<float>();
     }
@@ -109,9 +93,6 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     }
     if (vm.count("puct")) {
         cfg_puct = vm["puct"].as<float>();
-    }
-    if (vm.count("uct")) {
-        cfg_uct = vm["uct"].as<float>();
     }
     if (vm.count("psa")) {
         cfg_psa = vm["psa"].as<float>();
@@ -122,29 +103,11 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     if (vm.count("mc_softmax")) {
         cfg_mc_softmax = vm["mc_softmax"].as<float>();
     }
-    if (vm.count("beta")) {
-        cfg_beta = vm["beta"].as<float>();
-    }
-    if (vm.count("patternbonus")) {
-        cfg_patternbonus = vm["patternbonus"].as<float>();
-    }
     if (vm.count("cutoff_offset")) {
         cfg_cutoff_offset = vm["cutoff_offset"].as<float>();
     }
     if (vm.count("cutoff_ratio")) {
         cfg_cutoff_ratio = vm["cutoff_ratio"].as<float>();
-    }
-    if (vm.count("mix_opening")) {
-        cfg_mix_opening = vm["mix_opening"].as<float>();
-    }
-    if (vm.count("mix_ending")) {
-        cfg_mix_ending = vm["mix_ending"].as<float>();
-    }
-    if (vm.count("eval_thresh")) {
-        cfg_eval_thresh = vm["eval_thresh"].as<int>();
-    }
-    if (vm.count("rave_moves")) {
-        cfg_rave_moves = vm["rave_moves"].as<int>();
     }
     if (vm.count("extra_symmetry")) {
         cfg_extra_symmetry = vm["extra_symmetry"].as<int>();
@@ -259,7 +222,6 @@ int main (int argc, char *argv[]) {
     Zobrist::init_zobrist(*rng);
 
     // Initialize things
-    AttribScores::get_attribscores();
     Matcher::get_Matcher();
     Network::get_Network();
 

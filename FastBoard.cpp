@@ -2612,7 +2612,7 @@ bool FastBoard::can_kill_neighbours(const int vertex) {
     return false;
 }
 
-std::vector<int> FastBoard::killable_neighbours(const int string_parent, const int N) {
+std::vector<int> FastBoard::killable_neighbours(const int string_parent, const size_t N) {
     std::vector<int> result;
     int scolor = m_square[string_parent];
     int kcolor = !scolor;
