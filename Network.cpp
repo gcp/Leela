@@ -607,13 +607,17 @@ Network::Netresult Network::get_scored_moves_internal(
     auto outputs = std::vector<float>(begin, end);
 #endif
     for (size_t idx = 0; idx < outputs.size(); idx++) {
-        int rot_idx = rev_rotate_nn_idx(idx, rotation);
-        float val = policy_out[rot_idx];
-        int x = idx % 19;
-        int y = idx / 19;
-        int vtx = state->board.get_vertex(x, y);
-        if (state->board.get_square(vtx) == FastBoard::EMPTY) {
-            result.emplace_back(val, vtx);
+        if (idx < 19*19) {
+            int rot_idx = rev_rotate_nn_idx(idx, rotation);
+            float val = policy_out[rot_idx];
+            int x = idx % 19;
+            int y = idx / 19;
+            int vtx = state->board.get_vertex(x, y);
+            if (state->board.get_square(vtx) == FastBoard::EMPTY) {
+                result.emplace_back(val, vtx);
+            }
+        } else {
+            result.emplace_back(policy_out[idx], FastBoard::PASS);
         }
     }
 

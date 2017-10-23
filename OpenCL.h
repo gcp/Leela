@@ -34,7 +34,6 @@ private:
     cl::CommandQueue m_commandqueue;
     cl::Kernel m_convolve1_kernel;
     cl::Kernel m_convolve3_kernel;
-    cl::Kernel m_convolve5_kernel;
     cl::Kernel m_merge_kernel;
     cl::Kernel m_batchnorm_kernel;
     cl::Kernel m_innerproduct_kernel;
@@ -47,8 +46,6 @@ private:
 
 class OpenCL_Network {
 public:
-    using event_callback =  void (CL_CALLBACK *) (cl_event, cl_int, void *);
-
     template <size_t M, size_t V>
     void push_batchnorm(unsigned int channel_size,
                         const std::array<float, M> & means,
