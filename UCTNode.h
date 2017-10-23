@@ -13,53 +13,33 @@
 
 class UCTNode {
 public:
-    typedef std::tuple<float, int, UCTNode*> sortnode_t;
+    using sortnode_t = std::tuple<float, int, UCTNode*>;
 
-    UCTNode(int vertex, float score,
-            int expand_threshold, int netscore_threshold,
-            int movenum);
+    explicit UCTNode(int vertex, float score);
     ~UCTNode();
     bool first_visit() const;
     bool has_children() const;
-    float get_winrate(int tomove) const;
-    float get_raverate() const;
-    double get_blackwins() const;
-    void create_children(std::atomic<int> & nodecount,
-                         GameState & state, bool at_root, bool use_nets);
-    void netscore_children(std::atomic<int> & nodecount,
-                           GameState & state, bool at_root);
-    void run_value_net(GameState & state);
+    float create_children(std::atomic<int> & nodecount,
+                          GameState & state, bool at_root);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
     void invalidate();
     bool valid() const;
-    bool should_expand() const;
-    bool should_netscore() const;
     int get_move() const;
     int get_visits() const;
-    int get_ravevisits() const;
     bool has_netscore() const;
     float get_score() const;
     void set_score(float score);
     float get_eval(int tomove) const;
-    float get_mixed_score(int tomove);
-    static float score_mix_function(int movenum, float eval, float winrate);
     double get_blackevals() const;
     int get_evalcount() const;
-    bool has_eval_propagated() const;
-    void set_eval_propagated();
     void set_move(int move);
     void set_visits(int visits);
-    void set_blackwins(double wins);
-
-    void set_expand_cnt(int runs, int netscore_runs);
     void set_blackevals(double blacevals);
     void set_evalcount(int evalcount);
-    void set_expand_cnt(int runs);
     void set_eval(float eval);
     void accumulate_eval(float eval);
-    void update(Playout & gameresult, int color, bool update_eval);
-    void updateRAVE(Playout & playout, int color);
+    void update(bool update_eval, int color, float eval = 0.5f);
 
     UCTNode* uct_select_child(int color, bool use_nets);
     UCTNode* get_first_child() const;
@@ -84,35 +64,24 @@ private:
                          bool all_symmetries);
     float smp_noise();
     // Tree data
-    std::atomic<bool> m_has_children;
-    UCTNode* m_firstchild;
-    UCTNode* m_nextsibling;
+    std::atomic<bool> m_has_children{false};
+    UCTNode* m_firstchild{nullptr};
+    UCTNode* m_nextsibling{nullptr};
     // Move
     int m_move;
     // UCT
-    std::atomic<double> m_blackwins;
-    std::atomic<int> m_visits;
-    // RAVE
-    std::atomic<double> m_ravestmwins;
-    std::atomic<int> m_ravevisits;
-    // move order
+    std::atomic<int> m_visits{0};
+    // UCT
     float m_score;
-    // board eval
-    bool m_eval_propagated;
-    std::atomic<double> m_blackevals;
-    std::atomic<int> m_evalcount;
-    int m_movenum;
-    bool m_is_evaluating;    // mutex
+    std::atomic<double> m_blackevals{0};
+    std::atomic<int> m_evalcount{0};
     // alive (superko)
-    std::atomic<bool> m_valid;
-    // extend node
-    int m_expand_cnt;
-    bool m_is_expanding;
-    // dcnn node
-    bool m_has_netscore;
-    int m_netscore_thresh;
-    int m_symmetries_done;
-    bool m_is_netscoring;
+    std::atomic<bool> m_valid{true};
+    // is someone adding scores to this node?
+    bool m_is_expanding{false};
+    // dcnn node XXX redundant has_children
+    bool m_has_netscore{false};
+    int m_symmetries_done{0};
     SMP::Mutex m_nodemutex;
 };
 

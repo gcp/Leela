@@ -33,8 +33,6 @@ int cfg_num_threads;
 int cfg_max_playouts;
 bool cfg_enable_nets;
 bool cfg_komi_adjust;
-int cfg_mature_threshold;
-int cfg_expand_threshold;
 int cfg_lagbuffer_cs;
 #ifdef USE_OPENCL
 std::vector<int> cfg_gpus;
@@ -45,16 +43,9 @@ float cfg_fpu;
 float cfg_cutoff_offset;
 float cfg_cutoff_ratio;
 float cfg_puct;
-float cfg_uct;
 float cfg_psa;
 float cfg_softmax_temp;
-float cfg_mix_opening;
-float cfg_mix_ending;
 float cfg_mc_softmax;
-int cfg_eval_thresh;
-float cfg_beta;
-float cfg_patternbonus;
-int cfg_rave_moves;
 int cfg_extra_symmetry;
 int cfg_random_loops;
 std::string cfg_logfile;
@@ -67,9 +58,7 @@ void GTP::setup_default_parameters() {
     cfg_num_threads = std::max(1, std::min(SMP::get_num_cpus(), MAX_CPUS));
     cfg_enable_nets = true;
     cfg_komi_adjust = false;
-    cfg_mature_threshold = 1;
     cfg_extra_symmetry =  1;
-    cfg_eval_thresh = 1;
     cfg_max_playouts = INT_MAX;
     cfg_lagbuffer_cs = 100;
 #ifdef USE_OPENCL
@@ -83,9 +72,6 @@ void GTP::setup_default_parameters() {
     cfg_softmax_temp = 1.0f;
     cfg_cutoff_offset = 25.44f;
     cfg_cutoff_ratio = 4.72f;
-    cfg_mix_opening = 0.66f;
-    cfg_mix_ending = 0.49f;
-    cfg_rave_moves = 10;
     cfg_mc_softmax = 1.0f;
     cfg_random_loops = 4;
     cfg_logfile_handle = nullptr;
@@ -586,7 +572,7 @@ bool GTP::execute(GameState & game, std::string xinput) {
     } else if (command.find("heatmap") == 0) {
         gtp_printf(id, "");
         auto vec = Network::get_Network()->get_scored_moves(
-            &game, Network::Ensemble::AVERAGE_ALL);
+            &game, Network::Ensemble::DIRECT);
         Network::show_heatmap(&game, vec, false);
         return true;
     } else if (command.find("fixed_handicap") == 0) {

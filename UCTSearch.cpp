@@ -26,7 +26,7 @@ using namespace Utils;
 
 UCTSearch::UCTSearch(GameState & g)
     : m_rootstate(g),
-      m_root(FastBoard::PASS, 0.0f, 1, 1, g.board.get_stone_count()),
+      m_root(FastBoard::PASS, 0.0f),
       m_nodes(0),
       m_playouts(0),
       m_hasrunflag(false),
@@ -35,33 +35,6 @@ UCTSearch::UCTSearch(GameState & g)
       m_quiet(false) {
     set_use_nets(cfg_enable_nets);
     set_playout_limit(cfg_max_playouts);
-    if (m_use_nets) {
-        cfg_uct = 0.085f;
-        cfg_beta = 42.5;
-        cfg_patternbonus = 0.045f;
-#ifdef USE_OPENCL
-        cfg_expand_threshold = 15;
-#else
-        cfg_expand_threshold = 60;
-#endif
-    } else {
-        if (g.board.get_boardsize() <= 9) {
-            cfg_uct = 0.01f;
-            cfg_beta = 16.5f;
-            cfg_patternbonus = 0.0025f;
-            cfg_expand_threshold = 16;
-        } else if (g.board.get_boardsize() <= 13) {
-            cfg_uct = 0.01f;
-            cfg_beta = 22.0f;
-            cfg_patternbonus = 0.0035f;
-            cfg_expand_threshold = 20;
-        } else {
-            cfg_uct = 0.01f;
-            cfg_beta = 25.5f;
-            cfg_patternbonus = 0.0078f;
-            cfg_expand_threshold = 30;
-        }
-    }
 }
 
 void UCTSearch::set_runflag(std::atomic<bool> * flag) {
@@ -76,49 +49,23 @@ void UCTSearch::set_use_nets(bool flag) {
     }
 }
 
-Playout UCTSearch::play_simulation(GameState & currstate, UCTNode* const node) {
+float UCTSearch::play_simulation(GameState & currstate, UCTNode* const node) {
     const int color = currstate.get_to_move();
     const uint64 hash = currstate.board.get_hash();
     const float komi = currstate.get_komi();
-    Playout noderesult;
-    bool update_eval = true;
+    float noderesult;
+    bool update_result = true;
 
     TTable::get_TT()->sync(hash, komi, node);
 
-    if (m_use_nets
-        && !node->get_evalcount()
-        && node->get_visits() > cfg_eval_thresh) {
-        node->run_value_net(currstate);
-
-        LOCK(node->get_mutex(), lock);
-        // Check whether we have new evals to back up
-        if (!node->has_eval_propagated() && node->get_evalcount()) {
-            if (!node->has_eval_propagated()) {
-                noderesult.set_eval(node->get_blackevals());
-                node->set_eval_propagated();
-                // Don't accumulate our own eval twice
-                update_eval = false;
-            }
-        }
-    }
-
-    if (!node->has_children()
-        && node->should_expand()
-        && m_nodes < MAX_TREE_SIZE) {
-        node->create_children(m_nodes, currstate, false, m_use_nets);
-    }
-    // This can happen at the same time as the previous one if this
-    // position comes from the TTable.
-    if (m_use_nets
-        && node->has_children()
-        && node->should_netscore()) {
-        node->netscore_children(m_nodes, currstate, false);
+    if (!node->has_children() && m_nodes < MAX_TREE_SIZE) {
+        noderesult = node->create_children(m_nodes, currstate, false);
     }
 
     if (node->has_children()) {
         UCTNode * next = node->uct_select_child(color, m_use_nets);
 
-        if (next != NULL) {
+        if (next != nullptr) {
             int move = next->get_move();
 
             if (move != FastBoard::PASS) {
@@ -128,21 +75,20 @@ Playout UCTSearch::play_simulation(GameState & currstate, UCTNode* const node) {
                     noderesult = play_simulation(currstate, next);
                 } else {
                     next->invalidate();
-                    noderesult.run(currstate, false, true);
+                    update_result = false;
                 }
             } else {
                 currstate.play_pass();
                 noderesult = play_simulation(currstate, next);
             }
         } else {
-            noderesult.run(currstate, false, true);
+            update_result = false;
         }
-        node->updateRAVE(noderesult, color);
     } else {
-        noderesult.run(currstate, false, true);
+        update_result = false;
     }
 
-    node->update(noderesult, color, update_eval);
+    node->update(color, update_result, noderesult);
     TTable::get_TT()->update(hash, komi, node);
 
     return noderesult;
@@ -258,29 +204,17 @@ void UCTSearch::dump_stats(KoState & state, UCTNode & parent) {
     UCTNode * node = bestnode;
 
     while (node != nullptr) {
-        if (++movecount > 2 && node->get_visits() < cfg_expand_threshold) break;
+        if (++movecount > 2 && !node->get_visits()) break;
 
         std::string tmp = state.move_to_text(node->get_move());
         std::string pvstring(tmp);
 
-        if (!m_use_nets) {
-            myprintf("%4s -> %7d (U: %5.2f%%) (R: %5.2f%%: %7d) (N: %4.1f%%) PV: ",
-                        tmp.c_str(),
-                        node->get_visits(),
-                        node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
-                        node->get_visits() > 0 ? node->get_raverate()*100.0f : 0.0f,
-                        node->get_ravevisits(),
-                        node->get_score() * 100.0f);
-        } else {
-            myprintf("%4s -> %7d (W: %5.2f%%) (U: %5.2f%%) (V: %5.2f%%: %6d) (N: %4.1f%%) PV: ",
-                tmp.c_str(),
-                node->get_visits(),
-                node->get_mixed_score(color)*100.0f,
-                node->get_visits() > 0 ? node->get_winrate(color)*100.0f : 0.0f,
-                node->get_evalcount() > 0 ? node->get_eval(color)*100.0f : 0.0f,
-                node->get_evalcount(),
-                node->get_score() * 100.0f);
-        }
+        myprintf("%4s -> %7d (V: %5.2f%%: %6d) (N: %4.1f%%) PV: ",
+            tmp.c_str(),
+            node->get_visits(),
+            node->get_evalcount() > 0 ? node->get_eval(color)*100.0f : 0.0f,
+            node->get_evalcount(),
+            node->get_score() * 100.0f);
 
         KoState tmpstate = state;
 
@@ -291,19 +225,6 @@ void UCTSearch::dump_stats(KoState & state, UCTNode & parent) {
 
         node = node->get_sibling();
     }
-
-    std::string tmp = state.move_to_text(bestnode->get_move());
-    myprintf("====================================\n"
-             "%d visits, score %5.2f%% (from %5.2f%%) PV: ",
-             bestnode->get_visits(),
-             bestnode->get_visits() > 0 ? bestnode->get_mixed_score(color)*100.0f : 0.0f,
-             parent.get_mixed_score(color) * 100.0f,
-             tmp.c_str());
-
-    KoState tmpstate = state;
-    myprintf(get_pv(tmpstate, parent).c_str());
-
-    myprintf("\n");
 #endif
 }
 

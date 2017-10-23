@@ -37,7 +37,7 @@ public:
     bool is_running();
     bool playout_limit_reached();
     void increment_playouts();
-    Playout play_simulation(GameState & currstate, UCTNode * const node);
+    float play_simulation(GameState & currstate, UCTNode * const node);
     std::tuple<float, float, float> get_scores();
 
 private:

@@ -26,7 +26,6 @@ void TTable::update(uint64 hash, const float komi, const UCTNode * node) {
     */
     m_buckets[index].m_hash       = hash;
     m_buckets[index].m_visits     = node->get_visits();
-    m_buckets[index].m_blackwins  = node->get_blackwins();
     m_buckets[index].m_eval_sum   = node->get_blackevals();
     m_buckets[index].m_eval_count = node->get_evalcount();
 
@@ -57,7 +56,6 @@ void TTable::sync(uint64 hash, const float komi, UCTNode * node) {
             entry in TT has more info (new node)
         */
         node->set_visits(m_buckets[index].m_visits);
-        node->set_blackwins(m_buckets[index].m_blackwins);
         node->set_blackevals(m_buckets[index].m_eval_sum);
         node->set_evalcount(m_buckets[index].m_eval_count);
     }
