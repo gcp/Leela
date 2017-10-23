@@ -181,7 +181,7 @@ Network * Network::get_Network(void) {
 
 void Network::benchmark(GameState * state) {
     {
-        int BENCH_AMOUNT = 100;
+        int BENCH_AMOUNT = 1600;
         int cpus = cfg_num_threads;
         int iters_per_thread = (BENCH_AMOUNT + (cpus - 1)) / cpus;
 
@@ -298,8 +298,8 @@ void Network::initialize(void) {
         myprintf("layer %d (%s)", layer_num, (*it)->type());
         auto & blobs = (*it)->blobs();
         if (blobs.size() > 0) myprintf(" = ");
-        for (auto& pars : blobs) {
-            const Blob & blob = *(*pars);
+        for (auto pars = begin(blobs); pars != end(blobs); ++pars) {
+            auto const& blob = *(*pars);
             total_weights += blob.count();
             myprintf("%s ", blob.shape_string().c_str());
             if (boost::next(pars) != blobs.end()) myprintf("+ ");
@@ -512,7 +512,6 @@ Network::Netresult Network::get_scored_moves(
 
 Network::Netresult Network::get_scored_moves_internal(
     GameState * state, NNPlanes & planes, int rotation) {
-    std::vector<scored_node> result;
     assert(rotation >= 0 && rotation <= 7);
 #ifdef USE_CAFFE
     Blob* input_layer = s_net->input_blobs()[0];
@@ -522,7 +521,7 @@ Network::Netresult Network::get_scored_moves_internal(
     assert(channels == (int)planes.size());
     assert(width == state->board.get_boardsize());
     assert(height == state->board.get_boardsize());
-    float* orig_input_data = input_layer->mutable_cpu_data<float>();
+    float* input_data = input_layer->mutable_cpu_data<float>();
 #else
     constexpr int channels = INPUT_CHANNELS;
     assert(channels == planes.size());
@@ -566,7 +565,6 @@ Network::Netresult Network::get_scored_moves_internal(
 
     // Sigmoid
     float winrate_sig = (1.0f + std::tanh(winrate_out[0])) / 2.0f;
-    float val_result = winrate_sig;
 #elif defined(USE_BLAS)
     convolve<5,  32,  96>(input_data, conv1_w, conv1_b, output_data);
     std::swap(input_data, output_data);
@@ -576,11 +574,15 @@ Network::Netresult Network::get_scored_moves_internal(
 #endif
 #ifdef USE_CAFFE
     s_net->Forward();
-    Blob* output_layer = s_net->output_blobs()[0];
-    const float* begin = output_layer->cpu_data<float>();
-    const float* end = begin + output_layer->channels();
+    Blob* output_layer_pol = s_net->output_blobs()[0];
+    const float* begin = output_layer_pol->cpu_data<float>();
+    const float* end = begin + output_layer_pol->channels();
     auto outputs = std::vector<float>(begin, end);
+    Blob* output_layer_val = s_net->output_blobs()[1];
+    auto output_winrate = *(output_layer_val->cpu_data<float>());
+    auto winrate_sig = (1.0f + output_winrate) / 2.0f;
 #endif
+    std::vector<scored_node> result;
     for (size_t idx = 0; idx < outputs.size(); idx++) {
         if (idx < 19*19) {
             int rot_idx = rev_rotate_nn_idx(idx, rotation);
@@ -596,7 +598,7 @@ Network::Netresult Network::get_scored_moves_internal(
         }
     }
 
-    return std::make_pair(result, val_result);
+    return std::make_pair(result, winrate_sig);
 }
 
 void Network::show_heatmap(FastState * state, Netresult& result, bool topmoves) {
