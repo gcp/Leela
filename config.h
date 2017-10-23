@@ -20,8 +20,8 @@
 //#define KGS
 #define USE_OPTIONS
 #define USE_BLAS
-//#define USE_OPENBLAS
-#define USE_MKL
+#define USE_OPENBLAS
+//#define USE_MKL
 //#define USE_CAFFE
 #define USE_OPENCL
 //#define USE_TUNER

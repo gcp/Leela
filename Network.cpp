@@ -495,109 +495,6 @@ void Network::softmax(std::vector<float>& input,
     }
 }
 
-#ifdef USE_OPENCL
-class CallbackData {
-public:
-    std::atomic<int> * m_nodecount;
-    GameState m_state;
-    UCTNode * m_node;
-    int m_rotation;
-    std::atomic<int> * m_thread_results_outstanding;
-    std::vector<float> m_output_data;
-    std::vector<float> m_input_data;
-};
-
-extern "C" void CL_CALLBACK forward_cb(cl_event event, cl_int status,
-                                       void* data) {
-    CallbackData * cb_data = static_cast<CallbackData*>(data);
-
-    // Mark the kernels as available
-    cb_data->m_thread_results_outstanding->fetch_sub(1, std::memory_order_release);
-
-    constexpr int width = 19;
-    constexpr int height = 19;
-    std::vector<float> softmax_data(width * height);
-    Network::softmax(cb_data->m_output_data, softmax_data, cfg_softmax_temp);
-    std::vector<float>& outputs = softmax_data;
-
-    Network::Netresult result;
-
-    for (size_t idx = 0; idx < outputs.size(); idx++) {
-        int rot_idx = Network::rev_rotate_nn_idx(idx, cb_data->m_rotation);
-        float val = outputs[rot_idx];
-        int x = idx % 19;
-        int y = idx / 19;
-        int vtx = cb_data->m_state.board.get_vertex(x, y);
-        if (cb_data->m_state.board.get_square(vtx) == FastBoard::EMPTY) {
-            result.push_back(std::make_pair(val, vtx));
-        }
-    }
-
-    // Network::show_heatmap(&cb_data->m_state, result, false);
-
-    cb_data->m_node->scoring_cb(cb_data->m_nodecount, cb_data->m_state,
-                                result, false);
-
-    delete cb_data;
-
-    // Reduce the count of things having pointers to UCTNodes
-    // or UCTSearch. We cannot destroy the search till these
-    // have finished.
-    opencl.callback_finished();
-}
-
-void Network::async_scored_moves(std::atomic<int> * nodecount,
-                                 GameState * state,
-                                 UCTNode * node,
-                                 Ensemble ensemble,
-                                 int rotation) {
-    if (state->board.get_boardsize() != 19) {
-        return;
-    }
-
-    assert(ensemble == DIRECT || ensemble == RANDOM_ROTATION);
-    if (ensemble == RANDOM_ROTATION) {
-        assert(rotation == -1);
-        rotation = Random::get_Rng()->randfix<8>();
-    } else {
-        assert(ensemble == DIRECT);
-    }
-
-    CallbackData * cb_data = new CallbackData();
-
-    NNPlanes planes;
-    gather_features(state, planes);
-
-    constexpr int width = 19;
-    constexpr int height = 19;
-
-    cb_data->m_nodecount = nodecount;
-    cb_data->m_state = *state;
-    cb_data->m_node = node;
-    cb_data->m_input_data.resize(Network::MAX_CHANNELS * 19 * 19);
-    cb_data->m_output_data.resize(Network::MAX_CHANNELS * 19 * 19);
-    cb_data->m_thread_results_outstanding = opencl.get_thread_results_outstanding();
-    //assert(cb_data->m_thread_result_outstanding.load(boost::memory_order_acquire) == 0);
-    cb_data->m_rotation = rotation;
-
-    for (int c = 0; c < Network::INPUT_CHANNELS; ++c) {
-        for (int h = 0; h < height; ++h) {
-            for (int w = 0; w < width; ++w) {
-                int vtx = rotate_nn_idx(h * 19 + w, rotation);
-                cb_data->m_input_data[(c * height + h) * width + w] =
-                    (float)planes[c][vtx];
-            }
-        }
-    }
-
-    void * data = static_cast<void*>(cb_data);
-
-    opencl_net.forward(cb_data->m_input_data,
-                       cb_data->m_output_data,
-                       forward_cb, data);
-}
-#endif
-
 Network::Netresult Network::get_scored_moves(
     GameState * state, Ensemble ensemble, int rotation) {
     Netresult result;
@@ -620,13 +517,15 @@ Network::Netresult Network::get_scored_moves(
         result = get_scored_moves_internal(state, planes, 0);
         for (int r = 1; r < 8; r++) {
             auto sum_res = get_scored_moves_internal(state, planes, r);
-            for (size_t i = 0; i < sum_res.size(); i++) {
-                assert(result[i].second == sum_res[i].second);
-                result[i].first += sum_res[i].first;
+            for (size_t i = 0; i < sum_res.first.size(); i++) {
+                assert(result.first[i].second == sum_res.first[i].second);
+                result.first[i].first += sum_res.first[i].first;
             }
+            result.second += sum_res.second;
         }
-        std::for_each(result.begin(), result.end(),
+        std::for_each(begin(result.first), end(result.first),
                       [](scored_node & sn){ sn.first /= 8.0f; });
+        result.second /= 8.0f;
     }
 
     // if (ensemble == AVERAGE_ALL || ensemble == DIRECT) {
@@ -638,7 +537,7 @@ Network::Netresult Network::get_scored_moves(
 
 Network::Netresult Network::get_scored_moves_internal(
     GameState * state, NNPlanes & planes, int rotation) {
-    Netresult result;
+    std::vector<scored_node> result;
     assert(rotation >= 0 && rotation <= 7);
 #ifdef USE_CAFFE
     Blob* input_layer = s_net->input_blobs()[0];
@@ -676,7 +575,7 @@ Network::Netresult Network::get_scored_moves_internal(
         }
     }
 #ifdef USE_OPENCL
-    opencl_net.forward(input_data, output_data, nullptr, nullptr);
+    opencl_net.forward(input_data, output_data);
     // Get the mvoes
     convolve<1, 256, 2>(output_data, conv26_w, conv26_b, policy_data_1);
     batchnorm<2, 361>(policy_data_1, bn26_w1, bn26_w2, policy_data_2);
@@ -694,36 +593,9 @@ Network::Netresult Network::get_scored_moves_internal(
     float winrate_sig = (1.0f + std::tanh(output_data[0])) / 2.0f;
     float val_result = winrate_sig;
 #elif defined(USE_BLAS)
-    // XXX really only need the first 24
-    std::copy(orig_input_data.begin(), orig_input_data.end(), input_data.begin());
-
     convolve<5,  32,  96>(input_data, conv1_w, conv1_b, output_data);
     std::swap(input_data, output_data);
-    convolve<3,  96, 128>(input_data, conv2_w, conv2_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv3_w, conv3_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv4_w, conv4_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv5_w, conv5_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv6_w, conv6_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv7_w, conv7_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv8_w, conv8_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv9_w, conv9_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv10_w, conv10_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv11_w, conv11_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128, 128>(input_data, conv12_w, conv12_b, output_data);
-    std::swap(input_data, output_data);
-    convolve<3, 128,   1>(input_data, conv13_w, conv13_b, output_data);
     softmax(output_data, softmax_data, cfg_softmax_temp);
-
     // Move scores
     std::vector<float>& outputs = softmax_data;
 #endif
@@ -741,15 +613,15 @@ Network::Netresult Network::get_scored_moves_internal(
         int y = idx / 19;
         int vtx = state->board.get_vertex(x, y);
         if (state->board.get_square(vtx) == FastBoard::EMPTY) {
-            result.push_back(std::make_pair(val, vtx));
+            result.emplace_back(val, vtx);
         }
     }
 
-    return result;
+    return std::make_pair(result, val_result);
 }
 
 void Network::show_heatmap(FastState * state, Netresult& result, bool topmoves) {
-    auto moves = result;
+    auto moves = result.first;
     std::vector<std::string> display_map;
     std::string line;
 
@@ -782,18 +654,18 @@ void Network::show_heatmap(FastState * state, Netresult& result, bool topmoves) 
     }
 
     if (topmoves) {
-    std::stable_sort(moves.rbegin(), moves.rend());
+        std::stable_sort(moves.rbegin(), moves.rend());
 
-    float cum = 0.0f;
-    size_t tried = 0;
-    while (cum < 0.85f && tried < moves.size()) {
-        if (moves[tried].first < 0.01f) break;
-        myprintf("%1.3f (%s)\n",
-                 moves[tried].first,
-                 state->board.move_to_text(moves[tried].second).c_str());
-        cum += moves[tried].first;
-        tried++;
-    }
+        float cum = 0.0f;
+        size_t tried = 0;
+        while (cum < 0.85f && tried < moves.size()) {
+            if (moves[tried].first < 0.01f) break;
+            myprintf("%1.3f (%s)\n",
+                    moves[tried].first,
+                    state->board.move_to_text(moves[tried].second).c_str());
+            cum += moves[tried].first;
+            tried++;
+        }
     }
 }
 

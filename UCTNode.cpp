@@ -86,14 +86,6 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     if (m_visits < m_symmetries_done * cfg_extra_symmetry) {
         return;
     }
-#ifdef USE_OPENCL
-    // Previous kernel is still running, skip this expansion for now
-    if (!opencl.thread_can_issue()) {
-        // We don't abort them when the search ends
-        // assert(!at_root);
-        return;
-    }
-#endif
     // Someone else is running the expansion
     if (m_is_netscoring) {
         return;
@@ -103,21 +95,23 @@ void UCTNode::netscore_children(std::atomic<int> & nodecount,
     // Let simulations proceed
     lock.unlock();
 
-#ifdef USE_OPENCL
-    if (at_root) {
-        auto raw_netlist = Network::get_Network()->get_scored_moves(
-            &state, Network::Ensemble::AVERAGE_ALL);
-        scoring_cb(&nodecount, state, raw_netlist, at_root);
-    } else {
-        Network::get_Network()->async_scored_moves(
-            &nodecount, &state, this, Network::Ensemble::DIRECT, m_symmetries_done);
-    }
-#else
     auto raw_netlist = Network::get_Network()->get_scored_moves(
         &state, (at_root ? Network::Ensemble::AVERAGE_ALL :
                            Network::Ensemble::DIRECT), m_symmetries_done);
-    scoring_cb(&nodecount, state, raw_netlist, at_root);
-#endif
+
+    FastBoard & board = state.board;
+    std::vector<Network::scored_node> nodelist;
+
+    for (auto & node : raw_netlist.first) {
+        int vertex = node.second;
+        if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
+            if (!board.is_suicide(vertex, board.get_to_move())) {
+                nodelist.emplace_back(node);
+            }
+        }
+    }
+    nodelist.emplace_back(0.0f, +FastBoard::PASS);
+    rescore_nodelist(nodecount, board, nodelist, at_root);
 }
 
 void UCTNode::create_children(std::atomic<int> & nodecount,
@@ -153,7 +147,7 @@ void UCTNode::create_children(std::atomic<int> & nodecount,
         if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
             if (!board.is_suicide(vertex, board.get_to_move())) {
                 float score = state.score_move(territory, moyo, vertex);
-                nodelist.push_back(std::make_pair(score, vertex));
+                nodelist.emplace_back(score, vertex);
             }
         }
     }
@@ -163,37 +157,18 @@ void UCTNode::create_children(std::atomic<int> & nodecount,
     } else {
         passscore = 0;
     }
-    nodelist.push_back(std::make_pair(passscore, +FastBoard::PASS));
+    nodelist.emplace_back(passscore, FastBoard::PASS);
     link_nodelist(nodecount, board, nodelist, use_nets);
-}
-
-void UCTNode::scoring_cb(std::atomic<int> * nodecount,
-                         GameState & state,
-                         Network::Netresult & raw_netlist,
-                         bool all_symmetries) {
-    FastBoard & board = state.board;
-    std::vector<Network::scored_node> nodelist;
-
-    for (auto it = raw_netlist.begin(); it != raw_netlist.end(); ++it) {
-        int vertex = it->second;
-        if (vertex != state.m_komove && board.no_eye_fill(vertex)) {
-            if (!board.is_suicide(vertex, board.get_to_move())) {
-                nodelist.push_back(*it);
-            }
-        }
-    }
-    nodelist.push_back(std::make_pair(0.0f, +FastBoard::PASS));
-    rescore_nodelist(*nodecount, board, nodelist, all_symmetries);
 }
 
 void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
                                FastBoard & board,
-                               Network::Netresult & nodelist,
+                               std::vector<Network::scored_node> & nodelist,
                                bool all_symmetries) {
 
     assert(!nodelist.empty());
     // sort (this will reverse scores, but linking is backwards too)
-    std::sort(nodelist.begin(), nodelist.end());
+    std::sort(begin(nodelist), end(nodelist));
 
     int childrenadded = 0;
     const int max_net_childs = 35;
@@ -263,7 +238,7 @@ void UCTNode::rescore_nodelist(std::atomic<int> & nodecount,
 
 void UCTNode::link_nodelist(std::atomic<int> & nodecount,
                             FastBoard & board,
-                            Network::Netresult & nodelist,
+                            std::vector<Network::scored_node> & nodelist,
                             bool use_nets) {
     size_t totalchildren = nodelist.size();
     if (!totalchildren) return;

@@ -42,10 +42,10 @@ ubsan:
 
 
 LIBS = -lboost_program_options
-DYNAMIC_LIBS += -lboost_system -lboost_filesystem -lcaffe-nv -lprotobuf -lglog
-#LIBS += -lopenblas
+#DYNAMIC_LIBS += -lboost_system -lboost_filesystem -lcaffe-nv -lprotobuf -lglog
+LIBS += -lopenblas
 DYNAMIC_LIBS += -lpthread
-#DYNAMIC_LIBS += -lOpenCL
+DYNAMIC_LIBS += -lOpenCL
 #LIBS += -framework Accelerate
 #LIBS += -framework OpenCL
 #DYNAMIC_LIBS += -lmkl_rt
@@ -69,8 +69,8 @@ sources = Network.cpp AttribScores.cpp FullBoard.cpp KoState.cpp Playout.cpp \
 	  GameState.cpp Leela.cpp PNNode.cpp SGFParser.cpp Timing.cpp \
 	  Utils.cpp FastBoard.cpp Matcher.cpp PNSearch.cpp \
 	  SGFTree.cpp TTable.cpp Zobrist.cpp FastState.cpp GTP.cpp \
-	  MCOTable.cpp Random.cpp SMP.cpp UCTNode.cpp NN.cpp NN128.cpp \
-	  NNValue.cpp OpenCL.cpp MCPolicy.cpp
+	  MCOTable.cpp Random.cpp SMP.cpp UCTNode.cpp NWeights.cpp \
+	  NWeights2.cpp NWeights3.cpp NWeights4.cpp OpenCL.cpp MCPolicy.cpp
 
 objects = $(sources:.cpp=.o)
 deps = $(sources:%.cpp=%.d)

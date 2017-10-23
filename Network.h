@@ -35,7 +35,7 @@ public:
     };
     using TrainVector = std::vector<TrainPosition>;
     using scored_node = std::pair<float, int>;
-    using Netresult = std::vector<scored_node>;
+    using Netresult = std::pair<std::vector<scored_node>, float>;
 
     static Netresult get_scored_moves(GameState * state,
                                       Ensemble ensemble,
@@ -43,11 +43,6 @@ public:
     static constexpr int INPUT_CHANNELS = 18;
     static constexpr int MAX_CHANNELS = 256;
 
-#ifdef USE_OPENCL
-    void async_scored_moves(std::atomic<int> * nodecount,
-                            GameState * state, UCTNode * node,
-                            Ensemble ensemble, int rotation = -1);
-#endif
     void initialize();
     void benchmark(GameState * state);
     static void show_heatmap(FastState * state, Netresult & netres, bool topmoves);

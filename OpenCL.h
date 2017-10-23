@@ -43,7 +43,6 @@ private:
     cl::Buffer m_mergeBuffer;
     cl::Buffer m_outBuffer;
     bool m_buffers_allocated{false};
-    std::atomic<int> m_results_outstanding{0};
 };
 
 class OpenCL_Network {
@@ -103,8 +102,7 @@ public:
         return m_layers.size();
     }
 
-    void forward(std::vector<float>& input, std::vector<float>& output,
-                 event_callback cb, void * data);
+    void forward(std::vector<float>& input, std::vector<float>& output);
 
 private:
     template <size_t W>
@@ -128,12 +126,7 @@ class OpenCL {
 public:
     void initialize();
     void ensure_thread_initialized(void);
-
     std::string get_device_name();
-    bool thread_can_issue();
-    void callback_finished();
-    void join_outstanding_cb();
-    std::atomic<int> * get_thread_results_outstanding();
 
 private:
     cl::Program m_program;
@@ -142,8 +135,6 @@ private:
     size_t m_max_workgroup_size{0};
     std::vector<size_t> m_max_workgroup_dims;
     bool m_init_ok{false};
-    // Keep track of all async/cb threads we dispatch
-    std::atomic<int> m_cb_outstanding{0};
 };
 
 extern OpenCL opencl;

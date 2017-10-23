@@ -733,9 +733,6 @@ void UCTWorker::operator()() {
         m_search->play_simulation(*currstate, m_root);
         m_search->increment_playouts();
     } while(m_search->is_running() && !m_search->playout_limit_reached());
-#ifdef USE_OPENCL
-    opencl.join_outstanding_cb();
-#endif
 }
 
 std::tuple<float, float, float> UCTSearch::get_scores() {
@@ -889,9 +886,6 @@ int UCTSearch::think(int color, passflag_t passflag) {
 
     // stop the search
     m_run = false;
-#ifdef USE_OPENCL
-    opencl.join_outstanding_cb();
-#endif
     tg.wait_all();
     if (!m_root.has_children()) {
         return FastBoard::PASS;
@@ -986,9 +980,6 @@ void UCTSearch::ponder() {
 
     // stop the search
     m_run = false;
-#ifdef USE_OPENCL
-    opencl.join_outstanding_cb();
-#endif
     tg.wait_all();
     // display search info
     myprintf("\n");

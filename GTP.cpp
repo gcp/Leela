@@ -108,8 +108,9 @@ bool GTP::perform_self_test(GameState & state) {
 #ifndef USE_TUNER
     myprintf("OpenCL self-test: ");
     // Perform self-test
-    auto vec = Network::get_Network()->get_scored_moves(
+    auto res = Network::get_Network()->get_scored_moves(
         &state, Network::Ensemble::DIRECT, 0);
+    auto vec = res.first;
     testPassed &= vec[60].first > 0.176 && vec[60].first < 0.177;
     testPassed &= vec[60].second == 88;
     testPassed &= vec[72].first > 0.175 && vec[72].first < 0.176;

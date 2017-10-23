@@ -518,20 +518,6 @@ OpenCL opencl;
 OpenCL_Network opencl_net;
 thread_local ThreadData opencl_thread_data;
 
-bool OpenCL::thread_can_issue() {
-    static std::atomic<int> max_queue_size{0};
-    int current_queue = opencl_thread_data.m_results_outstanding;
-    if (current_queue > max_queue_size) {
-        max_queue_size = current_queue;
-        //myprintf("qsz: %d\n", max_queue_size);
-    }
-    return current_queue < 2;
-}
-
-std::atomic<int> * OpenCL::get_thread_results_outstanding() {
-    return &opencl_thread_data.m_results_outstanding;
-}
-
 void OpenCL::ensure_thread_initialized() {
     if (!opencl_thread_data.m_is_initialized) {
         // Make kernels
@@ -564,14 +550,12 @@ void OpenCL_Network::add_weights(size_t layer,
 }
 
 void OpenCL_Network::forward(std::vector<float>& input,
-                             std::vector<float>& output,
-                             event_callback cb, void * data) {
+                             std::vector<float>& output) {
     constexpr int width = 19;
     constexpr int height = 19;
     constexpr size_t one_plane = width * height * sizeof(float);
 
     opencl.ensure_thread_initialized();
-    opencl_thread_data.m_results_outstanding.fetch_add(1, std::memory_order_release);
     size_t inSize = sizeof(float) * input.size();
     size_t outSize = sizeof(float) * output.size();
     size_t finalSize = m_layers.back().outputs * 19 * 19 * sizeof(float);
@@ -640,23 +624,7 @@ void OpenCL_Network::forward(std::vector<float>& input,
     queue.enqueueCopyBuffer(inBuffer, outBuffer, 0, 0, finalSize);
     queue.enqueueReadBuffer(outBuffer, CL_FALSE, 0, finalSize, output.data());
 
-    opencl.m_cb_outstanding.fetch_add(1, std::memory_order_release);
     queue.finish();
-    if (cb != nullptr) {
-        cb(CL_COMPLETE, 0, data);
-    } else {
-        assert(data == nullptr);
-        opencl_thread_data.m_results_outstanding.fetch_sub(1, std::memory_order_release);
-        opencl.callback_finished();
-    }
-}
-
-void OpenCL::callback_finished() {
-    m_cb_outstanding.fetch_sub(1, std::memory_order_release);
-}
-
-void OpenCL::join_outstanding_cb() {
-    while (m_cb_outstanding.load(std::memory_order_acquire) > 0);
 }
 
 void OpenCL_Network::convolve(int filter_size, int channels, int outputs,

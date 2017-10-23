@@ -28,10 +28,6 @@ public:
                          GameState & state, bool at_root, bool use_nets);
     void netscore_children(std::atomic<int> & nodecount,
                            GameState & state, bool at_root);
-    void scoring_cb(std::atomic<int> * nodecount,
-                    GameState & state,
-                    Network::Netresult & raw_netlist,
-                    bool all_symmetries);
     void run_value_net(GameState & state);
     void kill_superkos(KoState & state);
     void delete_child(UCTNode * child);
@@ -80,11 +76,11 @@ private:
     void link_child(UCTNode * newchild);
     void link_nodelist(std::atomic<int> & nodecount,
                        FastBoard & state,
-                       Network::Netresult & nodes,
+                       std::vector<Network::scored_node> & nodelist,
                        bool use_nets);
     void rescore_nodelist(std::atomic<int> & nodecount,
                          FastBoard & state,
-                         Network::Netresult & nodes,
+                         std::vector<Network::scored_node> & nodelist,
                          bool all_symmetries);
     float smp_noise();
     // Tree data
