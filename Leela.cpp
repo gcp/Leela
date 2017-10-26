@@ -29,8 +29,8 @@ using namespace Utils;
 void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
     namespace po = boost::program_options;
     // Declare the supported options.
-    po::options_description desc("Allowed options");
-    desc.add_options()
+    po::options_description v_desc("Allowed options");
+    v_desc.add_options()
         ("help,h", "Show commandline options.")
         ("gtp,g", "Enable GTP mode.")
         ("threads,t", po::value<int>()->default_value(cfg_num_threads),
@@ -75,19 +75,40 @@ void parse_commandline(int argc, char *argv[], bool & gtp_mode) {
         ("random_loops", po::value<int>())
 #endif
         ;
+    // These won't be shown, we use them to catch incorrect usage of the
+    // command line.
+    po::options_description h_desc("Hidden options");
+    h_desc.add_options()
+        ("arguments", po::value<std::vector<std::string>>());
+    // Parse both the above, we will check if any of the latter are present.
+    po::options_description all("All options");
+    all.add(v_desc).add(h_desc);
+    po::positional_options_description p_desc;
+    p_desc.add("arguments", -1);
     po::variables_map vm;
     try {
-        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::store(po::command_line_parser(argc, argv)
+                  .options(all).positional(p_desc).run(), vm);
         po::notify(vm);
     }  catch(const boost::program_options::error& e) {
         myprintf("ERROR: %s\n", e.what());
+        std::cout << v_desc << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // Handle commandline options
-    if (vm.count("help")) {
-        std::cout << desc << std::endl;
-        exit(EXIT_SUCCESS);
+    if (vm.count("help") || vm.count("arguments")) {
+        auto ev = EXIT_SUCCESS;
+        // The user specified an argument. We don't accept any, so explain
+        // our usage.
+        if (vm.count("arguments")) {
+            for (auto& arg : vm["arguments"].as<std::vector<std::string>>()) {
+                std::cout << "Unrecognized argument: " << arg << std::endl;
+            }
+            ev = EXIT_FAILURE;
+        }
+        std::cout << v_desc << std::endl;
+        exit(ev);
     }
 
     if (vm.count("quiet")) {
