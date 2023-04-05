@@ -8,6 +8,7 @@
 #include <fstream>
 #include <boost/utility.hpp>
 #include <boost/format.hpp>
+#include <boost/next_prior.hpp>
 
 #include "Book.h"
 #include "Utils.h"
