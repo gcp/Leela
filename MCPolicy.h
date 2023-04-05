@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <array>
+#include <string>
 #include <vector>
 #include <limits>
 #include <map>
